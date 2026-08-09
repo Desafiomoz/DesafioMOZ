@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="pt-MZ">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Termos de Uso – Desafio MOZ</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=Poppins:wght@600;700;900&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --preto-fundo: #0A0C14;
+            --preto-escuro: #05060F;
+            --cinza: #161A2B;
+            --verde: #00C853;
+            --verde-claro: #22FF99;
+            --texto: #FFFFFF;
+            --texto-claro: #A8B0C8;
+            --destaque: #FFD700;
+        }
+
+        body {
+            background: var(--preto-fundo);
+            color: var(--texto);
+            font-family: 'Inter', system-ui, sans-serif;
+            line-height: 1.7;
+            padding: 20px 0 60px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(180deg, rgba(10,12,20,0.94), rgba(5,6,15,0.96));
+            z-index: -1;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* CABEÇALHO COM LOGÓTIPO */
+        .cabecalho {
+            text-align: center;
+            padding: 40px 0 30px;
+            border-bottom: 1px solid rgba(0,200,83,0.2);
+            margin-bottom: 40px;
+        }
+
+        .logo {
+            width: 120px;
+            height: 120px;
+            border-radius: 16px;
+            object-fit: contain;
+            margin-bottom: 20px;
+            box-shadow: 0 0 30px rgba(34,255,153,0.35);
+        }
+
+        .titulo-principal {
+            font-family: 'Poppins', sans-serif;
+            font-size: clamp(28px, 7vw, 42px);
+            background: linear-gradient(90deg, var(--verde), var(--verde-claro), var(--destaque));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 900;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .subtitulo {
+            color: var(--texto-claro);
+            margin-top: 10px;
+            font-size: 17px;
+        }
+
+        /* CAIXAS DE TERMOS */
+        .bloco-termo {
+            background: rgba(22,26,43,0.85);
+            border: 1px solid rgba(0,200,83,0.25);
+            border-radius: 18px;
+            padding: 28px;
+            margin-bottom: 22px;
+            transition: all 0.35s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .bloco-termo:hover {
+            border-color: var(--verde-claro);
+            transform: translateY(-4px);
+            box-shadow: 0 15px 40px rgba(0,200,83,0.18);
+        }
+
+        .titulo-termo {
+            color: var(--verde-claro);
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .bloco-termo ul {
+            padding-left: 28px;
+            color: var(--texto-claro);
+        }
+
+        .bloco-termo li {
+            margin-bottom: 10px;
+        }
+
+        .bloco-termo p {
+            color: var(--texto-claro);
+            line-height: 1.8;
+        }
+
+        /* TABELAS */
+        .titulo-tabela {
+            text-align: center;
+            color: var(--verde-claro);
+            font-size: 23px;
+            margin: 45px 0 22px;
+            font-weight: 700;
+        }
+
+        .tabela {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            border-radius: 18px;
+            overflow: hidden;
+            background: rgba(22,26,43,0.9);
+            margin-bottom: 35px;
+        }
+
+        .tabela th {
+            background: linear-gradient(90deg, var(--verde), var(--verde-claro));
+            color: #000;
+            padding: 18px;
+            text-align: left;
+            font-weight: 800;
+        }
+
+        .tabela td {
+            padding: 15px 18px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            color: var(--texto-claro);
+        }
+
+        .tabela tr:last-child td { border-bottom: none; }
+        .tabela tr:hover td { background: rgba(0,200,83,0.08); }
+
+        /* BOTÕES */
+        .area-botoes {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 55px;
+        }
+
+        .btn {
+            padding: 15px 35px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 17px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.35s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-voltar {
+            background: transparent;
+            color: var(--texto);
+            border: 2px solid var(--verde);
+        }
+
+        .btn-voltar:hover {
+            background: rgba(0,200,83,0.15);
+            transform: translateY(-3px);
+        }
+
+        .btn-conta {
+            background: linear-gradient(90deg, var(--verde), var(--verde-claro));
+            color: #000;
+            box-shadow: 0 5px 25px rgba(0,200,83,0.45);
+        }
+
+        .btn-conta:hover {
+            transform: translateY(-4px) scale(1.04);
+            box-shadow: 0 10px 35px rgba(0,200,83,0.55);
+        }
+
+        @media (max-width: 600px) {
+            .area-botoes { flex-direction: column; align-items: center; }
+            .btn { width: 100%; max-width: 320px; justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- CABEÇALHO COM LOGÓTIPO -->
+    <header class="cabecalho">
+        <img src="https://i.supaimg.com/b173afd9-4344-4026-a5d7-6a53e4b6efdc/8f054a24-2746-4a43-9f1c-354584289dc3.png" alt="Desafio MOZ" class="logo">
+        <h1 class="titulo-principal">📋 Termos de Uso</h1>
+        <p class="subtitulo">Ao usar o Desafio MOZ, concordas com todas as condições abaixo</p>
+    </header>
+
+    <!-- TERMOS PRINCIPAIS -->
+    <div class="bloco-termo">
+        <h3 class="titulo-termo"><i class="fas fa-file-signature"></i> 1. Aceitação dos Termos</h3>
+        <p>Ao se cadastrar, acessar ou usar a plataforma Desafio MOZ, declaras que leste, compreendeste e concordas em cumprir todos estes Termos de Uso, além das Regras Oficiais e da Política de Privacidade. Se não concordares, não podes utilizar os nossos serviços.</p>
+    </div>
+
+    <div class="bloco-termo">
+        <h3 class="titulo-termo"><i class="fas fa-user-check"></i> 2. Uso Autorizado da Plataforma</h3>
+        <ul>
+            <li>O serviço é destinado a pessoas com pelo menos 18 anos; menores só podem participar com autorização escrita de um responsável legal.</li>
+            <li>É permitido usar a plataforma apenas para fins pessoais e legais — não podes revender, copiar ou usar o conteúdo para outros projetos.</li>
+            <li>Comprometes‑te a não danificar, bloquear ou sobrecarregar o sistema do Desafio MOZ.</li>
+        </ul>
+    </div>
+
+    <div class="bloco-termo">
+        <h3 class="titulo-termo"><i class="fas fa-id-card"></i> 3. Responsabilidade dos Dados</h3>
+        <ul>
+            <li>Tu és o único responsável pela veracidade dos dados que cadastras.</li>
+            <li>Guardas a tua senha e acesso com cuidado — nunca compartilhes com ninguém.</li>
+            <li>Qualquer movimento feito na tua conta é de tua total responsabilidade.</li>
+            <li>Deves avisar imediatamente se perceberes acesso não autorizado à tua conta.</li>
+        </ul>
+    </div>
+
+    <div class="bloco-termo">
+        <h3 class="titulo-termo"><i class="fas fa-ban"></i> 4. Condutas Proibidas</h3>
+        <ul>
+            <li>Usar robôs, scripts, automações ou qualquer método artificial para ganhar pontos ou acessar funções.</li>
+            <li>Cadastrar dados falsos, contas duplicadas ou usar informações de terceiros.</li>
+            <li>Tentar interferir no funcionamento do site, aplicativo ou sistema de pagamentos.</li>
+            <li>Praticar fraude, engano ou qualquer ato que prejudique o Desafio MOZ ou outros utilizadores.</li>
+        </ul>
+    </div>
+
+    <div class="bloco-termo">
+        <h3 class="titulo-termo"><i class="fas fa-balance-scale"></i> 5. Direitos e Propriedade</h3>
+        <p>Todo o conteúdo, design, logótipo, textos, imagens e sistema do Desafio MOZ são protegidos por leis de direito de autor. Não podes copiar, reproduzir ou usar nada sem permissão escrita da nossa equipa. Continuamos donos de todos os direitos sobre a plataforma.</p>
+    </div>
+
+    <div class="bloco-termo">
+        <h3 class="titulo-termo"><i class="fas fa-hand-holding-usd"></i> 6. Pagamentos e Pontos</h3>
+        <p>Os pontos e recompensas são concedidos apenas quando cumpriste corretamente as tarefas. Reservamo‑nos o direito de rever ou cancelar pontos em caso de suspeita de fraude. Os pagamentos são feitos conforme as regras definidas, e não somos responsáveis por erros de dados que tu forneças.</p>
+    </div>
+
+    <div class="bloco-termo">
+        <h3 class="titulo-termo"><i class="fas fa-exclamation-triangle"></i> 7. Alterações e Encerramento</h3>
+        <p>Podemos atualizar estes Termos a qualquer momento — avisaremos na página ou pelo sistema. Também podemos suspender ou encerrar a tua conta se violares qualquer regra, sem direito a devolução ou compensação.</p>
+    </div>
+
+    <!-- TABELA DE DEVERES E DIREITOS -->
+    <h3 class="titulo-tabela">📊 Os Teus Direitos e Deveres</h3>
+    <table class="tabela">
+        <thead>
+            <tr>
+                <th>O Que Tens Direito</th>
+                <th>O Que Deves Cumprir</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Receber recompensas pelas tarefas concluídas</td>
+                <td>Fornecer dados verdadeiros e completos</td>
+            </tr>
+            <tr>
+                <td>Receber pagamentos no prazo definido</td>
+                <td>Respeitar as regras e os outros utilizadores</td>
+            </tr>
+            <tr>
+                <td>Ter acesso ao suporte e informações claras</td>
+                <td>Não usar meios ilegais ou automáticos</td>
+            </tr>
+            <tr>
+                <td>Solicitar o encerramento da tua conta</td>
+                <td>Manter a tua senha em segurança</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- TABELA DE CONTATO -->
+    <h3 class="titulo-tabela">📩 Contato e Dúvidas</h3>
+    <table class="tabela">
+        <thead>
+            <tr>
+                <th>Assunto</th>
+                <th>Como Contactar</th>
+                <th>Prazo de Resposta</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Dúvidas sobre os Termos</td>
+                <td>Página de Ajuda ou Suporte</td>
+                <td>Até 3 dias úteis</td>
+            </tr>
+            <tr>
+                <td>Problemas com conta</td>
+                <td>Suporte do Desafio MOZ</td>
+                <td>Até 48 horas</td>
+            </tr>
+            <tr>
+                <td>Reclamações ou sugestões</td>
+                <td>Formulário na plataforma</td>
+                <td>Até 5 dias úteis</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- BOTÕES FINAIS -->
+    <div class="area-botoes">
+        <a href="index.html" class="btn btn-voltar">
+            <i class="fas fa-arrow-left"></i> Voltar ao Início
+        </a>
+        <a href="criar-conta.html" class="btn btn-conta">
+            <i class="fas fa-user-check"></i> Aceitar e Criar Conta
+        </a>
+    </div>
+</div>
+
+
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+<script>
+(function () {
+  if (typeof window.__DESAFIO_MOZ_FIREBASE__ === 'undefined') {
+    window.__DESAFIO_MOZ_FIREBASE__ = true;
+    var firebaseConfig = {
+      apiKey: "AIzaSyDONfggnmf9OJX_AgfvcHTRf6tsuKD5nrA",
+      authDomain: "desafio-moz-61b70.firebaseapp.com",
+      projectId: "desafio-moz-61b70",
+      storageBucket: "desafio-moz-61b70.firebasestorage.app",
+      messagingSenderId: "945658936331",
+      appId: "1:945658936331:web:7ee4b0e7de1c1daf36db0e",
+      measurementId: "G-G1DZQ1B0DB"
+    };
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    window.db = firebase.firestore();
+  }
+  var db = window.db;
+  var PAGINA = 'termos';
+
+  function injetarHtml(container, html) {
+    var tpl = document.createElement('template');
+    tpl.innerHTML = html || '';
+    var frag = tpl.content;
+    Array.prototype.forEach.call(frag.querySelectorAll('script'), function (old) {
+      var s = document.createElement('script');
+      Array.prototype.forEach.call(old.attributes, function (a) { s.setAttribute(a.name, a.value); });
+      s.text = old.textContent || '';
+      old.parentNode.replaceChild(s, old);
+    });
+    container.appendChild(frag);
+  }
+
+  async function carregarAnunciosCurtosNaPagina() {
+    try {
+      var snap = await db.collection('anunciosCurtos').get();
+      var host = document.getElementById('zona-anuncios-curtos');
+      if (!host) {
+        host = document.createElement('div');
+        host.id = 'zona-anuncios-curtos';
+        host.style.cssText = 'max-width:900px;margin:20px auto;padding:0 16px;';
+        var footer = document.querySelector('footer');
+        var botoes = document.querySelector('.area-botoes');
+        var menu = document.querySelector('.menu-baixo');
+        if (menu) document.body.insertBefore(host, menu);
+        else if (botoes) botoes.parentNode.insertBefore(host, botoes);
+        else if (footer) footer.parentNode.insertBefore(host, footer);
+        else document.body.appendChild(host);
+      }
+      host.innerHTML = '';
+      snap.forEach(function (doc) {
+        var d = doc.data() || {};
+        if (d.ativo === false) return;
+        var pags = (d.paginas || []).map(function (p) {
+          return String(p).toLowerCase().replace(/\.html$/, '');
+        });
+        if (pags.indexOf(PAGINA) === -1) return;
+        var box = document.createElement('div');
+        box.style.cssText = 'background:rgba(21,21,31,0.92);border:1px solid rgba(0,200,83,0.25);border-radius:14px;padding:12px;margin-bottom:12px;overflow:hidden;';
+        var lab = document.createElement('div');
+        lab.style.cssText = 'font-size:10px;color:#666;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;';
+        lab.textContent = 'Publicidade';
+        box.appendChild(lab);
+        var slot = document.createElement('div');
+        box.appendChild(slot);
+        host.appendChild(box);
+        try { injetarHtml(slot, d.codigo); } catch (e) {}
+      });
+    } catch (e) { console.warn('anunciosCurtos', e); }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', carregarAnunciosCurtosNaPagina);
+  } else {
+    carregarAnunciosCurtosNaPagina();
+  }
+})();
+</script>
+
+</body>
+</html>

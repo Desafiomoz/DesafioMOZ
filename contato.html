@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="pt-MZ">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contato – Desafio MOZ</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=Poppins:wght@600;700;900&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --preto-fundo: #0A0C14;
+            --preto-escuro: #05060F;
+            --cinza: #161A2B;
+            --verde: #00C853;
+            --verde-claro: #22FF99;
+            --texto: #FFFFFF;
+            --texto-claro: #A8B0C8;
+            --destaque: #FFD700;
+        }
+
+        body {
+            background: var(--preto-fundo);
+            color: var(--texto);
+            font-family: 'Inter', system-ui, sans-serif;
+            line-height: 1.7;
+            padding: 20px 0 60px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at top, rgba(34,255,153,0.08), transparent 60%),
+                        linear-gradient(180deg, rgba(10,12,20,0.96), rgba(5,6,15,0.98));
+            z-index: -1;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 850px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* CABEÇALHO */
+        .cabecalho {
+            text-align: center;
+            padding: 40px 0 35px;
+        }
+
+        .logo {
+            width: 110px;
+            height: 110px;
+            border-radius: 18px;
+            object-fit: contain;
+            margin-bottom: 18px;
+            box-shadow: 0 0 35px rgba(34,255,153,0.4);
+            animation: pulse 2.5s infinite ease-in-out;
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 20px rgba(34,255,153,0.3); }
+            50% { box-shadow: 0 0 40px rgba(34,255,153,0.6); }
+        }
+
+        .titulo-principal {
+            font-family: 'Poppins', sans-serif;
+            font-size: clamp(30px, 8vw, 44px);
+            background: linear-gradient(90deg, var(--verde), var(--verde-claro), var(--destaque));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 900;
+            margin-bottom: 10px;
+        }
+
+        .subtitulo {
+            color: var(--texto-claro);
+            font-size: 18px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* CAIXA DE MENSAGEM INICIAL */
+        .aviso-contato {
+            background: rgba(0,200,83,0.08);
+            border: 1px solid rgba(0,200,83,0.3);
+            border-radius: 20px;
+            padding: 25px;
+            text-align: center;
+            margin-bottom: 40px;
+            backdrop-filter: blur(10px);
+        }
+
+        .aviso-contato h3 {
+            color: var(--verde-claro);
+            margin-bottom: 10px;
+            font-size: 20px;
+        }
+
+        /* CARDS DE CONTATO */
+        .grade-contato {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 50px;
+        }
+
+        .card-contato {
+            background: rgba(22,26,43,0.85);
+            border: 1px solid rgba(0,200,83,0.25);
+            border-radius: 20px;
+            padding: 35px 25px;
+            text-align: center;
+            transition: all 0.4s ease;
+            backdrop-filter: blur(8px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-contato::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(34,255,153,0.08), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .card-contato:hover::before { left: 100%; }
+        .card-contato:hover {
+            transform: translateY(-6px) scale(1.02);
+            border-color: var(--verde-claro);
+            box-shadow: 0 20px 50px rgba(0,200,83,0.2);
+        }
+
+        .icone-contato {
+            font-size: 55px;
+            margin-bottom: 18px;
+            color: var(--verde-claro);
+        }
+
+        .card-contato h4 {
+            font-size: 20px;
+            color: var(--texto);
+            margin-bottom: 12px;
+        }
+
+        .valor-contato {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--verde-claro);
+            word-break: break-all;
+        }
+
+        .descricao-contato {
+            color: var(--texto-claro);
+            margin-top: 8px;
+            font-size: 15px;
+        }
+
+        /* BOTÕES */
+        .area-botoes {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 15px 35px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 17px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.35s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-voltar {
+            background: transparent;
+            color: var(--texto);
+            border: 2px solid var(--verde);
+        }
+
+        .btn-voltar:hover {
+            background: rgba(0,200,83,0.15);
+            transform: translateY(-3px);
+        }
+
+        .btn-conta {
+            background: linear-gradient(90deg, var(--verde), var(--verde-claro));
+            color: #000;
+            box-shadow: 0 5px 25px rgba(0,200,83,0.45);
+        }
+
+        .btn-conta:hover {
+            transform: translateY(-4px) scale(1.04);
+            box-shadow: 0 10px 35px rgba(0,200,83,0.55);
+        }
+
+        @media (max-width: 600px) {
+            .area-botoes { flex-direction: column; align-items: center; }
+            .btn { width: 100%; max-width: 320px; justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- CABEÇALHO -->
+    <header class="cabecalho">
+        <img src="https://i.supaimg.com/b173afd9-4344-4026-a5d7-6a53e4b6efdc/8f054a24-2746-4a43-9f1c-354584289dc3.png" alt="Desafio MOZ" class="logo">
+        <h1 class="titulo-principal">📞 Fale Connosco</h1>
+        <p class="subtitulo">Tens alguma dúvida, preocupação ou problema? Estamos aqui para ajudar!</p>
+    </header>
+
+    <!-- AVISO -->
+    <div class="aviso-contato">
+        <h3>💬 Não hesites em contactar‑nos</h3>
+        <p>Responderemos o mais rápido possível para resolver tudo da melhor forma para ti.</p>
+    </div>
+
+    <!-- CARDS DE CONTATO -->
+    <div class="grade-contato">
+        <div class="card-contato">
+            <div class="icone-contato"><i class="fas fa-phone-alt"></i></div>
+            <h4>Contacto por Telefone</h4>
+            <div class="valor-contato">+258 86 951 7893</div>
+            <p class="descricao-contato">Chamada ou mensagem por WhatsApp</p>
+        </div>
+
+        <div class="card-contato">
+            <div class="icone-contato"><i class="fas fa-envelope"></i></div>
+            <h4>Contacto por E‑mail</h4>
+            <div class="valor-contato">desafiomoz@gmail.com</div>
+            <p class="descricao-contato">Envia‑nos a tua mensagem detalhada</p>
+        </div>
+    </div>
+
+    <!-- DICAS -->
+    <div class="aviso-contato">
+        <h3>📝 Dica para um atendimento mais rápido</h3>
+        <p>Quando contactares, indica o teu nome de utilizador e explica claramente o que se passa — assim resolvemos o teu assunto mais depressa!</p>
+    </div>
+
+    <!-- BOTÕES -->
+    <div class="area-botoes">
+        <a href="index.html" class="btn btn-voltar">
+            <i class="fas fa-arrow-left"></i> Voltar ao Início
+        </a>
+        <a href="criar-conta.html" class="btn btn-conta">
+            <i class="fas fa-user-plus"></i> Criar Conta Grátis
+        </a>
+    </div>
+</div>
+
+</body>
+</html>

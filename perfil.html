@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="pt-MZ">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Minha Conta – Desafio MOZ</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: #0a0a0f;
+            color: #ffffff;
+            min-height: 100vh;
+            padding-bottom: 90px;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 16px;
+            background: rgba(10, 10, 15, 0.97);
+            border-bottom: 2px solid #00c853;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #00e676;
+            background: rgba(0, 200, 83, 0.15);
+            flex-shrink: 0;
+        }
+
+        .app-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #00e676;
+        }
+
+        .content {
+            padding: 20px 16px;
+        }
+
+        .perfil-card {
+            background: rgba(21, 21, 31, 0.95);
+            border: 1px solid rgba(0, 200, 83, 0.25);
+            border-radius: 18px;
+            padding: 28px 20px;
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .avatar {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin: 0 auto 16px;
+            display: block;
+            border: 3px solid #00e676;
+            box-shadow: 0 0 20px rgba(0, 200, 83, 0.4);
+            background: rgba(0, 200, 83, 0.15);
+        }
+
+        .nome-usuario {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 6px;
+            color: #fff;
+        }
+
+        .email-usuario {
+            font-size: 14px;
+            color: #aaa;
+            margin-bottom: 20px;
+        }
+
+        .info-box {
+            background: rgba(15, 15, 21, 0.9);
+            border-radius: 14px;
+            padding: 16px;
+            margin-bottom: 12px;
+            text-align: left;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.07);
+            font-size: 15px;
+            gap: 10px;
+        }
+
+        .info-item:last-child {
+            border-bottom: none;
+        }
+
+        .info-item .label {
+            color: #aaa;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .info-item .valor {
+            font-weight: 600;
+            color: #00e676;
+            text-align: right;
+            word-break: break-all;
+        }
+
+        .info-item .valor.saque-pendente { color: #ffc107; }
+        .info-item .valor.saque-pago { color: #00e676; }
+        .info-item .valor.saque-recusado { color: #ef5350; }
+        .info-item .valor.saque-nenhum { color: #888; }
+
+        .saque-detalhe {
+            font-size: 12px;
+            color: #888;
+            font-weight: 500;
+            display: block;
+            margin-top: 2px;
+        }
+
+        .pontos-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(0, 200, 83, 0.15);
+            border: 1px solid rgba(0, 200, 83, 0.35);
+            border-radius: 20px;
+            padding: 6px 14px;
+            margin-bottom: 16px;
+            font-size: 14px;
+            font-weight: 700;
+            color: #FFD700;
+        }
+
+        .btn-sair {
+            width: 100%;
+            background: linear-gradient(90deg, #ef5350, #e53935);
+            color: #fff;
+            border: none;
+            border-radius: 14px;
+            padding: 16px;
+            font-size: 16px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn-sair:active {
+            transform: scale(0.98);
+            opacity: 0.9;
+        }
+
+        .menu-baixo {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(12, 12, 18, 0.97);
+            border-top: 1px solid #1e1e2a;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 10px 0 12px;
+            z-index: 1000;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .menu-baixo a {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            text-decoration: none;
+            color: #777;
+            font-size: 11px;
+            font-weight: 500;
+            width: 70px;
+        }
+
+        .menu-baixo a i {
+            font-size: 20px;
+            margin-bottom: 2px;
+        }
+
+        .menu-baixo a.ativo {
+            color: #00e676;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="logo-area">
+            <img src="https://i.supaimg.com/b173afd9-4344-4026-a5d7-6a53e4b6efdc/8f054a24-2746-4a43-9f1c-354584289dc3.png" alt="Logo Desafio MOZ" class="logo">
+            <div class="app-title">Desafio MOZ</div>
+        </div>
+    </div>
+
+    <div class="content">
+
+        <div class="perfil-card">
+            <img src="https://i.supaimg.com/b173afd9-4344-4026-a5d7-6a53e4b6efdc/8f054a24-2746-4a43-9f1c-354584289dc3.png" alt="Foto de perfil" class="avatar" id="avatar">
+
+            <div class="nome-usuario" id="nome">—</div>
+            <div class="email-usuario" id="email">—</div>
+
+            <div class="pontos-badge" id="pontos-badge">
+                <i class="fas fa-coins"></i> <span id="pontos-txt">0 pts</span> · <span id="mzn-txt">0 MZN</span>
+            </div>
+
+            <div class="info-box">
+                <div class="info-item">
+                    <div class="label"><i class="fas fa-user"></i> Nome</div>
+                    <div class="valor" id="nome-info">—</div>
+                </div>
+                <div class="info-item">
+                    <div class="label"><i class="fas fa-id-card"></i> ID</div>
+                    <div class="valor" id="user-id">—</div>
+                </div>
+                <div class="info-item">
+                    <div class="label"><i class="fas fa-phone"></i> Telemóvel</div>
+                    <div class="valor" id="telefone">—</div>
+                </div>
+                <div class="info-item">
+                    <div class="label"><i class="fas fa-envelope"></i> E-mail</div>
+                    <div class="valor" id="email-info">—</div>
+                </div>
+                <div class="info-item">
+                    <div class="label"><i class="fas fa-wallet"></i> Último Saque</div>
+                    <div class="valor saque-nenhum" id="ultimo-saque">
+                        A carregar...
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn-sair" onclick="sairDaConta()">
+                <i class="fas fa-sign-out-alt"></i> Sair da Conta
+            </button>
+        </div>
+
+    </div>
+
+    <div class="menu-baixo">
+        <a href="desafios.html"><i class="fas fa-home"></i> Início</a>
+        <a href="tarefas.html"><i class="fas fa-tasks"></i> Tarefas</a>
+        <a href="saques.html"><i class="fas fa-wallet"></i> Sacar</a>
+        <a href="perfil.html" class="ativo"><i class="fas fa-cog"></i> Conta</a>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    <script>
+        if (typeof window.__DESAFIO_MOZ_FIREBASE__ === 'undefined') {
+            window.__DESAFIO_MOZ_FIREBASE__ = true;
+            var firebaseConfig = {
+                apiKey: "AIzaSyDONfggnmf9OJX_AgfvcHTRf6tsuKD5nrA",
+                authDomain: "desafio-moz-61b70.firebaseapp.com",
+                projectId: "desafio-moz-61b70",
+                storageBucket: "desafio-moz-61b70.firebasestorage.app",
+                messagingSenderId: "945658936331",
+                appId: "1:945658936331:web:7ee4b0e7de1c1daf36db0e",
+                measurementId: "G-G1DZQ1B0DB"
+            };
+            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+            window.db = firebase.firestore();
+        }
+        var db = window.db;
+
+        function hashCode(str) {
+            var hash = 0;
+            for (var i = 0; i < str.length; i++) {
+                hash = ((hash << 5) - hash) + str.charCodeAt(i);
+                hash |= 0;
+            }
+            return hash;
+        }
+
+        function formatarData(iso) {
+            if (!iso) return '';
+            try {
+                var d = new Date(iso);
+                if (isNaN(d.getTime())) return String(iso).substring(0, 16);
+                return String(d.getDate()).padStart(2, '0') + '/' +
+                       String(d.getMonth() + 1).padStart(2, '0') + '/' +
+                       d.getFullYear() + ' ' +
+                       String(d.getHours()).padStart(2, '0') + ':' +
+                       String(d.getMinutes()).padStart(2, '0');
+            } catch (e) {
+                return iso;
+            }
+        }
+
+        function textoStatus(status) {
+            if (status === 'pago') return 'Pago';
+            if (status === 'recusado') return 'Recusado';
+            return 'Pendente';
+        }
+
+        function classeStatus(status) {
+            if (status === 'pago') return 'saque-pago';
+            if (status === 'recusado') return 'saque-recusado';
+            if (status === 'pendente') return 'saque-pendente';
+            return 'saque-nenhum';
+        }
+
+        async function carregarUltimoSaque(email) {
+            var el = document.getElementById('ultimo-saque');
+            if (!email || email === '—') {
+                el.className = 'valor saque-nenhum';
+                el.innerHTML = 'Nenhum';
+                return;
+            }
+
+            try {
+                var lista = [];
+                var snap = await db.collection('solicitacoesSaque')
+                    .where('email', '==', email)
+                    .get();
+                snap.forEach(function (doc) {
+                    var d = doc.data();
+                    d._id = doc.id;
+                    lista.push(d);
+                });
+
+                // Também tenta email normalizado
+                var emailNorm = String(email).trim().toLowerCase();
+                if (emailNorm !== email) {
+                    var snap2 = await db.collection('solicitacoesSaque')
+                        .where('email', '==', emailNorm)
+                        .get();
+                    snap2.forEach(function (doc) {
+                        var d = doc.data();
+                        d._id = doc.id;
+                        // evita duplicados
+                        if (!lista.some(function (x) { return x._id === d._id; })) {
+                            lista.push(d);
+                        }
+                    });
+                }
+
+                if (!lista.length) {
+                    el.className = 'valor saque-nenhum';
+                    el.innerHTML = 'Nenhum';
+                    localStorage.setItem('ultimoSaque', 'Nenhum');
+                    return;
+                }
+
+                // Ordena pelo mais recente
+                lista.sort(function (a, b) {
+                    return (b.dataPedido || '').localeCompare(a.dataPedido || '');
+                });
+
+                var ultimo = lista[0];
+                var status = ultimo.status || 'pendente';
+                var valor = ultimo.valorMZN != null
+                    ? Number(ultimo.valorMZN).toFixed(2)
+                    : ((ultimo.pontos || 0) / 10).toFixed(2);
+                var dataStr = formatarData(ultimo.dataPedido);
+                var metodo = ultimo.metodo || '';
+
+                el.className = 'valor ' + classeStatus(status);
+                el.innerHTML =
+                    valor + ' MZN · ' + textoStatus(status) +
+                    (dataStr ? '<span class="saque-detalhe">' + dataStr + (metodo ? ' · ' + metodo : '') + '</span>' : '');
+
+                localStorage.setItem('ultimoSaque', valor + ' MZN (' + textoStatus(status) + ')');
+            } catch (e) {
+                console.warn('Último saque:', e);
+                var fallback = localStorage.getItem('ultimoSaque') || 'Nenhum';
+                el.className = 'valor saque-nenhum';
+                el.textContent = fallback;
+            }
+        }
+
+        async function carregarPontosFirebase(email) {
+            if (!email || email === '—') return null;
+            try {
+                var snap = await db.collection('usuarios').where('email', '==', email).limit(1).get();
+                if (snap.empty) {
+                    var emailNorm = String(email).trim().toLowerCase();
+                    if (emailNorm !== email) {
+                        snap = await db.collection('usuarios').where('email', '==', emailNorm).limit(1).get();
+                    }
+                }
+                if (!snap.empty) {
+                    return snap.docs[0].data();
+                }
+            } catch (e) {
+                console.warn('Perfil Firebase:', e);
+            }
+            return null;
+        }
+
+        function sairDaConta() {
+            if (!confirm('Tem a certeza que deseja sair da conta?')) return;
+            localStorage.removeItem('nomeUtilizador');
+            localStorage.removeItem('telUtilizador');
+            localStorage.removeItem('emailUtilizador');
+            localStorage.removeItem('userId');
+            localStorage.removeItem('ultimoSaque');
+            localStorage.removeItem('fotoPerfil');
+            localStorage.removeItem('pontosUtilizador');
+            window.location.href = 'criar-conta.html';
+        }
+
+        document.addEventListener('DOMContentLoaded', async function () {
+            var nome = localStorage.getItem('nomeUtilizador') || '—';
+            var tel = localStorage.getItem('telUtilizador') || '—';
+            var email = localStorage.getItem('emailUtilizador') || '—';
+            var userId = localStorage.getItem('userId');
+            var fotoPerfil = localStorage.getItem('fotoPerfil');
+            var pontos = parseInt(localStorage.getItem('pontosUtilizador') || '0', 10);
+
+            if (!userId && email && email !== '—') {
+                userId = 'USR-' + Math.abs(hashCode(email)).toString().substring(0, 6);
+                localStorage.setItem('userId', userId);
+            }
+
+            document.getElementById('nome').textContent = nome;
+            document.getElementById('nome-info').textContent = nome;
+            document.getElementById('email').textContent = email;
+            document.getElementById('email-info').textContent = email;
+            document.getElementById('telefone').textContent = tel;
+            document.getElementById('user-id').textContent = userId || '—';
+            document.getElementById('pontos-txt').textContent = pontos + ' pts';
+            document.getElementById('mzn-txt').textContent = (pontos / 10).toFixed(1) + ' MZN';
+
+            if (fotoPerfil) {
+                document.getElementById('avatar').src = fotoPerfil;
+            }
+
+            // Sincroniza com Firebase
+            if (email && email !== '—') {
+                var dados = await carregarPontosFirebase(email);
+                if (dados) {
+                    if (dados.nome) {
+                        document.getElementById('nome').textContent = dados.nome;
+                        document.getElementById('nome-info').textContent = dados.nome;
+                    }
+                    if (dados.telemovel) {
+                        document.getElementById('telefone').textContent = dados.telemovel;
+                    }
+                    if (dados.pontos != null) {
+                        pontos = dados.pontos;
+                        localStorage.setItem('pontosUtilizador', String(pontos));
+                        document.getElementById('pontos-txt').textContent = pontos + ' pts';
+                        document.getElementById('mzn-txt').textContent = (pontos / 10).toFixed(1) + ' MZN';
+                    }
+                }
+                await carregarUltimoSaque(email);
+            } else {
+                document.getElementById('ultimo-saque').className = 'valor saque-nenhum';
+                document.getElementById('ultimo-saque').textContent = 'Nenhum';
+            }
+        });
+    </script>
+
+
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+<script>
+(function () {
+  if (typeof window.__DESAFIO_MOZ_FIREBASE__ === 'undefined') {
+    window.__DESAFIO_MOZ_FIREBASE__ = true;
+    var firebaseConfig = {
+      apiKey: "AIzaSyDONfggnmf9OJX_AgfvcHTRf6tsuKD5nrA",
+      authDomain: "desafio-moz-61b70.firebaseapp.com",
+      projectId: "desafio-moz-61b70",
+      storageBucket: "desafio-moz-61b70.firebasestorage.app",
+      messagingSenderId: "945658936331",
+      appId: "1:945658936331:web:7ee4b0e7de1c1daf36db0e",
+      measurementId: "G-G1DZQ1B0DB"
+    };
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    window.db = firebase.firestore();
+  }
+  var db = window.db;
+  var PAGINA = 'perfil';
+
+  function injetarHtml(container, html) {
+    var tpl = document.createElement('template');
+    tpl.innerHTML = html || '';
+    var frag = tpl.content;
+    Array.prototype.forEach.call(frag.querySelectorAll('script'), function (old) {
+      var s = document.createElement('script');
+      Array.prototype.forEach.call(old.attributes, function (a) { s.setAttribute(a.name, a.value); });
+      s.text = old.textContent || '';
+      old.parentNode.replaceChild(s, old);
+    });
+    container.appendChild(frag);
+  }
+
+  async function carregarAnunciosCurtosNaPagina() {
+    try {
+      var snap = await db.collection('anunciosCurtos').get();
+      var host = document.getElementById('zona-anuncios-curtos');
+      if (!host) {
+        host = document.createElement('div');
+        host.id = 'zona-anuncios-curtos';
+        host.style.cssText = 'max-width:900px;margin:20px auto;padding:0 16px;';
+        var footer = document.querySelector('footer');
+        var botoes = document.querySelector('.area-botoes');
+        var menu = document.querySelector('.menu-baixo');
+        if (menu) document.body.insertBefore(host, menu);
+        else if (botoes) botoes.parentNode.insertBefore(host, botoes);
+        else if (footer) footer.parentNode.insertBefore(host, footer);
+        else document.body.appendChild(host);
+      }
+      host.innerHTML = '';
+      snap.forEach(function (doc) {
+        var d = doc.data() || {};
+        if (d.ativo === false) return;
+        var pags = (d.paginas || []).map(function (p) {
+          return String(p).toLowerCase().replace(/\.html$/, '');
+        });
+        if (pags.indexOf(PAGINA) === -1) return;
+        var box = document.createElement('div');
+        box.style.cssText = 'background:rgba(21,21,31,0.92);border:1px solid rgba(0,200,83,0.25);border-radius:14px;padding:12px;margin-bottom:12px;overflow:hidden;';
+        var lab = document.createElement('div');
+        lab.style.cssText = 'font-size:10px;color:#666;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;';
+        lab.textContent = 'Publicidade';
+        box.appendChild(lab);
+        var slot = document.createElement('div');
+        box.appendChild(slot);
+        host.appendChild(box);
+        try { injetarHtml(slot, d.codigo); } catch (e) {}
+      });
+    } catch (e) { console.warn('anunciosCurtos', e); }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', carregarAnunciosCurtosNaPagina);
+  } else {
+    carregarAnunciosCurtosNaPagina();
+  }
+})();
+</script>
+
+</body>
+</html>

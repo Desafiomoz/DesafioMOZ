@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="pt-MZ">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pesquisa de Dados – Desafio MOZ</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDONfggnmf9OJX_AgfvcHTRf6tsuKD5nrA",
+            authDomain: "desafio-moz-61b70.firebaseapp.com",
+            projectId: "desafio-moz-61b70",
+            storageBucket: "desafio-moz-61b70.firebasestorage.app",
+            messagingSenderId: "945658936331",
+            appId: "1:945658936331:web:7ee4b0e7de1c1daf36db0e",
+            measurementId: "G-G1DZQ1B0DB"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+    </script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background: #0a0a0f;
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px 16px 40px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .header img {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            object-fit: contain;
+            margin: 0 auto 12px;
+            display: block;
+            box-shadow: 0 0 25px rgba(34,255,153,0.4);
+            border: 2px solid #00e676;
+        }
+
+        .titulo {
+            font-size: 22px;
+            color: #00e676;
+            font-weight: 700;
+        }
+
+        .subtitulo {
+            color: #aaa;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        .card {
+            background: rgba(21,21,31,0.95);
+            border: 1px solid rgba(0,200,83,0.3);
+            border-radius: 18px;
+            padding: 24px 18px;
+            max-width: 420px;
+            margin: 0 auto;
+        }
+
+        .passo {
+            display: none;
+        }
+
+        .passo.ativo {
+            display: block;
+            animation: fade 0.35s ease;
+        }
+
+        @keyframes fade {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .pergunta {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 18px;
+            line-height: 1.4;
+        }
+
+        .opcoes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .opcao {
+            background: rgba(0,200,83,0.12);
+            border: 1px solid rgba(0,200,83,0.4);
+            color: #fff;
+            padding: 12px 18px;
+            border-radius: 12px;
+            font-size: 15px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .opcao:hover,
+        .opcao.selecionada {
+            background: #00c853;
+            color: #000;
+            font-weight: 600;
+        }
+
+        input, textarea {
+            width: 100%;
+            background: rgba(10,10,15,0.8);
+            border: 1px solid #2a2a3a;
+            border-radius: 12px;
+            padding: 14px;
+            color: #fff;
+            font-size: 15px;
+            margin-bottom: 14px;
+            outline: none;
+        }
+
+        input:focus, textarea:focus {
+            border-color: #00c853;
+        }
+
+        .btn {
+            width: 100%;
+            background: linear-gradient(90deg, #00c853, #00e676);
+            color: #000;
+            border: none;
+            border-radius: 14px;
+            padding: 15px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .progresso {
+            height: 6px;
+            background: #1e1e2a;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            overflow: hidden;
+        }
+
+        .progresso-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #00c853, #00e676);
+            width: 25%;
+            transition: width 0.4s ease;
+        }
+
+        .sucesso {
+            text-align: center;
+            padding: 30px 10px;
+        }
+
+        .sucesso .pts {
+            font-size: 42px;
+            font-weight: 800;
+            color: #FFD700;
+            margin: 15px 0;
+        }
+
+        .sucesso p {
+            color: #aaa;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Cabeçalho com logotipo -->
+    <div class="header">
+        <img src="https://i.supaimg.com/b173afd9-4344-4026-a5d7-6a53e4b6efdc/8f054a24-2746-4a43-9f1c-354584289dc3.png" 
+             alt="Desafio MOZ">
+        <div class="titulo">Pesquisa de Dados</div>
+        <div class="subtitulo">Responda e ganhe <strong style="color:#FFD700">+5 Pontos</strong></div>
+    </div>
+
+    <div class="card">
+        <div class="progresso">
+            <div class="progresso-bar" id="barra"></div>
+        </div>
+
+        <!-- PASSO 1: Nome e Idade -->
+        <div class="passo ativo" id="passo1">
+            <div class="pergunta">1. Qual é o seu nome e quantos anos tem?</div>
+            
+            <input type="text" id="nome" placeholder="Seu nome completo">
+            
+            <div style="margin-bottom:8px; color:#aaa; font-size:14px;">Idade:</div>
+            <div class="opcoes" id="idades">
+                <div class="opcao" onclick="selecionarIdade(this,18)">18</div>
+                <div class="opcao" onclick="selecionarIdade(this,19)">19</div>
+                <div class="opcao" onclick="selecionarIdade(this,20)">20</div>
+                <div class="opcao" onclick="mostrarIdadeLivre()">Outra</div>
+            </div>
+            <input type="number" id="idade-livre" placeholder="Digite a sua idade" style="display:none;" min="16" max="80">
+            
+            <button class="btn" onclick="avancar(1)">Continuar</button>
+        </div>
+
+        <!-- PASSO 2: Trabalho -->
+        <div class="passo" id="passo2">
+            <div class="pergunta">2. Qual é o seu trabalho / ocupação?</div>
+            
+            <div class="opcoes" id="trabalhos">
+                <div class="opcao" onclick="selecionarTrabalho(this,'Comerciante')">Comerciante</div>
+                <div class="opcao" onclick="selecionarTrabalho(this,'Motorista')">Motorista</div>
+                <div class="opcao" onclick="selecionarTrabalho(this,'Professor')">Professor</div>
+                <div class="opcao" onclick="selecionarTrabalho(this,'Estudante')">Estudante</div>
+                <div class="opcao" onclick="selecionarTrabalho(this,'Agricultor')">Agricultor</div>
+                <div class="opcao" onclick="selecionarTrabalho(this,'Funcionário Público')">Funcionário Público</div>
+                <div class="opcao" onclick="selecionarTrabalho(this,'Empregado de loja')">Empregado de loja</div>
+                <div class="opcao" onclick="selecionarTrabalho(this,'Técnico')">Técnico</div>
+                <div class="opcao" onclick="mostrarTrabalhoLivre()">Outro</div>
+            </div>
+            <input type="text" id="trabalho-livre" placeholder="Escreva o seu trabalho" style="display:none;">
+            
+            <button class="btn" onclick="avancar(2)">Continuar</button>
+        </div>
+
+        <!-- PASSO 3: Local e Salário -->
+        <div class="passo" id="passo3">
+            <div class="pergunta">3. Onde trabalha e quanto recebe por mês?</div>
+            
+            <input type="text" id="local" placeholder="Ex: Maputo, Matola, Beira, Nampula...">
+            <input type="text" id="salario" placeholder="Ex: 5.000 MZN, 12.000 MZN, Não recebo...">
+            
+            <button class="btn" onclick="avancar(3)">Continuar</button>
+        </div>
+
+        <!-- PASSO 4: Objetivo -->
+        <div class="passo" id="passo4">
+            <div class="pergunta">4. Qual é o seu principal objetivo no Desafio MOZ?</div>
+            
+            <textarea id="objetivo" rows="4" placeholder="Ex: Quero juntar dinheiro para... / Quero sacar o máximo possível..."></textarea>
+            
+            <button class="btn" id="btn-final" onclick="finalizar()">Enviar e Ganhar +5 Pontos</button>
+        </div>
+
+        <!-- Sucesso -->
+        <div class="passo" id="sucesso">
+            <div class="sucesso">
+                <div style="font-size:50px;">🎉</div>
+                <h2 style="color:#00e676; margin:10px 0;">Pesquisa Concluída!</h2>
+                <div class="pts">+5 Pontos</div>
+                <p>Os seus dados foram guardados com sucesso.<br>A redirecionar para Tarefas...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Se já fez a pesquisa → redireciona
+        if (localStorage.getItem('pesquisaDadosCompleta') === 'true') {
+            window.location.href = 'tarefas.html';
+        }
+
+        let dados = {
+            nome: '',
+            idade: '',
+            trabalho: '',
+            local: '',
+            salario: '',
+            objetivo: ''
+        };
+
+        function selecionarIdade(el, valor) {
+            document.querySelectorAll('#idades .opcao').forEach(o => o.classList.remove('selecionada'));
+            el.classList.add('selecionada');
+            dados.idade = valor;
+            document.getElementById('idade-livre').style.display = 'none';
+        }
+
+        function mostrarIdadeLivre() {
+            document.querySelectorAll('#idades .opcao').forEach(o => o.classList.remove('selecionada'));
+            document.getElementById('idade-livre').style.display = 'block';
+            document.getElementById('idade-livre').focus();
+        }
+
+        function selecionarTrabalho(el, valor) {
+            document.querySelectorAll('#trabalhos .opcao').forEach(o => o.classList.remove('selecionada'));
+            el.classList.add('selecionada');
+            dados.trabalho = valor;
+            document.getElementById('trabalho-livre').style.display = 'none';
+        }
+
+        function mostrarTrabalhoLivre() {
+            document.querySelectorAll('#trabalhos .opcao').forEach(o => o.classList.remove('selecionada'));
+            document.getElementById('trabalho-livre').style.display = 'block';
+            document.getElementById('trabalho-livre').focus();
+        }
+
+        function avancar(passo) {
+            if (passo === 1) {
+                dados.nome = document.getElementById('nome').value.trim();
+                const idadeLivre = document.getElementById('idade-livre').value;
+                if (idadeLivre) dados.idade = idadeLivre;
+
+                if (!dados.nome || !dados.idade) {
+                    alert('Por favor preencha o nome e a idade.');
+                    return;
+                }
+            }
+
+            if (passo === 2) {
+                const livre = document.getElementById('trabalho-livre').value.trim();
+                if (livre) dados.trabalho = livre;
+                if (!dados.trabalho) {
+                    alert('Por favor escolha ou escreva o seu trabalho.');
+                    return;
+                }
+            }
+
+            if (passo === 3) {
+                dados.local = document.getElementById('local').value.trim();
+                dados.salario = document.getElementById('salario').value.trim();
+                if (!dados.local || !dados.salario) {
+                    alert('Por favor preencha o local e o salário.');
+                    return;
+                }
+            }
+
+            // Esconder passo atual e mostrar o próximo
+            document.getElementById('passo' + passo).classList.remove('ativo');
+            const proximo = passo + 1;
+            document.getElementById('passo' + proximo).classList.add('ativo');
+
+            // Atualizar barra de progresso
+            const percent = (proximo / 4) * 100;
+            document.getElementById('barra').style.width = percent + '%';
+        }
+
+        async function finalizar() {
+            dados.objetivo = document.getElementById('objetivo').value.trim();
+            if (!dados.objetivo) {
+                alert('Por favor escreva o seu objetivo.');
+                return;
+            }
+
+            const btn = document.getElementById('btn-final');
+            btn.disabled = true;
+            btn.textContent = 'A guardar...';
+
+            const email = localStorage.getItem('emailUtilizador');
+            if (!email) {
+                alert('Sessão expirada. Faça login novamente.');
+                window.location.href = 'criar-conta.html';
+                return;
+            }
+
+            try {
+                // Procurar o utilizador pelo email
+                const snap = await db.collection('usuarios')
+                    .where('email', '==', email)
+                    .limit(1)
+                    .get();
+
+                if (snap.empty) {
+                    alert('Utilizador não encontrado.');
+                    btn.disabled = false;
+                    btn.textContent = 'Enviar e Ganhar +5 Pontos';
+                    return;
+                }
+
+                const docRef = snap.docs[0].ref;
+                const userData = snap.docs[0].data();
+                const pontosAtuais = userData.pontos || 0;
+                const novosPontos = pontosAtuais + 5;
+
+                // Guardar respostas + pontos no Firebase
+                await docRef.update({
+                    pesquisaDados: dados,
+                    pesquisaDadosCompleta: true,
+                    pontos: novosPontos,
+                    ultimaAtualizacao: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                // Atualizar localStorage
+                localStorage.setItem('pesquisaDadosCompleta', 'true');
+                localStorage.setItem('pontosUtilizador', novosPontos);
+                localStorage.setItem('ultimoGanho', 5);
+
+                // Mostrar tela de sucesso
+                document.getElementById('passo4').classList.remove('ativo');
+                document.getElementById('sucesso').classList.add('ativo');
+                document.getElementById('barra').style.width = '100%';
+
+                // Redirecionar para tarefas após 2.5 segundos
+                setTimeout(() => {
+                    window.location.href = 'tarefas.html';
+                }, 2500);
+
+            } catch (erro) {
+                console.error(erro);
+                alert('Erro ao guardar: ' + erro.message);
+                btn.disabled = false;
+                btn.textContent = 'Enviar e Ganhar +5 Pontos';
+            }
+        }
+    </script>
+
+</body>
+</html>

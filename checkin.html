@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="pt-MZ">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Check-in Diário – Desafio MOZ</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+  <script>
+    if (typeof window.__DESAFIO_MOZ_FIREBASE__ === 'undefined') {
+      window.__DESAFIO_MOZ_FIREBASE__ = true;
+      var firebaseConfig = {
+        apiKey: "AIzaSyDONfggnmf9OJX_AgfvcHTRf6tsuKD5nrA",
+        authDomain: "desafio-moz-61b70.firebaseapp.com",
+        projectId: "desafio-moz-61b70",
+        storageBucket: "desafio-moz-61b70.firebasestorage.app",
+        messagingSenderId: "945658936331",
+        appId: "1:945658936331:web:7ee4b0e7de1c1daf36db0e",
+        measurementId: "G-G1DZQ1B0DB"
+      };
+      if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+      window.db = firebase.firestore();
+    }
+    var db = window.db;
+  </script>
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    body {
+      background: #0a0a0f;
+      color: #fff;
+      min-height: 100vh;
+      padding: 16px 16px 40px;
+    }
+    .topo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .btn-voltar {
+      width: 40px; height: 40px;
+      border-radius: 12px;
+      background: rgba(0,200,83,0.15);
+      border: 1px solid rgba(0,200,83,0.35);
+      color: #00e676;
+      font-size: 16px;
+      display: flex; align-items: center; justify-content: center;
+      text-decoration: none;
+    }
+    .topo h1 { font-size: 20px; color: #00e676; font-weight: 700; }
+    .topo p { font-size: 12px; color: #aaa; }
+
+    .card {
+      background: rgba(21,21,31,0.95);
+      border: 1px solid rgba(0,200,83,0.3);
+      border-radius: 18px;
+      padding: 20px 16px;
+      max-width: 420px;
+      margin: 0 auto 16px;
+    }
+
+    .stats {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+    .stat {
+      flex: 1;
+      background: rgba(0,200,83,0.1);
+      border: 1px solid rgba(0,200,83,0.25);
+      border-radius: 14px;
+      padding: 14px 10px;
+      text-align: center;
+    }
+    .stat .num { font-size: 26px; font-weight: 800; color: #FFD700; }
+    .stat .lbl { font-size: 11px; color: #aaa; margin-top: 4px; }
+
+    .cal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .cal-header h2 { font-size: 16px; color: #fff; }
+    .cal-nav { display: flex; gap: 8px; }
+    .cal-nav button {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      background: rgba(0,200,83,0.12);
+      border: 1px solid rgba(0,200,83,0.3);
+      color: #00e676;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .semana {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      margin-bottom: 6px;
+      text-align: center;
+    }
+    .semana span {
+      font-size: 11px;
+      color: #888;
+      font-weight: 600;
+      padding: 4px 0;
+    }
+
+    .dias {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+    }
+    .dia {
+      aspect-ratio: 1;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 600;
+      color: #ccc;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid transparent;
+    }
+    .dia.vazio { background: transparent; }
+    .dia.hoje {
+      border-color: #00e676;
+      color: #00e676;
+      box-shadow: 0 0 10px rgba(0,200,83,0.25);
+    }
+    .dia.feito {
+      background: linear-gradient(135deg, #00c853, #00e676);
+      color: #000;
+      font-weight: 800;
+    }
+    .dia.futuro {
+      color: #555;
+      background: rgba(255,255,255,0.02);
+    }
+    .dia.passado:not(.feito) { color: #666; }
+
+    .legenda {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 16px;
+      justify-content: center;
+      font-size: 12px;
+      color: #aaa;
+    }
+    .legenda span { display: flex; align-items: center; gap: 6px; }
+    .dot { width: 12px; height: 12px; border-radius: 4px; display: inline-block; }
+    .dot.feito { background: linear-gradient(135deg, #00c853, #00e676); }
+    .dot.hoje { border: 2px solid #00e676; background: transparent; }
+    .dot.futuro { background: rgba(255,255,255,0.08); }
+
+    .btn-checkin {
+      width: 100%;
+      max-width: 420px;
+      margin: 0 auto;
+      display: block;
+      background: linear-gradient(90deg, #00c853, #00e676);
+      color: #000;
+      border: none;
+      border-radius: 14px;
+      padding: 16px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .btn-checkin:disabled {
+      background: #2a2a35;
+      color: #777;
+      cursor: not-allowed;
+    }
+    .msg {
+      text-align: center;
+      margin-top: 12px;
+      font-size: 13px;
+      color: #aaa;
+      max-width: 420px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .msg.ok { color: #00e676; }
+    .msg.err { color: #ff6b6b; }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #aaa;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="topo">
+    <a href="tarefas.html" class="btn-voltar"><i class="fas fa-arrow-left"></i></a>
+    <div>
+      <h1>Check-in Diário</h1>
+      <p>Entre todos os dias e ganhe +10 pontos</p>
+    </div>
+  </div>
+
+  <div id="loading" class="loading">A carregar...</div>
+
+  <div id="conteudo" style="display:none;">
+    <div class="card">
+      <div class="stats">
+        <div class="stat">
+          <div class="num" id="total-dias">0</div>
+          <div class="lbl">Dias feitos</div>
+        </div>
+        <div class="stat">
+          <div class="num" id="streak">0</div>
+          <div class="lbl">Sequência</div>
+        </div>
+        <div class="stat">
+          <div class="num" id="pts-ganhos">0</div>
+          <div class="lbl">Pts deste mês</div>
+        </div>
+      </div>
+
+      <div class="cal-header">
+        <h2 id="mes-titulo">—</h2>
+        <div class="cal-nav">
+          <button type="button" onclick="mudarMes(-1)"><i class="fas fa-chevron-left"></i></button>
+          <button type="button" onclick="mudarMes(1)"><i class="fas fa-chevron-right"></i></button>
+        </div>
+      </div>
+
+      <div class="semana">
+        <span>Dom</span><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span>
+      </div>
+      <div class="dias" id="calendario"></div>
+
+      <div class="legenda">
+        <span><i class="dot feito"></i> Feito</span>
+        <span><i class="dot hoje"></i> Hoje</span>
+        <span><i class="dot futuro"></i> Futuro</span>
+      </div>
+    </div>
+
+    <button class="btn-checkin" id="btn-checkin" onclick="fazerCheckin()" disabled>
+      🔒 A carregar...
+    </button>
+    <p class="msg" id="msg"></p>
+  </div>
+
+  <script>
+    var meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    var checkins = [];
+    var docRef = null;
+    var hoje = new Date();
+    var viewAno = hoje.getFullYear();
+    var viewMes = hoje.getMonth();
+
+    function dataISO(d) {
+      var y = d.getFullYear();
+      var m = String(d.getMonth() + 1).padStart(2, '0');
+      var day = String(d.getDate()).padStart(2, '0');
+      return y + '-' + m + '-' + day;
+    }
+
+    function hojeISO() {
+      return dataISO(new Date());
+    }
+
+    function calcularStreak(lista) {
+      if (!lista || !lista.length) return 0;
+      var set = {};
+      lista.forEach(function (x) { set[x] = true; });
+      var streak = 0;
+      var d = new Date();
+      if (!set[dataISO(d)]) {
+        d.setDate(d.getDate() - 1);
+      }
+      while (set[dataISO(d)]) {
+        streak++;
+        d.setDate(d.getDate() - 1);
+      }
+      return streak;
+    }
+
+    function pontosMesAtual(lista) {
+      var prefix = hoje.getFullYear() + '-' + String(hoje.getMonth() + 1).padStart(2, '0');
+      var n = 0;
+      (lista || []).forEach(function (x) {
+        if (x.indexOf(prefix) === 0) n++;
+      });
+      return n * 10;
+    }
+
+    function renderCalendario() {
+      document.getElementById('mes-titulo').textContent = meses[viewMes] + ' ' + viewAno;
+
+      var primeiro = new Date(viewAno, viewMes, 1);
+      var ultimo = new Date(viewAno, viewMes + 1, 0);
+      var startDia = primeiro.getDay();
+      var totalDias = ultimo.getDate();
+
+      var html = '';
+      for (var i = 0; i < startDia; i++) {
+        html += '<div class="dia vazio"></div>';
+      }
+
+      var hojeStr = hojeISO();
+      var set = {};
+      checkins.forEach(function (x) { set[x] = true; });
+
+      for (var d = 1; d <= totalDias; d++) {
+        var dt = new Date(viewAno, viewMes, d);
+        var iso = dataISO(dt);
+        var classes = ['dia'];
+        if (iso === hojeStr) classes.push('hoje');
+        if (set[iso]) classes.push('feito');
+        else if (iso > hojeStr) classes.push('futuro');
+        else classes.push('passado');
+        html += '<div class="' + classes.join(' ') + '">' + d + '</div>';
+      }
+
+      document.getElementById('calendario').innerHTML = html;
+      document.getElementById('total-dias').textContent = checkins.length;
+      document.getElementById('streak').textContent = calcularStreak(checkins);
+      document.getElementById('pts-ganhos').textContent = pontosMesAtual(checkins);
+      atualizarBotao();
+    }
+
+    function atualizarBotao() {
+      var btn = document.getElementById('btn-checkin');
+      var msg = document.getElementById('msg');
+      var hojeStr = hojeISO();
+
+      if (checkins.indexOf(hojeStr) !== -1) {
+        btn.disabled = true;
+        btn.textContent = '✅ Check-in de hoje já feito';
+        msg.className = 'msg ok';
+        msg.textContent = 'Volte amanhã para ganhar mais +10 pontos!';
+      } else {
+        btn.disabled = false;
+        btn.textContent = '🎁 Fazer Check-in e Ganhar +10 Pontos';
+        msg.className = 'msg';
+        msg.textContent = 'Só pode fazer 1 check-in por dia.';
+      }
+    }
+
+    function mudarMes(delta) {
+      viewMes += delta;
+      if (viewMes < 0) { viewMes = 11; viewAno--; }
+      if (viewMes > 11) { viewMes = 0; viewAno++; }
+      renderCalendario();
+    }
+
+    async function carregar() {
+      var email = localStorage.getItem('emailUtilizador');
+      if (!email) {
+        alert('Sessão expirada. Faça login novamente.');
+        window.location.href = 'criar-conta.html';
+        return;
+      }
+
+      try {
+        var snap = await db.collection('usuarios')
+          .where('email', '==', email)
+          .limit(1)
+          .get();
+
+        if (snap.empty) {
+          alert('Utilizador não encontrado.');
+          window.location.href = 'criar-conta.html';
+          return;
+        }
+
+        docRef = snap.docs[0].ref;
+        var data = snap.docs[0].data();
+        checkins = Array.isArray(data.checkins) ? data.checkins.slice() : [];
+
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('conteudo').style.display = 'block';
+        renderCalendario();
+      } catch (erro) {
+        console.error(erro);
+        document.getElementById('loading').textContent = 'Erro: ' + (erro.message || erro);
+      }
+    }
+
+    async function fazerCheckin() {
+      var hojeStr = hojeISO();
+      if (checkins.indexOf(hojeStr) !== -1) return;
+
+      var btn = document.getElementById('btn-checkin');
+      btn.disabled = true;
+      btn.textContent = 'A guardar...';
+
+      try {
+        var snap = await docRef.get();
+        var data = snap.data() || {};
+        var lista = Array.isArray(data.checkins) ? data.checkins.slice() : [];
+
+        if (lista.indexOf(hojeStr) !== -1) {
+          checkins = lista;
+          renderCalendario();
+          return;
+        }
+
+        lista.push(hojeStr);
+        var pontosAtuais = data.pontos || 0;
+        var novosPontos = pontosAtuais + 10;
+
+        await docRef.update({
+          checkins: lista,
+          pontos: novosPontos,
+          ultimoCheckin: hojeStr,
+          ultimaAtualizacao: new Date().toISOString()
+        });
+
+        checkins = lista;
+        localStorage.setItem('pontosUtilizador', String(novosPontos));
+        localStorage.setItem('ultimoGanho', '10');
+
+        renderCalendario();
+
+        var msg = document.getElementById('msg');
+        msg.className = 'msg ok';
+        msg.textContent = '🎉 +10 pontos adicionados! Volte amanhã.';
+      } catch (erro) {
+        console.error(erro);
+        btn.disabled = false;
+        btn.textContent = '🎁 Fazer Check-in e Ganhar +10 Pontos';
+        document.getElementById('msg').className = 'msg err';
+        document.getElementById('msg').textContent = 'Erro: ' + (erro.message || erro);
+      }
+    }
+
+    carregar();
+  </script>
+</body>
+</html>

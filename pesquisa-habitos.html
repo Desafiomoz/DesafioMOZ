@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="pt-MZ">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Pesquisa de Hábitos – Desafio MOZ</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+  <script>
+    if (typeof window.__DESAFIO_MOZ_FIREBASE__ === 'undefined') {
+      window.__DESAFIO_MOZ_FIREBASE__ = true;
+      var firebaseConfig = {
+        apiKey: "AIzaSyDONfggnmf9OJX_AgfvcHTRf6tsuKD5nrA",
+        authDomain: "desafio-moz-61b70.firebaseapp.com",
+        projectId: "desafio-moz-61b70",
+        storageBucket: "desafio-moz-61b70.firebasestorage.app",
+        messagingSenderId: "945658936331",
+        appId: "1:945658936331:web:7ee4b0e7de1c1daf36db0e",
+        measurementId: "G-G1DZQ1B0DB"
+      };
+      if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+      window.db = firebase.firestore();
+    }
+    var db = window.db;
+  </script>
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    body {
+      background: #0a0a0f;
+      color: #fff;
+      min-height: 100vh;
+      padding: 20px 16px 40px;
+    }
+    .header { text-align: center; margin-bottom: 22px; }
+    .header img {
+      width: 80px; height: 80px; border-radius: 50%; object-fit: contain;
+      margin: 0 auto 12px; display: block;
+      box-shadow: 0 0 22px rgba(34,255,153,0.35);
+      border: 2px solid #00e676;
+    }
+    .titulo { font-size: 20px; color: #00e676; font-weight: 700; }
+    .subtitulo { color: #aaa; font-size: 13px; margin-top: 4px; }
+
+    .card {
+      background: rgba(21,21,31,0.95);
+      border: 1px solid rgba(0,200,83,0.3);
+      border-radius: 18px;
+      padding: 22px 16px;
+      max-width: 420px;
+      margin: 0 auto;
+    }
+
+    .progresso {
+      height: 6px; background: #1e1e2a; border-radius: 10px;
+      margin-bottom: 22px; overflow: hidden;
+    }
+    .progresso-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #00c853, #00e676);
+      width: 20%;
+      transition: width 0.35s ease;
+    }
+
+    .passo { display: none; }
+    .passo.ativo { display: block; animation: fade 0.3s ease; }
+    @keyframes fade {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .pergunta {
+      font-size: 17px; font-weight: 600; margin-bottom: 16px; line-height: 1.4;
+    }
+    .num {
+      display: inline-block;
+      background: rgba(0,200,83,0.2);
+      color: #00e676;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      margin-bottom: 10px;
+    }
+
+    .opcoes { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+    .opcao {
+      background: rgba(0,200,83,0.1);
+      border: 1px solid rgba(0,200,83,0.35);
+      color: #fff;
+      padding: 14px 16px;
+      border-radius: 12px;
+      font-size: 15px;
+      cursor: pointer;
+      transition: 0.2s;
+      text-align: left;
+    }
+    .opcao:hover, .opcao.selecionada {
+      background: #00c853;
+      color: #000;
+      font-weight: 600;
+    }
+
+    .btn {
+      width: 100%;
+      background: linear-gradient(90deg, #00c853, #00e676);
+      color: #000;
+      border: none;
+      border-radius: 14px;
+      padding: 14px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 6px;
+    }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .sucesso { text-align: center; padding: 28px 8px; }
+    .sucesso .pts {
+      font-size: 40px; font-weight: 800; color: #FFD700; margin: 12px 0;
+    }
+    .sucesso p { color: #aaa; font-size: 14px; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <img src="https://i.supaimg.com/b173afd9-4344-4026-a5d7-6a53e4b6efdc/8f054a24-2746-4a43-9f1c-354584289dc3.png" alt="Desafio MOZ">
+    <div class="titulo">Pesquisa de Hábitos</div>
+    <div class="subtitulo">5 perguntas sobre o seu dia a dia · <strong style="color:#FFD700">+7 Pontos</strong></div>
+  </div>
+
+  <div class="card">
+    <div class="progresso">
+      <div class="progresso-bar" id="barra"></div>
+    </div>
+
+    <div class="passo ativo" id="passo1">
+      <div class="num">Pergunta 1 de 5</div>
+      <div class="pergunta">A que horas costuma acordar?</div>
+      <div class="opcoes" id="q1">
+        <div class="opcao" onclick="selecionar(1, this, 'Antes das 06:00')">Antes das 06:00</div>
+        <div class="opcao" onclick="selecionar(1, this, '06:00 – 07:00')">Entre 06:00 e 07:00</div>
+        <div class="opcao" onclick="selecionar(1, this, '07:00 – 08:00')">Entre 07:00 e 08:00</div>
+        <div class="opcao" onclick="selecionar(1, this, 'Depois das 08:00')">Depois das 08:00</div>
+      </div>
+      <button class="btn" onclick="avancar(1)">Continuar</button>
+    </div>
+
+    <div class="passo" id="passo2">
+      <div class="num">Pergunta 2 de 5</div>
+      <div class="pergunta">Como costuma deslocar-se no dia a dia?</div>
+      <div class="opcoes" id="q2">
+        <div class="opcao" onclick="selecionar(2, this, 'A pé')">A pé</div>
+        <div class="opcao" onclick="selecionar(2, this, 'Chapas / autocarro')">Chapas ou autocarro</div>
+        <div class="opcao" onclick="selecionar(2, this, 'Motorizada / carro')">Motorizada ou carro</div>
+        <div class="opcao" onclick="selecionar(2, this, 'Bicicleta')">Bicicleta</div>
+        <div class="opcao" onclick="selecionar(2, this, 'Fico em casa')">Fico quase sempre em casa</div>
+      </div>
+      <button class="btn" onclick="avancar(2)">Continuar</button>
+    </div>
+
+    <div class="passo" id="passo3">
+      <div class="num">Pergunta 3 de 5</div>
+      <div class="pergunta">Quantas refeições costuma fazer por dia?</div>
+      <div class="opcoes" id="q3">
+        <div class="opcao" onclick="selecionar(3, this, '1 refeição')">1 refeição</div>
+        <div class="opcao" onclick="selecionar(3, this, '2 refeições')">2 refeições</div>
+        <div class="opcao" onclick="selecionar(3, this, '3 refeições')">3 refeições</div>
+        <div class="opcao" onclick="selecionar(3, this, 'Mais de 3')">Mais de 3</div>
+      </div>
+      <button class="btn" onclick="avancar(3)">Continuar</button>
+    </div>
+
+    <div class="passo" id="passo4">
+      <div class="num">Pergunta 4 de 5</div>
+      <div class="pergunta">Quanto tempo passa no telemóvel por dia?</div>
+      <div class="opcoes" id="q4">
+        <div class="opcao" onclick="selecionar(4, this, 'Menos de 1 hora')">Menos de 1 hora</div>
+        <div class="opcao" onclick="selecionar(4, this, '1 a 3 horas')">1 a 3 horas</div>
+        <div class="opcao" onclick="selecionar(4, this, '3 a 5 horas')">3 a 5 horas</div>
+        <div class="opcao" onclick="selecionar(4, this, 'Mais de 5 horas')">Mais de 5 horas</div>
+      </div>
+      <button class="btn" onclick="avancar(4)">Continuar</button>
+    </div>
+
+    <div class="passo" id="passo5">
+      <div class="num">Pergunta 5 de 5</div>
+      <div class="pergunta">O que faz normalmente no fim do dia para relaxar?</div>
+      <div class="opcoes" id="q5">
+        <div class="opcao" onclick="selecionar(5, this, 'Ver TV / vídeos')">Ver TV ou vídeos</div>
+        <div class="opcao" onclick="selecionar(5, this, 'Redes sociais')">Redes sociais</div>
+        <div class="opcao" onclick="selecionar(5, this, 'Conversar com família')">Conversar com a família</div>
+        <div class="opcao" onclick="selecionar(5, this, 'Ouvir música')">Ouvir música</div>
+        <div class="opcao" onclick="selecionar(5, this, 'Dormir cedo')">Dormir cedo</div>
+      </div>
+      <button class="btn" id="btn-final" onclick="finalizar()">Enviar e Ganhar +7 Pontos</button>
+    </div>
+
+    <div class="passo" id="sucesso">
+      <div class="sucesso">
+        <div style="font-size:48px;">🎉</div>
+        <h2 style="color:#00e676; margin:10px 0;">Pesquisa concluída!</h2>
+        <div class="pts">+7 Pontos</div>
+        <p>Obrigado pelas respostas.<br>A redirecionar para Tarefas...</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    if (localStorage.getItem('pesquisaHabitosCompleta') === 'true') {
+      window.location.href = 'tarefas.html';
+    }
+
+    var respostas = { q1: '', q2: '', q3: '', q4: '', q5: '' };
+    var TOTAL = 5;
+
+    function selecionar(num, el, valor) {
+      var container = document.getElementById('q' + num);
+      container.querySelectorAll('.opcao').forEach(function (o) {
+        o.classList.remove('selecionada');
+      });
+      el.classList.add('selecionada');
+      respostas['q' + num] = valor;
+    }
+
+    function avancar(passo) {
+      if (!respostas['q' + passo]) {
+        alert('Por favor escolha uma opção.');
+        return;
+      }
+      document.getElementById('passo' + passo).classList.remove('ativo');
+      var proximo = passo + 1;
+      document.getElementById('passo' + proximo).classList.add('ativo');
+      document.getElementById('barra').style.width = ((proximo / TOTAL) * 100) + '%';
+    }
+
+    async function finalizar() {
+      if (!respostas.q5) {
+        alert('Por favor escolha uma opção.');
+        return;
+      }
+
+      var btn = document.getElementById('btn-final');
+      btn.disabled = true;
+      btn.textContent = 'A guardar...';
+
+      var email = localStorage.getItem('emailUtilizador');
+      if (!email) {
+        alert('Sessão expirada. Faça login novamente.');
+        window.location.href = 'criar-conta.html';
+        return;
+      }
+
+      try {
+        var snap = await db.collection('usuarios')
+          .where('email', '==', email)
+          .limit(1)
+          .get();
+
+        if (snap.empty) {
+          alert('Utilizador não encontrado.');
+          btn.disabled = false;
+          btn.textContent = 'Enviar e Ganhar +7 Pontos';
+          return;
+        }
+
+        var docRef = snap.docs[0].ref;
+        var userData = snap.docs[0].data();
+
+        if (userData.pesquisaHabitosCompleta === true) {
+          localStorage.setItem('pesquisaHabitosCompleta', 'true');
+          alert('Já completou esta pesquisa.');
+          window.location.href = 'tarefas.html';
+          return;
+        }
+
+        var pontosAtuais = userData.pontos || 0;
+        var novosPontos = pontosAtuais + 7;
+
+        await docRef.update({
+          pesquisaHabitos: respostas,
+          pesquisaHabitosCompleta: true,
+          pontos: novosPontos,
+          ultimaAtualizacao: new Date().toISOString()
+        });
+
+        localStorage.setItem('pesquisaHabitosCompleta', 'true');
+        localStorage.setItem('pontosUtilizador', String(novosPontos));
+        localStorage.setItem('ultimoGanho', '7');
+
+        document.getElementById('passo5').classList.remove('ativo');
+        document.getElementById('sucesso').classList.add('ativo');
+        document.getElementById('barra').style.width = '100%';
+
+        setTimeout(function () {
+          window.location.href = 'tarefas.html';
+        }, 2200);
+
+      } catch (erro) {
+        console.error(erro);
+        alert('Erro ao guardar: ' + (erro.message || erro));
+        btn.disabled = false;
+        btn.textContent = 'Enviar e Ganhar +7 Pontos';
+      }
+    }
+  </script>
+</body>
+</html>

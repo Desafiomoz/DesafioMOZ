@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="pt-MZ">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Entrar / Criar Conta – Desafio MOZ</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+
+  <script>
+    if (typeof window.__DESAFIO_MOZ_FIREBASE__ === 'undefined') {
+      window.__DESAFIO_MOZ_FIREBASE__ = true;
+      var firebaseConfig = {
+        apiKey: "AIzaSyDONfggnmf9OJX_AgfvcHTRf6tsuKD5nrA",
+        authDomain: "desafio-moz-61b70.firebaseapp.com",
+        projectId: "desafio-moz-61b70",
+        storageBucket: "desafio-moz-61b70.firebasestorage.app",
+        messagingSenderId: "945658936331",
+        appId: "1:945658936331:web:7ee4b0e7de1c1daf36db0e",
+        measurementId: "G-G1DZQ1B0DB"
+      };
+      if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+      window.db = firebase.firestore();
+      window.authGoogle = firebase.auth();
+    }
+    var db = window.db;
+  </script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=Poppins:wght@600;700;900&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --preto-fundo: #0A0C14; --verde: #00C853; --verde-claro: #22FF99;
+      --texto: #FFFFFF; --texto-claro: #A8B0C8; --erro: #FF4D4D; --destaque: #FFD700;
+    }
+    body {
+      background: var(--preto-fundo); color: var(--texto);
+      font-family: 'Inter', system-ui, sans-serif; line-height: 1.7;
+      min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 30px 20px;
+    }
+    body::before {
+      content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: radial-gradient(rgba(0,200,83,0.15), rgba(10,12,20,0.96), rgba(5,6,15,0.98)); z-index: -1;
+    }
+    .container {
+      width: 100%; max-width: 420px; background: rgba(22,26,43,0.85);
+      border-radius: 24px; padding: 40px 30px; border: 1px solid rgba(0,200,83,0.25);
+      backdrop-filter: blur(12px); box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    }
+    .cabecalho-form { text-align: center; margin-bottom: 35px; }
+    .logo {
+      width: 110px; height: 110px; border-radius: 50%; object-fit: contain; margin-bottom: 20px;
+      box-shadow: 0 0 35px rgba(34,255,153,0.4); animation: brilho 2.8s infinite ease-in-out;
+    }
+    @keyframes brilho {
+      0%, 100% { box-shadow: 0 0 20px rgba(34,255,153,0.3); transform: scale(1); }
+      50% { box-shadow: 0 0 45px rgba(34,255,153,0.6); transform: scale(1.03); }
+    }
+    .titulo-principal { font-family: 'Poppins', sans-serif; font-size: clamp(28px, 7vw, 36px); font-weight: 900; margin-bottom: 8px; line-height: 1.2; }
+    .nome-plataforma {
+      display: block; font-size: clamp(30px, 8vw, 40px);
+      background: linear-gradient(90deg, var(--verde), var(--verde-claro), var(--destaque));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900; margin-top: 5px;
+    }
+    .subtitulo { color: var(--texto-claro); font-size: 16px; margin-top: 12px; }
+    .abas { display: flex; background: rgba(5,6,15,0.9); border-radius: 12px; margin-bottom: 25px; overflow: hidden; }
+    .aba { flex: 1; padding: 15px; text-align: center; font-weight: 700; font-size: 17px; cursor: pointer; transition: all 0.3s ease; color: var(--texto-claro); }
+    .aba.ativa { background: linear-gradient(90deg, var(--verde), var(--verde-claro)); color: #000; box-shadow: 0 0 20px rgba(0,200,83,0.35); }
+    .formulario { display: none; }
+    .formulario.ativo { display: block; animation: aparece 0.35s ease; }
+    @keyframes aparece { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .btn-google {
+      width: 100%; padding: 14px; background: #fff; color: #000; border-radius: 12px; font-weight: 600; font-size: 15px;
+      display: flex; align-items: center; justify-content: center; gap: 10px; text-decoration: none; margin-bottom: 18px;
+    }
+    .divisor { text-align: center; color: var(--texto-claro); margin: 18px 0; position: relative; }
+    .divisor::before, .divisor::after { content: ''; position: absolute; top: 50%; width: 40%; height: 1px; background: rgba(255,255,255,0.1); }
+    .divisor::before { left: 0; } .divisor::after { right: 0; }
+    .grupo-input { margin-bottom: 18px; }
+    .grupo-input label { display: block; color: var(--verde-claro); font-weight: 600; margin-bottom: 8px; font-size: 15px; }
+    .grupo-input input {
+      width: 100%; padding: 14px 16px; background: rgba(5,6,15,0.8); border: 1px solid rgba(0,200,83,0.2);
+      border-radius: 12px; color: var(--texto); font-size: 16px; outline: none;
+    }
+    .grupo-input input:focus { border-color: var(--verde-claro); box-shadow: 0 0 15px rgba(34,255,153,0.25); }
+    .grupo-input input::placeholder { color: var(--texto-claro); }
+    .senha-wrap { position: relative; }
+    .senha-wrap input { padding-right: 48px; }
+    .btn-olho {
+      position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; color: var(--texto-claro); font-size: 18px; cursor: pointer; padding: 6px;
+    }
+    .btn-olho:hover { color: var(--verde-claro); }
+    .aviso-erro {
+      color: var(--erro); font-size: 14px; font-weight: 600; margin: -6px 0 14px; text-align: center; display: none;
+      padding: 12px; background: rgba(255,77,77,0.1); border-radius: 8px; border: 1px solid rgba(255,77,77,0.3);
+    }
+    .aviso-erro.mostra { display: block; }
+    .aviso-erro.sucesso { color: var(--verde); background: rgba(0,200,83,0.1); border-color: rgba(0,200,83,0.3); }
+    .btn-principal {
+      width: 100%; padding: 15px; background: linear-gradient(90deg, var(--verde), var(--verde-claro));
+      color: #000; border: none; border-radius: 12px; font-weight: 700; font-size: 17px; cursor: pointer; margin-top: 8px;
+    }
+    .btn-principal:disabled { opacity: 0.55; cursor: not-allowed; }
+    .link-ajuda { text-align: center; margin-top: 18px; color: var(--texto-claro); font-size: 14px; }
+    .link-ajuda a { color: var(--verde-claro); text-decoration: none; font-weight: 600; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="cabecalho-form">
+    <img src="https://i.supaimg.com/b173afd9-4344-4026-a5d7-6a53e4b6efdc/8f054a24-2746-4a43-9f1c-354584289dc3.png" alt="Desafio MOZ" class="logo">
+    <h1 class="titulo-principal">Bem-vindo ao <span class="nome-plataforma">Desafio MOZ</span></h1>
+    <p class="subtitulo">Entre e comece a ganhar dinheiro online.</p>
+  </div>
+
+  <div class="abas">
+    <div class="aba" id="aba-login" onclick="mostrarFormulario('login')">Login</div>
+    <div class="aba ativa" id="aba-cadastro" onclick="mostrarFormulario('cadastro')">Cadastro</div>
+  </div>
+
+  <div class="aviso-erro" id="aviso-campo"></div>
+
+  <form class="formulario" id="form-login">
+    <a href="#" class="btn-google" onclick="entrarComGoogle(); return false;">
+      <i class="fab fa-google"></i> Entrar com Google
+    </a>
+    <div class="divisor">ou</div>
+    <div class="grupo-input">
+      <label>E-mail</label>
+      <input type="email" id="email-login" placeholder="seuemail@gmail.com" autocomplete="email">
+    </div>
+    <div class="grupo-input">
+      <label>Senha</label>
+      <div class="senha-wrap">
+        <input type="password" id="senha-login" placeholder="••••••••" autocomplete="current-password">
+        <button type="button" class="btn-olho" onclick="toggleSenha('senha-login', this)"><i class="fas fa-eye"></i></button>
+      </div>
+    </div>
+    <button type="submit" class="btn-principal" id="btn-login">Entrar</button>
+    <div class="link-ajuda"><a href="#">Esqueceu a senha?</a></div>
+  </form>
+
+  <form class="formulario ativo" id="form-cadastro">
+    <a href="#" class="btn-google" onclick="entrarComGoogle(); return false;">
+      <i class="fab fa-google"></i> Cadastrar com Google
+    </a>
+    <div class="divisor">ou preencha os dados abaixo</div>
+    <div class="grupo-input">
+      <label>Nome Completo</label>
+      <input type="text" id="nome-cadastro" placeholder="Seu nome completo" autocomplete="name">
+    </div>
+    <div class="grupo-input">
+      <label>Telemóvel (M-Pesa / e-Mola)</label>
+      <input type="tel" id="telemovel-cadastro" placeholder="+258 8X XXX XXXX" autocomplete="tel">
+    </div>
+    <div class="grupo-input">
+      <label>E-mail</label>
+      <input type="email" id="email-cadastro" placeholder="seuemail@gmail.com" autocomplete="email">
+    </div>
+    <div class="grupo-input">
+      <label>Criar Senha</label>
+      <div class="senha-wrap">
+        <input type="password" id="senha-cadastro" placeholder="Mínimo 6 caracteres" autocomplete="new-password">
+        <button type="button" class="btn-olho" onclick="toggleSenha('senha-cadastro', this)"><i class="fas fa-eye"></i></button>
+      </div>
+    </div>
+    <button type="submit" class="btn-principal" id="btn-cadastro">Criar Minha Conta</button>
+  </form>
+</div>
+
+<script>
+  var aviso = document.getElementById('aviso-campo');
+
+  (function guardarRefDoLink() {
+    try {
+      var params = new URLSearchParams(window.location.search);
+      var ref = params.get('ref');
+      if (ref) localStorage.setItem('refPendente', ref.trim().toUpperCase());
+    } catch (e) {}
+  })();
+
+  function mostrarAviso(texto, tipo) {
+    aviso.innerHTML = texto;
+    aviso.className = 'aviso-erro';
+    if (tipo === 'sucesso') aviso.classList.add('sucesso');
+    aviso.classList.add('mostra');
+    setTimeout(function () { aviso.classList.remove('mostra'); }, 5000);
+  }
+
+  function mostrarFormulario(tipo) {
+    aviso.classList.remove('mostra');
+    if (tipo === 'login') {
+      document.getElementById('form-login').classList.add('ativo');
+      document.getElementById('form-cadastro').classList.remove('ativo');
+      document.getElementById('aba-login').classList.add('ativa');
+      document.getElementById('aba-cadastro').classList.remove('ativa');
+    } else {
+      document.getElementById('form-cadastro').classList.add('ativo');
+      document.getElementById('form-login').classList.remove('ativo');
+      document.getElementById('aba-cadastro').classList.add('ativa');
+      document.getElementById('aba-login').classList.remove('ativa');
+    }
+  }
+
+  function toggleSenha(inputId, btn) {
+    var input = document.getElementById(inputId);
+    var icon = btn.querySelector('i');
+    if (input.type === 'password') {
+      input.type = 'text';
+      icon.classList.remove('fa-eye');
+      icon.classList.add('fa-eye-slash');
+    } else {
+      input.type = 'password';
+      icon.classList.remove('fa-eye-slash');
+      icon.classList.add('fa-eye');
+    }
+  }
+
+  function mensagemPermissao(erro) {
+    var msg = (erro && erro.message) ? erro.message : String(erro);
+    if (msg.indexOf('permission') !== -1 || msg.indexOf('Permission') !== -1 || msg.indexOf('insufficient') !== -1) {
+      return '❌ Sem permissão no Firebase.<br>Abra o Firebase Console → Firestore → Regras.';
+    }
+    return '❌ Erro: ' + msg;
+  }
+
+  // Transforma a senha num código embaralhado (SHA-256) antes de guardar/comparar.
+  async function hashSenha(texto) {
+    var encoder = new TextEncoder();
+    var dados = encoder.encode(texto);
+    var hashBuffer = await crypto.subtle.digest('SHA-256', dados);
+    var hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(function (b) { return b.toString(16).padStart(2, '0'); }).join('');
+  }
+
+  function hashCode(str) {
+    var hash = 0;
+    for (var i = 0; i < str.length; i++) {
+      hash = ((hash << 5) - hash) + str.charCodeAt(i);
+      hash |= 0;
+    }
+    return Math.abs(hash);
+  }
+
+  // ENTRAR / CADASTRAR COM GOOGLE — cria o utilizador em "usuarios" se ainda não existir
+  async function entrarComGoogle() {
+    try {
+      var provider = new firebase.auth.GoogleAuthProvider();
+      var resultado = await authGoogle.signInWithPopup(provider);
+      var googleUser = resultado.user;
+      var email = (googleUser.email || '').trim().toLowerCase();
+      if (!email) return mostrarAviso('⚠️ Não foi possível obter o e-mail da conta Google.');
+
+      var procura = await db.collection('usuarios').where('email', '==', email).limit(1).get();
+      var usuario;
+
+      if (procura.empty) {
+        // Utilizador novo — cria o registo em "usuarios", igual ao cadastro normal.
+        var meuCodigo = 'MOZ' + hashCode(email).toString(36).toUpperCase().substring(0, 8);
+        var dadosNovo = {
+          nome: googleUser.displayName || 'Utilizador Google',
+          telemovel: googleUser.phoneNumber || '',
+          email: email,
+          senha: null,
+          loginGoogle: true,
+          pontos: 0,
+          pesquisaDadosCompleta: false,
+          pesquisaRapidaCompleta: false,
+          pesquisaOpiniaoCompleta: false,
+          pesquisaHabitosCompleta: false,
+          codigoIndicacao: meuCodigo,
+          criadoEm: new Date().toISOString()
+        };
+        var novoRef = await db.collection('usuarios').add(dadosNovo);
+        usuario = dadosNovo;
+      } else {
+        usuario = procura.docs[0].data();
+      }
+
+      localStorage.setItem('nomeUtilizador', usuario.nome || '');
+      localStorage.setItem('telUtilizador', usuario.telemovel || '');
+      localStorage.setItem('emailUtilizador', usuario.email || email);
+      localStorage.setItem('pontosUtilizador', String(usuario.pontos || 0));
+      localStorage.setItem('pesquisaDadosCompleta', usuario.pesquisaDadosCompleta ? 'true' : 'false');
+      localStorage.setItem('pesquisaRapidaCompleta', usuario.pesquisaRapidaCompleta ? 'true' : 'false');
+      localStorage.setItem('pesquisaOpiniaoCompleta', usuario.pesquisaOpiniaoCompleta ? 'true' : 'false');
+      localStorage.setItem('pesquisaHabitosCompleta', usuario.pesquisaHabitosCompleta ? 'true' : 'false');
+      if (usuario.codigoIndicacao) localStorage.setItem('codigoIndicacao', usuario.codigoIndicacao);
+
+      mostrarAviso('✅ Entrando com Google...', 'sucesso');
+      setTimeout(function () { window.location.href = 'desafios.html'; }, 1000);
+    } catch (erro) {
+      console.error(erro);
+      if (erro.code === 'auth/popup-closed-by-user') return;
+      mostrarAviso('❌ Erro ao entrar com Google: ' + (erro.message || erro));
+    }
+  }
+
+  // LOGIN – carrega só as pesquisas DESTA conta
+  document.getElementById('form-login').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var email = document.getElementById('email-login').value.trim().toLowerCase();
+    var senha = document.getElementById('senha-login').value;
+    var btn = document.getElementById('btn-login');
+    if (!email || !senha) return mostrarAviso('⚠️ Preencha todos os campos!');
+    btn.disabled = true;
+    btn.textContent = 'A entrar...';
+    try {
+      var senhaHash = await hashSenha(senha);
+      var procura = await db.collection('usuarios')
+        .where('email', '==', email)
+        .where('senha', '==', senhaHash)
+        .limit(1).get();
+
+      var precisaMigrar = false;
+      if (procura.empty) {
+        // Conta antiga (senha ainda em texto puro) — tenta com a senha "crua" e migra.
+        procura = await db.collection('usuarios')
+          .where('email', '==', email)
+          .where('senha', '==', senha)
+          .limit(1).get();
+        precisaMigrar = !procura.empty;
+      }
+
+      if (procura.empty) {
+        btn.disabled = false;
+        btn.textContent = 'Entrar';
+        return mostrarAviso('⚠️ E-mail ou senha inválidos!');
+      }
+      var usuario = procura.docs[0].data();
+
+      if (precisaMigrar) {
+        try { await procura.docs[0].ref.update({ senha: senhaHash }); } catch (eMig) { console.error(eMig); }
+      }
+
+      localStorage.setItem('nomeUtilizador', usuario.nome || '');
+      localStorage.setItem('telUtilizador', usuario.telemovel || '');
+      localStorage.setItem('emailUtilizador', usuario.email || email);
+      localStorage.setItem('pontosUtilizador', String(usuario.pontos || 0));
+      localStorage.setItem('pesquisaDadosCompleta', usuario.pesquisaDadosCompleta ? 'true' : 'false');
+      localStorage.setItem('pesquisaRapidaCompleta', usuario.pesquisaRapidaCompleta ? 'true' : 'false');
+      localStorage.setItem('pesquisaOpiniaoCompleta', usuario.pesquisaOpiniaoCompleta ? 'true' : 'false');
+      localStorage.setItem('pesquisaHabitosCompleta', usuario.pesquisaHabitosCompleta ? 'true' : 'false');
+      if (usuario.codigoIndicacao) localStorage.setItem('codigoIndicacao', usuario.codigoIndicacao);
+      mostrarAviso('✅ Entrando...', 'sucesso');
+      setTimeout(function () { window.location.href = 'desafios.html'; }, 1000);
+    } catch (erro) {
+      console.error(erro);
+      mostrarAviso(mensagemPermissao(erro));
+      btn.disabled = false;
+      btn.textContent = 'Entrar';
+    }
+  });
+
+  // CADASTRO – todas as pesquisas disponíveis
+  document.getElementById('form-cadastro').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var nome = document.getElementById('nome-cadastro').value.trim();
+    var telemovel = document.getElementById('telemovel-cadastro').value.trim();
+    var email = document.getElementById('email-cadastro').value.trim().toLowerCase();
+    var senha = document.getElementById('senha-cadastro').value;
+    var btn = document.getElementById('btn-cadastro');
+    if (!nome || !telemovel || !email || !senha) return mostrarAviso('⚠️ Preencha todos os campos!');
+    if (senha.length < 6) return mostrarAviso('⚠️ Senha deve ter pelo menos 6 caracteres!');
+    btn.disabled = true;
+    btn.textContent = 'A processar...';
+    mostrarAviso('⏳ A processar...', 'sucesso');
+    try {
+      var telExiste = await db.collection('usuarios').where('telemovel', '==', telemovel).limit(1).get();
+      var emailExiste = await db.collection('usuarios').where('email', '==', email).limit(1).get();
+      if (!telExiste.empty || !emailExiste.empty) {
+        btn.disabled = false;
+        btn.textContent = 'Criar Minha Conta';
+        return mostrarAviso('⚠️ Este número ou e-mail já está cadastrado!');
+      }
+      var params = new URLSearchParams(window.location.search);
+      var refCodigo = (params.get('ref') || localStorage.getItem('refPendente') || '').trim().toUpperCase();
+      var meuCodigo = 'MOZ' + hashCode(email).toString(36).toUpperCase().substring(0, 8);
+      var senhaHash = await hashSenha(senha);
+      var dadosNovo = {
+        nome: nome, telemovel: telemovel, email: email, senha: senhaHash,
+        pontos: 0, status: 'Ativo',
+        pesquisaDadosCompleta: false,
+        pesquisaRapidaCompleta: false,
+        pesquisaOpiniaoCompleta: false,
+        pesquisaHabitosCompleta: false,
+        codigoIndicacao: meuCodigo, totalConvidados: 0, pontosIndicacao: 0,
+        dataCadastro: new Date().toISOString()
+      };
+      if (refCodigo) dadosNovo.indicadoPor = refCodigo;
+      await db.collection('usuarios').add(dadosNovo);
+      if (refCodigo) {
+        try {
+          var indSnap = await db.collection('usuarios').where('codigoIndicacao', '==', refCodigo).limit(1).get();
+          if (!indSnap.empty) {
+            var indRef = indSnap.docs[0].ref;
+            var indData = indSnap.docs[0].data();
+            if ((indData.email || '').toLowerCase() !== email) {
+              await indRef.update({
+                pontos: (indData.pontos || 0) + 30,
+                totalConvidados: (indData.totalConvidados || 0) + 1,
+                pontosIndicacao: (indData.pontosIndicacao || 0) + 30,
+                ultimaAtualizacao: new Date().toISOString()
+              });
+            }
+          }
+        } catch (eInd) { console.error(eInd); }
+        localStorage.removeItem('refPendente');
+      }
+      localStorage.setItem('nomeUtilizador', nome);
+      localStorage.setItem('telUtilizador', telemovel);
+      localStorage.setItem('emailUtilizador', email);
+      localStorage.setItem('pontosUtilizador', '0');
+      localStorage.setItem('pesquisaDadosCompleta', 'false');
+      localStorage.setItem('pesquisaRapidaCompleta', 'false');
+      localStorage.setItem('pesquisaOpiniaoCompleta', 'false');
+      localStorage.setItem('pesquisaHabitosCompleta', 'false');
+      localStorage.setItem('codigoIndicacao', meuCodigo);
+      mostrarAviso('✅ Conta criada com sucesso!', 'sucesso');
+      setTimeout(function () { window.location.href = 'desafios.html'; }, 1200);
+    } catch (erro) {
+      console.error(erro);
+      mostrarAviso(mensagemPermissao(erro));
+      btn.disabled = false;
+      btn.textContent = 'Criar Minha Conta';
+    }
+  });
+</script>
+</body>
+</html>

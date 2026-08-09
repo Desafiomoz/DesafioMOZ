@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="pt-MZ">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Pesquisa – Desafio MOZ</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+  <script>
+    if (typeof window.__DESAFIO_MOZ_FIREBASE__ === 'undefined') {
+      window.__DESAFIO_MOZ_FIREBASE__ = true;
+      var firebaseConfig = {
+        apiKey: "AIzaSyDONfggnmf9OJX_AgfvcHTRf6tsuKD5nrA",
+        authDomain: "desafio-moz-61b70.firebaseapp.com",
+        projectId: "desafio-moz-61b70",
+        storageBucket: "desafio-moz-61b70.firebasestorage.app",
+        messagingSenderId: "945658936331",
+        appId: "1:945658936331:web:7ee4b0e7de1c1daf36db0e",
+        measurementId: "G-G1DZQ1B0DB"
+      };
+      if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+      window.db = firebase.firestore();
+    }
+    var db = window.db;
+  </script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    body { background: #0a0a0f; color: #fff; min-height: 100vh; padding: 16px; }
+    .topo { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+    .btn-voltar {
+      width: 40px; height: 40px; border-radius: 12px; background: rgba(0,200,83,0.15);
+      border: 1px solid rgba(0,200,83,0.35); color: #00e676; display: flex; align-items: center;
+      justify-content: center; text-decoration: none; font-size: 16px;
+    }
+    .topo h1 { font-size: 17px; color: #00e676; }
+    .card {
+      background: rgba(21,21,31,0.95); border: 1px solid rgba(0,200,83,0.28);
+      border-radius: 16px; padding: 18px 16px; max-width: 440px; margin: 0 auto;
+    }
+    .pts-badge { color: #FFD700; font-weight: 800; font-size: 14px; margin-bottom: 10px; }
+    .num-q { display: inline-block; background: rgba(0,200,83,0.2); color: #00e676; font-size: 12px; font-weight: 700; padding: 3px 8px; border-radius: 6px; margin-bottom: 10px; }
+    .pergunta { font-size: 16px; font-weight: 600; margin-bottom: 14px; line-height: 1.4; }
+    .opcao {
+      background: rgba(0,200,83,0.1); border: 1px solid rgba(0,200,83,0.35); color: #fff;
+      padding: 13px 14px; border-radius: 12px; font-size: 14px; cursor: pointer; margin-bottom: 10px; text-align: left;
+    }
+    .opcao.selecionada { background: #00c853; color: #000; font-weight: 600; }
+    .btn {
+      width: 100%; background: linear-gradient(90deg, #00c853, #00e676); color: #000; border: none;
+      border-radius: 14px; padding: 14px; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 8px;
+    }
+    .btn:disabled { opacity: 0.5; }
+    .loading { text-align: center; padding: 40px; color: #888; }
+    .sucesso { text-align: center; padding: 30px 10px; }
+    .sucesso .pts { font-size: 36px; font-weight: 800; color: #FFD700; margin: 12px 0; }
+  </style>
+</head>
+<body>
+  <div class="topo">
+    <a href="tarefas.html" class="btn-voltar"><i class="fas fa-arrow-left"></i></a>
+    <h1 id="titulo-topo">Pesquisa</h1>
+  </div>
+
+  <div id="loading" class="loading">A carregar pesquisa...</div>
+  <div id="conteudo" class="card" style="display:none;"></div>
+
+  <script>
+    var pesquisaId = new URLSearchParams(window.location.search).get('id');
+    var pesquisa = null;
+    var indice = 0;
+    var respostas = {};
+    var email = localStorage.getItem('emailUtilizador') || '';
+    var docRef = null;
+    var userData = {};
+    var selecionada = null;
+
+    function esc(s) {
+      return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    function quatroFixasCompletas(u) {
+      return !!(u.pesquisaDadosCompleta && u.pesquisaRapidaCompleta &&
+                u.pesquisaOpiniaoCompleta && u.pesquisaHabitosCompleta);
+    }
+
+    // Novas pesquisas do Admin só após 10 horas do cadastro
+    function passou10Horas(dataCadastro) {
+      if (!dataCadastro) return true;
+      try {
+        var d = new Date(dataCadastro);
+        if (isNaN(d.getTime())) return true;
+        return (Date.now() - d.getTime()) >= 10 * 60 * 60 * 1000;
+      } catch (e) { return true; }
+    }
+
+    function renderPergunta() {
+      var perguntas = pesquisa.perguntas || [];
+      if (indice >= perguntas.length) {
+        finalizar();
+        return;
+      }
+      var q = perguntas[indice];
+      var total = perguntas.length;
+      var html = '<div class="pts-badge">+' + (pesquisa.pontos || 0) + ' pontos</div>';
+      html += '<div class="num-q">Pergunta ' + (indice + 1) + ' de ' + total + '</div>';
+      html += '<div class="pergunta">' + esc(q.pergunta) + '</div>';
+      (q.opcoes || []).forEach(function (op) {
+        var safe = String(op).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        html += '<div class="opcao" onclick="sel(this,\'' + safe + '\')">' + esc(op) + '</div>';
+      });
+      html += '<button class="btn" id="btn-next" onclick="avancar()" disabled>Continuar</button>';
+      document.getElementById('conteudo').innerHTML = html;
+      selecionada = null;
+    }
+
+    function sel(el, valor) {
+      document.querySelectorAll('.opcao').forEach(function (o) { o.classList.remove('selecionada'); });
+      el.classList.add('selecionada');
+      selecionada = valor;
+      document.getElementById('btn-next').disabled = false;
+    }
+
+    function avancar() {
+      if (!selecionada) return;
+      respostas['q' + (indice + 1)] = selecionada;
+      selecionada = null;
+      indice++;
+      renderPergunta();
+    }
+
+    async function finalizar() {
+      document.getElementById('conteudo').innerHTML =
+        '<div class="sucesso"><div style="font-size:40px">✅</div><p>A guardar...</p></div>';
+      try {
+        // Re-lê pontos atuais para evitar sobrescrever
+        var fresh = await docRef.get();
+        var dados = fresh.exists ? fresh.data() : userData;
+        if (dados.pesquisasProgramadasFeitas && dados.pesquisasProgramadasFeitas[pesquisaId]) {
+          alert('Já concluiu esta pesquisa.');
+          window.location.href = 'tarefas.html';
+          return;
+        }
+        var pts = (dados.pontos || 0) + (pesquisa.pontos || 0);
+        var feitas = Object.assign({}, dados.pesquisasProgramadasFeitas || {});
+        feitas[pesquisaId] = true;
+
+        // Atualiza APENAS o documento DESTE utilizador (nunca a pesquisa global)
+        await docRef.update({
+          pontos: pts,
+          pesquisasProgramadasFeitas: feitas,
+          ultimaAtualizacao: new Date().toISOString()
+        });
+
+        localStorage.setItem('pontosUtilizador', String(pts));
+
+        // Cache local POR EMAIL — não partilha com outras contas no mesmo browser
+        var emailKey = String(email || '').trim().toLowerCase();
+        var lsKey = emailKey ? ('pesquisasProgFeitas_' + emailKey) : 'pesquisasProgFeitas_anon';
+        var ls = {};
+        try { ls = JSON.parse(localStorage.getItem(lsKey) || '{}'); } catch (e) {}
+        ls[pesquisaId] = true;
+        localStorage.setItem(lsKey, JSON.stringify(ls));
+        // Remove chave global antiga (bug) se existir
+        try { localStorage.removeItem('pesquisasProgFeitas'); } catch (e) {}
+
+        document.getElementById('conteudo').innerHTML =
+          '<div class="sucesso">' +
+          '<div style="font-size:48px">🎉</div>' +
+          '<h2 style="color:#00e676;margin:10px 0">Pesquisa concluída!</h2>' +
+          '<div class="pts">+' + (pesquisa.pontos || 0) + ' Pontos</div>' +
+          '<button class="btn" onclick="window.location.href=\'tarefas.html\'">Voltar às Tarefas</button>' +
+          '</div>';
+      } catch (e) {
+        alert('Erro ao guardar: ' + (e.message || e));
+        window.location.href = 'tarefas.html';
+      }
+    }
+
+    async function iniciar() {
+      if (!pesquisaId) {
+        alert('Pesquisa inválida.');
+        window.location.href = 'tarefas.html';
+        return;
+      }
+      if (!email) {
+        alert('Faça login.');
+        window.location.href = 'criar-conta.html';
+        return;
+      }
+      try {
+        var pSnap = await db.collection('pesquisasProgramadas').doc(pesquisaId).get();
+        if (!pSnap.exists) {
+          alert('Pesquisa não encontrada.');
+          window.location.href = 'tarefas.html';
+          return;
+        }
+        pesquisa = pSnap.data();
+        if (pesquisa.ativa === false) {
+          alert('Esta pesquisa já não está disponível.');
+          window.location.href = 'tarefas.html';
+          return;
+        }
+        if (pesquisa.dataHora) {
+          var dt = new Date(pesquisa.dataHora);
+          if (!isNaN(dt.getTime()) && dt > new Date()) {
+            alert('Esta pesquisa ainda não está disponível. Volte mais tarde.');
+            window.location.href = 'tarefas.html';
+            return;
+          }
+        }
+
+        // Procura utilizador de forma robusta (case e espaços)
+        var emailNorm = String(email).trim().toLowerCase();
+        var uSnap = await db.collection('usuarios').where('email', '==', email).limit(1).get();
+        if (uSnap.empty && emailNorm !== email) {
+          uSnap = await db.collection('usuarios').where('email', '==', emailNorm).limit(1).get();
+        }
+        if (uSnap.empty) {
+          var todos = await db.collection('usuarios').get();
+          var docEncontrado = null;
+          todos.forEach(function (doc) {
+            if (docEncontrado) return;
+            var em = String((doc.data().email || '')).trim().toLowerCase();
+            if (em && em === emailNorm) docEncontrado = doc;
+          });
+          if (docEncontrado) {
+            docRef = docEncontrado.ref;
+            userData = docEncontrado.data();
+          } else {
+            alert('Utilizador não encontrado.');
+            window.location.href = 'criar-conta.html';
+            return;
+          }
+        } else {
+          docRef = uSnap.docs[0].ref;
+          userData = uSnap.docs[0].data();
+        }
+
+        // Bloqueado pelo admin
+        if (userData.ocultarPesquisas === true) {
+          alert('Pesquisas indisponíveis para a sua conta.');
+          window.location.href = 'tarefas.html';
+          return;
+        }
+        // Só depois de concluir as 4 pesquisas fixas
+        if (!quatroFixasCompletas(userData)) {
+          alert('Complete primeiro as 4 pesquisas iniciais (Dados, Rápida, Opinião e Hábitos).');
+          window.location.href = 'tarefas.html';
+          return;
+        }
+        // Utilizador novo: só após 10 horas do cadastro
+        if (!passou10Horas(userData.dataCadastro)) {
+          alert('As novas pesquisas estarão disponíveis 10 horas após o seu cadastro. Volte mais tarde.');
+          window.location.href = 'tarefas.html';
+          return;
+        }
+        // Já fez esta
+        if (userData.pesquisasProgramadasFeitas && userData.pesquisasProgramadasFeitas[pesquisaId]) {
+          alert('Já concluiu esta pesquisa.');
+          window.location.href = 'tarefas.html';
+          return;
+        }
+
+        document.getElementById('titulo-topo').textContent = pesquisa.titulo || 'Pesquisa';
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('conteudo').style.display = 'block';
+        renderPergunta();
+      } catch (e) {
+        document.getElementById('loading').textContent = 'Erro: ' + (e.message || e);
+      }
+    }
+
+    iniciar();
+  </script>
+</body>
+</html>

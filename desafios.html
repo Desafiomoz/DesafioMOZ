@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="pt-MZ">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Página Principal – Desafio MOZ</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --preto-fundo: #0A0C14;
+            --verde: #00C853;
+            --verde-claro: #22FF99;
+            --texto: #FFFFFF;
+            --texto-claro: #A8B0C8;
+            --destaque: #FFD700;
+        }
+        body {
+            background: var(--preto-fundo);
+            color: var(--texto);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            min-height: 100vh;
+            padding: 20px 15px 90px;
+        }
+        .cabecalho {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(0,200,83,0.2);
+        }
+        .cabecalho .logo {
+            width: 56px;
+            height: 56px;
+            border-radius: 12px;
+            object-fit: cover;
+            flex-shrink: 0;
+            border: 2px solid var(--verde);
+            background: rgba(0,200,83,0.1);
+        }
+        .typing-area {
+            flex: 1;
+            min-height: 52px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .typing-area h1 {
+            font-size: 22px;
+            color: var(--verde-claro);
+            min-height: 28px;
+            line-height: 1.3;
+        }
+        .typing-area .cursor {
+            display: inline-block;
+            width: 2px;
+            height: 1.1em;
+            background: var(--verde-claro);
+            margin-left: 2px;
+            vertical-align: text-bottom;
+            animation: blink 0.7s step-end infinite;
+        }
+        @keyframes blink { 50% { opacity: 0; } }
+
+        .saldo {
+            background: linear-gradient(90deg, rgba(0,200,83,0.15), rgba(34,255,153,0.05));
+            border: 1px solid var(--verde);
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .saldo .pontos { font-size: 32px; font-weight: 700; color: var(--destaque); }
+        .saldo .valor { font-size: 14px; color: var(--texto-claro); margin-top: 5px; }
+
+        .meus-dados {
+            background: rgba(22,26,43,0.9);
+            border: 1px solid rgba(0,200,83,0.3);
+            border-radius: 12px;
+            padding: 18px;
+            margin-bottom: 25px;
+        }
+        .meus-dados h2 { font-size: 18px; color: var(--verde-claro); margin-bottom: 12px; }
+        .dado-item {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            font-size: 15px;
+        }
+        .dado-item:last-child { border-bottom: none; }
+        .dado-item span { color: var(--texto-claro); margin-right: 6px; }
+
+        .sec-titulo {
+            font-size: 17px;
+            margin-bottom: 12px;
+            color: var(--verde-claro);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Cartão do desafio YouTube - corrigido */
+        .cartao-yt {
+            background: rgba(22,26,43,0.95);
+            border: 1px solid rgba(255, 0, 0, 0.35);
+            border-radius: 16px;
+            padding: 18px;
+            margin-bottom: 14px;
+            position: relative;
+            overflow: hidden;
+        }
+        .cartao-yt::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #ff0000, #cc0000, #ff4444);
+        }
+        .cartao-yt-topo { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+        .yt-logo {
+            width: 52px;
+            height: 52px;
+            border-radius: 12px;
+            object-fit: cover;
+            flex-shrink: 0;
+            border: 2px solid rgba(255,0,0,0.5);
+            background: #fff;
+        }
+        .yt-info h3 { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+        .yt-info p { font-size: 13px; color: var(--texto-claro); line-height: 1.35; }
+        .yt-ganho {
+            display: inline-block;
+            background: rgba(255, 215, 0, 0.15);
+            border: 1px solid rgba(255, 215, 0, 0.4);
+            color: var(--destaque);
+            font-weight: 800;
+            font-size: 14px;
+            padding: 4px 10px;
+            border-radius: 8px;
+            margin-top: 8px;
+        }
+
+        .yt-botoes {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 4px;
+        }
+        .btn-yt {
+            width: 100%;
+            border: none;
+            border-radius: 12px;
+            padding: 14px 16px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: transform 0.15s ease, opacity 0.15s;
+        }
+        .btn-yt:active { transform: scale(0.98); }
+
+        .btn-yt-inscrever {
+            background: linear-gradient(135deg, #ff0000, #cc0000);
+            color: #fff;
+            box-shadow: 0 6px 20px rgba(255, 0, 0, 0.35);
+        }
+        .btn-yt-confirmar {
+            background: linear-gradient(135deg, #00c853, #00e676);
+            color: #003d1a;
+            box-shadow: 0 6px 20px rgba(0, 200, 83, 0.35);
+            display: none;
+        }
+        .btn-yt-confirmar.show { display: flex; }
+        .btn-yt-feito {
+            background: rgba(0, 200, 83, 0.15);
+            color: #00e676;
+            border: 1px solid rgba(0, 200, 83, 0.4);
+            cursor: default;
+            display: none;
+        }
+        .btn-yt-feito.show { display: flex; }
+
+        .yt-aviso {
+            font-size: 12px;
+            color: #888;
+            margin-top: 10px;
+            line-height: 1.4;
+            text-align: center;
+        }
+
+        .menu-baixo {
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            background: rgba(5,6,15,0.97);
+            border-top: 1px solid rgba(0,200,83,0.3);
+            display: flex;
+            justify-content: space-around;
+            padding: 11px 0 14px;
+            z-index: 100;
+        }
+        .menu-baixo a { color: var(--texto-claro); text-decoration: none; text-align: center; font-size: 11px; width: 70px; }
+        .menu-baixo a.ativo { color: var(--verde-claro); }
+        .menu-baixo i { font-size: 18px; display: block; margin-bottom: 3px; }
+    </style>
+</head>
+<body>
+
+<div class="cabecalho">
+    <img src="https://i.supaimg.com/b173afd9-4344-4026-a5d7-6a53e4b6efdc/8f054a24-2746-4a43-9f1c-354584289dc3.png" alt="Logo Desafio MOZ" class="logo">
+    <div class="typing-area">
+        <h1><span id="typing-text"></span><span class="cursor"></span></h1>
+    </div>
+</div>
+
+<div class="saldo">
+    <div class="pontos" id="pontos-display">0 Pontos</div>
+    <div class="valor">10 Pontos = 1 Metical | Mínimo para sacar: 50 MT</div>
+</div>
+
+<div class="meus-dados">
+    <h2><i class="fas fa-user-circle"></i> Meus Dados</h2>
+    <div class="dado-item"><span>Nome:</span> <strong id="mostrar-nome">—</strong></div>
+    <div class="dado-item"><span>Telemóvel:</span> <strong id="mostrar-tel">—</strong></div>
+    <div class="dado-item"><span>E-mail:</span> <strong id="mostrar-email">—</strong></div>
+</div>
+
+<div class="sec-titulo"><i class="fas fa-calendar-day"></i> Desafios do Dia</div>
+<p style="font-size:12px;color:#ffab40;margin:-4px 0 14px;line-height:1.45;text-align:center;">
+  ⚠️ Se não cumprir as regras dos desafios (ex.: fingir inscrição ou não ver os anúncios), <strong>os pontos serão diminuídos</strong> pelo administrador.
+</p>
+
+<!-- DESAFIO YOUTUBE - CORRIGIDO -->
+<div class="cartao-yt" id="card-youtube">
+    <div class="cartao-yt-topo">
+        <img src="https://i.supaimg.com/b173afd9-4344-4026-a5d7-6a53e4b6efdc/8f054a24-2746-4a43-9f1c-354584289dc3.png"
+             alt="Desafio MOZ" class="yt-logo"
+             onerror="this.src='https://www.youtube.com/s/desktop/favicon.ico'">
+        <div class="yt-info">
+            <h3><i class="fab fa-youtube" style="color:#ff0000;"></i> Canal Desafio MOZ</h3>
+            <p>Inscreva-se no nosso canal no YouTube e ganhe pontos.</p>
+            <div class="yt-ganho">+10 Pontos</div>
+        </div>
+    </div>
+    <div class="yt-botoes">
+        <button type="button" class="btn-yt btn-yt-inscrever" id="btn-abrir-yt" onclick="abrirCanalYoutube()">
+            <i class="fab fa-youtube"></i> Inscrever-se no canal
+        </button>
+        <button type="button" class="btn-yt btn-yt-confirmar" id="btn-confirmar-yt" onclick="confirmarInscricao()">
+            <i class="fas fa-check-circle"></i> Já me inscrevi — receber 10 pontos
+        </button>
+        <button type="button" class="btn-yt btn-yt-feito" id="btn-feito-yt" disabled>
+            <i class="fas fa-check-double"></i> Concluído · +10 pontos recebidos
+        </button>
+    </div>
+    <p class="yt-aviso" id="yt-aviso">
+        1) Toque em “Inscrever-se no canal” · 2) Inscreva-se no YouTube · 3) Volte e toque em “Já me inscrevi”
+    </p>
+</div>
+
+<!-- Desafios programados pelo Admin (máx. 4 por dia; extras após 10h) -->
+<div id="lista-desafios-prog"></div>
+<div id="msg-desafios-vazio" style="display:none;background:rgba(21,21,31,0.95);border:1px dashed rgba(0,200,83,0.35);border-radius:16px;padding:28px 18px;text-align:center;margin-bottom:14px;">
+    <div style="font-size:36px;margin-bottom:10px;">📭</div>
+    <h3 style="font-size:16px;color:#00e676;margin-bottom:8px;">Desafios indisponíveis</h3>
+    <p style="font-size:13px;color:#aaa;line-height:1.5;" id="msg-desafios-vazio-texto">
+        Concluiu os desafios disponíveis por agora.<br>
+        Aguarde a aparição de novos desafios.
+    </p>
+</div>
+
+<div class="menu-baixo">
+    <a href="desafios.html" class="ativo"><i class="fas fa-home"></i> Início</a>
+    <a href="tarefas.html"><i class="fas fa-tasks"></i> Tarefas</a>
+    <a href="saques.html"><i class="fas fa-wallet"></i> Sacar</a>
+    <a href="perfil.html"><i class="fas fa-cog"></i> Conta</a>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+<script>
+    if (typeof window.__DESAFIO_MOZ_FIREBASE__ === 'undefined') {
+        window.__DESAFIO_MOZ_FIREBASE__ = true;
+        var firebaseConfig = {
+            apiKey: "AIzaSyDONfggnmf9OJX_AgfvcHTRf6tsuKD5nrA",
+            authDomain: "desafio-moz-61b70.firebaseapp.com",
+            projectId: "desafio-moz-61b70",
+            storageBucket: "desafio-moz-61b70.firebasestorage.app",
+            messagingSenderId: "945658936331",
+            appId: "1:945658936331:web:7ee4b0e7de1c1daf36db0e",
+            measurementId: "G-G1DZQ1B0DB"
+        };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        window.db = firebase.firestore();
+    }
+    var db = window.db;
+
+    var YOUTUBE_URL = 'https://www.youtube.com/@DesafioMoz';
+    var PONTOS_YT = 10;
+    var emailUtilizador = '';
+    var docRef = null;
+    var jaFezYoutube = false;      // estado atual (só Firebase)
+    var abriuCanal = false;
+    var userDataCache = null;
+    var desafiosAbertos = {}; // id -> true se já abriu o link
+
+    function escHtml(s) {
+        return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function atualizarPontosUI(pts) {
+        document.getElementById('pontos-display').textContent = pts + ' Pontos';
+        localStorage.setItem('pontosUtilizador', String(pts));
+    }
+
+    function mostrarEstadoFeito() {
+        document.getElementById('btn-abrir-yt').style.display = 'none';
+        document.getElementById('btn-confirmar-yt').classList.remove('show');
+        document.getElementById('btn-feito-yt').classList.add('show');
+        document.getElementById('yt-aviso').textContent = 'Concluído! A carregar próximo desafio em 5 segundos...';
+        // Sai o cartão YouTube e libera espaço para o próximo
+        setTimeout(function () {
+            var card = document.getElementById('card-youtube');
+            if (card) {
+                card.style.transition = 'opacity 0.4s';
+                card.style.opacity = '0';
+                setTimeout(function () {
+                    card.style.display = 'none';
+                    if (userDataCache) userDataCache.desafioYoutubeCompleto = true;
+                    carregarDesafiosProgramados();
+                }, 400);
+            }
+        }, 5000);
+    }
+
+    // Após concluir qualquer desafio: remove o cartão e em 5s mostra o próximo
+    function aposConcluirDesafio(cardId) {
+        var card = document.getElementById(cardId);
+        if (card) {
+            card.innerHTML = '<div style="text-align:center;padding:20px;color:#00e676;"><i class="fas fa-check-double"></i><br>Concluído!<br><small style="color:#888">Próximo desafio em 5 s...</small></div>';
+            setTimeout(function () {
+                card.style.transition = 'opacity 0.4s';
+                card.style.opacity = '0';
+                setTimeout(function () {
+                    if (card.parentNode) card.parentNode.removeChild(card);
+                    carregarDesafiosProgramados();
+                }, 400);
+            }, 5000);
+        } else {
+            setTimeout(function () { carregarDesafiosProgramados(); }, 5000);
+        }
+    }
+
+    function abrirCanalYoutube() {
+        if (jaFezYoutube) return;
+        window.open(YOUTUBE_URL, '_blank', 'noopener,noreferrer');
+        abriuCanal = true;
+        var btnConf = document.getElementById('btn-confirmar-yt');
+        btnConf.classList.add('show');
+        document.getElementById('yt-aviso').textContent =
+            'Inscreva-se no canal e depois toque em “Já me inscrevi — receber 10 pontos”.';
+    }
+
+    async function confirmarInscricao() {
+        if (jaFezYoutube) {
+            alert('Já recebeu os pontos deste desafio.');
+            return;
+        }
+        if (!abriuCanal) {
+            alert('Primeiro toque em “Inscrever-se no canal” e inscreva-se no YouTube.');
+            return;
+        }
+        if (!emailUtilizador || emailUtilizador === '—') {
+            alert('Faça login para receber os pontos.');
+            window.location.href = 'criar-conta.html';
+            return;
+        }
+
+        var btn = document.getElementById('btn-confirmar-yt');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> A guardar...';
+
+        try {
+            if (!docRef) {
+                var snap = await db.collection('usuarios').where('email', '==', emailUtilizador).limit(1).get();
+                if (snap.empty) {
+                    var emailNorm = String(emailUtilizador).trim().toLowerCase();
+                    if (emailNorm !== emailUtilizador) {
+                        snap = await db.collection('usuarios').where('email', '==', emailNorm).limit(1).get();
+                    }
+                }
+                if (snap.empty) {
+                    alert('Utilizador não encontrado. Faça login novamente.');
+                    window.location.href = 'criar-conta.html';
+                    return;
+                }
+                docRef = snap.docs[0].ref;
+            }
+
+            var fresh = await docRef.get();
+            var dados = fresh.exists ? fresh.data() : {};
+
+            if (dados.desafioYoutubeCompleto === true) {
+                jaFezYoutube = true;
+                mostrarEstadoFeito();
+                alert('Já tinha concluído este desafio.');
+                return;
+            }
+
+            var pts = (dados.pontos || 0) + PONTOS_YT;
+            await docRef.update({
+                pontos: pts,
+                desafioYoutubeCompleto: true,
+                desafioYoutubeData: new Date().toISOString(),
+                ultimaAtualizacao: new Date().toISOString()
+            });
+
+            jaFezYoutube = true;
+            atualizarPontosUI(pts);
+            mostrarEstadoFeito();
+            alert('✅ +' + PONTOS_YT + ' pontos! Obrigado por se inscrever no canal Desafio MOZ.');
+        } catch (e) {
+            console.error(e);
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-check-circle"></i> Já me inscrevi — receber 10 pontos';
+            alert('Erro ao guardar pontos: ' + (e.message || e));
+        }
+    }
+
+
+    var DEZ_HORAS_MS = 10 * 60 * 60 * 1000;
+
+    // Anúncios: podem repetir 10h após conclusão. Links: 1 vez só.
+    function msUltimaConclusaoDesafio(val) {
+        if (val == null || val === false || val === '') return null;
+        if (val === true) return 0; // formato antigo → já pode repetir (anúncio)
+        if (typeof val === 'string') {
+            var t = new Date(val).getTime();
+            return isNaN(t) ? 0 : t;
+        }
+        if (typeof val === 'object' && val.em) {
+            var t2 = new Date(val.em).getTime();
+            return isNaN(t2) ? 0 : t2;
+        }
+        return 0;
+    }
+
+    function desafioEstaBloqueadoParaUser(d, feitos, agoraMs) {
+        // Anúncio interativo/rewarded: SEMPRE disponível (sem 10h)
+        if (d.tipo === 'anuncio') return false;
+        var val = feitos[d._id];
+        if (val == null || val === false || val === '') return false;
+        // link e outros: uma vez só
+        return true;
+    }
+
+    async function carregarDesafiosProgramados() {
+        var zona = document.getElementById('lista-desafios-prog');
+        if (!zona) return;
+        zona.innerHTML = '';
+
+        var feitos = {};
+        if (userDataCache && userDataCache.desafiosProgramadosFeitos) {
+            feitos = userDataCache.desafiosProgramadosFeitos;
+        }
+
+        try {
+            var snap = await db.collection('desafiosProgramados').get();
+            var agoraMs = Date.now();
+            var DEZ_HORAS = 10 * 60 * 60 * 1000;
+            var MAX_VISIVEIS = 4;
+
+            // Todas as ativas, ordenadas por dataHora (mais antigas primeiro)
+            var todasAtivas = [];
+            snap.forEach(function (doc) {
+                var d = doc.data();
+                d._id = doc.id;
+                if (d.ativa === false) return;
+                if (!d.dataHora) return;
+                var dt = new Date(d.dataHora).getTime();
+                if (isNaN(dt) || dt > agoraMs) return; // ainda não chegou a hora
+                d._dtMs = dt;
+                todasAtivas.push(d);
+            });
+            todasAtivas.sort(function (a, b) { return a._dtMs - b._dtMs; });
+
+            // Posição global (incluindo já feitos) para regra das 4 + 10h
+            var elegiveis = [];
+            var indiceGlobal = 0;
+            todasAtivas.forEach(function (d) {
+                var posicao = indiceGlobal;
+                indiceGlobal++;
+                // Anúncio: some 10h e volta. Link: some de vez.
+                if (desafioEstaBloqueadoParaUser(d, feitos, agoraMs)) return;
+
+                // Primeiras 4: disponíveis de imediato
+                // A partir da 5ª: só após dataHora + 10 horas (regra de publicação)
+                if (posicao < 4) {
+                    elegiveis.push(d);
+                } else if (agoraMs >= d._dtMs + DEZ_HORAS) {
+                    elegiveis.push(d);
+                }
+            });
+
+            var adicionadas = 0;
+            elegiveis.forEach(function (d) {
+                if (adicionadas >= MAX_VISIVEIS) return;
+
+                var img = d.imagem || 'https://i.supaimg.com/b173afd9-4344-4026-a5d7-6a53e4b6efdc/8f054a24-2746-4a43-9f1c-354584289dc3.png';
+                var pts = d.pontos || 10;
+                var isAnuncio = d.tipo === 'anuncio';
+
+                var card = document.createElement('div');
+                card.className = 'cartao-yt';
+                card.id = 'card-des-' + d._id;
+                card.innerHTML =
+                    '<div class="cartao-yt-topo">' +
+                        '<img src="' + escHtml(img) + '" alt="" class="yt-logo" onerror="this.src=\'https://i.supaimg.com/b173afd9-4344-4026-a5d7-6a53e4b6efdc/8f054a24-2746-4a43-9f1c-354584289dc3.png\'">' +
+                        '<div class="yt-info">' +
+                            '<h3>' + escHtml(d.titulo || 'Desafio') + '</h3>' +
+                            '<p>' + escHtml(d.descricao || 'Complete e ganhe pontos') + '</p>' +
+                            '<div class="yt-ganho">+' + pts + ' Pontos' + (isAnuncio ? '' : '') + '</div>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="yt-botoes">' +
+                        (isAnuncio
+                            ? '<button type="button" class="btn-yt btn-yt-inscrever" onclick="abrirDesafioAnuncio(\'' + d._id + '\')"><i class="fas fa-ad"></i> Ver anúncio</button>'
+                            : '<button type="button" class="btn-yt btn-yt-inscrever" id="btn-abrir-' + d._id + '" onclick="abrirDesafioLink(\'' + d._id + '\',\'' + escHtml(d.link || '').replace(/'/g, "\\'") + '\')"><i class="fas fa-external-link-alt"></i> Abrir / Seguir</button>' +
+                              '<button type="button" class="btn-yt btn-yt-confirmar" id="btn-conf-' + d._id + '" onclick="confirmarDesafioLink(\'' + d._id + '\',' + pts + ')"><i class="fas fa-check-circle"></i> Já fiz — receber ' + pts + ' pontos</button>'
+                        ) +
+                    '</div>' +
+                    '<p class="yt-aviso">' +
+                        (isAnuncio
+                            ? 'Assista o anúncio (interativo ou rewarded) e receba +' + pts + ' pontos. O desafio sai depois.'
+                            : '1) Toque em Abrir/Seguir · 2) Complete a ação · 3) Volte e confirme para receber os pontos') +
+                    '</p>';
+                zona.appendChild(card);
+                adicionadas++;
+            });
+            console.log('[Desafio MOZ] Desafios visíveis:', adicionadas, '| elegíveis:', elegiveis.length);
+            atualizarMsgDesafiosVazio(adicionadas);
+        } catch (e) {
+            console.warn('Desafios programados:', e);
+            atualizarMsgDesafiosVazio(0);
+        }
+    }
+
+    function atualizarMsgDesafiosVazio(adicionadas) {
+        var msg = document.getElementById('msg-desafios-vazio');
+        var txt = document.getElementById('msg-desafios-vazio-texto');
+        if (!msg) return;
+
+        var ytVisivel = false;
+        var cardYt = document.getElementById('card-youtube');
+        if (cardYt && cardYt.style.display !== 'none' && !jaFezYoutube) {
+            ytVisivel = true;
+        }
+
+        // Conta cartões programados ainda no DOM (não só os acabados de adicionar)
+        var zona = document.getElementById('lista-desafios-prog');
+        var progVisiveis = 0;
+        if (zona) {
+            zona.querySelectorAll('.cartao-yt').forEach(function (c) {
+                if (c.style.display !== 'none' && c.style.opacity !== '0') progVisiveis++;
+            });
+        }
+        var total = (ytVisivel ? 1 : 0) + progVisiveis;
+
+        if (total === 0) {
+            msg.style.display = 'block';
+            if (txt) {
+                txt.innerHTML = 'Concluiu os desafios disponíveis por agora.<br>' +
+                    'Aguarde a aparição de novos desafios.';
+            }
+        } else {
+            msg.style.display = 'none';
+        }
+    }
+
+    function abrirDesafioLink(id, link) {
+        if (!link) return alert('Link inválido.');
+        window.open(link, '_blank', 'noopener,noreferrer');
+        desafiosAbertos[id] = true;
+        var btn = document.getElementById('btn-conf-' + id);
+        if (btn) btn.classList.add('show');
+    }
+
+    function abrirDesafioAnuncio(id) {
+        window.location.href = 'desafio-anuncio.html?id=' + encodeURIComponent(id);
+    }
+
+    async function confirmarDesafioLink(id, pts) {
+        if (!desafiosAbertos[id]) {
+            alert('Primeiro toque em “Abrir / Seguir” e complete a ação.');
+            return;
+        }
+        if (!emailUtilizador || emailUtilizador === '—') {
+            alert('Faça login para receber os pontos.');
+            window.location.href = 'criar-conta.html';
+            return;
+        }
+        if (!docRef) {
+            alert('Utilizador não encontrado. Faça login novamente.');
+            return;
+        }
+        try {
+            var fresh = await docRef.get();
+            var dados = fresh.exists ? fresh.data() : {};
+            var feitos = Object.assign({}, dados.desafiosProgramadosFeitos || {});
+            if (feitos[id]) {
+                alert('Já concluiu este desafio.');
+                var card = document.getElementById('card-des-' + id);
+                if (card) card.remove();
+                return;
+            }
+            feitos[id] = true;
+            var novosPts = (dados.pontos || 0) + (pts || 0);
+            await docRef.update({
+                pontos: novosPts,
+                desafiosProgramadosFeitos: feitos,
+                ultimaAtualizacao: new Date().toISOString()
+            });
+            if (userDataCache) userDataCache.desafiosProgramadosFeitos = feitos;
+            atualizarPontosUI(novosPts);
+            alert('✅ +' + pts + ' pontos recebidos!');
+            aposConcluirDesafio('card-des-' + id);
+        } catch (e) {
+            alert('Erro: ' + (e.message || e));
+        }
+    }
+
+
+    // Anúncios curtos (AdSense) — sem pontos
+    // Camada extra de segurança: mesmo que exista algo salvo por engano no Admin
+    // para "desafios"/"tarefas", esta página nunca vai exibi-lo — página com
+    // mecânica de pontos não pode ter AdSense, sob risco de banimento da conta.
+    var PAGINAS_PROIBIDAS_ADSENSE = ['desafios', 'tarefas', 'desafio-anuncio'];
+    async function carregarAnunciosCurtosNaPagina(nomePagina) {
+        if (PAGINAS_PROIBIDAS_ADSENSE.indexOf(nomePagina) !== -1) return;
+        try {
+            var snap = await db.collection('anunciosCurtos').get();
+            var host = document.getElementById('zona-anuncios-curtos');
+            if (!host) {
+                host = document.createElement('div');
+                host.id = 'zona-anuncios-curtos';
+                host.style.cssText = 'margin:14px 0;';
+                var menu = document.querySelector('.menu-baixo');
+                if (menu) document.body.insertBefore(host, menu);
+                else document.body.appendChild(host);
+            }
+            host.innerHTML = '';
+            snap.forEach(function (doc) {
+                var d = doc.data() || {};
+                if (d.ativo === false) return;
+                var pags = d.paginas || [];
+                if (pags.indexOf(nomePagina) === -1) return;
+                var box = document.createElement('div');
+                box.style.cssText = 'background:rgba(21,21,31,0.9);border:1px solid #2a2a3a;border-radius:12px;padding:10px;margin-bottom:10px;overflow:hidden;';
+                var label = document.createElement('div');
+                label.style.cssText = 'font-size:10px;color:#666;margin-bottom:6px;';
+                label.textContent = 'Publicidade';
+                box.appendChild(label);
+                var slot = document.createElement('div');
+                box.appendChild(slot);
+                host.appendChild(box);
+                try {
+                    var tpl = document.createElement('template');
+                    tpl.innerHTML = d.codigo || '';
+                    var frag = tpl.content;
+                    Array.prototype.forEach.call(frag.querySelectorAll('script'), function (old) {
+                        var s = document.createElement('script');
+                        Array.prototype.forEach.call(old.attributes, function (attr) { s.setAttribute(attr.name, attr.value); });
+                        s.text = old.textContent || '';
+                        old.parentNode.replaceChild(s, old);
+                    });
+                    slot.appendChild(frag);
+                } catch (eInj) {}
+            });
+        } catch (e) { console.warn('anunciosCurtos', e); }
+    }
+
+    document.addEventListener('DOMContentLoaded', async function () {
+        var nome = localStorage.getItem('nomeUtilizador') || '—';
+        var tel = localStorage.getItem('telUtilizador') || '—';
+        emailUtilizador = localStorage.getItem('emailUtilizador') || '—';
+
+        document.getElementById('mostrar-nome').textContent = nome;
+        document.getElementById('mostrar-tel').textContent = tel;
+        document.getElementById('mostrar-email').textContent = emailUtilizador;
+
+        var pontos = parseInt(localStorage.getItem('pontosUtilizador') || '0', 10);
+        atualizarPontosUI(pontos);
+
+        // Sincroniza com Firebase
+        if (emailUtilizador && emailUtilizador !== '—') {
+            try {
+                var snap = await db.collection('usuarios').where('email', '==', emailUtilizador).limit(1).get();
+                if (snap.empty) {
+                    var emailNorm = String(emailUtilizador).trim().toLowerCase();
+                    if (emailNorm !== emailUtilizador) {
+                        snap = await db.collection('usuarios').where('email', '==', emailNorm).limit(1).get();
+                    }
+                }
+                if (!snap.empty) {
+                    docRef = snap.docs[0].ref;
+                    var u = snap.docs[0].data();
+                    userDataCache = u;
+                    if (u.pontos != null) atualizarPontosUI(u.pontos);
+                    if (u.desafioYoutubeCompleto === true) {
+                        jaFezYoutube = true;
+                        var cardYt = document.getElementById('card-youtube');
+                        if (cardYt) cardYt.style.display = 'none';
+                    }
+                }
+            } catch (e) {
+                console.warn('Sincronização:', e);
+            }
+        }
+
+        await carregarDesafiosProgramados();
+        await carregarAnunciosCurtosNaPagina('desafios');
+
+        // Efeito de digitação
+        var frases = ["Desafio MOZ", "Bem-vindo, comece a ganhar agora!"];
+        var el = document.getElementById('typing-text');
+        var fraseIndex = 0, charIndex = 0, apagando = false;
+
+        function digitar() {
+            var fraseAtual = frases[fraseIndex];
+            if (!apagando) {
+                el.textContent = fraseAtual.substring(0, charIndex + 1);
+                charIndex++;
+                if (charIndex === fraseAtual.length) {
+                    apagando = true;
+                    setTimeout(digitar, 1800);
+                    return;
+                }
+                setTimeout(digitar, 80);
+            } else {
+                el.textContent = fraseAtual.substring(0, charIndex - 1);
+                charIndex--;
+                if (charIndex === 0) {
+                    apagando = false;
+                    fraseIndex = (fraseIndex + 1) % frases.length;
+                    setTimeout(digitar, 400);
+                    return;
+                }
+                setTimeout(digitar, 45);
+            }
+        }
+        digitar();
+    });
+</script>
+
+</body>
+</html>

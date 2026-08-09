@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="pt-MZ">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Política de Privacidade – Desafio MOZ</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=Poppins:wght@600;700;900&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --preto-fundo: #0A0C14;
+            --preto-escuro: #05060F;
+            --cinza: #161A2B;
+            --verde: #00C853;
+            --verde-claro: #22FF99;
+            --texto: #FFFFFF;
+            --texto-claro: #A8B0C8;
+            --destaque: #FFD700;
+        }
+
+        body {
+            background: var(--preto-fundo);
+            color: var(--texto);
+            font-family: 'Inter', system-ui, sans-serif;
+            line-height: 1.8;
+            padding: 20px 0 60px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 20% 30%, rgba(0,200,83,0.06), transparent 55%),
+                        radial-gradient(circle at 80% 70%, rgba(34,255,153,0.05), transparent 55%),
+                        linear-gradient(180deg, rgba(10,12,20,0.96), rgba(5,6,15,0.98));
+            z-index: -1;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* CABEÇALHO */
+        .cabecalho {
+            text-align: center;
+            padding: 45px 0 35px;
+            border-bottom: 1px solid rgba(0,200,83,0.2);
+            margin-bottom: 40px;
+        }
+
+        .logo {
+            width: 105px;
+            height: 105px;
+            border-radius: 16px;
+            object-fit: contain;
+            margin-bottom: 18px;
+            box-shadow: 0 0 30px rgba(34,255,153,0.35);
+        }
+
+        .titulo-principal {
+            font-family: 'Poppins', sans-serif;
+            font-size: clamp(28px, 7vw, 42px);
+            background: linear-gradient(90deg, var(--verde), var(--verde-claro), var(--destaque));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 900;
+            margin-bottom: 10px;
+        }
+
+        .subtitulo {
+            color: var(--texto-claro);
+            font-size: 17px;
+            max-width: 650px;
+            margin: 0 auto;
+        }
+
+        /* CAIXAS DE PRIVACIDADE COM ESTILO NOVO */
+        .bloco-privacidade {
+            background: rgba(22,26,43,0.8);
+            border-left: 4px solid var(--verde);
+            border-radius: 0 18px 18px 0;
+            padding: 28px 25px;
+            margin-bottom: 24px;
+            transition: all 0.35s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .bloco-privacidade:hover {
+            border-left-color: var(--verde-claro);
+            background: rgba(22,26,43,0.9);
+            transform: translateX(5px);
+            box-shadow: 5px 0 25px rgba(0,200,83,0.15);
+        }
+
+        .titulo-bloco {
+            color: var(--verde-claro);
+            font-size: 21px;
+            font-weight: 700;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .bloco-privacidade p,
+        .bloco-privacidade li {
+            color: var(--texto-claro);
+        }
+
+        .bloco-privacidade ul {
+            padding-left: 28px;
+            margin-top: 8px;
+        }
+
+        .bloco-privacidade li {
+            margin-bottom: 8px;
+        }
+
+        /* TABELA DE DADOS */
+        .titulo-tabela {
+            text-align: center;
+            color: var(--verde-claro);
+            font-size: 22px;
+            margin: 45px 0 20px;
+            font-weight: 700;
+        }
+
+        .tabela {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            border-radius: 18px;
+            overflow: hidden;
+            background: rgba(22,26,43,0.9);
+            margin-bottom: 35px;
+        }
+
+        .tabela th {
+            background: linear-gradient(90deg, var(--verde), var(--verde-claro));
+            color: #000;
+            padding: 17px;
+            text-align: left;
+            font-weight: 800;
+        }
+
+        .tabela td {
+            padding: 15px 17px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            color: var(--texto-claro);
+        }
+
+        .tabela tr:last-child td { border-bottom: none; }
+        .tabela tr:hover td { background: rgba(0,200,83,0.08); }
+
+        /* BOTÕES */
+        .area-botoes {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 50px;
+        }
+
+        .btn {
+            padding: 15px 35px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 17px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.35s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-voltar {
+            background: transparent;
+            color: var(--texto);
+            border: 2px solid var(--verde);
+        }
+
+        .btn-voltar:hover {
+            background: rgba(0,200,83,0.15);
+            transform: translateY(-3px);
+        }
+
+        .btn-conta {
+            background: linear-gradient(90deg, var(--verde), var(--verde-claro));
+            color: #000;
+            box-shadow: 0 5px 25px rgba(0,200,83,0.45);
+        }
+
+        .btn-conta:hover {
+            transform: translateY(-4px) scale(1.04);
+            box-shadow: 0 10px 35px rgba(0,200,83,0.55);
+        }
+
+        @media (max-width: 600px) {
+            .area-botoes { flex-direction: column; align-items: center; }
+            .btn { width: 100%; max-width: 320px; justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- CABEÇALHO -->
+    <header class="cabecalho">
+        <img src="https://i.supaimg.com/b173afd9-4344-4026-a5d7-6a53e4b6efdc/8f054a24-2746-4a43-9f1c-354584289dc3.png" alt="Desafio MOZ" class="logo">
+        <h1 class="titulo-principal">🔒 Política de Privacidade</h1>
+        <p class="subtitulo">A tua segurança e privacidade são a nossa maior prioridade</p>
+    </header>
+
+    <!-- CONTEÚDO -->
+    <div class="bloco-privacidade">
+        <h3 class="titulo-bloco"><i class="fas fa-info-circle"></i> 1. Introdução</h3>
+        <p>O Desafio MOZ compromete‑se a proteger os teus dados pessoais. Esta política explica como recolhemos, usamos, guardamos e protegemos as tuas informações quando usas a nossa plataforma. Ao criares uma conta, concordas com as regras aqui descritas.</p>
+    </div>
+
+    <div class="bloco-privacidade">
+        <h3 class="titulo-bloco"><i class="fas fa-database"></i> 2. Quais dados recolhemos</h3>
+        <p>Pedimos apenas o que é necessário para o funcionamento do serviço:</p>
+        <ul>
+            <li>Nome completo e dados de contacto (telemóvel, e‑mail);</li>
+            <li>Número de operadora (M‑Pesa / e‑Mola) para receberes os teus ganhos;</li>
+            <li>Dados de acesso e atividade na plataforma;</li>
+            <li>Informações do dispositivo para melhorar a segurança.</li>
+        </ul>
+    </div>
+
+    <div class="bloco-privacidade">
+        <h3 class="titulo-bloco"><i class="fas fa-cogs"></i> 3. Para que usamos os teus dados</h3>
+        <ul>
+            <li>Gerir a tua conta e confirmar a tua identidade;</li>
+            <li>Processar os pagamentos e recompensas;</li>
+            <li>Enviar avisos importantes sobre o serviço;</li>
+            <li>Melhorar as funcionalidades e a segurança do site;</li>
+            <li>Evitar fraudes e uso indevido da plataforma.</li>
+        </ul>
+    </div>
+
+    <div class="bloco-privacidade">
+        <h3 class="titulo-bloco"><i class="fas fa-user-secret"></i> 4. Proteção e Sigilo</h3>
+        <p>Nunca vendemos, trocamos ou partilhamos os teus dados pessoais com terceiros para fins comerciais. As informações são guardadas em servidores seguros, com acesso restrito apenas a pessoas autorizadas e ligadas diretamente ao funcionamento do Desafio MOZ.</p>
+    </div>
+
+    <div class="bloco-privacidade">
+        <h3 class="titulo-bloco"><i class="fas fa-cookie-bite"></i> 5. Tecnologias e Segurança</h3>
+        <p>Usamos medidas técnicas e administrativas para proteger os teus dados contra acesso não autorizado, perda ou alteração. Podemos usar cookies para melhorar a tua experiência, mas nunca para recolher informações sem o teu conhecimento.</p>
+    </div>
+
+    <div class="bloco-privacidade">
+        <h3 class="titulo-bloco"><i class="fas fa-edit"></i> 6. Os teus Direitos</h3>
+        <p>Tens o direito de pedir acesso, correção ou eliminação dos teus dados a qualquer momento. Basta entrar em contacto pelos meios disponíveis na página de Contato. Manteremos apenas os dados necessários enquanto a tua conta estiver ativa ou por exigência legal.</p>
+    </div>
+
+    <div class="bloco-privacidade">
+        <h3 class="titulo-bloco"><i class="fas fa-sync-alt"></i> 7. Alterações e Dúvidas</h3>
+        <p>Podemos atualizar esta política sempre que necessário — qualquer alteração será publicada aqui. Se tiveres alguma dúvida sobre a proteção dos teus dados, fala connosco através do número ou e‑mail oficial.</p>
+    </div>
+
+    <!-- TABELA DE RESUMO -->
+    <h3 class="titulo-tabela">📊 Resumo da Nossa Proteção</h3>
+    <table class="tabela">
+        <thead>
+            <tr>
+                <th>O Que Fazemos</th>
+                <th>O Que Não Fazemos</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Recolhemos só dados essenciais</td>
+                <td>Não pedimos dados desnecessários</td>
+            </tr>
+            <tr>
+                <td>Guardamos com segurança</td>
+                <td>Não vendemos os teus dados</td>
+            </tr>
+            <tr>
+                <td>Usamos só para o serviço</td>
+                <td>Não partilhamos com terceiros</td>
+            </tr>
+            <tr>
+                <td>Respeitamos os teus direitos</td>
+                <td>Não enviamos mensagens indesejadas</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- BOTÕES -->
+    <div class="area-botoes">
+        <a href="index.html" class="btn btn-voltar">
+            <i class="fas fa-arrow-left"></i> Voltar ao Início
+        </a>
+        <a href="contato.html" class="btn btn-conta">
+            <i class="fas fa-question-circle"></i> Tirar Dúvidas
+        </a>
+    </div>
+</div>
+
+
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+<script>
+(function () {
+  if (typeof window.__DESAFIO_MOZ_FIREBASE__ === 'undefined') {
+    window.__DESAFIO_MOZ_FIREBASE__ = true;
+    var firebaseConfig = {
+      apiKey: "AIzaSyDONfggnmf9OJX_AgfvcHTRf6tsuKD5nrA",
+      authDomain: "desafio-moz-61b70.firebaseapp.com",
+      projectId: "desafio-moz-61b70",
+      storageBucket: "desafio-moz-61b70.firebasestorage.app",
+      messagingSenderId: "945658936331",
+      appId: "1:945658936331:web:7ee4b0e7de1c1daf36db0e",
+      measurementId: "G-G1DZQ1B0DB"
+    };
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    window.db = firebase.firestore();
+  }
+  var db = window.db;
+  var PAGINA = 'privacidade';
+
+  function injetarHtml(container, html) {
+    var tpl = document.createElement('template');
+    tpl.innerHTML = html || '';
+    var frag = tpl.content;
+    Array.prototype.forEach.call(frag.querySelectorAll('script'), function (old) {
+      var s = document.createElement('script');
+      Array.prototype.forEach.call(old.attributes, function (a) { s.setAttribute(a.name, a.value); });
+      s.text = old.textContent || '';
+      old.parentNode.replaceChild(s, old);
+    });
+    container.appendChild(frag);
+  }
+
+  async function carregarAnunciosCurtosNaPagina() {
+    try {
+      var snap = await db.collection('anunciosCurtos').get();
+      var host = document.getElementById('zona-anuncios-curtos');
+      if (!host) {
+        host = document.createElement('div');
+        host.id = 'zona-anuncios-curtos';
+        host.style.cssText = 'max-width:900px;margin:20px auto;padding:0 16px;';
+        var footer = document.querySelector('footer');
+        var botoes = document.querySelector('.area-botoes');
+        var menu = document.querySelector('.menu-baixo');
+        if (menu) document.body.insertBefore(host, menu);
+        else if (botoes) botoes.parentNode.insertBefore(host, botoes);
+        else if (footer) footer.parentNode.insertBefore(host, footer);
+        else document.body.appendChild(host);
+      }
+      host.innerHTML = '';
+      snap.forEach(function (doc) {
+        var d = doc.data() || {};
+        if (d.ativo === false) return;
+        var pags = (d.paginas || []).map(function (p) {
+          return String(p).toLowerCase().replace(/\.html$/, '');
+        });
+        if (pags.indexOf(PAGINA) === -1) return;
+        var box = document.createElement('div');
+        box.style.cssText = 'background:rgba(21,21,31,0.92);border:1px solid rgba(0,200,83,0.25);border-radius:14px;padding:12px;margin-bottom:12px;overflow:hidden;';
+        var lab = document.createElement('div');
+        lab.style.cssText = 'font-size:10px;color:#666;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;';
+        lab.textContent = 'Publicidade';
+        box.appendChild(lab);
+        var slot = document.createElement('div');
+        box.appendChild(slot);
+        host.appendChild(box);
+        try { injetarHtml(slot, d.codigo); } catch (e) {}
+      });
+    } catch (e) { console.warn('anunciosCurtos', e); }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', carregarAnunciosCurtosNaPagina);
+  } else {
+    carregarAnunciosCurtosNaPagina();
+  }
+})();
+</script>
+
+</body>
+</html>

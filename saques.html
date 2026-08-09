@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="pt-MZ">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Saque - Desafio MOZ</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+
+        body {
+            background-color: #0a0a0f;
+            background-image: url('https://i.supaimg.com/b173afd9-4344-4026-a5d7-6a53e4b6efdc/ee1d80e4-4738-41a8-b50c-cfadd8bd080c.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: #ffffff;
+            min-height: 100vh;
+            padding-bottom: 85px;
+            position: relative;
+        }
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(8, 8, 14, 0.88);
+            z-index: -1;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background: rgba(10, 10, 15, 0.95);
+            border-bottom: 2px solid #00c853;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .logo-area { display: flex; align-items: center; gap: 10px; }
+        .logo {
+            width: 42px; height: 42px; border-radius: 50%;
+            object-fit: cover; border: 2px solid #00e676;
+            background: rgba(0, 200, 83, 0.15); flex-shrink: 0;
+        }
+        .app-title { font-size: 20px; font-weight: 700; color: #00e676; }
+
+        .balance-circle {
+            width: 56px; height: 56px; border-radius: 50%;
+            background: linear-gradient(145deg, #00c853, #00e676);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            font-weight: 700; color: #000;
+            box-shadow: 0 0 16px rgba(0, 200, 83, 0.55);
+        }
+        .balance-circle .amount { font-size: 16px; line-height: 1; }
+        .balance-circle .currency { font-size: 10px; line-height: 1; margin-top: 1px; }
+
+        .user-info {
+            background: rgba(18, 18, 26, 0.95);
+            padding: 8px 16px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #aaa;
+            border-bottom: 1px solid #1e1e2a;
+        }
+        .user-info span { color: #00e676; }
+
+        .content { padding: 16px; }
+
+        .wallet-card {
+            background: rgba(21, 21, 31, 0.92);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #1e1e2a;
+        }
+        .wallet-title { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+        .wallet-title h2 { font-size: 20px; font-weight: 700; }
+        .wallet-subtitle { color: #888; font-size: 14px; margin-bottom: 18px; }
+
+        .points-box {
+            border: 2px dashed #00c853;
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            background: rgba(15, 15, 21, 0.9);
+        }
+        .points-item .label { color: #aaa; font-size: 13px; margin-bottom: 4px; }
+        .points-item .value { font-size: 28px; font-weight: 700; color: #00e676; }
+        .points-item .value.mzn { color: #fff; }
+
+        .warning-box {
+            background: rgba(26, 26, 18, 0.95);
+            border: 2px solid #f9a825;
+            border-radius: 12px;
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #f9a825;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .warning-box.ok {
+            border-color: #00c853;
+            color: #00e676;
+            background: rgba(0, 200, 83, 0.08);
+        }
+
+        .section-title { font-size: 17px; font-weight: 700; margin: 22px 0 14px; color: #fff; }
+
+        .payment-option {
+            background: rgba(21, 21, 31, 0.92);
+            border-radius: 14px;
+            padding: 14px 16px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+        .payment-option.active {
+            border-color: #00c853;
+            background: rgba(15, 26, 20, 0.95);
+            box-shadow: 0 0 12px rgba(0, 200, 83, 0.25);
+        }
+        .payment-option .logo-img {
+            width: 52px; height: 52px; border-radius: 10px;
+            object-fit: contain; background: #fff; padding: 6px;
+        }
+        .payment-option .info h3 { font-size: 17px; font-weight: 700; margin-bottom: 2px; }
+        .payment-option .info p { font-size: 13px; color: #aaa; }
+
+        .form-group { margin-bottom: 16px; }
+        .form-group label {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 14px; color: #ccc; margin-bottom: 8px;
+        }
+        .form-group input {
+            width: 100%;
+            background: rgba(18, 18, 26, 0.95);
+            border: 1px solid #2a2a3a;
+            border-radius: 12px;
+            padding: 14px 16px;
+            color: #fff; font-size: 15px; outline: none;
+        }
+        .form-group input::placeholder { color: #555; }
+        .form-group input:focus { border-color: #00c853; }
+
+        /* ===== BOTÃO DE SAQUE ATRAENTE ===== */
+        .btn-saque-wrap { margin-top: 12px; position: relative; }
+
+        .btn-saque {
+            width: 100%;
+            border: none;
+            border-radius: 16px;
+            padding: 18px 20px;
+            font-size: 17px;
+            font-weight: 800;
+            letter-spacing: 0.3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.15s ease, box-shadow 0.2s ease;
+        }
+        .btn-saque::before {
+            content: "";
+            position: absolute;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,0.25) 50%, transparent 70%);
+            transform: translateX(-100%);
+            transition: none;
+        }
+        .btn-saque:active { transform: scale(0.97); }
+
+        .btn-saque.ativo {
+            background: linear-gradient(135deg, #00c853 0%, #00e676 45%, #69f0ae 100%);
+            color: #003d1a;
+            box-shadow: 0 8px 28px rgba(0, 200, 83, 0.45), 0 0 0 1px rgba(0, 230, 118, 0.3);
+            animation: pulseGlow 2.4s ease-in-out infinite;
+        }
+        .btn-saque.ativo:hover::before,
+        .btn-saque.ativo:focus::before {
+            animation: shine 0.9s ease;
+        }
+        .btn-saque.ativo .btn-icon {
+            font-size: 22px;
+            filter: drop-shadow(0 1px 2px rgba(0,0,0,0.15));
+        }
+        .btn-saque.ativo .btn-text {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            line-height: 1.15;
+        }
+        .btn-saque.ativo .btn-text strong { font-size: 17px; }
+        .btn-saque.ativo .btn-text small {
+            font-size: 11px; font-weight: 600; opacity: 0.75; letter-spacing: 0.2px;
+        }
+
+        .btn-saque.desativado {
+            background: #2a2a35;
+            color: #777;
+            cursor: not-allowed;
+            box-shadow: none;
+            animation: none;
+        }
+
+        .btn-saque.enviando {
+            background: linear-gradient(135deg, #00897b, #00bcd4);
+            color: #fff;
+            cursor: wait;
+            animation: none;
+            box-shadow: 0 6px 20px rgba(0, 188, 212, 0.35);
+        }
+
+        .btn-saque.sucesso {
+            background: linear-gradient(135deg, #1b5e20, #2e7d32);
+            color: #a5d6a7;
+            cursor: default;
+            animation: none;
+            box-shadow: 0 6px 20px rgba(46, 125, 50, 0.4);
+        }
+
+        .btn-saque.pendente {
+            background: linear-gradient(135deg, #e65100, #ff9800);
+            color: #fff;
+            cursor: default;
+            animation: none;
+            box-shadow: 0 6px 20px rgba(255, 152, 0, 0.4);
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 8px 28px rgba(0, 200, 83, 0.45), 0 0 0 1px rgba(0, 230, 118, 0.3); }
+            50% { box-shadow: 0 8px 36px rgba(0, 230, 118, 0.65), 0 0 0 2px rgba(0, 230, 118, 0.5); }
+        }
+        @keyframes shine {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .toast {
+            display: none;
+            position: fixed;
+            top: 70px; left: 16px; right: 16px;
+            z-index: 2000;
+            background: rgba(15, 26, 20, 0.98);
+            border: 1px solid #00c853;
+            border-radius: 14px;
+            padding: 16px 18px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+            animation: slideDown 0.35s ease;
+        }
+        .toast.show { display: block; }
+        .toast .toast-title {
+            color: #00e676; font-weight: 800; font-size: 15px; margin-bottom: 4px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .toast .toast-msg { color: #ccc; font-size: 13px; line-height: 1.4; }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .resumo-card {
+            background: rgba(21, 21, 31, 0.92);
+            border-radius: 16px;
+            padding: 4px 0;
+            margin-top: 24px;
+            border: 1px solid #1e1e2a;
+        }
+        .resumo-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 14px 18px;
+            border-bottom: 1px solid #1e1e2a;
+            font-size: 15px;
+        }
+        .resumo-row:last-child { border-bottom: none; }
+        .resumo-row .label { color: #aaa; }
+        .resumo-row .value { font-weight: 600; }
+        .resumo-row .value.red { color: #ef5350; }
+        .resumo-row.highlight {
+            background: rgba(15, 26, 20, 0.95);
+            border-radius: 0 0 14px 14px;
+        }
+        .resumo-row.highlight .label {
+            color: #00e676; font-weight: 700;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .resumo-row.highlight .value { color: #00e676; font-size: 18px; }
+
+        .prazo {
+            display: flex; align-items: flex-start; gap: 10px;
+            margin-top: 16px; padding: 12px;
+            background: rgba(18, 18, 26, 0.95);
+            border-radius: 12px; font-size: 13px; color: #aaa; line-height: 1.4;
+        }
+
+        .menu-baixo {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: rgba(12, 12, 18, 0.97);
+            border-top: 1px solid #1e1e2a;
+            display: flex; justify-content: space-around; align-items: center;
+            padding: 10px 0 12px; z-index: 1000;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
+        }
+        .menu-baixo a {
+            display: flex; flex-direction: column; align-items: center; gap: 4px;
+            text-decoration: none; color: #777; font-size: 11px; font-weight: 500; width: 70px;
+        }
+        .menu-baixo a i { font-size: 20px; margin-bottom: 2px; }
+        .menu-baixo a.ativo { color: #00e676; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="logo-area">
+            <img src="https://i.supaimg.com/b173afd9-4344-4026-a5d7-6a53e4b6efdc/8f054a24-2746-4a43-9f1c-354584289dc3.png" alt="Logo Desafio MOZ" class="logo">
+            <div class="app-title">Desafio MOZ</div>
+        </div>
+        <div class="balance-circle">
+            <div class="amount" id="circle-mzn">0</div>
+            <div class="currency">MZN</div>
+        </div>
+    </div>
+
+    <div class="user-info">
+        <div>ID: <span id="user-id">—</span></div>
+        <div>Email: <span id="user-email">—</span></div>
+    </div>
+
+    <div id="toast" class="toast">
+        <div class="toast-title"><i class="fas fa-check-circle"></i> <span id="toast-title">Pedido enviado!</span></div>
+        <div class="toast-msg" id="toast-msg">O seu saque foi registado e aparecerá no painel de administração.</div>
+    </div>
+
+    <div class="content">
+
+        <div class="wallet-card">
+            <div class="wallet-title">
+                <span style="font-size: 26px;">💰</span>
+                <h2>Carteira de Recompensas</h2>
+            </div>
+            <p class="wallet-subtitle">Seu saldo atual e rendimentos</p>
+
+            <div class="points-box">
+                <div class="points-item">
+                    <div class="label">Pontos<br>Acumulados</div>
+                    <div class="value" id="pontos-acumulados">0</div>
+                </div>
+                <div class="points-item" style="text-align: right;">
+                    <div class="label">Equivalente em<br>Meticais</div>
+                    <div class="value mzn" id="mzn-equivalente">0 MZN</div>
+                </div>
+            </div>
+
+            <div class="warning-box" id="warning-saque">
+                <span>⚠️</span>
+                <span id="warning-texto">A carregar saldo...</span>
+            </div>
+        </div>
+
+        <h3 class="section-title">Escolha o Método de Pagamento</h3>
+
+        <div class="payment-option active" data-metodo="M-Pesa" onclick="selecionarPagamento(this)">
+            <img src="https://i.supaimg.com/b173afd9-4344-4026-a5d7-6a53e4b6efdc/78870cb5-ab0a-4108-a5ef-6e76fa9a7db1.jpg"
+                 alt="M-Pesa" class="logo-img"
+                 onerror="this.src='https://img.logokit.com/m-pesa.com'">
+            <div class="info">
+                <h3>M-Pesa</h3>
+                <p>Carteira móvel segura e rápida da Vodacom</p>
+            </div>
+        </div>
+
+        <div class="payment-option" data-metodo="e-Mola" onclick="selecionarPagamento(this)">
+            <img src="https://i.supaimg.com/b173afd9-4344-4026-a5d7-6a53e4b6efdc/e9c09751-c70f-4a5a-88ed-eabc95779bb6.png"
+                 alt="e-Mola" class="logo-img"
+                 onerror="this.src='https://seeklogo.com/images/M/movitel-logo-405014.png'">
+            <div class="info">
+                <h3>e-Mola</h3>
+                <p>Serviço de dinheiro móvel da Movitel</p>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>📞 Número de Telefone (M-Pesa / e-Mola)</label>
+            <input type="tel" id="telefone-saque" placeholder="Ex: 84 123 4567" maxlength="12">
+        </div>
+
+        <div class="form-group">
+            <label>👤 Nome Completo do Titular</label>
+            <input type="text" id="nome-saque" placeholder="Nome exato como na operadora">
+        </div>
+
+        <div class="form-group">
+            <label>🎯 Pontos que deseja sacar</label>
+            <input type="number" id="pontos-saque" placeholder="Ex: 800" min="500" step="10" oninput="atualizarResumoEscolha()">
+            <p style="font-size:12px;color:#888;margin-top:6px;">
+                Mínimo: <strong style="color:#00e676;">500 pontos</strong> (50 MZN) · Máximo: o seu saldo atual
+            </p>
+        </div>
+
+        <div class="btn-saque-wrap">
+            <button type="button" class="btn-saque desativado" id="btn-saque" disabled>
+                <span class="btn-icon">🔒</span>
+                <span class="btn-text"><strong>Ainda não atinge o mínimo</strong></span>
+            </button>
+        </div>
+
+        <h3 class="section-title" style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 20px;">📊</span> Resumo da Operação
+        </h3>
+
+        <div class="resumo-card">
+            <div class="resumo-row">
+                <span class="label">Saldo Disponível</span>
+                <span class="value" id="resumo-saldo">0 pts · 0.00 MZN</span>
+            </div>
+            <div class="resumo-row">
+                <span class="label">Valor Mínimo para Saque</span>
+                <span class="value">500 pts · 50.00 MZN</span>
+            </div>
+            <div class="resumo-row">
+                <span class="label">Pontos a sacar</span>
+                <span class="value" id="resumo-deseja">0 pts · 0.00 MZN</span>
+            </div>
+            <div class="resumo-row">
+                <span class="label">Taxa de Serviço (20%)</span>
+                <span class="value red" id="resumo-taxa">0.00 MZN</span>
+            </div>
+            <div class="resumo-row highlight">
+                <span class="label">✅ Valor Líquido a Receber</span>
+                <span class="value" id="resumo-liquido">0.00 MZN</span>
+            </div>
+            <div class="resumo-row">
+                <span class="label">Pontos que ficam na conta</span>
+                <span class="value" id="resumo-restantes" style="color:#00e676;">0 pts</span>
+            </div>
+        </div>
+
+        <div class="prazo">
+            <span>⏱️</span>
+            <span>Prazo de Recebimento: Após a solicitação, o pagamento é processado em até 72 horas úteis. O pedido aparece imediatamente no painel do administrador.</span>
+        </div>
+    </div>
+
+    <div class="menu-baixo">
+        <a href="desafios.html"><i class="fas fa-home"></i> Início</a>
+        <a href="tarefas.html"><i class="fas fa-tasks"></i> Tarefas</a>
+        <a href="saques.html" class="ativo"><i class="fas fa-wallet"></i> Sacar</a>
+        <a href="perfil.html"><i class="fas fa-cog"></i> Conta</a>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    <script>
+        if (typeof window.__DESAFIO_MOZ_FIREBASE__ === 'undefined') {
+            window.__DESAFIO_MOZ_FIREBASE__ = true;
+            var firebaseConfig = {
+                apiKey: "AIzaSyDONfggnmf9OJX_AgfvcHTRf6tsuKD5nrA",
+                authDomain: "desafio-moz-61b70.firebaseapp.com",
+                projectId: "desafio-moz-61b70",
+                storageBucket: "desafio-moz-61b70.firebasestorage.app",
+                messagingSenderId: "945658936331",
+                appId: "1:945658936331:web:7ee4b0e7de1c1daf36db0e",
+                measurementId: "G-G1DZQ1B0DB"
+            };
+            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+            window.db = firebase.firestore();
+        }
+        var db = window.db;
+
+        var MINIMO_PONTOS = 500;   // 50 MZN
+        var MINIMO_MZN = 50;
+        var metodoPagamento = 'M-Pesa';
+        var pontosAtuais = 0;
+        var mznAtuais = 0;
+        var emailUtilizador = '';
+        var userDocRef = null;
+        var pedidoPendente = false;
+        var aEnviar = false;
+
+        function selecionarPagamento(el) {
+            document.querySelectorAll('.payment-option').forEach(function (o) { o.classList.remove('active'); });
+            el.classList.add('active');
+            metodoPagamento = el.getAttribute('data-metodo') || 'M-Pesa';
+        }
+
+        function hashCode(str) {
+            var hash = 0;
+            for (var i = 0; i < str.length; i++) {
+                hash = ((hash << 5) - hash) + str.charCodeAt(i);
+                hash |= 0;
+            }
+            return hash;
+        }
+
+        function mostrarToast(titulo, msg) {
+            var t = document.getElementById('toast');
+            document.getElementById('toast-title').textContent = titulo;
+            document.getElementById('toast-msg').textContent = msg;
+            t.classList.add('show');
+            setTimeout(function () { t.classList.remove('show'); }, 4500);
+        }
+
+        function getPontosEscolhidos() {
+            var el = document.getElementById('pontos-saque');
+            var v = parseInt(el.value, 10);
+            if (isNaN(v) || v < 0) return 0;
+            return v;
+        }
+
+        function atualizarResumoEscolha() {
+            var ptsEscolha = getPontosEscolhidos();
+            var mznEscolha = ptsEscolha / 10;
+            var taxa = mznEscolha * 0.20;
+            var liquido = mznEscolha - taxa;
+            var restantes = Math.max(0, pontosAtuais - ptsEscolha);
+
+            document.getElementById('resumo-deseja').textContent =
+                ptsEscolha + ' pts · ' + mznEscolha.toFixed(2) + ' MZN';
+            document.getElementById('resumo-taxa').textContent = taxa.toFixed(2) + ' MZN';
+            document.getElementById('resumo-liquido').textContent = liquido.toFixed(2) + ' MZN';
+            document.getElementById('resumo-restantes').textContent = restantes + ' pts';
+
+            atualizarBotao();
+        }
+
+        function atualizarBotao() {
+            var warningBox = document.getElementById('warning-saque');
+            var warningTexto = document.getElementById('warning-texto');
+            var btn = document.getElementById('btn-saque');
+            var ptsEscolha = getPontosEscolhidos();
+            var mznEscolha = ptsEscolha / 10;
+            var liquido = mznEscolha - (mznEscolha * 0.20);
+
+            if (pedidoPendente) {
+                warningBox.className = 'warning-box ok';
+                warningTexto.textContent = 'Já tem um pedido de saque pendente. Aguarde o processamento.';
+                btn.className = 'btn-saque pendente';
+                btn.disabled = true;
+                btn.onclick = null;
+                btn.innerHTML = '<span class="btn-icon">⏳</span><span class="btn-text"><strong>Pedido em análise</strong><small>Aguarde até 72h úteis</small></span>';
+                return;
+            }
+
+            if (pontosAtuais < MINIMO_PONTOS) {
+                warningBox.className = 'warning-box';
+                var falta = MINIMO_PONTOS - pontosAtuais;
+                warningTexto.textContent = 'Faltam ' + falta + ' pontos para atingir o saque mínimo (500 pts / 50 MZN)!';
+                btn.className = 'btn-saque desativado';
+                btn.disabled = true;
+                btn.onclick = null;
+                btn.innerHTML = '<span class="btn-icon">🔒</span><span class="btn-text"><strong>Ainda não atinge o mínimo</strong><small>Mínimo: 500 pontos</small></span>';
+                return;
+            }
+
+            // Tem saldo suficiente no geral
+            warningBox.className = 'warning-box ok';
+            warningTexto.textContent = 'Pode solicitar o saque. Escolha quantos pontos deseja sacar.';
+
+            if (ptsEscolha < MINIMO_PONTOS) {
+                btn.className = 'btn-saque desativado';
+                btn.disabled = true;
+                btn.onclick = null;
+                btn.innerHTML = '<span class="btn-icon">🔒</span><span class="btn-text"><strong>Mínimo 500 pontos</strong><small>Escolha pelo menos 500 pts</small></span>';
+                return;
+            }
+            if (ptsEscolha > pontosAtuais) {
+                btn.className = 'btn-saque desativado';
+                btn.disabled = true;
+                btn.onclick = null;
+                btn.innerHTML = '<span class="btn-icon">🔒</span><span class="btn-text"><strong>Saldo insuficiente</strong><small>Só tem ' + pontosAtuais + ' pontos</small></span>';
+                return;
+            }
+
+            btn.className = 'btn-saque ativo';
+            btn.disabled = false;
+            btn.onclick = solicitarSaque;
+            btn.innerHTML =
+                '<span class="btn-icon">💸</span>' +
+                '<span class="btn-text">' +
+                    '<strong>Solicitar Saque</strong>' +
+                    '<small>Receber ' + liquido.toFixed(2) + ' MZN líquidos</small>' +
+                '</span>';
+        }
+
+        function atualizarUI() {
+            var mzn = mznAtuais;
+            var pts = pontosAtuais;
+
+            document.getElementById('pontos-acumulados').textContent = pts;
+            document.getElementById('mzn-equivalente').textContent = mzn.toFixed(2) + ' MZN';
+            document.getElementById('circle-mzn').textContent = mzn % 1 === 0 ? mzn : mzn.toFixed(1);
+
+            document.getElementById('resumo-saldo').textContent = pts + ' pts · ' + mzn.toFixed(2) + ' MZN';
+
+            // Pré-preenche com o saldo total (utilizador pode baixar)
+            var inputPts = document.getElementById('pontos-saque');
+            if (inputPts && !inputPts.value) {
+                inputPts.value = pts >= MINIMO_PONTOS ? pts : '';
+                inputPts.max = pts;
+            }
+            if (inputPts) inputPts.max = pts;
+
+            atualizarResumoEscolha();
+        }
+
+        async function verificarPedidoPendente(email) {
+            if (!email) return false;
+            try {
+                var snap = await db.collection('solicitacoesSaque')
+                    .where('email', '==', email)
+                    .get();
+                var pendente = false;
+                snap.forEach(function (doc) {
+                    var s = doc.data();
+                    if ((s.status || 'pendente') === 'pendente') pendente = true;
+                });
+                // Também tenta email em minúsculas
+                if (!pendente) {
+                    var emailNorm = email.toLowerCase();
+                    if (emailNorm !== email) {
+                        var snap2 = await db.collection('solicitacoesSaque')
+                            .where('email', '==', emailNorm)
+                            .get();
+                        snap2.forEach(function (doc) {
+                            var s = doc.data();
+                            if ((s.status || 'pendente') === 'pendente') pendente = true;
+                        });
+                    }
+                }
+                return pendente;
+            } catch (e) {
+                console.warn('Verificar pendente:', e);
+                return false;
+            }
+        }
+
+        async function carregarPontosFirebase(email) {
+            if (!email || email === '—') return null;
+            try {
+                var emailNorm = String(email).trim().toLowerCase();
+                var snap = await db.collection('usuarios').where('email', '==', email).limit(1).get();
+                if (snap.empty && emailNorm !== email) {
+                    snap = await db.collection('usuarios').where('email', '==', emailNorm).limit(1).get();
+                }
+                if (snap.empty) {
+                    var todos = await db.collection('usuarios').get();
+                    var encontrado = null;
+                    todos.forEach(function (doc) {
+                        if (encontrado) return;
+                        var em = String((doc.data().email || '')).trim().toLowerCase();
+                        if (em && em === emailNorm) encontrado = doc;
+                    });
+                    if (encontrado) {
+                        userDocRef = encontrado.ref;
+                        var d = encontrado.data();
+                        return { pontos: d.pontos || 0, nome: d.nome || '', telemovel: d.telemovel || '' };
+                    }
+                    return null;
+                }
+                userDocRef = snap.docs[0].ref;
+                var d = snap.docs[0].data();
+                return {
+                    pontos: d.pontos || 0,
+                    nome: d.nome || '',
+                    telemovel: d.telemovel || ''
+                };
+            } catch (e) {
+                console.warn('Pontos Firebase:', e);
+            }
+            return null;
+        }
+
+        async function solicitarSaque() {
+            if (aEnviar || pedidoPendente) return;
+
+            var tel = (document.getElementById('telefone-saque').value || '').trim();
+            var nome = (document.getElementById('nome-saque').value || '').trim();
+            var ptsEscolha = getPontosEscolhidos();
+
+            if (!nome || nome.length < 3) {
+                alert('Escreva o nome completo do titular.');
+                document.getElementById('nome-saque').focus();
+                return;
+            }
+            if (!tel || tel.replace(/\D/g, '').length < 8) {
+                alert('Escreva um número de telefone válido (M-Pesa ou e-Mola).');
+                document.getElementById('telefone-saque').focus();
+                return;
+            }
+            if (!emailUtilizador || emailUtilizador === '—') {
+                alert('Faça login para solicitar o saque.');
+                window.location.href = 'criar-conta.html';
+                return;
+            }
+            if (ptsEscolha < MINIMO_PONTOS) {
+                alert('O mínimo para saque é 500 pontos (50 MZN).');
+                return;
+            }
+            if (ptsEscolha > pontosAtuais) {
+                alert('Não tem pontos suficientes. O seu saldo é de ' + pontosAtuais + ' pontos.');
+                return;
+            }
+
+            var jaPendente = await verificarPedidoPendente(emailUtilizador);
+            if (jaPendente) {
+                pedidoPendente = true;
+                atualizarUI();
+                alert('Já tem um pedido de saque pendente. Aguarde o processamento.');
+                return;
+            }
+
+            aEnviar = true;
+            var btn = document.getElementById('btn-saque');
+            btn.className = 'btn-saque enviando';
+            btn.disabled = true;
+            btn.innerHTML = '<span class="btn-icon"><i class="fas fa-spinner fa-spin"></i></span><span class="btn-text"><strong>A enviar pedido...</strong></span>';
+
+            var mznEscolha = ptsEscolha / 10;
+            var taxa = mznEscolha * 0.20;
+            var liquido = mznEscolha - taxa;
+            var pontosRestantes = pontosAtuais - ptsEscolha;
+
+            try {
+                // 1) Desconta os pontos da conta do utilizador
+                if (userDocRef) {
+                    var fresh = await userDocRef.get();
+                    var dadosFresh = fresh.exists ? fresh.data() : {};
+                    var ptsAtuaisFresh = dadosFresh.pontos || 0;
+                    if (ptsEscolha > ptsAtuaisFresh) {
+                        throw new Error('Saldo insuficiente (atualizado). Atualize a página.');
+                    }
+                    pontosRestantes = ptsAtuaisFresh - ptsEscolha;
+                    await userDocRef.update({
+                        pontos: pontosRestantes,
+                        ultimaAtualizacao: new Date().toISOString()
+                    });
+                }
+
+                // 2) Cria o pedido no Admin — o valor principal é o LÍQUIDO (após 20%)
+                await db.collection('solicitacoesSaque').add({
+                    email: emailUtilizador,
+                    nome: nome,
+                    telemovel: tel.replace(/\s/g, ''),
+                    pontos: ptsEscolha,
+                    pontosRestantes: pontosRestantes,
+                    valorMZN: Number(mznEscolha.toFixed(2)),
+                    taxaMZN: Number(taxa.toFixed(2)),
+                    liquidoMZN: Number(liquido.toFixed(2)),
+                    metodo: metodoPagamento,
+                    status: 'pendente',
+                    dataPedido: new Date().toISOString()
+                });
+
+                // Atualiza saldo local
+                pontosAtuais = pontosRestantes;
+                mznAtuais = pontosAtuais / 10;
+                localStorage.setItem('pontosUtilizador', String(pontosAtuais));
+                document.getElementById('pontos-saque').value = '';
+                document.getElementById('pontos-saque').max = pontosAtuais;
+
+                pedidoPendente = true;
+                aEnviar = false;
+
+                btn.className = 'btn-saque sucesso';
+                btn.innerHTML = '<span class="btn-icon">🎉</span><span class="btn-text"><strong>Pedido enviado com sucesso!</strong><small>Processamento em até 72h</small></span>';
+
+                mostrarToast(
+                    'Pedido de saque enviado!',
+                    'Foram descontados ' + ptsEscolha + ' pontos. Restam ' + pontosRestantes +
+                    ' pts na conta. O admin irá pagar ' + liquido.toFixed(2) + ' MZN via ' + metodoPagamento + '.'
+                );
+
+                setTimeout(function () { atualizarUI(); }, 2500);
+            } catch (e) {
+                aEnviar = false;
+                console.error(e);
+                alert('Erro ao enviar pedido: ' + (e.message || e) + '\n\nTente novamente.');
+                atualizarUI();
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', async function () {
+            var nome = localStorage.getItem('nomeUtilizador') || '';
+            var tel = localStorage.getItem('telUtilizador') || '';
+            emailUtilizador = localStorage.getItem('emailUtilizador') || '—';
+
+            var userId = localStorage.getItem('userId');
+            if (!userId && emailUtilizador && emailUtilizador !== '—') {
+                userId = 'USR-' + Math.abs(hashCode(emailUtilizador)).toString().substring(0, 6);
+                localStorage.setItem('userId', userId);
+            }
+
+            document.getElementById('user-id').textContent = userId || '—';
+            document.getElementById('user-email').textContent = emailUtilizador;
+
+            if (nome) document.getElementById('nome-saque').value = nome;
+            if (tel) document.getElementById('telefone-saque').value = tel;
+
+            // Pontos: prioriza Firebase, fallback localStorage
+            pontosAtuais = parseInt(localStorage.getItem('pontosUtilizador') || '0', 10);
+            mznAtuais = pontosAtuais / 10;
+
+            if (emailUtilizador && emailUtilizador !== '—') {
+                var fb = await carregarPontosFirebase(emailUtilizador);
+                if (fb) {
+                    pontosAtuais = fb.pontos;
+                    mznAtuais = pontosAtuais / 10;
+                    localStorage.setItem('pontosUtilizador', String(pontosAtuais));
+                    if (fb.nome && !document.getElementById('nome-saque').value) {
+                        document.getElementById('nome-saque').value = fb.nome;
+                    }
+                    if (fb.telemovel && !document.getElementById('telefone-saque').value) {
+                        document.getElementById('telefone-saque').value = fb.telemovel;
+                    }
+                }
+                pedidoPendente = await verificarPedidoPendente(emailUtilizador);
+            }
+
+            atualizarUI();
+        });
+    </script>
+</body>
+</html>

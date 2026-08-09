@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="pt-MZ">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Tarefas – Desafio MOZ</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: #0a0a0f;
+            color: #ffffff;
+            min-height: 100vh;
+            padding-bottom: 90px;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background: rgba(10, 10, 15, 0.97);
+            border-bottom: 2px solid #00c853;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #00e676;
+            background: rgba(0, 200, 83, 0.15);
+            flex-shrink: 0;
+        }
+
+        .app-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #00e676;
+        }
+
+        .user-email {
+            font-size: 12px;
+            color: #aaa;
+            max-width: 140px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .user-email span {
+            color: #00e676;
+        }
+
+        .content {
+            padding: 16px;
+        }
+
+        .sec-titulo {
+            font-size: 18px;
+            font-weight: 700;
+            color: #00e676;
+            margin: 22px 0 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tarefa-card {
+            background: rgba(21, 21, 31, 0.95);
+            border: 1px solid rgba(0, 200, 83, 0.25);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            transition: 0.2s;
+        }
+
+        .tarefa-card:active {
+            transform: scale(0.98);
+        }
+
+        .tarefa-icon {
+            width: 54px;
+            height: 54px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+
+        .icon-jogos { background: linear-gradient(135deg, #7c4dff, #b388ff); }
+        .icon-anuncios { background: linear-gradient(135deg, #ff6d00, #ffab40); }
+        .icon-pesquisa { background: linear-gradient(135deg, #00b0ff, #40c4ff); }
+        .icon-extra { background: linear-gradient(135deg, #00c853, #69f0ae); }
+        .icon-nova { background: linear-gradient(135deg, #ffd600, #ffab00); }
+        .badge-nova {
+            display: inline-block; background: #ffd600; color: #000; font-size: 10px;
+            font-weight: 800; padding: 2px 6px; border-radius: 4px; margin-left: 4px; vertical-align: middle;
+        }
+
+        .tarefa-info {
+            flex: 1;
+        }
+
+        .tarefa-info h3 {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 3px;
+        }
+
+        .tarefa-info p {
+            font-size: 13px;
+            color: #aaa;
+        }
+
+        .tarefa-ganho {
+            text-align: right;
+        }
+
+        .pontos {
+            font-size: 16px;
+            font-weight: 700;
+            color: #FFD700;
+            margin-bottom: 6px;
+        }
+
+        .btn-fazer {
+            background: #00c853;
+            color: #000;
+            border: none;
+            padding: 7px 14px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .btn-fazer:active {
+            background: #00e676;
+        }
+
+        .banner {
+            background: linear-gradient(135deg, rgba(0,200,83,0.2), rgba(34,255,153,0.08));
+            border: 1px solid #00c853;
+            border-radius: 16px;
+            padding: 18px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .banner h2 {
+            font-size: 18px;
+            color: #00e676;
+            margin-bottom: 6px;
+        }
+
+        .banner p {
+            font-size: 13px;
+            color: #ccc;
+        }
+
+        .jogos-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+
+        .jogo-card {
+            background: rgba(21, 21, 31, 0.95);
+            border: 1px solid rgba(0,200,83,0.2);
+            border-radius: 14px;
+            padding: 16px 12px;
+            text-align: center;
+        }
+
+        .jogo-card .emoji {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        .jogo-card h4 {
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .jogo-card .pts {
+            color: #FFD700;
+            font-weight: 700;
+            font-size: 13px;
+        }
+
+        .msg-indisponivel {
+            background: rgba(21, 21, 31, 0.95);
+            border: 1px dashed rgba(0, 200, 83, 0.35);
+            border-radius: 16px;
+            padding: 28px 18px;
+            text-align: center;
+            margin-bottom: 14px;
+            display: none;
+        }
+        .msg-indisponivel .icone {
+            font-size: 36px;
+            margin-bottom: 10px;
+        }
+        .msg-indisponivel h3 {
+            font-size: 16px;
+            color: #00e676;
+            margin-bottom: 8px;
+        }
+        .msg-indisponivel p {
+            font-size: 13px;
+            color: #aaa;
+            line-height: 1.5;
+        }
+
+        .menu-baixo {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(12, 12, 18, 0.97);
+            border-top: 1px solid #1e1e2a;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 10px 0 12px;
+            z-index: 1000;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .menu-baixo a {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            text-decoration: none;
+            color: #777;
+            font-size: 11px;
+            font-weight: 500;
+            width: 70px;
+        }
+
+        .menu-baixo a i {
+            font-size: 20px;
+            margin-bottom: 2px;
+        }
+
+        .menu-baixo a.ativo {
+            color: #00e676;
+        }
+
+        .ad-overlay {
+            display: none; position: fixed; inset: 0; z-index: 2000;
+            background: rgba(0,0,0,0.92); flex-direction: column;
+        }
+        .ad-overlay.show { display: flex; }
+        .ad-overlay-top {
+            flex-shrink: 0; display: flex; justify-content: space-between; align-items: center;
+            padding: 12px 14px; border-bottom: 1px solid rgba(0,200,83,0.3);
+        }
+        .ad-overlay-top span { color: #00e676; font-weight: 700; font-size: 14px; }
+        .ad-overlay-top button {
+            background: rgba(255,255,255,0.1); border: 1px solid #444; color: #ccc;
+            border-radius: 8px; padding: 8px 12px; font-size: 12px; cursor: pointer;
+        }
+        .ad-overlay-body {
+            flex: 1; overflow: auto; display: flex; align-items: center; justify-content: center;
+            padding: 12px; background: #0a0a0f;
+        }
+        .ad-overlay-body .ad-slot { width: 100%; max-width: 480px; min-height: 280px; }
+        .ad-overlay-foot {
+            flex-shrink: 0; padding: 14px 16px 20px; text-align: center;
+            border-top: 1px solid rgba(0,200,83,0.25); background: rgba(0,0,0,0.9);
+        }
+        .ad-overlay-foot .timer { font-size: 22px; font-weight: 800; color: #FFD700; margin-bottom: 6px; }
+        .ad-overlay-foot p { font-size: 12px; color: #888; margin-bottom: 10px; }
+        .ad-overlay-foot .btn-receber {
+            background: linear-gradient(90deg, #00c853, #00e676); color: #000; border: none;
+            border-radius: 10px; padding: 12px 20px; font-weight: 700; font-size: 14px;
+            cursor: pointer; width: 100%; max-width: 320px; opacity: 0.4; pointer-events: none;
+        }
+        .ad-overlay-foot .btn-receber.ativo { opacity: 1; pointer-events: auto; }
+        .ad-indisponivel { font-size: 12px; color: #ffab40; margin-top: 4px; display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="logo-area">
+            <img src="https://i.supaimg.com/b173afd9-4344-4026-a5d7-6a53e4b6efdc/8f054a24-2746-4a43-9f1c-354584289dc3.png" alt="Logo Desafio MOZ" class="logo">
+            <div class="app-title">Desafio MOZ</div>
+        </div>
+        <div class="user-email">
+            <span id="email-topo">—</span>
+        </div>
+    </div>
+
+    <div class="content">
+
+        <div class="banner">
+            <h2>🎯 Complete Tarefas e Ganhe!</h2>
+            <p>Quanto mais tarefas fizer, mais pontos acumula para sacar.</p>
+        </div>
+
+        <!-- JOGOS E APLICATIVOS-->
+        <div class="sec-titulo"><i class="fas fa-gamepad"></i> Jogos e Aplicativos</div>
+
+        <div class="jogos-grid">
+            <div class="jogo-card" onclick="alert('Jogo em breve!')">
+                <div class="emoji">🎮</div>
+                <h4>Puzzle Rápido</h4>
+                <div class="pts">+8 Pontos</div>
+            </div>
+            <div class="jogo-card" onclick="alert('Jogo em breve!')">
+                <div class="emoji">🧠</div>
+                <h4>Memória MOZ</h4>
+                <div class="pts">+12 Pontos</div>
+            </div>
+            <div class="jogo-card" onclick="alert('Jogo em breve!')">
+                <div class="emoji">🎯</div>
+                <h4>Alvo Certo</h4>
+                <div class="pts">+10 Pontos</div>
+            </div>
+            <div class="jogo-card" onclick="alert('Jogo em breve!')">
+                <div class="emoji">⚡</div>
+                <h4>Velocidade</h4>
+                <div class="pts">+15 Pontos</div>
+            </div>
+        </div>
+
+        <!-- ANÚNCIOS (permanentes — código vem do Admin) -->
+        <div class="sec-titulo"><i class="fas fa-ad"></i> Anúncios</div>
+
+        <div class="tarefa-card" id="card-ad-interativo">
+            <div class="tarefa-icon icon-anuncios">📱</div>
+            <div class="tarefa-info">
+                <h3 id="ad-int-titulo">Anúncio interativo</h3>
+                <p id="ad-int-desc">Clique e interaja com o anúncio</p>
+                <div class="ad-indisponivel" id="ad-int-msg">Sem anúncio disponível de momento</div>
+            </div>
+            <div class="tarefa-ganho">
+                <div class="pontos" id="ad-int-pts">+8 Pts</div>
+                <button class="btn-fazer" id="ad-int-btn" onclick="abrirAnuncioTarefa('interativo')">Ver</button>
+            </div>
+        </div>
+
+        <div class="tarefa-card" id="card-ad-rewarded">
+            <div class="tarefa-icon icon-anuncios">🎬</div>
+            <div class="tarefa-info">
+                <h3 id="ad-rew-titulo">Rewarded vídeo</h3>
+                <p id="ad-rew-desc">Assista o vídeo e ganhe pontos</p>
+                <div class="ad-indisponivel" id="ad-rew-msg">Sem anúncio disponível de momento</div>
+            </div>
+            <div class="tarefa-ganho">
+                <div class="pontos" id="ad-rew-pts">+12 Pts</div>
+                <button class="btn-fazer" id="ad-rew-btn" onclick="abrirAnuncioTarefa('rewarded')">Ver</button>
+            </div>
+        </div>
+
+        <!-- Overlay de anúncio (aparece no mesmo ecrã) -->
+        <div class="ad-overlay" id="ad-overlay">
+            <div class="ad-overlay-top">
+                <span id="ad-ov-titulo">Anúncio</span>
+                <button type="button" onclick="fecharAnuncioTarefa()">Fechar</button>
+            </div>
+            <div class="ad-overlay-body">
+                <div class="ad-slot" id="ad-ov-slot"></div>
+            </div>
+            <div class="ad-overlay-foot">
+                <div class="timer" id="ad-ov-timer">—</div>
+                <p id="ad-ov-txt">Aguarde o anúncio…</p>
+                <button type="button" class="btn-receber" id="ad-ov-btn" onclick="receberPontosAnuncio()">Receber pontos</button>
+            </div>
+        </div>
+
+        <!-- PESQUISAS -->
+        <div class="sec-titulo"><i class="fas fa-search"></i> Pesquisas</div>
+
+        <div id="lista-pesquisas">
+            <div class="tarefa-card" id="card-pesquisa-dados">
+                <div class="tarefa-icon icon-pesquisa">📋</div>
+                <div class="tarefa-info">
+                    <h3>Pesquisa de Dados</h3>
+                    <p>Responda e ganhe pontos (só 1 vez)</p>
+                </div>
+                <div class="tarefa-ganho">
+                    <div class="pontos">+5 Pts</div>
+                    <button class="btn-fazer" onclick="window.location.href='pesquisa.html'">Fazer</button>
+                </div>
+            </div>
+
+            <div class="tarefa-card" id="card-pesquisa-rapida">
+                <div class="tarefa-icon icon-pesquisa">📝</div>
+                <div class="tarefa-info">
+                    <h3>Pesquisa rápida (1 min)</h3>
+                    <p>Responda 3 perguntas simples</p>
+                </div>
+                <div class="tarefa-ganho">
+                    <div class="pontos">+3 Pts</div>
+                    <button class="btn-fazer" onclick="window.location.href='pesquisa-rapida.html'">Fazer</button>
+                </div>
+            </div>
+
+            <div class="tarefa-card" id="card-pesquisa-opiniao">
+                <div class="tarefa-icon icon-pesquisa">📊</div>
+                <div class="tarefa-info">
+                    <h3>Opinião sobre produtos</h3>
+                    <p>Ajude marcas a melhorar</p>
+                </div>
+                <div class="tarefa-ganho">
+                    <div class="pontos">+5 Pts</div>
+                    <button class="btn-fazer" onclick="window.location.href='pesquisa-opiniao.html'">Fazer</button>
+                </div>
+            </div>
+
+            <div class="tarefa-card" id="card-pesquisa-habitos">
+                <div class="tarefa-icon icon-pesquisa">🗣️</div>
+                <div class="tarefa-info">
+                    <h3>Pesquisa de hábitos</h3>
+                    <p>5 perguntas sobre o seu dia a dia</p>
+                </div>
+                <div class="tarefa-ganho">
+                    <div class="pontos">+7 Pts</div>
+                    <button class="btn-fazer" onclick="window.location.href='pesquisa-habitos.html'">Fazer</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="msg-indisponivel" id="msg-pesquisas-indisponiveis">
+            <div class="icone">📭</div>
+            <h3>Pesquisas indisponíveis</h3>
+            <p>Concluiu todas as pesquisas disponíveis por agora.<br>
+            Aguarde o aparecimento de novas pesquisas em breve.</p>
+        </div>
+
+        <!-- EXTRA -->
+        <div class="sec-titulo"><i class="fas fa-star"></i> Tarefas Extra</div>
+
+        <div class="tarefa-card" id="card-convidar-amigo">
+            <div class="tarefa-icon icon-extra">👥</div>
+            <div class="tarefa-info">
+                <h3>Convidar 1 amigo</h3>
+                <p>Ganha quando ele se cadastrar</p>
+            </div>
+            <div class="tarefa-ganho">
+                <div class="pontos">+30 Pts</div>
+                <button class="btn-fazer" onclick="window.location.href='convidar.html'">Convidar</button>
+            </div>
+        </div>
+
+        <div class="tarefa-card">
+            <div class="tarefa-icon icon-extra">📅</div>
+            <div class="tarefa-info">
+                <h3>Check-in diário</h3>
+                <p>Entre todos os dias e ganhe</p>
+            </div>
+            <div class="tarefa-ganho">
+                <div class="pontos">+10 Pts</div>
+                <button class="btn-fazer" onclick="window.location.href='checkin.html'">Fazer</button>
+            </div>
+        </div>
+
+        <div class="tarefa-card">
+            <div class="tarefa-icon icon-extra">🏆</div>
+            <div class="tarefa-info">
+                <h3>Missão semanal</h3>
+                <p>Encontre e complete a missão da semana</p>
+            </div>
+            <div class="tarefa-ganho">
+                <div class="pontos">+100 Pts</div>
+                <button class="btn-fazer" onclick="window.location.href='missao-semanal.html'">Ver</button>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="menu-baixo">
+        <a href="desafios.html"><i class="fas fa-home"></i> Início</a>
+        <a href="tarefas.html" class="ativo"><i class="fas fa-tasks"></i> Tarefas</a>
+        <a href="saques.html"><i class="fas fa-wallet"></i> Sacar</a>
+        <a href="perfil.html"><i class="fas fa-cog"></i> Conta</a>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    <script>
+        if (typeof window.__DESAFIO_MOZ_FIREBASE__ === 'undefined') {
+            window.__DESAFIO_MOZ_FIREBASE__ = true;
+            var firebaseConfig = {
+                apiKey: "AIzaSyDONfggnmf9OJX_AgfvcHTRf6tsuKD5nrA",
+                authDomain: "desafio-moz-61b70.firebaseapp.com",
+                projectId: "desafio-moz-61b70",
+                storageBucket: "desafio-moz-61b70.firebasestorage.app",
+                messagingSenderId: "945658936331",
+                appId: "1:945658936331:web:7ee4b0e7de1c1daf36db0e",
+                measurementId: "G-G1DZQ1B0DB"
+            };
+            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+            window.db = firebase.firestore();
+        }
+        var db = window.db;
+
+        var pesquisas = [
+            { key: 'pesquisaDadosCompleta', id: 'card-pesquisa-dados' },
+            { key: 'pesquisaRapidaCompleta', id: 'card-pesquisa-rapida' },
+            { key: 'pesquisaOpiniaoCompleta', id: 'card-pesquisa-opiniao' },
+            { key: 'pesquisaHabitosCompleta', id: 'card-pesquisa-habitos' }
+        ];
+
+        function aplicarPesquisas(flags) {
+            var ocultas = 0;
+            pesquisas.forEach(function (p) {
+                var feita = flags[p.key] === true || flags[p.key] === 'true';
+                localStorage.setItem(p.key, feita ? 'true' : 'false');
+                var card = document.getElementById(p.id);
+                if (card) {
+                    if (feita) {
+                        card.style.display = 'none';
+                        ocultas++;
+                    } else {
+                        card.style.display = '';
+                    }
+                }
+            });
+            return ocultas;
+        }
+
+        function atualizarMsgIndisponivel() {
+            var zona = document.getElementById('lista-pesquisas');
+            var visiveis = 0;
+            if (zona) {
+                zona.querySelectorAll('.tarefa-card').forEach(function (c) {
+                    if (c.style.display !== 'none') visiveis++;
+                });
+            }
+            var msg = document.getElementById('msg-pesquisas-indisponiveis');
+            if (msg) msg.style.display = visiveis === 0 ? 'block' : 'none';
+        }
+
+        function escHtml(str) {
+            return String(str || '')
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        function quatroFixasCompletas(flags) {
+            return pesquisas.every(function (p) {
+                return flags[p.key] === true || flags[p.key] === 'true';
+            });
+        }
+
+        // Novas pesquisas do Admin só após 10 horas do cadastro (utilizador novo)
+        function passou10Horas(dataCadastro) {
+            if (!dataCadastro) return true;
+            try {
+                var d = new Date(dataCadastro);
+                if (isNaN(d.getTime())) return true;
+                return (Date.now() - d.getTime()) >= 10 * 60 * 60 * 1000;
+            } catch (e) { return true; }
+        }
+
+        function ocultarTodasPesquisas(msgTexto) {
+            pesquisas.forEach(function (p) {
+                var card = document.getElementById(p.id);
+                if (card) card.style.display = 'none';
+            });
+            var zona = document.getElementById('lista-pesquisas');
+            if (zona) zona.querySelectorAll('.pesq-programada').forEach(function (el) { el.remove(); });
+            var msg = document.getElementById('msg-pesquisas-indisponiveis');
+            if (msg) {
+                msg.style.display = 'block';
+                if (msgTexto) {
+                    msg.querySelector('h3').textContent = 'Pesquisas indisponíveis';
+                    msg.querySelector('p').innerHTML = msgTexto;
+                }
+            }
+        }
+
+        // Chave de localStorage POR EMAIL — a conclusão de um utilizador
+        // NÃO esconde a pesquisa para outras contas no mesmo browser
+        function chavePesquisasProgFeitas(email) {
+            var e = String(email || localStorage.getItem('emailUtilizador') || '').trim().toLowerCase();
+            return e ? ('pesquisasProgFeitas_' + e) : 'pesquisasProgFeitas_anon';
+        }
+
+        // Pesquisas do Admin:
+        // 1) Só depois das 4 fixas concluídas
+        // 2) Utilizador NOVO: só após 10 horas do cadastro
+        // 3) Utilizador ANTIGO: vê até 4 de imediato (mesmo que o Admin tenha criado várias no mesmo dia).
+        //    As restantes (5ª, 6ª, 7ª...) só ficam disponíveis 10 horas depois da dataHora da pesquisa.
+        async function carregarPesquisasProgramadas(u) {
+            var zona = document.getElementById('lista-pesquisas');
+            if (!zona) return;
+            zona.querySelectorAll('.pesq-programada').forEach(function (el) { el.remove(); });
+
+            if (u && u.ocultarPesquisas === true) {
+                atualizarMsgIndisponivel();
+                return;
+            }
+
+            // Flags das 4 pesquisas fixas (Firebase ou localStorage)
+            var flagsFixas = {};
+            if (u) {
+                flagsFixas = {
+                    pesquisaDadosCompleta: !!u.pesquisaDadosCompleta,
+                    pesquisaRapidaCompleta: !!u.pesquisaRapidaCompleta,
+                    pesquisaOpiniaoCompleta: !!u.pesquisaOpiniaoCompleta,
+                    pesquisaHabitosCompleta: !!u.pesquisaHabitosCompleta
+                };
+            } else {
+                pesquisas.forEach(function (p) {
+                    flagsFixas[p.key] = localStorage.getItem(p.key);
+                });
+            }
+
+            // 1) Só mostra novas se as 4 fixas estiverem concluídas
+            if (!quatroFixasCompletas(flagsFixas)) {
+                console.log('[Desafio MOZ] Novas pesquisas bloqueadas: complete as 4 pesquisas fixas primeiro.');
+                atualizarMsgIndisponivel();
+                return;
+            }
+
+            // 2) Utilizador novo: só após 10 horas do cadastro
+            if (u && !passou10Horas(u.dataCadastro)) {
+                console.log('[Desafio MOZ] Novas pesquisas bloqueadas: aguarde 10 horas após o cadastro.');
+                atualizarMsgIndisponivel();
+                return;
+            }
+
+            // Só o que ESTE utilizador já fez (documento Firebase dele).
+            var feitas = {};
+            if (u && u.pesquisasProgramadasFeitas && typeof u.pesquisasProgramadasFeitas === 'object') {
+                Object.keys(u.pesquisasProgramadasFeitas).forEach(function (k) {
+                    if (u.pesquisasProgramadasFeitas[k]) feitas[k] = true;
+                });
+            } else {
+                try {
+                    var ls = JSON.parse(localStorage.getItem(chavePesquisasProgFeitas()) || '{}');
+                    Object.keys(ls).forEach(function (k) {
+                        if (ls[k]) feitas[k] = true;
+                    });
+                } catch (e) {}
+            }
+
+            // Remove chave global antiga (bug)
+            try { localStorage.removeItem('pesquisasProgFeitas'); } catch (e) {}
+
+            try {
+                var snap = await db.collection('pesquisasProgramadas').get();
+                var agoraMs = Date.now();
+                var DEZ_HORAS = 10 * 60 * 60 * 1000;
+                var MAX_VISIVEIS = 4;
+
+                // Lista completa de pesquisas ativas (ordenadas por dataHora)
+                var todasAtivas = [];
+                snap.forEach(function (doc) {
+                    var p = doc.data();
+                    p._id = doc.id;
+                    if (p.ativa === false) return;
+                    if (!p.dataHora) return;
+                    var dt = new Date(p.dataHora);
+                    if (isNaN(dt.getTime())) return;
+                    p._dtMs = dt.getTime();
+                    todasAtivas.push(p);
+                });
+                todasAtivas.sort(function (a, b) {
+                    return a._dtMs - b._dtMs;
+                });
+
+                // Filtra as que o utilizador ainda NÃO fez e cuja data já passou
+                // Regra especial:
+                //   - As primeiras 4 (por ordem de data) ficam disponíveis assim que dataHora <= agora
+                //   - A partir da 5ª, só ficam disponíveis 10 horas DEPOIS da sua dataHora
+                //   Assim, se o Admin criar 7 no mesmo dia, o utilizador antigo vê 4 de imediato
+                //   e as outras 3 só 10 horas depois.
+                var elegiveis = [];
+                var indiceGlobal = 0; // posição entre as ativas com data já passada (incluindo as já feitas)
+
+                todasAtivas.forEach(function (p) {
+                    // Ainda não chegou a hora de aparição base
+                    if (p._dtMs > agoraMs) return;
+
+                    // Conta a posição desta pesquisa entre as que já "nasceram"
+                    var posicao = indiceGlobal;
+                    indiceGlobal++;
+
+                    // Já concluída por este utilizador → não mostra, mas conta na posição
+                    if (feitas[p._id]) return;
+
+                    // Primeiras 4: disponíveis de imediato
+                    // A partir da 5ª: só após dataHora + 10 horas
+                    if (posicao < 4) {
+                        elegiveis.push(p);
+                    } else {
+                        if (agoraMs >= p._dtMs + DEZ_HORAS) {
+                            elegiveis.push(p);
+                        }
+                    }
+                });
+
+                // Mostra no máximo 4
+                var adicionadas = 0;
+                elegiveis.forEach(function (p) {
+                    if (adicionadas >= MAX_VISIVEIS) return;
+
+                    var card = document.createElement('div');
+                    card.className = 'tarefa-card pesq-programada';
+                    card.id = 'card-prog-' + p._id;
+                    card.innerHTML =
+                        '<div class="tarefa-icon icon-nova">🆕</div>' +
+                        '<div class="tarefa-info">' +
+                            '<h3>' + escHtml(p.titulo || 'Nova pesquisa') + ' <span class="badge-nova">NOVA</span></h3>' +
+                            '<p>' + escHtml(p.descricao || 'Pesquisa do administrador') + '</p>' +
+                        '</div>' +
+                        '<div class="tarefa-ganho">' +
+                            '<div class="pontos">+' + (p.pontos || 0) + ' Pts</div>' +
+                            '<button class="btn-fazer" onclick="window.location.href=\'pesquisa-dinamica.html?id=' + p._id + '\'">Fazer</button>' +
+                        '</div>';
+                    zona.appendChild(card);
+                    adicionadas++;
+                });
+                console.log('[Desafio MOZ] Pesquisas programadas visíveis:', adicionadas, '| elegíveis:', elegiveis.length, '| total ativas:', todasAtivas.length);
+            } catch (e) {
+                console.warn('Pesquisas programadas:', e);
+            }
+            atualizarMsgIndisponivel();
+        }
+
+        async function encontrarUtilizadorPorEmail(email) {
+            if (!email || email === '—') return null;
+            var emailNorm = String(email).trim().toLowerCase();
+            try {
+                // 1) Tentativa exacta
+                var snap = await db.collection('usuarios').where('email', '==', email).limit(1).get();
+                if (!snap.empty) return { ref: snap.docs[0].ref, data: snap.docs[0].data() };
+
+                // 2) Tentativa com email em minúsculas (caso o login tenha case diferente)
+                if (emailNorm !== email) {
+                    snap = await db.collection('usuarios').where('email', '==', emailNorm).limit(1).get();
+                    if (!snap.empty) return { ref: snap.docs[0].ref, data: snap.docs[0].data() };
+                }
+
+                // 3) Fallback: percorre e compara em minúsculas (útil se o email foi gravado com espaços/case)
+                var todos = await db.collection('usuarios').get();
+                var encontrado = null;
+                todos.forEach(function (doc) {
+                    if (encontrado) return;
+                    var em = String((doc.data().email || '')).trim().toLowerCase();
+                    if (em && em === emailNorm) {
+                        encontrado = { ref: doc.ref, data: doc.data() };
+                    }
+                });
+                return encontrado;
+            } catch (e) {
+                console.warn('Erro ao procurar utilizador:', e);
+                return null;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', async function () {
+            var email = localStorage.getItem('emailUtilizador') || '—';
+            document.getElementById('email-topo').textContent = email;
+
+            var userData = null;
+
+            if (email && email !== '—') {
+                try {
+                    var encontrado = await encontrarUtilizadorPorEmail(email);
+                    if (encontrado) {
+                        userData = encontrado.data;
+
+                        if (userData.ocultarConvidar === true) {
+                            var cardConv = document.getElementById('card-convidar-amigo');
+                            if (cardConv) cardConv.style.display = 'none';
+                        }
+                        if (userData.ocultarPesquisas === true) {
+                            ocultarTodasPesquisas('As pesquisas estão bloqueadas para a sua conta. Contacte o suporte se for um erro.');
+                            if (userData.pontos != null) localStorage.setItem('pontosUtilizador', String(userData.pontos));
+                            return;
+                        }
+
+                        aplicarPesquisas({
+                            pesquisaDadosCompleta: !!userData.pesquisaDadosCompleta,
+                            pesquisaRapidaCompleta: !!userData.pesquisaRapidaCompleta,
+                            pesquisaOpiniaoCompleta: !!userData.pesquisaOpiniaoCompleta,
+                            pesquisaHabitosCompleta: !!userData.pesquisaHabitosCompleta
+                        });
+
+                        if (userData.pontos != null) localStorage.setItem('pontosUtilizador', String(userData.pontos));
+                    } else {
+                        // Utilizador não encontrado no Firebase — ainda assim mostra pesquisas fixas do localStorage
+                        var flagsLS = {};
+                        pesquisas.forEach(function (p) {
+                            flagsLS[p.key] = localStorage.getItem(p.key);
+                        });
+                        aplicarPesquisas(flagsLS);
+                    }
+                } catch (e) {
+                    console.warn('Sincronização Firebase:', e);
+                    var flagsErr = {};
+                    pesquisas.forEach(function (p) {
+                        flagsErr[p.key] = localStorage.getItem(p.key);
+                    });
+                    aplicarPesquisas(flagsErr);
+                }
+            } else {
+                var flagsNoEmail = {};
+                pesquisas.forEach(function (p) {
+                    flagsNoEmail[p.key] = localStorage.getItem(p.key);
+                });
+                aplicarPesquisas(flagsNoEmail);
+            }
+
+            // SEMPRE tenta carregar pesquisas programadas (para todos os utilizadores logados)
+            // mesmo se o perfil Firebase não foi encontrado
+            await carregarPesquisasProgramadas(userData);
+            await carregarAnunciosTarefas();
+        });
+
+        // ——— Anúncios Tarefas (Admin → interativo / rewarded) ———
+        var anunciosTarefasCfg = { interativo: null, rewarded: null };
+        var adEmCurso = null;
+        var adTimerId = null;
+        var adPodeReceber = false;
+        var adUserRef = null;
+        var adAnuncioCarregado = false;   // só true depois de confirmação real de carga
+        var adObserver = null;            // observa o slot à espera do anúncio aparecer
+        var adCargaTimeoutId = null;      // tempo máximo à espera do anúncio carregar
+        var adAnuncioCarregado = false;   // só true depois de confirmação real de carga
+        var adObserver = null;            // observa o slot à espera do anúncio aparecer
+        var adCargaTimeoutId = null;      // tempo máximo à espera do anúncio carregar
+
+        async function carregarAnunciosTarefas() {
+            try {
+                var snap = await db.collection('anunciosTarefas').get();
+                anunciosTarefasCfg = { interativo: null, rewarded: null };
+                snap.forEach(function (doc) {
+                    var d = doc.data() || {};
+                    d._id = doc.id;
+                    if (d.tipo === 'interativo' || doc.id === 'interativo') anunciosTarefasCfg.interativo = d;
+                    if (d.tipo === 'rewarded' || doc.id === 'rewarded') anunciosTarefasCfg.rewarded = d;
+                });
+            } catch (e) {
+                console.warn('anunciosTarefas:', e);
+            }
+            aplicarUIAnunciosTarefas();
+        }
+
+        function aplicarUIAnunciosTarefas() {
+            // Interativo
+            var int = anunciosTarefasCfg.interativo;
+            var temInt = int && int.ativo !== false && (int.codigo || '').trim();
+            document.getElementById('ad-int-titulo').textContent = (int && int.titulo) ? int.titulo : 'Anúncio interativo';
+            document.getElementById('ad-int-desc').textContent = (int && int.descricao) ? int.descricao : 'Clique e interaja com o anúncio';
+            document.getElementById('ad-int-pts').textContent = '+' + ((int && int.pontos) ? int.pontos : 8) + ' Pts';
+            document.getElementById('ad-int-msg').style.display = temInt ? 'none' : 'block';
+            document.getElementById('ad-int-btn').disabled = !temInt;
+            document.getElementById('ad-int-btn').style.opacity = temInt ? '1' : '0.5';
+
+            // Rewarded
+            var rew = anunciosTarefasCfg.rewarded;
+            var temRew = rew && rew.ativo !== false && (rew.codigo || '').trim();
+            document.getElementById('ad-rew-titulo').textContent = (rew && rew.titulo) ? rew.titulo : 'Rewarded vídeo';
+            document.getElementById('ad-rew-desc').textContent = (rew && rew.descricao) ? rew.descricao : 'Assista o vídeo e ganhe pontos';
+            document.getElementById('ad-rew-pts').textContent = '+' + ((rew && rew.pontos) ? rew.pontos : 12) + ' Pts';
+            document.getElementById('ad-rew-msg').style.display = temRew ? 'none' : 'block';
+            document.getElementById('ad-rew-btn').disabled = !temRew;
+            document.getElementById('ad-rew-btn').style.opacity = temRew ? '1' : '0.5';
+        }
+
+        function abrirAnuncioTarefa(tipo) {
+            var cfg = anunciosTarefasCfg[tipo];
+            if (!cfg || !(cfg.codigo || '').trim()) {
+                alert('Não há anúncio disponível neste momento. Tente mais tarde.');
+                return;
+            }
+            var email = localStorage.getItem('emailUtilizador') || '';
+            if (!email || email === '—') {
+                alert('Faça login para ganhar pontos.');
+                return;
+            }
+            adEmCurso = { tipo: tipo, cfg: cfg };
+            adPodeReceber = false;
+            adAnuncioCarregado = false;
+            limparObservadorAnuncio();
+            if (adCargaTimeoutId) { clearTimeout(adCargaTimeoutId); adCargaTimeoutId = null; }
+            if (adTimerId) { clearInterval(adTimerId); adTimerId = null; }
+
+            var slot = document.getElementById('ad-ov-slot');
+            slot.innerHTML = '';
+
+            document.getElementById('ad-ov-titulo').textContent =
+                (cfg.titulo || (tipo === 'rewarded' ? 'Rewarded vídeo' : 'Anúncio interativo'));
+            document.getElementById('ad-ov-timer').textContent = '—';
+            document.getElementById('ad-ov-txt').textContent = 'A carregar o anúncio, aguarde…';
+            document.getElementById('ad-ov-btn').classList.remove('ativo');
+            document.getElementById('ad-ov-btn').textContent = 'A carregar…';
+            document.getElementById('ad-overlay').classList.add('show');
+
+            var cod = (cfg.codigo || '').trim();
+
+            if (/^https?:\/\//i.test(cod) && cod.indexOf('<') === -1) {
+                // URL simples (ex: Direct Link) → iframe; só confirma quando o iframe carregar
+                var ifr = document.createElement('iframe');
+                ifr.style.cssText = 'width:100%;min-height:320px;border:none;border-radius:12px;background:#111;';
+                ifr.allow = 'autoplay; fullscreen';
+                ifr.onload = function () { confirmarAnuncioCarregado(tipo); };
+                ifr.onerror = falhaCarregarAnuncio;
+                slot.appendChild(ifr);
+                ifr.src = cod;
+            } else {
+                // Código HTML/script do publicador → injeta executando os <script> de verdade
+                injetarCodigoAnuncio(slot, cod);
+                observarCarregamentoAnuncio(slot, tipo);
+            }
+
+            // Tempo máximo à espera do anúncio aparecer; se não aparecer, falha
+            adCargaTimeoutId = setTimeout(function () {
+                if (!adAnuncioCarregado) falhaCarregarAnuncio();
+            }, 12000);
+        }
+
+        // Insere o código do publicador recriando cada <script> manualmente,
+        // pois innerHTML NUNCA executa <script> — é uma restrição do navegador.
+        function injetarCodigoAnuncio(container, codigoHtml) {
+            var tpl = document.createElement('template');
+            tpl.innerHTML = codigoHtml;
+            var frag = tpl.content;
+            Array.prototype.forEach.call(frag.querySelectorAll('script'), function (antigo) {
+                var novo = document.createElement('script');
+                Array.prototype.forEach.call(antigo.attributes, function (attr) {
+                    novo.setAttribute(attr.name, attr.value);
+                });
+                novo.text = antigo.textContent || '';
+                antigo.parentNode.replaceChild(novo, antigo);
+            });
+            container.appendChild(frag);
+        }
+
+        // Observa o slot do anúncio: só considera "anúncio carregado" quando algo
+        // é realmente inserido no ecrã pelo script da rede (iframe, banner, etc.)
+        function observarCarregamentoAnuncio(container, tipo) {
+            limparObservadorAnuncio();
+            adObserver = new MutationObserver(function () {
+                if (container.querySelector('iframe, img, ins[data-loaded], canvas') || container.children.length > 0) {
+                    confirmarAnuncioCarregado(tipo);
+                }
+            });
+            adObserver.observe(container, { childList: true, subtree: true });
+        }
+
+        function limparObservadorAnuncio() {
+            if (adObserver) { adObserver.disconnect(); adObserver = null; }
+        }
+
+        // Só a partir daqui o timer arranca — ou seja, só se conta o tempo
+        // (e só se liberam os pontos) depois de confirmado que o anúncio apareceu.
+        function confirmarAnuncioCarregado(tipo) {
+            if (adAnuncioCarregado) return;
+            adAnuncioCarregado = true;
+            limparObservadorAnuncio();
+            if (adCargaTimeoutId) { clearTimeout(adCargaTimeoutId); adCargaTimeoutId = null; }
+            var cfg = adEmCurso ? adEmCurso.cfg : null;
+            var segs = parseInt(cfg && cfg.segundos, 10);
+            if (isNaN(segs) || segs < 5) segs = (tipo === 'rewarded' ? 20 : 15);
+            iniciarTimerAnuncio(segs);
+        }
+
+        // Se o anúncio não carregar (sem inventário na rede, bloqueado por
+        // adblock, erro de rede), o utilizador NÃO pode ganhar pontos.
+        function falhaCarregarAnuncio() {
+            limparObservadorAnuncio();
+            if (adCargaTimeoutId) { clearTimeout(adCargaTimeoutId); adCargaTimeoutId = null; }
+            if (adTimerId) { clearInterval(adTimerId); adTimerId = null; }
+            adPodeReceber = false;
+            document.getElementById('ad-ov-timer').textContent = '—';
+            document.getElementById('ad-ov-txt').textContent = 'Não foi possível carregar o anúncio agora. Tente novamente mais tarde.';
+            var btn = document.getElementById('ad-ov-btn');
+            btn.classList.remove('ativo');
+            btn.textContent = 'Sem anúncio disponível';
+        }
+
+        function iniciarTimerAnuncio(segs) {
+            if (adTimerId) clearInterval(adTimerId);
+            var rest = segs;
+            document.getElementById('ad-ov-timer').textContent = rest;
+            document.getElementById('ad-ov-txt').textContent = 'Segundos restantes para poder receber os pontos';
+            adTimerId = setInterval(function () {
+                rest--;
+                document.getElementById('ad-ov-timer').textContent = Math.max(0, rest);
+                if (rest <= 0) {
+                    clearInterval(adTimerId);
+                    adTimerId = null;
+                    adPodeReceber = true;
+                    document.getElementById('ad-ov-txt').textContent = 'Pode receber os pontos agora';
+                    var btn = document.getElementById('ad-ov-btn');
+                    btn.classList.add('ativo');
+                    btn.textContent = 'Receber +' + ((adEmCurso && adEmCurso.cfg && adEmCurso.cfg.pontos) ? adEmCurso.cfg.pontos : 0) + ' pontos';
+                }
+            }, 1000);
+        }
+
+        function fecharAnuncioTarefa() {
+            if (adTimerId) { clearInterval(adTimerId); adTimerId = null; }
+            if (adCargaTimeoutId) { clearTimeout(adCargaTimeoutId); adCargaTimeoutId = null; }
+            limparObservadorAnuncio();
+            document.getElementById('ad-overlay').classList.remove('show');
+            document.getElementById('ad-ov-slot').innerHTML = '';
+            adEmCurso = null;
+            adPodeReceber = false;
+            adAnuncioCarregado = false;
+        }
+
+        async function receberPontosAnuncio() {
+            // Exige: anúncio confirmado como carregado + tempo mínimo cumprido.
+            if (!adAnuncioCarregado || !adPodeReceber || !adEmCurso) return;
+            var email = localStorage.getItem('emailUtilizador') || '';
+            if (!email) return alert('Faça login.');
+            var btn = document.getElementById('ad-ov-btn');
+            btn.classList.remove('ativo');
+            btn.textContent = 'A guardar…';
+            try {
+                var encontrado = await encontrarUtilizadorPorEmail(email);
+                if (!encontrado) {
+                    alert('Utilizador não encontrado.');
+                    fecharAnuncioTarefa();
+                    return;
+                }
+                var dados = encontrado.data || {};
+                var pts = parseInt((adEmCurso.cfg && adEmCurso.cfg.pontos) || 0, 10) || 0;
+                var novos = (dados.pontos || 0) + pts;
+                var hist = Object.assign({}, dados.anunciosTarefasHist || {});
+                hist[adEmCurso.tipo] = new Date().toISOString();
+                await encontrado.ref.update({
+                    pontos: novos,
+                    anunciosTarefasHist: hist,
+                    ultimaAtualizacao: new Date().toISOString()
+                });
+                localStorage.setItem('pontosUtilizador', String(novos));
+                alert('Ganhou +' + pts + ' pontos! Total: ' + novos);
+                fecharAnuncioTarefa();
+            } catch (e) {
+                alert('Erro ao creditar pontos: ' + (e.message || e));
+                btn.classList.add('ativo');
+                btn.textContent = 'Receber pontos';
+            }
+        }
+
+    </script>
+
+
+</body>
+</html>

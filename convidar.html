@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="pt-MZ">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Convidar Amigo – Desafio MOZ</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+  <script>
+    if (typeof window.__DESAFIO_MOZ_FIREBASE__ === 'undefined') {
+      window.__DESAFIO_MOZ_FIREBASE__ = true;
+      var firebaseConfig = {
+        apiKey: "AIzaSyDONfggnmf9OJX_AgfvcHTRf6tsuKD5nrA",
+        authDomain: "desafio-moz-61b70.firebaseapp.com",
+        projectId: "desafio-moz-61b70",
+        storageBucket: "desafio-moz-61b70.firebasestorage.app",
+        messagingSenderId: "945658936331",
+        appId: "1:945658936331:web:7ee4b0e7de1c1daf36db0e",
+        measurementId: "G-G1DZQ1B0DB"
+      };
+      if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+      window.db = firebase.firestore();
+    }
+    var db = window.db;
+  </script>
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    body {
+      background: #0a0a0f;
+      color: #fff;
+      min-height: 100vh;
+      padding: 16px 16px 40px;
+    }
+    .topo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .btn-voltar {
+      width: 40px; height: 40px;
+      border-radius: 12px;
+      background: rgba(0,200,83,0.15);
+      border: 1px solid rgba(0,200,83,0.35);
+      color: #00e676;
+      font-size: 16px;
+      display: flex; align-items: center; justify-content: center;
+      text-decoration: none;
+    }
+    .topo h1 { font-size: 20px; color: #00e676; font-weight: 700; }
+    .topo p { font-size: 12px; color: #aaa; }
+
+    .card {
+      background: rgba(21,21,31,0.95);
+      border: 1px solid rgba(0,200,83,0.3);
+      border-radius: 18px;
+      padding: 22px 16px;
+      max-width: 420px;
+      margin: 0 auto 16px;
+    }
+
+    .premio {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .premio .pts {
+      font-size: 42px;
+      font-weight: 800;
+      color: #FFD700;
+      line-height: 1.1;
+    }
+    .premio .lbl {
+      font-size: 14px;
+      color: #aaa;
+      margin-top: 6px;
+    }
+
+    .stats {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .stat {
+      flex: 1;
+      background: rgba(0,200,83,0.1);
+      border: 1px solid rgba(0,200,83,0.25);
+      border-radius: 12px;
+      padding: 12px 8px;
+      text-align: center;
+    }
+    .stat .num { font-size: 22px; font-weight: 800; color: #00e676; }
+    .stat .txt { font-size: 11px; color: #aaa; margin-top: 3px; }
+
+    .label-link {
+      font-size: 13px;
+      color: #00e676;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .link-box {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .link-box input {
+      flex: 1;
+      background: rgba(10,10,15,0.9);
+      border: 1px solid #2a2a3a;
+      border-radius: 12px;
+      padding: 12px 14px;
+      color: #fff;
+      font-size: 13px;
+      outline: none;
+    }
+    .btn-copiar {
+      background: #00c853;
+      color: #000;
+      border: none;
+      border-radius: 12px;
+      padding: 0 16px;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .partilhar-titulo {
+      font-size: 14px;
+      color: #aaa;
+      margin: 18px 0 12px;
+      text-align: center;
+    }
+    .botoes-share {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .btn-share {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 13px;
+      border-radius: 12px;
+      border: none;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      text-decoration: none;
+      color: #fff;
+    }
+    .btn-wa { background: #25D366; }
+    .btn-fb { background: #1877F2; }
+    .btn-tg { background: #0088cc; }
+    .btn-mais { background: rgba(0,200,83,0.2); color: #00e676; border: 1px solid rgba(0,200,83,0.4); }
+
+    .como-funciona h3 {
+      font-size: 15px;
+      color: #00e676;
+      margin-bottom: 12px;
+    }
+    .passo-item {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 12px;
+      align-items: flex-start;
+    }
+    .passo-num {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #00c853, #00e676);
+      color: #000;
+      font-weight: 800;
+      font-size: 13px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .passo-txt { font-size: 13px; color: #ccc; line-height: 1.4; padding-top: 4px; }
+
+    .aviso {
+      background: rgba(255,193,7,0.1);
+      border: 1px solid rgba(255,193,7,0.35);
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 12px;
+      color: #f9a825;
+      margin-top: 14px;
+      line-height: 1.45;
+    }
+
+    .msg-copia {
+      text-align: center;
+      color: #00e676;
+      font-size: 13px;
+      font-weight: 600;
+      margin-top: 10px;
+      display: none;
+    }
+
+    .loading { text-align: center; padding: 40px; color: #aaa; }
+  </style>
+</head>
+<body>
+
+  <div class="topo">
+    <a href="tarefas.html" class="btn-voltar"><i class="fas fa-arrow-left"></i></a>
+    <div>
+      <h1>Convidar Amigo</h1>
+      <p>Ganhe +30 pontos por cada amigo</p>
+    </div>
+  </div>
+
+  <div id="loading" class="loading">A carregar o seu link...</div>
+
+  <div id="conteudo" style="display:none;">
+    <div class="card">
+      <div class="premio">
+        <div class="pts">+30</div>
+        <div class="lbl">pontos por cada amigo que se cadastrar</div>
+      </div>
+
+      <div class="stats">
+        <div class="stat">
+          <div class="num" id="total-convidados">0</div>
+          <div class="txt">Amigos convidados</div>
+        </div>
+        <div class="stat">
+          <div class="num" id="pts-indicacao">0</div>
+          <div class="txt">Pontos ganhos</div>
+        </div>
+      </div>
+
+      <div class="label-link">O seu link único</div>
+      <div class="link-box">
+        <input type="text" id="link-indicacao" readonly>
+        <button type="button" class="btn-copiar" onclick="copiarLink()">Copiar</button>
+      </div>
+      <div class="msg-copia" id="msg-copia">✅ Link copiado!</div>
+
+      <div class="partilhar-titulo">Partilhar em</div>
+      <div class="botoes-share">
+        <a class="btn-share btn-wa" id="btn-whatsapp" target="_blank" rel="noopener">
+          <i class="fab fa-whatsapp"></i> WhatsApp
+        </a>
+        <a class="btn-share btn-fb" id="btn-facebook" target="_blank" rel="noopener">
+          <i class="fab fa-facebook-f"></i> Facebook
+        </a>
+        <a class="btn-share btn-tg" id="btn-telegram" target="_blank" rel="noopener">
+          <i class="fab fa-telegram-plane"></i> Telegram
+        </a>
+        <button type="button" class="btn-share btn-mais" onclick="partilharNativo()">
+          <i class="fas fa-share-alt"></i> Mais
+        </button>
+      </div>
+    </div>
+
+    <div class="card como-funciona">
+      <h3>Como funciona</h3>
+      <div class="passo-item">
+        <div class="passo-num">1</div>
+        <div class="passo-txt">Copie ou partilhe o seu link único com amigos e família.</div>
+      </div>
+      <div class="passo-item">
+        <div class="passo-num">2</div>
+        <div class="passo-txt">O amigo abre o link e cria uma conta no Desafio MOZ.</div>
+      </div>
+      <div class="passo-item">
+        <div class="passo-num">3</div>
+        <div class="passo-txt">Quando ele se cadastrar, você recebe automaticamente <strong style="color:#FFD700">+30 pontos</strong>.</div>
+      </div>
+
+      <div class="aviso">
+        ⚠️ Só conta se o amigo se cadastrar pelo <strong>seu</strong> link. Cada amigo só pode ser indicado uma vez.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /*
+     * ============================================================
+     *  LINK BASE DO SITE
+     *  Quando o site estiver no ar, substitua a linha abaixo
+     *  pelo endereço real, por exemplo:
+     *  var LINK_BASE = 'https://desafio-moz.com';
+     * ============================================================
+     */
+    var LINK_BASE = ''; // ← COLOQUE AQUI O LINK DO SITE (ex: https://seudominio.com)
+
+    var codigoIndicacao = '';
+    var docRef = null;
+
+    function hashCode(str) {
+      var hash = 0;
+      for (var i = 0; i < str.length; i++) {
+        hash = ((hash << 5) - hash) + str.charCodeAt(i);
+        hash |= 0;
+      }
+      return Math.abs(hash);
+    }
+
+    function gerarCodigo(email) {
+      return 'MOZ' + hashCode(email).toString(36).toUpperCase().substring(0, 8);
+    }
+
+    function obterLinkBase() {
+      if (LINK_BASE && LINK_BASE.trim() !== '') {
+        return LINK_BASE.replace(/\/$/, '');
+      }
+      if (window.location.protocol === 'http:' || window.location.protocol === 'https:') {
+        var path = window.location.pathname;
+        var dir = path.substring(0, path.lastIndexOf('/') + 1);
+        return window.location.origin + dir.replace(/\/$/, '');
+      }
+      return 'https://SEU-SITE.com';
+    }
+
+    function montarLink(codigo) {
+      return obterLinkBase() + '/criar-conta.html?ref=' + encodeURIComponent(codigo);
+    }
+
+    function atualizarUI(link) {
+      document.getElementById('link-indicacao').value = link;
+
+      var texto = encodeURIComponent('Junta-te ao Desafio MOZ e começa a ganhar pontos! 💰\n' + link);
+      document.getElementById('btn-whatsapp').href = 'https://wa.me/?text=' + texto;
+      document.getElementById('btn-facebook').href = 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(link);
+      document.getElementById('btn-telegram').href = 'https://t.me/share/url?url=' + encodeURIComponent(link) + '&text=' + encodeURIComponent('Junta-te ao Desafio MOZ!');
+    }
+
+    function copiarLink() {
+      var input = document.getElementById('link-indicacao');
+      input.select();
+      input.setSelectionRange(0, 99999);
+      try {
+        navigator.clipboard.writeText(input.value);
+      } catch (e) {
+        document.execCommand('copy');
+      }
+      var msg = document.getElementById('msg-copia');
+      msg.style.display = 'block';
+      setTimeout(function () { msg.style.display = 'none'; }, 2500);
+    }
+
+    function partilharNativo() {
+      var link = document.getElementById('link-indicacao').value;
+      if (navigator.share) {
+        navigator.share({
+          title: 'Desafio MOZ',
+          text: 'Junta-te ao Desafio MOZ e começa a ganhar pontos!',
+          url: link
+        }).catch(function () {});
+      } else {
+        copiarLink();
+      }
+    }
+
+    async function carregar() {
+      var email = localStorage.getItem('emailUtilizador');
+      if (!email) {
+        alert('Sessão expirada. Faça login novamente.');
+        window.location.href = 'criar-conta.html';
+        return;
+      }
+
+      try {
+        var snap = await db.collection('usuarios')
+          .where('email', '==', email)
+          .limit(1)
+          .get();
+
+        if (snap.empty) {
+          alert('Utilizador não encontrado.');
+          window.location.href = 'criar-conta.html';
+          return;
+        }
+
+        docRef = snap.docs[0].ref;
+        var data = snap.docs[0].data();
+
+        codigoIndicacao = data.codigoIndicacao || localStorage.getItem('codigoIndicacao') || gerarCodigo(email);
+
+        if (!data.codigoIndicacao) {
+          await docRef.update({ codigoIndicacao: codigoIndicacao });
+        }
+        localStorage.setItem('codigoIndicacao', codigoIndicacao);
+
+        document.getElementById('total-convidados').textContent = data.totalConvidados || 0;
+        document.getElementById('pts-indicacao').textContent = data.pontosIndicacao || 0;
+
+        var link = montarLink(codigoIndicacao);
+        atualizarUI(link);
+
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('conteudo').style.display = 'block';
+      } catch (erro) {
+        console.error(erro);
+        document.getElementById('loading').textContent = 'Erro: ' + (erro.message || erro);
+      }
+    }
+
+    carregar();
+  </script>
+</body>
+</html>

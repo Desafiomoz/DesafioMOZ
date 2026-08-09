@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="pt-MZ">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Missão Semanal – Desafio MOZ</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+  <script>
+    if (typeof window.__DESAFIO_MOZ_FIREBASE__ === 'undefined') {
+      window.__DESAFIO_MOZ_FIREBASE__ = true;
+      var firebaseConfig = {
+        apiKey: "AIzaSyDONfggnmf9OJX_AgfvcHTRf6tsuKD5nrA",
+        authDomain: "desafio-moz-61b70.firebaseapp.com",
+        projectId: "desafio-moz-61b70",
+        storageBucket: "desafio-moz-61b70.firebasestorage.app",
+        messagingSenderId: "945658936331",
+        appId: "1:945658936331:web:7ee4b0e7de1c1daf36db0e",
+        measurementId: "G-G1DZQ1B0DB"
+      };
+      if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+      window.db = firebase.firestore();
+    }
+    var db = window.db;
+  </script>
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    body {
+      background: #0a0a0f;
+      color: #fff;
+      min-height: 100vh;
+      padding: 16px 16px 40px;
+    }
+    .topo {
+      display: flex; align-items: center; gap: 12px; margin-bottom: 18px;
+    }
+    .btn-voltar {
+      width: 40px; height: 40px; border-radius: 12px;
+      background: rgba(0,200,83,0.15); border: 1px solid rgba(0,200,83,0.35);
+      color: #00e676; font-size: 16px; display: flex; align-items: center; justify-content: center;
+      text-decoration: none;
+    }
+    .topo h1 { font-size: 18px; color: #00e676; font-weight: 700; }
+    .topo p { font-size: 12px; color: #aaa; }
+
+    .card {
+      background: rgba(21,21,31,0.95);
+      border: 1px solid rgba(0,200,83,0.28);
+      border-radius: 16px;
+      padding: 18px 16px;
+      max-width: 440px;
+      margin: 0 auto 14px;
+    }
+    .card h2 {
+      font-size: 15px; color: #00e676; margin-bottom: 12px;
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    .premio-box {
+      text-align: center; padding: 12px 0 6px;
+    }
+    .premio-box .pts {
+      font-size: 40px; font-weight: 800; color: #FFD700; line-height: 1.1;
+    }
+    .premio-box .lbl { font-size: 13px; color: #aaa; margin-top: 4px; }
+
+    .stats {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px;
+    }
+    .stat {
+      background: rgba(0,200,83,0.1);
+      border: 1px solid rgba(0,200,83,0.25);
+      border-radius: 12px; padding: 12px 8px; text-align: center;
+    }
+    .stat .num { font-size: 22px; font-weight: 800; color: #00e676; }
+    .stat .txt { font-size: 11px; color: #aaa; margin-top: 3px; }
+
+    .status-banner {
+      border-radius: 12px; padding: 14px 14px; margin-bottom: 12px;
+      font-size: 14px; line-height: 1.45; font-weight: 600;
+    }
+    .status-ok {
+      background: rgba(0,200,83,0.15); border: 1px solid #00c853; color: #00e676;
+    }
+    .status-wait {
+      background: rgba(255,193,7,0.12); border: 1px solid rgba(255,193,7,0.4); color: #ffc107;
+    }
+    .status-done {
+      background: rgba(100,100,120,0.2); border: 1px solid #444; color: #aaa;
+    }
+
+    .prev-item {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 10px 0; border-bottom: 1px solid #222; font-size: 13px;
+    }
+    .prev-item:last-child { border-bottom: none; }
+    .prev-dia { color: #ccc; }
+    .prev-hora { color: #00e676; font-weight: 700; }
+    .prev-tag {
+      font-size: 10px; padding: 3px 8px; border-radius: 6px; font-weight: 600;
+    }
+    .tag-agora { background: rgba(0,200,83,0.25); color: #00e676; }
+    .tag-breve { background: rgba(255,193,7,0.2); color: #ffc107; }
+    .tag-depois { background: rgba(255,255,255,0.08); color: #888; }
+
+    .progresso {
+      height: 8px; background: #1e1e2a; border-radius: 10px; overflow: hidden; margin: 10px 0 6px;
+    }
+    .progresso-bar {
+      height: 100%; background: linear-gradient(90deg, #00c853, #00e676);
+      width: 0%; transition: width 0.35s ease;
+    }
+    .progresso-txt { font-size: 12px; color: #aaa; text-align: center; margin-bottom: 12px; }
+
+    .passo { display: none; }
+    .passo.ativo { display: block; animation: fade 0.3s ease; }
+    @keyframes fade {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .pergunta { font-size: 16px; font-weight: 600; margin-bottom: 14px; line-height: 1.4; }
+    .num-q {
+      display: inline-block; background: rgba(0,200,83,0.2); color: #00e676;
+      font-size: 12px; font-weight: 700; padding: 3px 8px; border-radius: 6px; margin-bottom: 10px;
+    }
+    .opcoes { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+    .opcao {
+      background: rgba(0,200,83,0.1); border: 1px solid rgba(0,200,83,0.35);
+      color: #fff; padding: 13px 14px; border-radius: 12px; font-size: 14px;
+      cursor: pointer; text-align: left; transition: 0.2s;
+    }
+    .opcao:hover, .opcao.selecionada {
+      background: #00c853; color: #000; font-weight: 600;
+    }
+
+    .btn {
+      width: 100%; background: linear-gradient(90deg, #00c853, #00e676);
+      color: #000; border: none; border-radius: 14px; padding: 14px;
+      font-size: 15px; font-weight: 700; cursor: pointer;
+    }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-sec {
+      width: 100%; background: rgba(0,200,83,0.15); color: #00e676;
+      border: 1px solid rgba(0,200,83,0.4); border-radius: 14px; padding: 13px;
+      font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 8px;
+    }
+
+    .ad-box {
+      background: #111; border: 2px dashed #333; border-radius: 12px;
+      padding: 28px 16px; text-align: center; margin-bottom: 12px;
+    }
+    .ad-box .ico { font-size: 36px; margin-bottom: 8px; }
+    .ad-box p { font-size: 13px; color: #888; margin-bottom: 12px; }
+    .ad-done { border-color: #00c853; color: #00e676; }
+
+    .sucesso { text-align: center; padding: 24px 8px; }
+    .sucesso .pts { font-size: 42px; font-weight: 800; color: #FFD700; margin: 12px 0; }
+
+    .loading { text-align: center; padding: 40px; color: #888; }
+    .aviso-mini {
+      font-size: 12px; color: #888; line-height: 1.45; margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="topo">
+    <a href="tarefas.html" class="btn-voltar"><i class="fas fa-arrow-left"></i></a>
+    <div>
+      <h1>Missão Semanal</h1>
+      <p>Encontre e complete para ganhar +100 pts</p>
+    </div>
+  </div>
+
+  <div id="loading" class="loading">A procurar a missão desta semana...</div>
+
+  <div id="conteudo" style="display:none;">
+
+    <!-- RESUMO -->
+    <div class="card">
+      <div class="premio-box">
+        <div class="pts">+100</div>
+        <div class="lbl">pontos se completar a missão da semana</div>
+      </div>
+      <div class="stats">
+        <div class="stat">
+          <div class="num" id="missoes-encontradas">0</div>
+          <div class="txt">Missões encontradas</div>
+        </div>
+        <div class="stat">
+          <div class="num" id="semana-label">—</div>
+          <div class="txt">Semana atual</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ESTADO DA MISSÃO -->
+    <div class="card">
+      <h2><i class="fas fa-search"></i> Estado da missão</h2>
+      <div id="status-banner" class="status-banner status-wait">A verificar...</div>
+      <div id="zona-acao"></div>
+    </div>
+
+    <!-- PREVISÕES -->
+    <div class="card" id="card-previsoes">
+      <h2><i class="fas fa-clock"></i> Previsões desta semana</h2>
+      <p style="font-size:12px;color:#888;margin-bottom:10px;">
+        A missão aparece em horários aleatórios. Quem a encontrar pode completá-la.
+      </p>
+      <div id="lista-previsoes"></div>
+      <p class="aviso-mini">
+        💡 Abra esta página nos horários previstos. A disponibilidade muda a cada semana.
+      </p>
+    </div>
+
+    <!-- MISSÃO ATIVA: PERGUNTAS + ANÚNCIOS -->
+    <div id="zona-missao" style="display:none;">
+
+      <div class="card">
+        <h2><i class="fas fa-tasks"></i> Progresso da missão</h2>
+        <div class="progresso"><div class="progresso-bar" id="barra"></div></div>
+        <div class="progresso-txt" id="progresso-txt">0 / 13 etapas</div>
+      </div>
+
+      <!-- PERGUNTAS -->
+      <div class="card" id="card-perguntas">
+        <h2><i class="fas fa-question-circle"></i> 10 perguntas da semana</h2>
+
+        <div class="passo ativo" id="qpasso1">
+          <div class="num-q">Pergunta 1 de 10</div>
+          <div class="pergunta">Qual é a capital de Moçambique?</div>
+          <div class="opcoes">
+            <div class="opcao" onclick="sel(1,this,'Maputo')">Maputo</div>
+            <div class="opcao" onclick="sel(1,this,'Beira')">Beira</div>
+            <div class="opcao" onclick="sel(1,this,'Nampula')">Nampula</div>
+            <div class="opcao" onclick="sel(1,this,'Matola')">Matola</div>
+          </div>
+          <button class="btn" onclick="avancarQ(1)">Continuar</button>
+        </div>
+
+        <div class="passo" id="qpasso2">
+          <div class="num-q">Pergunta 2 de 10</div>
+          <div class="pergunta">Qual moeda é usada em Moçambique?</div>
+          <div class="opcoes">
+            <div class="opcao" onclick="sel(2,this,'Metical')">Metical (MZN)</div>
+            <div class="opcao" onclick="sel(2,this,'Rand')">Rand</div>
+            <div class="opcao" onclick="sel(2,this,'Kwanza')">Kwanza</div>
+            <div class="opcao" onclick="sel(2,this,'Euro')">Euro</div>
+          </div>
+          <button class="btn" onclick="avancarQ(2)">Continuar</button>
+        </div>
+
+        <div class="passo" id="qpasso3">
+          <div class="num-q">Pergunta 3 de 10</div>
+          <div class="pergunta">O que significa M-Pesa?</div>
+          <div class="opcoes">
+            <div class="opcao" onclick="sel(3,this,'Dinheiro móvel')">Serviço de dinheiro móvel</div>
+            <div class="opcao" onclick="sel(3,this,'Banco físico')">Um banco físico</div>
+            <div class="opcao" onclick="sel(3,this,'Cartão de crédito')">Cartão de crédito</div>
+            <div class="opcao" onclick="sel(3,this,'App de jogos')">Aplicação de jogos</div>
+          </div>
+          <button class="btn" onclick="avancarQ(3)">Continuar</button>
+        </div>
+
+        <div class="passo" id="qpasso4">
+          <div class="num-q">Pergunta 4 de 10</div>
+          <div class="pergunta">Quantos pontos mínimos precisa para sacar no Desafio MOZ?</div>
+          <div class="opcoes">
+            <div class="opcao" onclick="sel(4,this,'500')">500 pontos (50 MZN)</div>
+            <div class="opcao" onclick="sel(4,this,'100')">100 pontos</div>
+            <div class="opcao" onclick="sel(4,this,'1000')">1000 pontos</div>
+            <div class="opcao" onclick="sel(4,this,'50')">50 pontos</div>
+          </div>
+          <button class="btn" onclick="avancarQ(4)">Continuar</button>
+        </div>
+
+        <div class="passo" id="qpasso5">
+          <div class="num-q">Pergunta 5 de 10</div>
+          <div class="pergunta">Qual oceano banha a costa de Moçambique?</div>
+          <div class="opcoes">
+            <div class="opcao" onclick="sel(5,this,'Índico')">Oceano Índico</div>
+            <div class="opcao" onclick="sel(5,this,'Atlântico')">Oceano Atlântico</div>
+            <div class="opcao" onclick="sel(5,this,'Pacífico')">Oceano Pacífico</div>
+            <div class="opcao" onclick="sel(5,this,'Ártico')">Oceano Ártico</div>
+          </div>
+          <button class="btn" onclick="avancarQ(5)">Continuar</button>
+        </div>
+
+        <div class="passo" id="qpasso6">
+          <div class="num-q">Pergunta 6 de 10</div>
+          <div class="pergunta">Qual é uma boa forma de ganhar mais pontos no Desafio MOZ?</div>
+          <div class="opcoes">
+            <div class="opcao" onclick="sel(6,this,'Convidar amigos')">Convidar amigos</div>
+            <div class="opcao" onclick="sel(6,this,'Não fazer nada')">Não fazer nada</div>
+            <div class="opcao" onclick="sel(6,this,'Criar várias contas')">Criar várias contas</div>
+            <div class="opcao" onclick="sel(6,this,'Ignorar tarefas')">Ignorar as tarefas</div>
+          </div>
+          <button class="btn" onclick="avancarQ(6)">Continuar</button>
+        </div>
+
+        <div class="passo" id="qpasso7">
+          <div class="num-q">Pergunta 7 de 10</div>
+          <div class="pergunta">Qual língua oficial de Moçambique?</div>
+          <div class="opcoes">
+            <div class="opcao" onclick="sel(7,this,'Português')">Português</div>
+            <div class="opcao" onclick="sel(7,this,'Inglês')">Inglês</div>
+            <div class="opcao" onclick="sel(7,this,'Francês')">Francês</div>
+            <div class="opcao" onclick="sel(7,this,'Swahili')">Swahili</div>
+          </div>
+          <button class="btn" onclick="avancarQ(7)">Continuar</button>
+        </div>
+
+        <div class="passo" id="qpasso8">
+          <div class="num-q">Pergunta 8 de 10</div>
+          <div class="pergunta">O check-in diário no Desafio MOZ dá quantos pontos?</div>
+          <div class="opcoes">
+            <div class="opcao" onclick="sel(8,this,'10')">+10 pontos</div>
+            <div class="opcao" onclick="sel(8,this,'5')">+5 pontos</div>
+            <div class="opcao" onclick="sel(8,this,'30')">+30 pontos</div>
+            <div class="opcao" onclick="sel(8,this,'50')">+50 pontos</div>
+          </div>
+          <button class="btn" onclick="avancarQ(8)">Continuar</button>
+        </div>
+
+        <div class="passo" id="qpasso9">
+          <div class="num-q">Pergunta 9 de 10</div>
+          <div class="pergunta">Qual destas é uma operadora móvel em Moçambique?</div>
+          <div class="opcoes">
+            <div class="opcao" onclick="sel(9,this,'Vodacom')">Vodacom</div>
+            <div class="opcao" onclick="sel(9,this,'Orange')">Orange</div>
+            <div class="opcao" onclick="sel(9,this,'MTN')">MTN apenas</div>
+            <div class="opcao" onclick="sel(9,this,'Claro')">Claro</div>
+          </div>
+          <button class="btn" onclick="avancarQ(9)">Continuar</button>
+        </div>
+
+        <div class="passo" id="qpasso10">
+          <div class="num-q">Pergunta 10 de 10</div>
+          <div class="pergunta">Qual o seu principal objetivo nesta semana no Desafio MOZ?</div>
+          <div class="opcoes">
+            <div class="opcao" onclick="sel(10,this,'Completar missão')">Completar a missão semanal</div>
+            <div class="opcao" onclick="sel(10,this,'Sacar')">Chegar ao saque</div>
+            <div class="opcao" onclick="sel(10,this,'Convidar')">Convidar amigos</div>
+            <div class="opcao" onclick="sel(10,this,'Aprender')">Aprender e divertir-me</div>
+          </div>
+          <button class="btn" id="btn-fim-perguntas" onclick="avancarQ(10)">Concluir perguntas</button>
+        </div>
+      </div>
+
+      <!-- ANÚNCIOS (3 vídeos) -->
+      <div class="card" id="card-anuncios" style="display:none;">
+        <h2><i class="fas fa-play-circle"></i> Anúncios da missão (3 vídeos)</h2>
+        <p style="font-size:13px;color:#aaa;margin-bottom:14px;">
+          Assista 3 anúncios para concluir a missão semanal.
+        </p>
+
+        <div class="ad-box" id="ad1">
+          <div class="ico">🎬</div>
+          <p>Anúncio 1 de 3</p>
+          <button class="btn" type="button" onclick="verAnuncio(1)">Ver anúncio (15s)</button>
+        </div>
+        <div class="ad-box" id="ad2">
+          <div class="ico">📺</div>
+          <p>Anúncio 2 de 3</p>
+          <button class="btn" type="button" onclick="verAnuncio(2)" disabled>Bloqueado</button>
+        </div>
+        <div class="ad-box" id="ad3">
+          <div class="ico">📱</div>
+          <p>Anúncio 3 de 3</p>
+          <button class="btn" type="button" onclick="verAnuncio(3)" disabled>Bloqueado</button>
+        </div>
+      </div>
+
+      <!-- SUCESSO -->
+      <div class="card" id="card-sucesso" style="display:none;">
+        <div class="sucesso">
+          <div style="font-size:48px;">🏆</div>
+          <h2 style="color:#00e676;margin:10px 0;">Missão concluída!</h2>
+          <div class="pts">+100 Pontos</div>
+          <p style="color:#aaa;font-size:14px;">Parabéns! Completou a missão semanal.</p>
+          <button class="btn" style="margin-top:16px;" onclick="window.location.href='tarefas.html'">Voltar às Tarefas</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    /*
+     * Missão semanal:
+     * - Janelas aleatórias por semana (baseadas no número da semana)
+     * - Quem abrir a página durante uma janela "ativa" encontra a missão
+     * - Completar = 10 perguntas + 3 anúncios = +100 pontos (1x por semana)
+     */
+
+    var email = '';
+    var docRef = null;
+    var userData = {};
+    var semanaId = '';
+    var respostas = {};
+    var anunciosVistos = 0;
+    var perguntasFeitas = 0;
+    var missaoAtiva = false;
+    var jaCompletouEstaSemana = false;
+
+    var DIAS = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+
+    function getSemanaId(d) {
+      d = d || new Date();
+      var onejan = new Date(d.getFullYear(), 0, 1);
+      var week = Math.ceil((((d - onejan) / 86400000) + onejan.getDay() + 1) / 7);
+      return d.getFullYear() + '-S' + week;
+    }
+
+    // Gera 5 "janelas" previsíveis mas pseudo-aleatórias para a semana
+    function gerarPrevisoes(semana) {
+      var seed = 0;
+      for (var i = 0; i < semana.length; i++) seed += semana.charCodeAt(i) * (i + 1);
+      function rnd() {
+        seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+        return seed / 0x7fffffff;
+      }
+      var agora = new Date();
+      var inicioSemana = new Date(agora);
+      inicioSemana.setDate(agora.getDate() - agora.getDay()); // domingo
+      inicioSemana.setHours(0, 0, 0, 0);
+
+      var slots = [];
+      for (var n = 0; n < 5; n++) {
+        var diaOffset = Math.floor(rnd() * 7);
+        var hora = 8 + Math.floor(rnd() * 13); // 8h–20h
+        var minuto = rnd() > 0.5 ? 0 : 30;
+        var inicio = new Date(inicioSemana);
+        inicio.setDate(inicioSemana.getDate() + diaOffset);
+        inicio.setHours(hora, minuto, 0, 0);
+        var fim = new Date(inicio.getTime() + 90 * 60 * 1000); // 90 min de janela
+        slots.push({ inicio: inicio, fim: fim });
+      }
+      slots.sort(function (a, b) { return a.inicio - b.inicio; });
+      return slots;
+    }
+
+    function estaAtiva(slots, agora) {
+      agora = agora || new Date();
+      for (var i = 0; i < slots.length; i++) {
+        if (agora >= slots[i].inicio && agora <= slots[i].fim) return true;
+      }
+      return false;
+    }
+
+    function renderPrevisoes(slots) {
+      var agora = new Date();
+      var html = '';
+      slots.forEach(function (s) {
+        var tag = 'tag-depois';
+        var label = 'Mais tarde';
+        if (agora >= s.inicio && agora <= s.fim) {
+          tag = 'tag-agora'; label = 'AGORA';
+        } else if (s.inicio > agora && (s.inicio - agora) < 24 * 3600 * 1000) {
+          tag = 'tag-breve'; label = 'Em breve';
+        } else if (s.fim < agora) {
+          label = 'Passou';
+        }
+        var dia = DIAS[s.inicio.getDay()];
+        var h1 = String(s.inicio.getHours()).padStart(2, '0') + ':' + String(s.inicio.getMinutes()).padStart(2, '0');
+        var h2 = String(s.fim.getHours()).padStart(2, '0') + ':' + String(s.fim.getMinutes()).padStart(2, '0');
+        html += '<div class="prev-item">' +
+          '<span class="prev-dia">' + dia + '</span>' +
+          '<span class="prev-hora">' + h1 + ' – ' + h2 + '</span>' +
+          '<span class="prev-tag ' + tag + '">' + label + '</span>' +
+          '</div>';
+      });
+      document.getElementById('lista-previsoes').innerHTML = html;
+    }
+
+    function atualizarProgresso() {
+      var total = 13; // 10 perguntas + 3 anúncios
+      var feito = perguntasFeitas + anunciosVistos;
+      var pct = Math.min(100, (feito / total) * 100);
+      document.getElementById('barra').style.width = pct + '%';
+      document.getElementById('progresso-txt').textContent = feito + ' / ' + total + ' etapas';
+    }
+
+    function sel(num, el, valor) {
+      var passo = document.getElementById('qpasso' + num);
+      passo.querySelectorAll('.opcao').forEach(function (o) { o.classList.remove('selecionada'); });
+      el.classList.add('selecionada');
+      respostas['q' + num] = valor;
+    }
+
+    function avancarQ(num) {
+      if (!respostas['q' + num]) {
+        alert('Escolha uma opção.');
+        return;
+      }
+      perguntasFeitas = Math.max(perguntasFeitas, num);
+      atualizarProgresso();
+
+      if (num < 10) {
+        document.getElementById('qpasso' + num).classList.remove('ativo');
+        document.getElementById('qpasso' + (num + 1)).classList.add('ativo');
+      } else {
+        document.getElementById('card-perguntas').style.display = 'none';
+        document.getElementById('card-anuncios').style.display = 'block';
+        atualizarProgresso();
+      }
+    }
+
+    function verAnuncio(n) {
+      var box = document.getElementById('ad' + n);
+      var btn = box.querySelector('button');
+      btn.disabled = true;
+      btn.textContent = 'A assistir... 15s';
+      var rest = 15;
+      var t = setInterval(function () {
+        rest--;
+        btn.textContent = 'A assistir... ' + rest + 's';
+        if (rest <= 0) {
+          clearInterval(t);
+          box.classList.add('ad-done');
+          btn.textContent = '✅ Visto';
+          anunciosVistos = Math.max(anunciosVistos, n);
+          atualizarProgresso();
+          if (n < 3) {
+            var nextBtn = document.getElementById('ad' + (n + 1)).querySelector('button');
+            nextBtn.disabled = false;
+            nextBtn.textContent = 'Ver anúncio (15s)';
+          } else {
+            finalizarMissao();
+          }
+        }
+      }, 1000);
+    }
+
+    async function finalizarMissao() {
+      if (jaCompletouEstaSemana) return;
+      try {
+        var pontosAtuais = userData.pontos || 0;
+        var novos = pontosAtuais + 100;
+        var encontradas = (userData.missoesSemanaisEncontradas || 0);
+        // só conta "encontrada" se ainda não tinha começado esta semana
+        if (userData.missaoSemanaId !== semanaId) {
+          encontradas += 1;
+        }
+
+        await docRef.update({
+          pontos: novos,
+          missaoSemanaId: semanaId,
+          missaoSemanalCompleta: true,
+          missaoSemanalRespostas: respostas,
+          missoesSemanaisEncontradas: encontradas,
+          ultimaAtualizacao: new Date().toISOString()
+        });
+        try {
+          await missaoGlobalRef().update({ completa: true, dataCompleta: new Date().toISOString() });
+        } catch (eg) { console.warn(eg); }
+
+        localStorage.setItem('pontosUtilizador', String(novos));
+        document.getElementById('missoes-encontradas').textContent = encontradas;
+        document.getElementById('card-anuncios').style.display = 'none';
+        document.getElementById('card-sucesso').style.display = 'block';
+        document.getElementById('barra').style.width = '100%';
+        document.getElementById('progresso-txt').textContent = '13 / 13 etapas';
+        jaCompletouEstaSemana = true;
+      } catch (e) {
+        alert('Erro ao guardar: ' + (e.message || e));
+      }
+    }
+
+    // Documento global da missão da semana: só O PRIMEIRO que encontrar fica com o privilégio
+    function missaoGlobalRef() {
+      return db.collection('missaoSemanalGlobal').doc(semanaId);
+    }
+
+    async function tentarSerPrimeiro() {
+      var ref = missaoGlobalRef();
+      try {
+        var resultado = await db.runTransaction(async function (tx) {
+          var snap = await tx.get(ref);
+          if (snap.exists) {
+            var d = snap.data();
+            // Já tem dono
+            return { ok: false, dono: d.emailEncontrou, nome: d.nomeEncontrou || '' };
+          }
+          // Ainda ninguém — este utilizador é o primeiro
+          tx.set(ref, {
+            emailEncontrou: email,
+            nomeEncontrou: userData.nome || email,
+            dataEncontrada: new Date().toISOString(),
+            semanaId: semanaId,
+            completa: false
+          });
+          return { ok: true };
+        });
+        return resultado;
+      } catch (e) {
+        // Se transação não for suportada / regras, tenta manual
+        console.warn('Transação:', e);
+        var snap = await ref.get();
+        if (snap.exists) {
+          var d = snap.data();
+          return { ok: false, dono: d.emailEncontrou, nome: d.nomeEncontrou || '' };
+        }
+        await ref.set({
+          emailEncontrou: email,
+          nomeEncontrou: userData.nome || email,
+          dataEncontrada: new Date().toISOString(),
+          semanaId: semanaId,
+          completa: false
+        });
+        // Reconfirma (corrida)
+        var conf = await ref.get();
+        var d2 = conf.data();
+        if (d2.emailEncontrou === email) return { ok: true };
+        return { ok: false, dono: d2.emailEncontrou, nome: d2.nomeEncontrou || '' };
+      }
+    }
+
+    async function iniciarMissaoEncontrada() {
+      // Só o primeiro pode começar
+      var claim = await tentarSerPrimeiro();
+      if (!claim.ok) {
+        // Pode ser o próprio a continuar
+        if (claim.dono === email) {
+          // continua
+        } else {
+          document.getElementById('status-banner').className = 'status-banner status-done';
+          document.getElementById('status-banner').textContent =
+            '😔 Esta semana a missão já foi encontrada por outra pessoa' +
+            (claim.nome ? ' (' + claim.nome + ')' : '') +
+            '. Tente na próxima semana!';
+          document.getElementById('zona-acao').innerHTML = '';
+          document.getElementById('zona-missao').style.display = 'none';
+          return;
+        }
+      } else {
+        // Primeiro a encontrar — conta no perfil
+        try {
+          var encontradas = (userData.missoesSemanaisEncontradas || 0) + 1;
+          await docRef.update({
+            missaoSemanaId: semanaId,
+            missaoSemanalCompleta: false,
+            missoesSemanaisEncontradas: encontradas
+          });
+          userData.missoesSemanaisEncontradas = encontradas;
+          userData.missaoSemanaId = semanaId;
+          document.getElementById('missoes-encontradas').textContent = encontradas;
+        } catch (e) { console.warn(e); }
+      }
+
+      missaoAtiva = true;
+      document.getElementById('zona-missao').style.display = 'block';
+      document.getElementById('card-previsoes').style.display = 'none';
+      document.getElementById('status-banner').className = 'status-banner status-ok';
+      document.getElementById('status-banner').textContent =
+        '🏆 Foi o PRIMEIRO a encontrar! Complete as 10 perguntas e os 3 anúncios para ganhar +100 pts.';
+      document.getElementById('zona-acao').innerHTML = '';
+    }
+
+    async function carregar() {
+      email = localStorage.getItem('emailUtilizador') || '';
+      if (!email) {
+        alert('Sessão expirada. Faça login.');
+        window.location.href = 'criar-conta.html';
+        return;
+      }
+
+      semanaId = getSemanaId();
+      document.getElementById('semana-label').textContent = semanaId.replace(/.*-S/, 'S');
+
+      try {
+        var snap = await db.collection('usuarios').where('email', '==', email).limit(1).get();
+        if (snap.empty) {
+          alert('Utilizador não encontrado.');
+          window.location.href = 'criar-conta.html';
+          return;
+        }
+        docRef = snap.docs[0].ref;
+        userData = snap.docs[0].data();
+        document.getElementById('missoes-encontradas').textContent = userData.missoesSemanaisEncontradas || 0;
+
+        var slots = gerarPrevisoes(semanaId);
+        renderPrevisoes(slots);
+
+        // Estado global: quem encontrou primeiro esta semana
+        var globalSnap = await missaoGlobalRef().get();
+        var globalData = globalSnap.exists ? globalSnap.data() : null;
+        var donoEmail = globalData ? globalData.emailEncontrou : null;
+        var souODono = donoEmail === email;
+        var jaTemDono = !!donoEmail;
+
+        jaCompletouEstaSemana = (userData.missaoSemanaId === semanaId && userData.missaoSemanalCompleta === true)
+          || (globalData && globalData.completa === true && souODono);
+        var ativaAgora = estaAtiva(slots);
+
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('conteudo').style.display = 'block';
+
+        if (jaCompletouEstaSemana && souODono) {
+          document.getElementById('status-banner').className = 'status-banner status-done';
+          document.getElementById('status-banner').textContent = '✅ Completou a missão desta semana (foi o primeiro). Volte na próxima!';
+          document.getElementById('zona-acao').innerHTML = '';
+        } else if (jaTemDono && !souODono) {
+          document.getElementById('status-banner').className = 'status-banner status-done';
+          document.getElementById('status-banner').textContent =
+            '😔 A missão desta semana já foi encontrada por ' +
+            (globalData.nomeEncontrou || 'outro utilizador') +
+            '. Só a primeira pessoa ganha o privilégio. Tente na próxima semana!';
+          document.getElementById('zona-acao').innerHTML = '';
+        } else if (souODono && !jaCompletouEstaSemana) {
+          document.getElementById('status-banner').className = 'status-banner status-ok';
+          document.getElementById('status-banner').textContent =
+            '🏆 É o primeiro desta semana! Continue a missão para ganhar +100 pts.';
+          document.getElementById('zona-acao').innerHTML =
+            '<button class="btn" type="button" onclick="iniciarMissaoEncontrada()">Continuar missão</button>';
+        } else if (ativaAgora) {
+          document.getElementById('status-banner').className = 'status-banner status-ok';
+          document.getElementById('status-banner').textContent =
+            '🎉 A missão está AGORA disponível! Se for o primeiro a clicar, ganha o privilégio desta semana.';
+          document.getElementById('zona-acao').innerHTML =
+            '<button class="btn" type="button" onclick="iniciarMissaoEncontrada()">Tentar ser o primeiro</button>';
+        } else {
+          document.getElementById('status-banner').className = 'status-banner status-wait';
+          document.getElementById('status-banner').textContent =
+            '⏳ Missão ainda não está ativa. Só quem encontrar PRIMEIRO nos horários previstos fica com a chance.';
+          document.getElementById('zona-acao').innerHTML =
+            '<button class="btn-sec" type="button" onclick="location.reload()">Verificar novamente</button>';
+        }
+      } catch (e) {
+        console.error(e);
+        document.getElementById('loading').textContent = 'Erro: ' + (e.message || e);
+      }
+    }
+
+    carregar();
+  </script>
+</body>
+</html>

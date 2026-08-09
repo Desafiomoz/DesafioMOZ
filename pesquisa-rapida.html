@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="pt-MZ">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Pesquisa Rápida – Desafio MOZ</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+  <script>
+    if (typeof window.__DESAFIO_MOZ_FIREBASE__ === 'undefined') {
+      window.__DESAFIO_MOZ_FIREBASE__ = true;
+      var firebaseConfig = {
+        apiKey: "AIzaSyDONfggnmf9OJX_AgfvcHTRf6tsuKD5nrA",
+        authDomain: "desafio-moz-61b70.firebaseapp.com",
+        projectId: "desafio-moz-61b70",
+        storageBucket: "desafio-moz-61b70.firebasestorage.app",
+        messagingSenderId: "945658936331",
+        appId: "1:945658936331:web:7ee4b0e7de1c1daf36db0e",
+        measurementId: "G-G1DZQ1B0DB"
+      };
+      if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+      window.db = firebase.firestore();
+    }
+    var db = window.db;
+  </script>
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    body {
+      background: #0a0a0f;
+      color: #fff;
+      min-height: 100vh;
+      padding: 20px 16px 40px;
+    }
+    .header { text-align: center; margin-bottom: 22px; }
+    .header img {
+      width: 80px; height: 80px; border-radius: 50%; object-fit: contain;
+      margin: 0 auto 12px; display: block;
+      box-shadow: 0 0 22px rgba(34,255,153,0.35);
+      border: 2px solid #00e676;
+    }
+    .titulo { font-size: 20px; color: #00e676; font-weight: 700; }
+    .subtitulo { color: #aaa; font-size: 13px; margin-top: 4px; }
+
+    .card {
+      background: rgba(21,21,31,0.95);
+      border: 1px solid rgba(0,200,83,0.3);
+      border-radius: 18px;
+      padding: 22px 16px;
+      max-width: 420px;
+      margin: 0 auto;
+    }
+
+    .progresso {
+      height: 6px; background: #1e1e2a; border-radius: 10px;
+      margin-bottom: 22px; overflow: hidden;
+    }
+    .progresso-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #00c853, #00e676);
+      width: 33%;
+      transition: width 0.35s ease;
+    }
+
+    .passo { display: none; }
+    .passo.ativo { display: block; animation: fade 0.3s ease; }
+    @keyframes fade {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .pergunta {
+      font-size: 17px; font-weight: 600; margin-bottom: 16px; line-height: 1.4;
+    }
+    .num {
+      display: inline-block;
+      background: rgba(0,200,83,0.2);
+      color: #00e676;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      margin-bottom: 10px;
+    }
+
+    .opcoes { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+    .opcao {
+      background: rgba(0,200,83,0.1);
+      border: 1px solid rgba(0,200,83,0.35);
+      color: #fff;
+      padding: 14px 16px;
+      border-radius: 12px;
+      font-size: 15px;
+      cursor: pointer;
+      transition: 0.2s;
+      text-align: left;
+    }
+    .opcao:hover, .opcao.selecionada {
+      background: #00c853;
+      color: #000;
+      font-weight: 600;
+    }
+
+    .btn {
+      width: 100%;
+      background: linear-gradient(90deg, #00c853, #00e676);
+      color: #000;
+      border: none;
+      border-radius: 14px;
+      padding: 14px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 6px;
+    }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .sucesso { text-align: center; padding: 28px 8px; }
+    .sucesso .pts {
+      font-size: 40px; font-weight: 800; color: #FFD700; margin: 12px 0;
+    }
+    .sucesso p { color: #aaa; font-size: 14px; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <img src="https://i.supaimg.com/b173afd9-4344-4026-a5d7-6a53e4b6efdc/8f054a24-2746-4a43-9f1c-354584289dc3.png" alt="Desafio MOZ">
+    <div class="titulo">Pesquisa Rápida</div>
+    <div class="subtitulo">3 perguntas · cerca de 1 minuto · <strong style="color:#FFD700">+3 Pontos</strong></div>
+  </div>
+
+  <div class="card">
+    <div class="progresso">
+      <div class="progresso-bar" id="barra"></div>
+    </div>
+
+    <div class="passo ativo" id="passo1">
+      <div class="num">Pergunta 1 de 3</div>
+      <div class="pergunta">Como costuma usar a internet no dia a dia?</div>
+      <div class="opcoes" id="q1">
+        <div class="opcao" onclick="selecionar(1, this, 'Redes sociais')">Redes sociais (WhatsApp, Facebook, TikTok)</div>
+        <div class="opcao" onclick="selecionar(1, this, 'Trabalho / estudos')">Trabalho ou estudos</div>
+        <div class="opcao" onclick="selecionar(1, this, 'Notícias')">Ver notícias</div>
+        <div class="opcao" onclick="selecionar(1, this, 'Entretenimento')">Vídeos e entretenimento</div>
+        <div class="opcao" onclick="selecionar(1, this, 'Pouca internet')">Uso pouco a internet</div>
+      </div>
+      <button class="btn" onclick="avancar(1)">Continuar</button>
+    </div>
+
+    <div class="passo" id="passo2">
+      <div class="num">Pergunta 2 de 3</div>
+      <div class="pergunta">Qual é a sua forma preferida de receber dinheiro?</div>
+      <div class="opcoes" id="q2">
+        <div class="opcao" onclick="selecionar(2, this, 'M-Pesa')">M-Pesa</div>
+        <div class="opcao" onclick="selecionar(2, this, 'e-Mola')">e-Mola</div>
+        <div class="opcao" onclick="selecionar(2, this, 'Conta bancária')">Conta bancária</div>
+        <div class="opcao" onclick="selecionar(2, this, 'Dinheiro físico')">Dinheiro em mão</div>
+      </div>
+      <button class="btn" onclick="avancar(2)">Continuar</button>
+    </div>
+
+    <div class="passo" id="passo3">
+      <div class="num">Pergunta 3 de 3</div>
+      <div class="pergunta">O que mais o motiva a usar o Desafio MOZ?</div>
+      <div class="opcoes" id="q3">
+        <div class="opcao" onclick="selecionar(3, this, 'Ganhar dinheiro extra')">Ganhar dinheiro extra</div>
+        <div class="opcao" onclick="selecionar(3, this, 'Tarefas rápidas')">Tarefas rápidas e fáceis</div>
+        <div class="opcao" onclick="selecionar(3, this, 'Convidar amigos')">Convidar amigos e ganhar mais</div>
+        <div class="opcao" onclick="selecionar(3, this, 'Curiosidade')">Só por curiosidade</div>
+      </div>
+      <button class="btn" id="btn-final" onclick="finalizar()">Enviar e Ganhar +3 Pontos</button>
+    </div>
+
+    <div class="passo" id="sucesso">
+      <div class="sucesso">
+        <div style="font-size:48px;">🎉</div>
+        <h2 style="color:#00e676; margin:10px 0;">Pesquisa concluída!</h2>
+        <div class="pts">+3 Pontos</div>
+        <p>Obrigado pelas respostas.<br>A redirecionar para Tarefas...</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    if (localStorage.getItem('pesquisaRapidaCompleta') === 'true') {
+      window.location.href = 'tarefas.html';
+    }
+
+    var respostas = { q1: '', q2: '', q3: '' };
+
+    function selecionar(num, el, valor) {
+      var container = document.getElementById('q' + num);
+      container.querySelectorAll('.opcao').forEach(function (o) {
+        o.classList.remove('selecionada');
+      });
+      el.classList.add('selecionada');
+      respostas['q' + num] = valor;
+    }
+
+    function avancar(passo) {
+      if (!respostas['q' + passo]) {
+        alert('Por favor escolha uma opção.');
+        return;
+      }
+      document.getElementById('passo' + passo).classList.remove('ativo');
+      var proximo = passo + 1;
+      document.getElementById('passo' + proximo).classList.add('ativo');
+      document.getElementById('barra').style.width = ((proximo / 3) * 100) + '%';
+    }
+
+    async function finalizar() {
+      if (!respostas.q3) {
+        alert('Por favor escolha uma opção.');
+        return;
+      }
+
+      var btn = document.getElementById('btn-final');
+      btn.disabled = true;
+      btn.textContent = 'A guardar...';
+
+      var email = localStorage.getItem('emailUtilizador');
+      if (!email) {
+        alert('Sessão expirada. Faça login novamente.');
+        window.location.href = 'criar-conta.html';
+        return;
+      }
+
+      try {
+        var snap = await db.collection('usuarios')
+          .where('email', '==', email)
+          .limit(1)
+          .get();
+
+        if (snap.empty) {
+          alert('Utilizador não encontrado.');
+          btn.disabled = false;
+          btn.textContent = 'Enviar e Ganhar +3 Pontos';
+          return;
+        }
+
+        var docRef = snap.docs[0].ref;
+        var userData = snap.docs[0].data();
+
+        if (userData.pesquisaRapidaCompleta === true) {
+          localStorage.setItem('pesquisaRapidaCompleta', 'true');
+          alert('Já completou esta pesquisa.');
+          window.location.href = 'tarefas.html';
+          return;
+        }
+
+        var pontosAtuais = userData.pontos || 0;
+        var novosPontos = pontosAtuais + 3;
+
+        await docRef.update({
+          pesquisaRapida: respostas,
+          pesquisaRapidaCompleta: true,
+          pontos: novosPontos,
+          ultimaAtualizacao: new Date().toISOString()
+        });
+
+        localStorage.setItem('pesquisaRapidaCompleta', 'true');
+        localStorage.setItem('pontosUtilizador', String(novosPontos));
+        localStorage.setItem('ultimoGanho', '3');
+
+        document.getElementById('passo3').classList.remove('ativo');
+        document.getElementById('sucesso').classList.add('ativo');
+        document.getElementById('barra').style.width = '100%';
+
+        setTimeout(function () {
+          window.location.href = 'tarefas.html';
+        }, 2200);
+
+      } catch (erro) {
+        console.error(erro);
+        alert('Erro ao guardar: ' + (erro.message || erro));
+        btn.disabled = false;
+        btn.textContent = 'Enviar e Ganhar +3 Pontos';
+      }
+    }
+  </script>
+</body>
+</html>

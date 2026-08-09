@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="pt-MZ">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Regras – Desafio MOZ</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=Poppins:wght@600;700;900&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --preto-fundo: #0A0C14;
+            --preto-escuro: #05060F;
+            --cinza: #161A2B;
+            --verde: #00C853;
+            --verde-claro: #22FF99;
+            --texto: #FFFFFF;
+            --texto-claro: #A8B0C8;
+            --destaque: #FFD700;
+        }
+
+        body {
+            background: var(--preto-fundo);
+            color: var(--texto);
+            font-family: 'Inter', system-ui, sans-serif;
+            line-height: 1.7;
+            padding: 20px 0 60px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(180deg, rgba(10,12,20,0.94), rgba(5,6,15,0.96));
+            z-index: -1;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* CABEÇALHO COM LOGÓTIPO */
+        .cabecalho {
+            text-align: center;
+            padding: 40px 0 30px;
+            border-bottom: 1px solid rgba(0,200,83,0.2);
+            margin-bottom: 40px;
+        }
+
+        .logo {
+            width: 90px;
+            height: 90px;
+            border-radius: 12px;
+            object-fit: contain;
+            margin-bottom: 15px;
+            box-shadow: 0 0 25px rgba(34,255,153,0.3);
+        }
+
+        .titulo-principal {
+            font-family: 'Poppins', sans-serif;
+            font-size: clamp(28px, 7vw, 42px);
+            background: linear-gradient(90deg, var(--verde), var(--verde-claro), var(--destaque));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 900;
+        }
+
+        .subtitulo {
+            color: var(--texto-claro);
+            margin-top: 8px;
+            font-size: 16px;
+        }
+
+        /* CAIXAS DE REGRAS */
+        .bloco-regra {
+            background: rgba(22,26,43,0.85);
+            border: 1px solid rgba(0,200,83,0.25);
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 20px;
+            transition: 0.3s ease;
+            backdrop-filter: blur(8px);
+        }
+
+        .bloco-regra:hover {
+            border-color: var(--verde-claro);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0,200,83,0.15);
+        }
+
+        .titulo-regra {
+            color: var(--verde-claro);
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .bloco-regra ul {
+            padding-left: 25px;
+            color: var(--texto-claro);
+        }
+
+        .bloco-regra li {
+            margin-bottom: 8px;
+        }
+
+        /* TABELAS BONITAS E ORGANIZADAS */
+        .titulo-tabela {
+            text-align: center;
+            color: var(--verde-claro);
+            font-size: 22px;
+            margin: 40px 0 20px;
+            font-weight: 700;
+        }
+
+        .tabela {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            border-radius: 16px;
+            overflow: hidden;
+            background: rgba(22,26,43,0.9);
+            margin-bottom: 30px;
+        }
+
+        .tabela th {
+            background: linear-gradient(90deg, var(--verde), var(--verde-claro));
+            color: #000;
+            padding: 16px;
+            text-align: left;
+            font-weight: 800;
+        }
+
+        .tabela td {
+            padding: 14px 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            color: var(--texto-claro);
+        }
+
+        .tabela tr:last-child td { border-bottom: none; }
+        .tabela tr:hover td { background: rgba(0,200,83,0.08); }
+
+        /* BOTÕES */
+        .area-botoes {
+            display: flex;
+            justify-content: center;
+            gap: 18px;
+            flex-wrap: wrap;
+            margin-top: 50px;
+        }
+
+        .btn {
+            padding: 14px 32px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 16px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-voltar {
+            background: transparent;
+            color: var(--texto);
+            border: 2px solid var(--verde);
+        }
+
+        .btn-voltar:hover {
+            background: rgba(0,200,83,0.15);
+            transform: translateY(-2px);
+        }
+
+        .btn-conta {
+            background: linear-gradient(90deg, var(--verde), var(--verde-claro));
+            color: #000;
+            box-shadow: 0 4px 20px rgba(0,200,83,0.4);
+        }
+
+        .btn-conta:hover {
+            transform: translateY(-3px) scale(1.03);
+            box-shadow: 0 8px 30px rgba(0,200,83,0.5);
+        }
+
+        @media (max-width: 600px) {
+            .area-botoes { flex-direction: column; align-items: center; }
+            .btn { width: 100%; max-width: 300px; justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- CABEÇALHO COM LOGÓTIPO -->
+    <header class="cabecalho">
+        <img src="https://i.supaimg.com/b173afd9-4344-4026-a5d7-6a53e4b6efdc/8f054a24-2746-4a43-9f1c-354584289dc3.png" alt="Desafio MOZ" class="logo">
+        <h1 class="titulo-principal">📜 Regras Oficiais</h1>
+        <p class="subtitulo">Leia com atenção para aproveitar tudo sem problemas</p>
+    </header>
+
+    <!-- REGRAS PRINCIPAIS -->
+    <div class="bloco-regra">
+        <h3 class="titulo-regra"><i class="fas fa-check-circle"></i> 1. Conta e Cadastro</h3>
+        <ul>
+            <li>Só é permitida <strong>uma conta por pessoa</strong> e por número de telefone.</li>
+            <li>Os dados devem ser <strong>reais e verdadeiros</strong> (nome, número M‑Pesa/e‑Mola).</li>
+            <li>É proibido usar contas de outras pessoas, dados falsos ou documentos alheios.</li>
+            <li>Menores de 18 anos só podem participar com autorização de um responsável.</li>
+        </ul>
+    </div>
+
+    <div class="bloco-regra">
+        <h3 class="titulo-regra"><i class="fas fa-coins"></i> 2. Pontos e Ganhos</h3>
+        <ul>
+            <li><strong>10 Pontos = 1 Metical</strong> — valor fixo e garantido.</li>
+            <li>Ganhas pontos ao fazer desafios, responder pesquisas, ver anúncios e indicar amigos.</li>
+            <li>Pontos só são adicionados após confirmação da tarefa.</li>
+            <li>Tarefas incompletas ou feitas de forma errada não geram pontos.</li>
+        </ul>
+    </div>
+
+    <div class="bloco-regra">
+        <h3 class="titulo-regra"><i class="fas fa-money-check-alt"></i> 3. Saques e Pagamentos</h3>
+        <ul>
+            <li>Valor mínimo para sacar: <strong>500 Pontos = 50 MT</strong>.</li>
+            <li>Pagamentos feitos apenas por <strong>M‑Pesa e e‑Mola</strong>.</li>
+            <li>Prazo de pagamento: até <strong>48 horas úteis</strong> após o pedido.</li>
+            <li>Verifique sempre o número antes de confirmar o saque.</li>
+        </ul>
+    </div>
+
+    <div class="bloco-regra">
+        <h3 class="titulo-regra"><i class="fas fa-ban"></i> 4. Proibições e Penalidades</h3>
+        <ul>
+            <li>Proibido uso de <strong>robôs, automações ou truques</strong> para ganhar pontos.</li>
+            <li>Não é permitido alterar dados depois de pedir um saque.</li>
+            <li>Contas duplicadas ou suspeitas serão <strong>bloqueadas imediatamente</strong> sem aviso prévio.</li>
+            <li>Qualquer tentativa de fraude cancela todos os pontos e ganhos.</li>
+        </ul>
+    </div>
+
+    <div class="bloco-regra">
+        <h3 class="titulo-regra"><i class="fas fa-handshake"></i> 5. Indicações e Convites</h3>
+        <ul>
+            <li>Ganhas recompensa por cada amigo que se cadastrar pelo teu link.</li>
+            <li>O amigo deve completar o cadastro corretamente e fazer a primeira tarefa.</li>
+            <li>Proibido convidar a ti mesmo ou usar números que já estão cadastrados.</li>
+        </ul>
+    </div>
+
+    <!-- TABELA EXATA COM OS DADOS QUE QUERES -->
+    <h3 class="titulo-tabela">📊 Tabela de Tarefas e Valores</h3>
+    <table class="tabela">
+        <thead>
+            <tr>
+                <th>Tarefa / Descrição</th>
+                <th>Pontos Ganhos</th>
+                <th>Valor em Meticais</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Cadastro completo</td>
+                <td>+100 Pontos</td>
+                <td>10 MT</td>
+            </tr>
+            <tr>
+                <td>Pesquisa curta</td>
+                <td>+100 Pontos</td>
+                <td>10 MT</td>
+            </tr>
+            <tr>
+                <td>Ver anúncio</td>
+                <td>+150 Pontos</td>
+                <td>15 MT</td>
+            </tr>
+            <tr>
+                <td>Desafio do dia / Jogo</td>
+                <td>+200 Pontos</td>
+                <td>20 MT</td>
+            </tr>
+            <tr>
+                <td>Indicar um amigo ativo</td>
+                <td>+300 Pontos</td>
+                <td>30 MT</td>
+            </tr>
+            <tr>
+                <td><strong>Mínimo para saque</strong></td>
+                <td><strong>500 Pontos</strong></td>
+                <td><strong>50 MT</strong></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- TABELA DE PAGAMENTOS ORGANIZADA -->
+    <h3 class="titulo-tabela">💳 Métodos de Pagamento</h3>
+    <table class="tabela">
+        <thead>
+            <tr>
+                <th>Operadora</th>
+                <th>País</th>
+                <th>Prazo de Entrega</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>🇲🇿 M‑Pesa</td>
+                <td>Moçambique</td>
+                <td>Até 48 horas</td>
+            </tr>
+            <tr>
+                <td>🇲🇿 e‑Mola</td>
+                <td>Moçambique</td>
+                <td>Até 48 horas</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- BOTÕES FINAIS -->
+    <div class="area-botoes">
+        <a href="index.html" class="btn btn-voltar">
+            <i class="fas fa-arrow-left"></i> Voltar ao Início
+        </a>
+        <a href="criar-conta.html" class="btn btn-conta">
+            <i class="fas fa-user-plus"></i> Criar Minha Conta
+        </a>
+    </div>
+</div>
+
+
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+<script>
+(function () {
+  if (typeof window.__DESAFIO_MOZ_FIREBASE__ === 'undefined') {
+    window.__DESAFIO_MOZ_FIREBASE__ = true;
+    var firebaseConfig = {
+      apiKey: "AIzaSyDONfggnmf9OJX_AgfvcHTRf6tsuKD5nrA",
+      authDomain: "desafio-moz-61b70.firebaseapp.com",
+      projectId: "desafio-moz-61b70",
+      storageBucket: "desafio-moz-61b70.firebasestorage.app",
+      messagingSenderId: "945658936331",
+      appId: "1:945658936331:web:7ee4b0e7de1c1daf36db0e",
+      measurementId: "G-G1DZQ1B0DB"
+    };
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    window.db = firebase.firestore();
+  }
+  var db = window.db;
+  var PAGINA = 'regras';
+
+  function injetarHtml(container, html) {
+    var tpl = document.createElement('template');
+    tpl.innerHTML = html || '';
+    var frag = tpl.content;
+    Array.prototype.forEach.call(frag.querySelectorAll('script'), function (old) {
+      var s = document.createElement('script');
+      Array.prototype.forEach.call(old.attributes, function (a) { s.setAttribute(a.name, a.value); });
+      s.text = old.textContent || '';
+      old.parentNode.replaceChild(s, old);
+    });
+    container.appendChild(frag);
+  }
+
+  async function carregarAnunciosCurtosNaPagina() {
+    try {
+      var snap = await db.collection('anunciosCurtos').get();
+      var host = document.getElementById('zona-anuncios-curtos');
+      if (!host) {
+        host = document.createElement('div');
+        host.id = 'zona-anuncios-curtos';
+        host.style.cssText = 'max-width:900px;margin:20px auto;padding:0 16px;';
+        var footer = document.querySelector('footer');
+        var botoes = document.querySelector('.area-botoes');
+        var menu = document.querySelector('.menu-baixo');
+        if (menu) document.body.insertBefore(host, menu);
+        else if (botoes) botoes.parentNode.insertBefore(host, botoes);
+        else if (footer) footer.parentNode.insertBefore(host, footer);
+        else document.body.appendChild(host);
+      }
+      host.innerHTML = '';
+      snap.forEach(function (doc) {
+        var d = doc.data() || {};
+        if (d.ativo === false) return;
+        var pags = (d.paginas || []).map(function (p) {
+          return String(p).toLowerCase().replace(/\.html$/, '');
+        });
+        if (pags.indexOf(PAGINA) === -1) return;
+        var box = document.createElement('div');
+        box.style.cssText = 'background:rgba(21,21,31,0.92);border:1px solid rgba(0,200,83,0.25);border-radius:14px;padding:12px;margin-bottom:12px;overflow:hidden;';
+        var lab = document.createElement('div');
+        lab.style.cssText = 'font-size:10px;color:#666;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;';
+        lab.textContent = 'Publicidade';
+        box.appendChild(lab);
+        var slot = document.createElement('div');
+        box.appendChild(slot);
+        host.appendChild(box);
+        try { injetarHtml(slot, d.codigo); } catch (e) {}
+      });
+    } catch (e) { console.warn('anunciosCurtos', e); }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', carregarAnunciosCurtosNaPagina);
+  } else {
+    carregarAnunciosCurtosNaPagina();
+  }
+})();
+</script>
+
+</body>
+</html>

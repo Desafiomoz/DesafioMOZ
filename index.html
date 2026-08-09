@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="pt-MZ">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Desafio MOZ – Ganhe Dinheiro em Moçambique</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=Poppins:wght@600;700;900&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --preto-fundo: #0A0C14;
+            --preto-escuro: #05060F;
+            --cinza: #161A2B;
+            --verde: #00C853;
+            --verde-claro: #22FF99;
+            --texto: #FFFFFF;
+            --texto-claro: #A8B0C8;
+            --destaque: #FFD700;
+        }
+
+        body {
+            background: var(--preto-fundo);
+            color: var(--texto);
+            font-family: 'Inter', system-ui, sans-serif;
+            line-height: 1.6;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(180deg, rgba(10, 12, 20, 0.92), rgba(5, 6, 15, 0.95)),
+                        url('https://picsum.photos/id/1015/1920/1080') center/cover no-repeat;
+            z-index: -2;
+            filter: brightness(0.75) contrast(1.1);
+        }
+
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+            background: radial-gradient(circle at 30% 20%, rgba(34, 255, 153, 0.08) 0%, transparent 50%),
+                        radial-gradient(circle at 70% 60%, rgba(0, 200, 83, 0.06) 0%, transparent 50%);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .cabecalho {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-img {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            object-fit: contain;
+        }
+
+        .logo-texto {
+            font-family: 'Poppins', sans-serif;
+            font-size: 26px;
+            font-weight: 900;
+            background: linear-gradient(90deg, var(--verde), var(--verde-claro), #FFD700);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -1px;
+        }
+
+        .botoes-topo {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 15px;
+            text-decoration: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: center;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-entrar {
+            background: transparent;
+            color: white;
+            border: 2px solid var(--verde);
+        }
+
+        .btn-entrar:hover {
+            background: rgba(0, 200, 83, 0.15);
+            transform: translateY(-3px);
+        }
+
+        .btn-conta {
+            background: linear-gradient(90deg, var(--verde), var(--verde-claro));
+            color: #000;
+            box-shadow: 0 4px 15px rgba(0, 200, 83, 0.4);
+        }
+
+        .btn-conta:hover {
+            transform: translateY(-4px) scale(1.05);
+            box-shadow: 0 8px 25px rgba(0, 200, 83, 0.5);
+        }
+
+        .hero {
+            padding: 120px 20px 100px;
+            text-align: center;
+            position: relative;
+        }
+
+        .hero h1 {
+            font-family: 'Poppins', sans-serif;
+            font-size: clamp(32px, 8vw, 58px);
+            line-height: 1.1;
+            margin-bottom: 24px;
+            font-weight: 900;
+        }
+
+        .hero p {
+            font-size: 18px;
+            max-width: 700px;
+            margin: 0 auto;
+            color: var(--texto-claro);
+        }
+
+        .destaque-verde {
+            background: linear-gradient(90deg, var(--verde-claro), #FFD700);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .faixa-app {
+            background: rgba(0,200,83,0.1);
+            border: 1px solid rgba(0,200,83,0.3);
+            border-radius: 20px;
+            padding: 24px;
+            margin: 40px 0;
+            display: flex;
+            align-items: center;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .secao {
+            padding: 80px 0;
+        }
+
+        .titulo-secao {
+            text-align: center;
+            font-size: clamp(26px, 6vw, 36px);
+            margin-bottom: 50px;
+            color: var(--verde-claro);
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .grade-provas {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+        }
+
+        .cartao-prova {
+            background: rgba(22, 26, 43, 0.85);
+            border-radius: 20px;
+            padding: 32px 24px;
+            border: 1px solid rgba(0, 200, 83, 0.3);
+            transition: all 0.4s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .cartao-prova:hover {
+            transform: translateY(-12px);
+            border-color: var(--verde-claro);
+            box-shadow: 0 20px 40px rgba(0, 200, 83, 0.25);
+        }
+
+        .numero-prova {
+            font-size: clamp(38px, 8vw, 52px);
+            font-weight: 900;
+            color: var(--verde-claro);
+            margin: 16px 0;
+            text-align: center;
+        }
+
+        .bloco-imagem {
+            display: flex;
+            align-items: center;
+            gap: 40px;
+            flex-wrap: wrap;
+        }
+
+        .bloco-texto {
+            flex: 1;
+            min-width: 280px;
+        }
+
+        .img-conteudo {
+            max-width: 100%;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            border: 3px solid rgba(0, 200, 83, 0.3);
+            object-fit: contain;
+        }
+
+        .tabela {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(22, 26, 43, 0.9);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .tabela th, .tabela td {
+            padding: 18px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .tabela th {
+            background: rgba(0, 200, 83, 0.2);
+            color: var(--verde-claro);
+        }
+
+        .chamada-final {
+            background: linear-gradient(135deg, var(--preto-escuro), #0F1A1A);
+            border: 2px solid var(--verde);
+            border-radius: 24px;
+            padding: 60px 40px;
+            text-align: center;
+            margin: 60px auto;
+            max-width: 900px;
+            box-shadow: 0 0 60px rgba(0, 200, 83, 0.3);
+        }
+
+        footer {
+            background: var(--preto-escuro);
+            padding: 80px 0 30px;
+        }
+
+        .grade-rodape {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 40px;
+        }
+
+        .logo-rodape {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            object-fit: contain;
+            margin-bottom: 10px;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-12px); }
+        }
+
+        .flutuante {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @media (max-width: 768px) {
+            .hero { padding: 80px 20px 70px; }
+            .bloco-imagem {
+                gap: 30px;
+                flex-direction: column;
+                text-align: center;
+            }
+            .faixa-app { flex-direction: column; text-align: center; }
+            .cabecalho { justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+    <div class="particles"></div>
+
+    <!-- CABEÇALHO -->
+    <header>
+        <div class="container cabecalho">
+            <div class="logo-area">
+                <img src="https://i.supaimg.com/b173afd9-4344-4026-a5d7-6a53e4b6efdc/8f054a24-2746-4a43-9f1c-354584289dc3.png" alt="Desafio MOZ" class="logo-img">
+                <div class="logo-texto">DESAFIO MOZ</div>
+            </div>
+            <div class="botoes-topo">
+                <a href="criar-conta.html" class="btn btn-entrar">
+                    <i class="fas fa-sign-in-alt"></i> Entrar
+                </a>
+                <a href="criar-conta.html" class="btn btn-conta">
+                    <i class="fas fa-user-plus"></i> Criar Conta Grátis
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- HERO -->
+        <section class="hero">
+            <h1>Ganhe dinheiro real em <span class="destaque-verde">Moçambique</span> com desafios, jogos, pesquisas e anúncios</h1>
+            <p>Junte‑se a milhares de moçambicanos que já recebem por <strong>M‑Pesa</strong> e <strong>Emola</strong>. Sem investimento. Só diversão e recompensas.</p>
+            <div style="display: flex; justify-content: center; gap: 18px; flex-wrap: wrap; margin-top: 30px;">
+                <a href="criar-conta.html" class="btn btn-conta" style="padding: 18px 36px; font-size: 18px;">
+                    <i class="fas fa-rocket"></i> COMEÇAR AGORA
+                </a>
+                <a href="#provas" class="btn btn-entrar" style="padding: 18px 36px; font-size: 18px;">Ver Provas Reais</a>
+            </div>
+        </section>
+
+        <!-- FAIXA APP -->
+        <div class="faixa-app">
+            <img src="https://consistent-white-lkucepnl.edgeone.dev/Gemini_Generated_Image_raug3mraug3mraug.png" alt="Aplicativo Desafio MOZ" style="width: 180px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+            <div>
+                <h3 style="color: var(--verde-claro); font-size: 22px;">📱 Tenha o Desafio MOZ na palma da mão</h3>
+                <p style="color: var(--texto-claro);">Ganhe dinheiro de qualquer lugar de Moçambique, direto do teu celular.</p>
+                <a href="criar-conta.html" class="btn btn-conta" style="margin-top: 12px;">Começar Agora(Brevemente)</a>
+            </div>
+        </div>
+
+        <!-- PROVAS REAIS -->
+        <section class="secao" id="provas">
+            <h2 class="titulo-secao">✅ Resultados Reais dos Nossos Membros</h2>
+            <div class="grade-provas">
+                <div class="cartao-prova">
+                    <div style="font-size: 52px; text-align: center; margin-bottom: 12px;">💰</div>
+                    <div class="numero-prova">+32.450 MT</div>
+                    <div style="text-align: center; color: var(--texto-claro);">Pagos nos últimos 30 dias</div>
+                    <div style="margin-top: 20px; font-style: italic; color: #ccc; text-align: center;">“Saquei 4 vezes este mês! Super confiável.” – Rosa, Sofala</div>
+                </div>
+                <div class="cartao-prova">
+                    <div style="font-size: 52px; text-align: center; margin-bottom: 12px;">🏆</div>
+                    <div class="numero-prova">+8.200</div>
+                    <div style="text-align: center; color: var(--texto-claro);">Desafios e pesquisas concluídos</div>
+                    <div style="margin-top: 20px; font-style: italic; color: #ccc; text-align: center;">“Os jogos são os meus favoritos!” – João, Inhambane</div>
+                </div>
+                <div class="cartao-prova">
+                    <div style="font-size: 52px; text-align: center; margin-bottom: 12px;">⭐</div>
+                    <div class="numero-prova">4.98 / 5</div>
+                    <div style="text-align: center; color: var(--texto-claro);">Avaliação dos utilizadores</div>
+                    <div style="margin-top: 20px; font-style: italic; color: #ccc; text-align: center;">“Melhor plataforma de ganhos em Moçambique!” – Carlos, Tete</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PESQUISAS E ANÚNCIOS -->
+        <section class="secao">
+            <div class="bloco-imagem">
+                <img src="https://fragile-indigo-r7slahyg.edgeone.dev/Gemini_Generated_Image_igetjnigetjniget.png" alt="Pesquisas e Anúncios" class="img-conteudo flutuante">
+                <div class="bloco-texto">
+                    <h3>📝 Responda pesquisas e ganhe recompensas</h3>
+                    <p>As empresas precisam da tua opinião. Cada questionário concluído adiciona pontos à tua conta. Quanto mais ativo fores, mais oportunidades recebes.</p>
+                    <a href="criar-conta.html" class="btn btn-conta">Explorar Pesquisas</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- JOGOS E SAQUES -->
+        <section class="secao">
+            <h2 class="titulo-secao">🎮 Mais formas de ganhar e receber</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 28px;">
+                <div class="cartao-prova">
+                    <img src="https://i.supaimg.com/9447b725-0914-4700-9681-fccbd9cb5399/ed8cda03-eea7-4425-ba79-d78a2a841832.png" alt="Jogos" style="width: 100%; border-radius: 16px; margin-bottom: 20px;">
+                    <h3 style="color: var(--verde-claro);">Teste jogos e aplicativos</h3>
+                    <p>Jogue, teste novos aplicativos e acumule pontos rapidamente.</p>
+                </div>
+                <div class="cartao-prova">
+                    <h3 style="color: var(--verde-claro);">Receba por M‑Pesa e Emola</h3>
+                    <img src="https://cdn.phototourl.com/free/2026-07-16-31cd801f-6ae4-493e-8a90-5891a6cb9eb9.png" alt="Pagamentos" style="max-height: 120px; margin: 15px auto; display: block;">
+                    <p>Saque direto para a tua operadora em menos de 72 horas.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- TABELA DE CONVERSÃO COMPLETA -->
+        <section class="secao">
+            <h3 style="text-align: center; color: var(--verde-claro); margin-bottom: 20px; font-size: 26px;">📊 Tabela de Conversão e Regras</h3>
+            <div style="overflow-x: auto;">
+                <table class="tabela">
+                    <thead>
+                        <tr>
+                            <th>Descrição</th>
+                            <th>Pontos</th>
+                            <th>Valor em Meticais</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Conversão base</td>
+                            <td>10 Pontos</td>
+                            <td>1 MT</td>
+                        </tr>
+                        <tr>
+                            <td>Mínimo para sacar</td>
+                            <td>500 Pontos</td>
+                            <td>50 MT</td>
+                        </tr>
+                        <tr>
+                            <td>Pesquisa rápida</td>
+                            <td>+100 Pontos</td>
+                            <td>10 MT</td>
+                        </tr>
+                        <tr>
+                            <td>Anúncio curto</td>
+                            <td>+150 Pontos</td>
+                            <td>15 MT</td>
+                        </tr>
+                        <tr>
+                            <td>Desafio do dia / Jogo</td>
+                            <td>+200 Pontos</td>
+                            <td>20 MT</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- DISPOSITIVOS -->
+        <section class="secao">
+            <div class="bloco-imagem">
+                <div class="bloco-texto">
+                    <h3>🖥️ Funciona em qualquer dispositivo</h3>
+                    <p>Só precisas de um celular, tablet ou computador. Trabalha de casa, nos intervalos ou onde estiveres.</p>
+                    <a href="criar-conta.html" class="btn btn-conta">Criar conta grátis</a>
+                </div>
+                <img src="https://radical-yellow-kkmca8ux.edgeone.dev/Gemini_Generated_Image_gdvr1ggdvr1ggdvr.png" alt="Celular, tablet e computador" class="img-conteudo">
+            </div>
+        </section>
+
+        <!-- CHAMADA FINAL -->
+        <section class="chamada-final">
+            <h2>Não percas mais tempo! Começa hoje mesmo</h2>
+            <p style="font-size: 19px; max-width: 600px; margin: 0 auto 30px;">Cria a tua conta em menos de 1 minuto e faz os teus primeiros desafios agora.</p>
+            <a href="criar-conta.html" class="btn btn-conta" style="font-size: 20px; padding: 20px 50px;">CRIAR MINHA CONTA GRÁTIS</a>
+        </section>
+    </div>
+
+    <!-- RODAPÉ -->
+    <footer>
+        <div class="container grade-rodape">
+            <div>
+                <img src="https://i.supaimg.com/b173afd9-4344-4026-a5d7-6a53e4b6efdc/8f054a24-2746-4a43-9f1c-354584289dc3.png" alt="Desafio MOZ" class="logo-rodape">
+                <h4 style="color: var(--verde-claro); margin-top: 12px;">💎 Desafio MOZ</h4>
+                <p style="color: var(--texto-claro);">A plataforma nº1 de ganhos online em Moçambique.</p>
+            </div>
+            <div>
+                <h4>Páginas</h4>
+                <ul style="list-style: none; color: var(--texto-claro);">
+                    <li><a href="index.html" style="color: inherit; text-decoration: none;">Início</a></li>
+                    <li><a href="criar-conta.html" style="color: inherit; text-decoration: none;">Desafios</a></li>
+                    <li><a href="criar-conta.html" style="color: inherit; text-decoration: none;">Meu Saldo</a></li>
+                    <li><a href="criar-conta.html" style="color: inherit; text-decoration: none;">Pedir Saque</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4>Ajuda</h4>
+                <ul style="list-style: none; color: var(--texto-claro);">
+                    <li><a href="Regras.html" style="color: inherit; text-decoration: none;">Regras Oficiais</a></li>
+                    <li><a href="contato.html" style="color: inherit; text-decoration: none;">Contacto</a></li>
+                    <li><a href="termos.html" style="color: inherit; text-decoration: none;">Termos de Uso</a></li>
+                    <li><a href="privacidade.html" style="color: inherit; text-decoration: none;">Privacidade</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4>Pagamentos</h4>
+                <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 10px;">
+                    <img src="https://cdn.phototourl.com/free/2026-07-16-b2c96625-02ed-4253-9dc4-914c1056bdb1.png" alt="M-Pesa" style="height: 60px;">
+                    <img src="https://cdn.phototourl.com/free/2026-07-16-89e855d7-40ba-4202-9d7a-3843619d54c1.webp" alt="Emola" style="height: 60px;">
+                </div>
+            </div>
+        </div>
+        <div style="text-align: center; padding-top: 40px; border-top: 1px solid rgba(255,255,255,0.1); color: #666; font-size: 14px; margin-top: 40px;">
+            © 2026 Desafio MOZ — Todos os direitos reservados. Plataforma 100% gratuita para participantes.
+        </div>
+    </footer>
+
+    <script>
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                if (this.getAttribute('href').length > 1) {
+                    e.preventDefault();
+                    document.querySelector(this.getAttribute('href')).scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+    </script>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+<script>
+(function () {
+  if (typeof window.__DESAFIO_MOZ_FIREBASE__ === 'undefined') {
+    window.__DESAFIO_MOZ_FIREBASE__ = true;
+    var firebaseConfig = {
+      apiKey: "AIzaSyDONfggnmf9OJX_AgfvcHTRf6tsuKD5nrA",
+      authDomain: "desafio-moz-61b70.firebaseapp.com",
+      projectId: "desafio-moz-61b70",
+      storageBucket: "desafio-moz-61b70.firebasestorage.app",
+      messagingSenderId: "945658936331",
+      appId: "1:945658936331:web:7ee4b0e7de1c1daf36db0e",
+      measurementId: "G-G1DZQ1B0DB"
+    };
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    window.db = firebase.firestore();
+  }
+  var db = window.db;
+  var PAGINA = 'index';
+
+  function injetarHtml(container, html) {
+    var tpl = document.createElement('template');
+    tpl.innerHTML = html || '';
+    var frag = tpl.content;
+    Array.prototype.forEach.call(frag.querySelectorAll('script'), function (old) {
+      var s = document.createElement('script');
+      Array.prototype.forEach.call(old.attributes, function (a) { s.setAttribute(a.name, a.value); });
+      s.text = old.textContent || '';
+      old.parentNode.replaceChild(s, old);
+    });
+    container.appendChild(frag);
+  }
+
+  async function carregarAnunciosCurtosNaPagina() {
+    try {
+      var snap = await db.collection('anunciosCurtos').get();
+      var host = document.getElementById('zona-anuncios-curtos');
+      if (!host) {
+        host = document.createElement('div');
+        host.id = 'zona-anuncios-curtos';
+        host.style.cssText = 'max-width:900px;margin:20px auto;padding:0 16px;';
+        var footer = document.querySelector('footer');
+        var botoes = document.querySelector('.area-botoes');
+        var menu = document.querySelector('.menu-baixo');
+        if (menu) document.body.insertBefore(host, menu);
+        else if (botoes) botoes.parentNode.insertBefore(host, botoes);
+        else if (footer) footer.parentNode.insertBefore(host, footer);
+        else document.body.appendChild(host);
+      }
+      host.innerHTML = '';
+      snap.forEach(function (doc) {
+        var d = doc.data() || {};
+        if (d.ativo === false) return;
+        var pags = (d.paginas || []).map(function (p) {
+          return String(p).toLowerCase().replace(/\.html$/, '');
+        });
+        if (pags.indexOf(PAGINA) === -1) return;
+        var box = document.createElement('div');
+        box.style.cssText = 'background:rgba(21,21,31,0.92);border:1px solid rgba(0,200,83,0.25);border-radius:14px;padding:12px;margin-bottom:12px;overflow:hidden;';
+        var lab = document.createElement('div');
+        lab.style.cssText = 'font-size:10px;color:#666;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;';
+        lab.textContent = 'Publicidade';
+        box.appendChild(lab);
+        var slot = document.createElement('div');
+        box.appendChild(slot);
+        host.appendChild(box);
+        try { injetarHtml(slot, d.codigo); } catch (e) {}
+      });
+    } catch (e) { console.warn('anunciosCurtos', e); }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', carregarAnunciosCurtosNaPagina);
+  } else {
+    carregarAnunciosCurtosNaPagina();
+  }
+})();
+</script>
+
+</body>
+</html>

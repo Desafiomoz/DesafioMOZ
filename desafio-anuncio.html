@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="pt-MZ">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Anúncio – Desafio MOZ</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+  <script>
+    if (typeof window.__DESAFIO_MOZ_FIREBASE__ === 'undefined') {
+      window.__DESAFIO_MOZ_FIREBASE__ = true;
+      var firebaseConfig = {
+        apiKey: "AIzaSyDONfggnmf9OJX_AgfvcHTRf6tsuKD5nrA",
+        authDomain: "desafio-moz-61b70.firebaseapp.com",
+        projectId: "desafio-moz-61b70",
+        storageBucket: "desafio-moz-61b70.firebasestorage.app",
+        messagingSenderId: "945658936331",
+        appId: "1:945658936331:web:7ee4b0e7de1c1daf36db0e",
+        measurementId: "G-G1DZQ1B0DB"
+      };
+      if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+      window.db = firebase.firestore();
+    }
+    var db = window.db;
+  </script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    html, body { background: #000; color: #fff; height: 100%; width: 100%; overflow: hidden; }
+    .overlay {
+      position: fixed; inset: 0; display: flex; flex-direction: column; background: #000; z-index: 10;
+    }
+    .topo {
+      flex-shrink: 0; display: flex; justify-content: space-between; align-items: center;
+      padding: 12px 14px; border-bottom: 1px solid rgba(0,200,83,0.3); background: rgba(0,0,0,0.9);
+    }
+    .topo .info { color: #00e676; font-weight: 700; font-size: 14px; }
+    .topo .sub { color: #888; font-size: 11px; margin-top: 2px; }
+    .btn-sair {
+      background: rgba(255,255,255,0.1); border: 1px solid #444; color: #ccc;
+      border-radius: 8px; padding: 8px 12px; font-size: 12px; text-decoration: none;
+    }
+    .corpo {
+      flex: 1; overflow: auto; display: flex; align-items: center; justify-content: center;
+      padding: 12px; background: #0a0a0f;
+    }
+    .slot { width: 100%; max-width: 520px; min-height: 280px; }
+    .rodape {
+      flex-shrink: 0; padding: 14px 16px 22px; text-align: center;
+      border-top: 1px solid rgba(0,200,83,0.25); background: rgba(0,0,0,0.95);
+    }
+    .timer { font-size: 26px; font-weight: 800; color: #FFD700; margin-bottom: 6px; }
+    .txt { font-size: 13px; color: #888; margin-bottom: 12px; }
+    .btn-receber {
+      background: linear-gradient(90deg, #00c853, #00e676); color: #000; border: none;
+      border-radius: 10px; padding: 14px 20px; font-weight: 700; font-size: 15px;
+      cursor: pointer; width: 100%; max-width: 340px; opacity: 0.4; pointer-events: none;
+    }
+    .btn-receber.ativo { opacity: 1; pointer-events: auto; }
+    .loading {
+      position: fixed; inset: 0; background: #0a0a0f; display: flex; align-items: center;
+      justify-content: center; color: #888; z-index: 50;
+    }
+  </style>
+</head>
+<body>
+  <div id="loading" class="loading">A carregar…</div>
+
+  <div class="overlay" id="app" style="display:none;">
+    <div class="topo">
+      <div>
+        <div class="info" id="titulo">Anúncio</div>
+        <div class="sub" id="subtitulo">Rewarded / interativo</div>
+      </div>
+      <a href="desafios.html" class="btn-sair">Sair</a>
+    </div>
+    <div class="corpo"><div class="slot" id="slot"></div></div>
+    <div class="rodape">
+      <div class="timer" id="timer">—</div>
+      <p class="txt" id="txt">A carregar o anúncio…</p>
+      <button type="button" class="btn-receber" id="btn" onclick="receberPontos()">Receber pontos</button>
+      <p style="font-size:11px;color:#555;margin-top:10px;">Só recebe pontos se o anúncio carregar e o tempo terminar.</p>
+    </div>
+  </div>
+
+  <script>
+    var desafioId = new URLSearchParams(window.location.search).get('id');
+    var desafio = null, email = localStorage.getItem('emailUtilizador') || '', docRef = null;
+    var timerId = null, cargaTimeoutId = null, observer = null;
+    var anuncioCarregado = false, podeReceber = false, aGuardar = false;
+
+    function limparObs() {
+      if (observer) { observer.disconnect(); observer = null; }
+    }
+
+    function injetarCodigo(container, html) {
+      var tpl = document.createElement('template');
+      tpl.innerHTML = html;
+      var frag = tpl.content;
+      Array.prototype.forEach.call(frag.querySelectorAll('script'), function (old) {
+        var s = document.createElement('script');
+        Array.prototype.forEach.call(old.attributes, function (a) { s.setAttribute(a.name, a.value); });
+        s.text = old.textContent || '';
+        old.parentNode.replaceChild(s, old);
+      });
+      container.appendChild(frag);
+    }
+
+    function iniciarTimer(segs) {
+      if (timerId) clearInterval(timerId);
+      var rest = segs;
+      document.getElementById('timer').textContent = rest;
+      document.getElementById('txt').textContent = 'Segundos restantes para receber pontos';
+      timerId = setInterval(function () {
+        rest--;
+        document.getElementById('timer').textContent = Math.max(0, rest);
+        if (rest <= 0) {
+          clearInterval(timerId); timerId = null;
+          podeReceber = true;
+          document.getElementById('txt').textContent = 'Pode receber os pontos agora';
+          var btn = document.getElementById('btn');
+          btn.classList.add('ativo');
+          btn.textContent = 'Receber +' + (desafio.pontos || 0) + ' pontos';
+        }
+      }, 1000);
+    }
+
+    function confirmarCarga() {
+      if (anuncioCarregado) return;
+      anuncioCarregado = true;
+      limparObs();
+      if (cargaTimeoutId) { clearTimeout(cargaTimeoutId); cargaTimeoutId = null; }
+      var segs = parseInt(desafio.segundosAnuncio || desafio.segundos, 10);
+      if (isNaN(segs) || segs < 5) segs = (desafio.subtipo === 'rewarded' || desafio.tipoAnuncio === 'rewarded') ? 20 : 15;
+      iniciarTimer(segs);
+    }
+
+    function falhaCarga() {
+      limparObs();
+      if (cargaTimeoutId) { clearTimeout(cargaTimeoutId); cargaTimeoutId = null; }
+      if (timerId) { clearInterval(timerId); timerId = null; }
+      podeReceber = false;
+      document.getElementById('timer').textContent = '—';
+      document.getElementById('txt').textContent = 'Não foi possível carregar o anúncio. Tente mais tarde.';
+      var btn = document.getElementById('btn');
+      btn.classList.remove('ativo');
+      btn.textContent = 'Sem anúncio disponível';
+    }
+
+    function mostrarAnuncio() {
+      var slot = document.getElementById('slot');
+      slot.innerHTML = '';
+      anuncioCarregado = false;
+      podeReceber = false;
+      document.getElementById('btn').classList.remove('ativo');
+      document.getElementById('btn').textContent = 'A carregar…';
+      document.getElementById('txt').textContent = 'A carregar o anúncio, aguarde…';
+      document.getElementById('timer').textContent = '—';
+
+      var cod = (desafio.codigoAnuncio || desafio.codigo || '').trim();
+      if (!cod && Array.isArray(desafio.codigoAnuncios) && desafio.codigoAnuncios[0]) {
+        cod = String(desafio.codigoAnuncios[0]).trim();
+      }
+      if (!cod) {
+        falhaCarga();
+        return;
+      }
+
+      if (/^https?:\/\//i.test(cod) && cod.indexOf('<') === -1) {
+        var ifr = document.createElement('iframe');
+        ifr.style.cssText = 'width:100%;min-height:360px;border:none;border-radius:12px;background:#111;';
+        ifr.allow = 'autoplay; fullscreen';
+        ifr.onload = function () { confirmarCarga(); };
+        ifr.onerror = falhaCarga;
+        slot.appendChild(ifr);
+        ifr.src = cod;
+      } else {
+        injetarCodigo(slot, cod);
+        limparObs();
+        observer = new MutationObserver(function () {
+          if (slot.querySelector('iframe, img, video, canvas, ins') || slot.children.length > 0) {
+            confirmarCarga();
+          }
+        });
+        observer.observe(slot, { childList: true, subtree: true });
+        // se o HTML já trouxe conteúdo estático
+        if (slot.children.length > 0) setTimeout(confirmarCarga, 400);
+      }
+
+      cargaTimeoutId = setTimeout(function () {
+        if (!anuncioCarregado) falhaCarga();
+      }, 12000);
+    }
+
+    async function receberPontos() {
+      if (!anuncioCarregado || !podeReceber || aGuardar) return;
+      aGuardar = true;
+      var btn = document.getElementById('btn');
+      btn.classList.remove('ativo');
+      btn.textContent = 'A guardar…';
+      try {
+        var fresh = await docRef.get();
+        var dados = fresh.exists ? fresh.data() : {};
+        var pts = desafio.pontos || 10;
+        var novos = (dados.pontos || 0) + pts;
+        var hist = Object.assign({}, dados.anunciosDesafioHist || {});
+        hist[desafioId] = new Date().toISOString();
+        await docRef.update({
+          pontos: novos,
+          anunciosDesafioHist: hist,
+          ultimaAtualizacao: new Date().toISOString()
+        });
+        localStorage.setItem('pontosUtilizador', String(novos));
+        // NÃO grava em desafiosProgramadosFeitos → o desafio fica sempre visível
+        alert('Ganhou +' + pts + ' pontos!');
+        window.location.href = 'desafios.html';
+      } catch (e) {
+        aGuardar = false;
+        alert('Erro: ' + (e.message || e));
+        btn.classList.add('ativo');
+        btn.textContent = 'Receber pontos';
+      }
+    }
+
+    async function iniciar() {
+      if (!desafioId) { alert('Desafio inválido'); location.href = 'desafios.html'; return; }
+      if (!email) { alert('Faça login'); location.href = 'criar-conta.html'; return; }
+      try {
+        var p = await db.collection('desafiosProgramados').doc(desafioId).get();
+        if (!p.exists) { alert('Desafio não encontrado'); location.href = 'desafios.html'; return; }
+        desafio = p.data();
+        if (desafio.ativa === false) { alert('Indisponível'); location.href = 'desafios.html'; return; }
+
+        document.getElementById('titulo').textContent = desafio.titulo || 'Anúncio';
+        var sub = desafio.tipoAnuncio || desafio.subtipo || desafio.tipo || 'anuncio';
+        document.getElementById('subtitulo').textContent =
+          (sub === 'rewarded' ? 'Rewarded vídeo' : (sub === 'interativo' ? 'Anúncio interativo' : 'Anúncio recompensado'));
+
+        var emailNorm = String(email).trim().toLowerCase();
+        var uSnap = await db.collection('usuarios').where('email', '==', email).limit(1).get();
+        if (uSnap.empty && emailNorm !== email) {
+          uSnap = await db.collection('usuarios').where('email', '==', emailNorm).limit(1).get();
+        }
+        if (uSnap.empty) { alert('Utilizador não encontrado'); location.href = 'criar-conta.html'; return; }
+        docRef = uSnap.docs[0].ref;
+        var uData = uSnap.docs[0].data();
+        // Desafio de anúncio permanente: sem regra de 10 horas
+
+
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('app').style.display = 'flex';
+        mostrarAnuncio();
+      } catch (e) {
+        document.getElementById('loading').textContent = 'Erro: ' + (e.message || e);
+      }
+    }
+    iniciar();
+  </script>
+</body>
+</html>

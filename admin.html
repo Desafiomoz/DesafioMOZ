@@ -1,0 +1,2039 @@
+<!DOCTYPE html>
+<html lang="pt-MZ">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin – Desafio MOZ</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+  <script>
+    if (typeof window.__DESAFIO_MOZ_FIREBASE__ === 'undefined') {
+      window.__DESAFIO_MOZ_FIREBASE__ = true;
+      var firebaseConfig = {
+        apiKey: "AIzaSyDONfggnmf9OJX_AgfvcHTRf6tsuKD5nrA",
+        authDomain: "desafio-moz-61b70.firebaseapp.com",
+        projectId: "desafio-moz-61b70",
+        storageBucket: "desafio-moz-61b70.firebasestorage.app",
+        messagingSenderId: "945658936331",
+        appId: "1:945658936331:web:7ee4b0e7de1c1daf36db0e",
+        measurementId: "G-G1DZQ1B0DB"
+      };
+      if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+      window.db = firebase.firestore();
+    }
+    var db = window.db;
+    var auth = firebase.auth();
+  </script>
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    body { background: #0d0d12; color: #eee; min-height: 100vh; }
+
+    .header-admin {
+      background: #15151f; border-bottom: 2px solid #00c853;
+      padding: 14px 18px; display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 50;
+    }
+    .header-admin h1 { font-size: 17px; color: #00e676; }
+    .header-admin button {
+      background: rgba(0,200,83,0.15); border: 1px solid #00c853; color: #00e676;
+      padding: 6px 14px; border-radius: 8px; cursor: pointer; font-size: 13px;
+    }
+
+    .tabs { display: flex; background: #12121a; border-bottom: 1px solid #222; overflow-x: auto; }
+    .tab {
+      flex: 1; min-width: 90px; padding: 12px 8px; text-align: center; font-size: 12px; font-weight: 600;
+      color: #777; cursor: pointer; border: none; border-bottom: 2px solid transparent; background: none; white-space: nowrap;
+    }
+    .tab.ativo { color: #00e676; border-bottom-color: #00e676; }
+    .tab .badge {
+      display: none; background: #ff6b6b; color: #fff; font-size: 10px;
+      padding: 1px 6px; border-radius: 10px; margin-left: 4px;
+    }
+
+    .conteudo { padding: 16px; max-width: 1100px; margin: 0 auto; }
+
+    .resumo {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 10px; margin-bottom: 18px;
+    }
+    .resumo-card {
+      background: #15151f; border: 1px solid #2a2a3a; border-radius: 12px;
+      padding: 14px; text-align: center;
+    }
+    .resumo-card .num { font-size: 22px; font-weight: 800; color: #00e676; }
+    .resumo-card .lbl { font-size: 11px; color: #888; margin-top: 4px; }
+
+    .busca { margin-bottom: 14px; }
+    .busca input, .form-box input, .form-box select, .form-box textarea {
+      width: 100%; background: #15151f; border: 1px solid #2a2a3a; border-radius: 10px;
+      padding: 10px 14px; color: #fff; font-size: 14px; outline: none;
+    }
+    .busca input:focus, .form-box input:focus, .form-box select:focus, .form-box textarea:focus { border-color: #00c853; }
+    .form-box { background: #15151f; border: 1px solid #2a2a3a; border-radius: 14px; padding: 16px; margin-bottom: 16px; }
+    .form-box h3 { color: #00e676; font-size: 15px; margin-bottom: 14px; }
+    .form-row { margin-bottom: 12px; }
+    .form-row label { display: block; font-size: 12px; color: #aaa; margin-bottom: 5px; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    @media (max-width: 600px) { .form-grid { grid-template-columns: 1fr; } }
+
+    .btn-verde {
+      background: linear-gradient(90deg, #00c853, #00e676); color: #000; border: none;
+      border-radius: 10px; padding: 12px 18px; font-weight: 700; font-size: 14px; cursor: pointer; width: 100%;
+    }
+    .btn-vermelho { background: #c62828; color: #fff; border: none; border-radius: 6px; padding: 5px 10px; font-size: 11px; font-weight: 600; cursor: pointer; margin: 2px; }
+    .btn-laranja { background: #ff9800; color: #000; border: none; border-radius: 6px; padding: 5px 10px; font-size: 11px; font-weight: 600; cursor: pointer; margin: 2px; }
+    .btn-azul { background: #1976d2; color: #fff; border: none; border-radius: 6px; padding: 5px 10px; font-size: 11px; font-weight: 600; cursor: pointer; margin: 2px; }
+    .btn-cinza { background: #444; color: #ccc; border: none; border-radius: 6px; padding: 5px 10px; font-size: 11px; font-weight: 600; cursor: pointer; margin: 2px; }
+
+    .tabela-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid #2a2a3a; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 700px; }
+    th { background: #1a1a28; color: #00e676; text-align: left; padding: 12px 10px; font-weight: 600; white-space: nowrap; }
+    td { padding: 11px 10px; border-top: 1px solid #222; vertical-align: middle; }
+    tr:hover td { background: rgba(0,200,83,0.05); }
+
+    .pts-alto { color: #FFD700; font-weight: 700; }
+    .pts-ok { color: #00e676; font-weight: 700; }
+    .pts-baixo { color: #888; }
+
+    .status-tag { display: inline-block; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; }
+    .status-pendente { background: rgba(255,193,7,0.2); color: #ffc107; }
+    .status-pago { background: rgba(0,200,83,0.2); color: #00e676; }
+    .status-recusado { background: rgba(255,107,107,0.2); color: #ff6b6b; }
+    .status-ativo { background: rgba(0,200,83,0.2); color: #00e676; }
+    .status-bloqueado { background: rgba(255,107,107,0.2); color: #ff6b6b; }
+    .status-andamento { background: rgba(33,150,243,0.2); color: #64b5f6; }
+
+    .btn-acao { border: none; border-radius: 6px; padding: 5px 10px; font-size: 11px; font-weight: 600; cursor: pointer; margin: 2px; }
+    .btn-pagar { background: #00c853; color: #000; }
+    .btn-recusar { background: #ff6b6b; color: #fff; }
+    .btn-apagar { background: #c62828; color: #fff; }
+
+    .vazio { text-align: center; padding: 40px 20px; color: #666; font-size: 14px; }
+    .painel { display: none; }
+    .painel.ativo { display: block; }
+
+    .senha-oculta { letter-spacing: 2px; }
+    .btn-olho-admin { background: none; border: none; color: #888; cursor: pointer; font-size: 12px; margin-left: 4px; }
+
+    .rank-1 { color: #FFD700; font-weight: 800; }
+    .rank-2 { color: #C0C0C0; font-weight: 700; }
+    .rank-3 { color: #CD7F32; font-weight: 700; }
+
+    .aviso-ok {
+      background: rgba(0,200,83,0.15); border: 1px solid #00c853; color: #00e676;
+      padding: 10px 14px; border-radius: 10px; margin-bottom: 12px; font-size: 13px; display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="tela-login-admin" style="position:fixed;inset:0;background:#0d0d12;z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;">
+    <div style="background:#15151f;border:1px solid #2a2a3a;border-radius:14px;padding:28px 24px;max-width:340px;width:100%;text-align:center;">
+      <i class="fas fa-shield-alt" style="font-size:32px;color:#00e676;margin-bottom:12px;display:block;"></i>
+      <h2 style="color:#eee;font-size:17px;margin-bottom:16px;">Acesso restrito</h2>
+      <input type="email" id="email-admin-input" placeholder="E-mail do administrador" autocomplete="username"
+        style="width:100%;background:#0d0d12;border:1px solid #2a2a3a;border-radius:10px;padding:12px 14px;color:#fff;font-size:14px;outline:none;margin-bottom:10px;">
+      <input type="password" id="senha-admin-input" placeholder="Senha" autocomplete="current-password"
+        style="width:100%;background:#0d0d12;border:1px solid #2a2a3a;border-radius:10px;padding:12px 14px;color:#fff;font-size:14px;outline:none;margin-bottom:12px;"
+        onkeydown="if(event.key==='Enter'){entrarAdmin();}">
+      <div id="erro-senha-admin" style="color:#ff6b6b;font-size:12px;margin-bottom:10px;display:none;"></div>
+      <button type="button" id="btn-entrar-admin" onclick="entrarAdmin()"
+        style="background:linear-gradient(90deg,#00c853,#00e676);color:#000;border:none;border-radius:10px;padding:12px 18px;font-weight:700;font-size:14px;cursor:pointer;width:100%;">
+        Entrar
+      </button>
+    </div>
+  </div>
+
+  <script>
+    function entrarAdmin() {
+      var email = (document.getElementById('email-admin-input').value || '').trim();
+      var senha = document.getElementById('senha-admin-input').value;
+      var erroEl = document.getElementById('erro-senha-admin');
+      var btn = document.getElementById('btn-entrar-admin');
+      erroEl.style.display = 'none';
+      if (!email || !senha) {
+        erroEl.textContent = 'Preencha e-mail e senha.';
+        erroEl.style.display = 'block';
+        return;
+      }
+      btn.disabled = true;
+      btn.textContent = 'Entrando...';
+      auth.signInWithEmailAndPassword(email, senha)
+        .catch(function (e) {
+          erroEl.textContent = 'E-mail ou senha incorretos.';
+          erroEl.style.display = 'block';
+        })
+        .finally(function () {
+          btn.disabled = false;
+          btn.textContent = 'Entrar';
+        });
+    }
+
+    auth.onAuthStateChanged(function (user) {
+      var tela = document.getElementById('tela-login-admin');
+      if (user) {
+        tela.style.display = 'none';
+        carregarTudo();
+      } else {
+        tela.style.display = 'flex';
+      }
+    });
+  </script>
+
+  <div class="header-admin">
+    <h1><i class="fas fa-shield-alt"></i> Painel Admin – Desafio MOZ</h1>
+    <div>
+      <button type="button" onclick="carregarTudo()"><i class="fas fa-sync"></i> Atualizar</button>
+      <button type="button" onclick="auth.signOut()" style="margin-left:8px;background:rgba(255,107,107,0.15);border:1px solid #ff6b6b;color:#ff6b6b;"><i class="fas fa-sign-out-alt"></i> Sair</button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab ativo" data-tab="usuarios" onclick="mudarTab('usuarios')"><i class="fas fa-users"></i> Utilizadores</button>
+    <button class="tab" data-tab="saques" onclick="mudarTab('saques')"><i class="fas fa-money-bill-wave"></i> Saques <span class="badge" id="badge-saques">0</span></button>
+    <button class="tab" data-tab="pesquisas" onclick="mudarTab('pesquisas')"><i class="fas fa-poll"></i> Pesquisas</button>
+    <button class="tab" data-tab="anuncios" onclick="mudarTab('anuncios')"><i class="fas fa-ad"></i> Anúncios</button>
+    <button class="tab" data-tab="desafios" onclick="mudarTab('desafios')"><i class="fas fa-bolt"></i> Desafios</button>
+    <button class="tab" data-tab="missoes" onclick="mudarTab('missoes')"><i class="fas fa-trophy"></i> Missões</button>
+    <button class="tab" data-tab="ranking" onclick="mudarTab('ranking')"><i class="fas fa-medal"></i> Ranking</button>
+  </div>
+
+  <div class="conteudo">
+
+    <div class="resumo">
+      <div class="resumo-card"><div class="num" id="total-users">0</div><div class="lbl">Utilizadores</div></div>
+      <div class="resumo-card"><div class="num" id="total-pts">0</div><div class="lbl">Pontos totais</div></div>
+      <div class="resumo-card"><div class="num" id="prontos-saque">0</div><div class="lbl">Prontos a sacar (≥500)</div></div>
+      <div class="resumo-card"><div class="num" id="saques-pendentes">0</div><div class="lbl">Saques pendentes</div></div>
+      <div class="resumo-card"><div class="num" id="total-pesquisas">0</div><div class="lbl">Pesquisas programadas</div></div>
+    </div>
+
+    <div class="aviso-ok" id="aviso-admin"></div>
+
+    <!-- UTILIZADORES -->
+    <div class="painel ativo" id="painel-usuarios">
+
+      <div class="form-box">
+        <h3><i class="fas fa-coins"></i> Ajustar pontos de um utilizador</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:12px;">
+          Use para <strong>aumentar</strong> ou <strong>diminuir</strong> pontos (ex.: fraude em desafios, inscrição falsa no YouTube/WhatsApp).
+          Valor positivo adiciona; negativo remove. Ex: <code>-50</code> tira 50 pontos.
+        </p>
+        <div class="form-grid">
+          <div class="form-row">
+            <label>E-mail do utilizador</label>
+            <input type="email" id="ajuste-pts-email" placeholder="email@exemplo.com">
+          </div>
+          <div class="form-row">
+            <label>Pontos (+ ou −)</label>
+            <input type="number" id="ajuste-pts-valor" placeholder="Ex: -50 ou 100" step="1">
+          </div>
+        </div>
+        <button type="button" class="btn-verde" onclick="ajustarPontosUtilizador()">⚡ Aplicar ajuste de pontos</button>
+      </div>
+
+      <div class="form-box">
+        <h3><i class="fas fa-key"></i> Alterar senha de um utilizador</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:12px;">
+          Use quando o utilizador esquecer a senha ou pedir ajuda. A nova senha já fica protegida (embaralhada) automaticamente.
+        </p>
+        <div class="form-grid">
+          <div class="form-row">
+            <label>E-mail do utilizador</label>
+            <input type="email" id="troca-senha-email" placeholder="email@exemplo.com">
+          </div>
+          <div class="form-row">
+            <label>Nova senha (mín. 6 caracteres)</label>
+            <input type="text" id="troca-senha-valor" placeholder="Nova senha">
+          </div>
+        </div>
+        <button type="button" class="btn-verde" onclick="trocarSenhaUtilizador()">🔑 Alterar senha</button>
+      </div>
+
+      <div class="form-box">
+        <h3><i class="fas fa-user-friends"></i> Bloquear / desbloquear “Convidar amigo”</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:12px;">
+          Quando bloqueado, o utilizador <strong>não vê</strong> a opção de convidar amigos na página Tarefas.
+          Desbloqueie quando quiser voltar a permitir.
+        </p>
+        <div class="form-row">
+          <label>E-mail do utilizador</label>
+          <input type="email" id="bloqueio-convidar-email" placeholder="email@exemplo.com">
+        </div>
+        <div class="form-grid">
+          <button type="button" class="btn-vermelho" style="width:100%;padding:12px;border-radius:10px;font-size:14px;" onclick="bloquearConvidarPorEmail(true)">🔒 Bloquear convites</button>
+          <button type="button" class="btn-verde" style="width:100%;" onclick="bloquearConvidarPorEmail(false)">🔓 Desbloquear convites</button>
+        </div>
+        <h3 style="color:#00e676;font-size:14px;margin:18px 0 10px;"><i class="fas fa-list"></i> Utilizadores com convites bloqueados</h3>
+        <div class="tabela-wrap" style="margin-top:0;">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th><th>Nome</th><th>E-mail</th><th>Telemóvel</th><th>Pontos</th><th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-convidar-bloqueados">
+              <tr><td colspan="6" class="vazio">Nenhum utilizador com convites bloqueados.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="busca">
+        <input type="text" id="busca-users" placeholder="Pesquisar nome, email ou telemóvel..." oninput="filtrarUsers()">
+      </div>
+      <div class="tabela-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th><th>Nome</th><th>Telemóvel</th><th>E-mail</th><th>Senha</th>
+              <th>Pontos</th><th>MZN</th><th>Cadastro</th><th>Status</th><th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-users"><tr><td colspan="10" class="vazio">A carregar...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SAQUES -->
+    <div class="painel" id="painel-saques">
+      <div class="busca">
+        <input type="text" id="busca-saques" placeholder="Pesquisar por nome ou telemóvel..." oninput="filtrarSaques()">
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+        <button type="button" class="btn-laranja" onclick="carregarSaques()">🔄 Atualizar</button>
+        <button type="button" class="btn-vermelho" onclick="limparSaquesProcessados()">🗑️ Apagar saques pagos/recusados</button>
+        <button type="button" class="btn-vermelho" onclick="limparTodosSaques()">🗑️ Apagar TODOS os saques</button>
+      </div>
+      <p style="font-size:11px;color:#888;margin-bottom:10px;">Use quando a lista ficar grande. Apagar só limpa o registo no Admin — <strong>não altera pontos</strong> dos utilizadores.</p>
+      <div class="tabela-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th><th>Nome</th><th>Telemóvel</th><th>Pontos</th><th>Bruto (MZN)</th><th>A pagar (líquido)</th>
+              <th>Data pedido</th><th>Status</th><th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-saques"><tr><td colspan="9" class="vazio">A carregar...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- PESQUISAS PROGRAMADAS -->
+    <div class="painel" id="painel-pesquisas">
+      <div class="form-box">
+        <h3><i class="fas fa-plus-circle"></i> Gerar pesquisa automática (vai para Tarefas)</h3>
+        <div class="form-row">
+          <label>Título da pesquisa</label>
+          <input type="text" id="pesq-titulo" placeholder="Ex: Opinião sobre apps móveis">
+        </div>
+        <div class="form-row">
+          <label>Descrição curta</label>
+          <input type="text" id="pesq-desc" placeholder="Ex: Responda 3 perguntas e ganhe pontos">
+        </div>
+        <div class="form-grid">
+          <div class="form-row">
+            <label>Pontos a ganhar</label>
+            <input type="number" id="pesq-pontos" value="5" min="1" max="100">
+          </div>
+          <div class="form-row">
+            <label>Nº de perguntas (1–10)</label>
+            <input type="number" id="pesq-num-q" value="3" min="1" max="10">
+          </div>
+        </div>
+        <div class="form-grid">
+          <div class="form-row">
+            <label>Data de aparição (dia / mês / ano)</label>
+            <input type="date" id="pesq-data">
+          </div>
+          <div class="form-row">
+            <label>Hora de aparição</label>
+            <input type="time" id="pesq-hora" value="08:00">
+          </div>
+        </div>
+        <div class="form-row">
+          <label>Tema das perguntas (escreva o tema — as perguntas são geradas automaticamente)</label>
+          <input type="text" id="pesq-tema" placeholder="Ex: carros, redes sociais, saúde, desporto, Moçambique...">
+        </div>
+        <button type="button" class="btn-verde" onclick="criarPesquisa()">📢 Publicar pesquisa nas Tarefas</button>
+      </div>
+
+      <div class="form-box">
+        <h3><i class="fas fa-ban"></i> Bloquear / desbloquear pesquisas para um utilizador</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:12px;">
+          Bloqueia <strong>todas</strong> as pesquisas (as 4 fixas + as geradas automaticamente) para esse utilizador. Pode desbloquear quando quiser.
+        </p>
+        <div class="form-row">
+          <label>E-mail do utilizador</label>
+          <input type="email" id="bloqueio-email" placeholder="email@exemplo.com">
+        </div>
+        <div class="form-grid">
+          <button type="button" class="btn-vermelho" style="width:100%;padding:12px;border-radius:10px;font-size:14px;" onclick="bloquearPesquisasPorEmail(true)">🔒 Bloquear pesquisas</button>
+          <button type="button" class="btn-verde" style="width:100%;" onclick="bloquearPesquisasPorEmail(false)">🔓 Desbloquear pesquisas</button>
+        </div>
+      </div>
+
+      <div class="tabela-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th><th>Título</th><th>Pontos</th><th>Aparição</th><th>Estado</th><th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-pesquisas"><tr><td colspan="6" class="vazio">Nenhuma pesquisa programada.</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+
+    <!-- ANÚNCIOS TAREFAS (interativo + rewarded) -->
+    <div class="painel" id="painel-anuncios">
+      <div class="form-box">
+        <h3><i class="fas fa-ad"></i> Anúncios da página Tarefas</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:14px;line-height:1.45;">
+          Escolha o <strong>tipo</strong>, cole o <strong>código</strong> que configurou na rede de anúncios (Adsterra, Monetag, etc.),
+          a descrição e quantos <strong>pontos</strong> o utilizador ganha ao ver.
+          O anúncio fica sempre na página Tarefas. Ao clicar em <strong>Ver</strong>, aparece no ecrã (sem outra página).
+          A rede decide se há inventário; se não houver código ativo, o botão fica indisponível.
+        </p>
+        <div class="form-row">
+          <label>Tipo de anúncio</label>
+          <select id="ad-tipo">
+            <option value="interativo">Anúncio interativo</option>
+            <option value="rewarded">Rewarded vídeo</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label>Título (opcional)</label>
+          <input type="text" id="ad-titulo" placeholder="Ex: Anúncio interativo / Rewarded vídeo">
+        </div>
+        <div class="form-row">
+          <label>Descrição (aparece em Tarefas)</label>
+          <input type="text" id="ad-desc" placeholder="Ex: Clique e interaja com o anúncio">
+        </div>
+        <div class="form-grid">
+          <div class="form-row">
+            <label>Pontos ao concluir</label>
+            <input type="number" id="ad-pontos" value="8" min="1" max="500">
+          </div>
+          <div class="form-row">
+            <label>Segundos mínimos antes de receber pontos</label>
+            <input type="number" id="ad-segundos" value="15" min="5" max="120">
+          </div>
+        </div>
+        <div class="form-row">
+          <label>Código HTML / script ou URL do anúncio</label>
+          <textarea id="ad-codigo" rows="5" placeholder="Cole aqui o código da rede (iframe, script) ou uma URL https://..."></textarea>
+        </div>
+        <div class="form-row">
+          <label>Estado</label>
+          <select id="ad-ativo">
+            <option value="true">Ativo (visível em Tarefas)</option>
+            <option value="false">Desativado</option>
+          </select>
+        </div>
+        <button type="button" class="btn-verde" onclick="guardarAnuncioTarefa()">💾 Guardar anúncio neste tipo</button>
+      </div>
+
+
+      <div class="form-box" style="margin-top:8px;">
+        <h3><i class="fas fa-ad"></i> Anúncios curtos (AdSense / banner — SEM pontos)</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:12px;line-height:1.45;">
+          Códigos tipo Google AdSense / banner. O utilizador <strong>não ganha pontos</strong>.
+          Escolha em que páginas o anúncio aparece. Serve só para monetizar.
+        </p>
+        <div class="form-row">
+          <label>Nome interno</label>
+          <input type="text" id="curto-nome" placeholder="Ex: Banner rodapé">
+        </div>
+        <div class="form-row">
+          <label>Código HTML / script</label>
+          <textarea id="curto-codigo" rows="4" placeholder="Cole o código AdSense ou banner..."></textarea>
+        </div>
+        <div class="form-row">
+          <label>Páginas onde mostrar (tu decides)</label>
+          <p style="font-size:11px;color:#888;margin-bottom:6px;line-height:1.4;">
+            Escreve os nomes das páginas separados por vírgula, iguais ao ficheiro HTML <strong>sem .html</strong>.
+            Exemplos permitidos: <code>regras, contacto, privacidade, perfil, saques</code>
+          </p>
+          <p style="font-size:11px;color:#ff5252;margin-bottom:6px;line-height:1.4;">
+            ⚠️ Nunca coloque em <strong>desafios</strong> ou <strong>tarefas</strong> — são páginas com anúncios que dão pontos,
+            e misturar com AdSense nelas viola as políticas do Google e pode banir a conta.
+          </p>
+          <input type="text" id="curto-paginas" placeholder="Ex: regras, contacto, privacidade">
+        </div>
+        <div class="form-row">
+          <label>Ativo</label>
+          <select id="curto-ativo"><option value="true">Sim</option><option value="false">Não</option></select>
+        </div>
+        <button type="button" class="btn-verde" onclick="guardarAnuncioCurto()">💾 Guardar anúncio curto</button>
+      </div>
+
+      <div class="tabela-wrap" style="margin-bottom:16px;">
+        <table>
+          <thead>
+            <tr><th>Nome</th><th>Páginas</th><th>Estado</th><th>Ações</th></tr>
+          </thead>
+          <tbody id="tbody-anuncios-curtos">
+            <tr><td colspan="4" class="vazio">Nenhum anúncio curto.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="tabela-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Tipo</th><th>Título</th><th>Pontos</th><th>Segundos</th><th>Estado</th><th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-anuncios-tarefas">
+            <tr><td colspan="6" class="vazio">Nenhum anúncio configurado.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- DESAFIOS DO DIA (programados) -->
+    <div class="painel" id="painel-desafios">
+      <div class="form-box">
+        <h3><i class="fas fa-plus-circle"></i> Criar desafio do dia</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:12px;">
+          Máximo <strong>4 desafios</strong> visíveis de cada vez. Se criar mais (ex.: 7 no mesmo dia), os restantes só aparecem <strong>10 horas depois</strong>.
+          Anúncios recompensados: o utilizador assiste <strong>3 anúncios em ecrã inteiro</strong>, recebe os pontos e o desafio some; <strong>volta a aparecer após 10 horas</strong> (pode repetir).
+        </p>
+        <div class="form-row">
+          <label>Título do desafio</label>
+          <input type="text" id="des-titulo" placeholder="Ex: Canal Desafio MOZ / Seguir no Facebook">
+        </div>
+        <div class="form-row">
+          <label>Descrição curta</label>
+          <input type="text" id="des-desc" placeholder="Ex: Inscreva-se no canal e ganhe pontos">
+        </div>
+        <div class="form-row">
+          <label>URL da imagem / logotipo</label>
+          <input type="url" id="des-imagem" placeholder="https://... (link da imagem ou logo)">
+        </div>
+        <div class="form-grid">
+          <div class="form-row">
+            <label>Pontos a ganhar</label>
+            <input type="number" id="des-pontos" value="10" min="1" max="500">
+          </div>
+          <div class="form-row">
+            <label>Tipo de desafio</label>
+            <select id="des-tipo" onchange="toggleCamposDesafio()">
+              <option value="link">Link externo (YouTube, Facebook, etc.)</option>
+              <option value="anuncio">Anúncio interativo / rewarded (vai a desafio-anuncio)</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row" id="campo-link-desafio">
+          <label>Link de redirecionamento (página a seguir / inscrever)</label>
+          <input type="url" id="des-link" placeholder="https://www.youtube.com/@DesafioMoz ou Facebook...">
+        </div>
+        <div class="form-row" id="campo-anuncio-desafio" style="display:none;">
+          <p style="font-size:12px;color:#ffab40;margin-bottom:12px;line-height:1.45;">
+            Use códigos de <strong>publicador</strong> (AdSense, AdMob ou outra rede), não campanhas do Google Ads de anunciante.
+            Os anúncios abrem em ecrã inteiro, um a seguir ao outro. O utilizador assiste os 3 e depois recebe os pontos (anúncio recompensado).
+          </p>
+          <label>Anúncio 1 — código HTML (iframe/script) ou URL</label>
+          <textarea id="des-codigo-anuncio-1" rows="2" placeholder="Cole o código do publicador ou URL do 1º anúncio..."></textarea>
+          <label style="margin-top:10px;">Anúncio 2 — código HTML ou URL</label>
+          <textarea id="des-codigo-anuncio-2" rows="2" placeholder="Código ou URL do 2º anúncio..."></textarea>
+          <label style="margin-top:10px;">Anúncio 3 — código HTML ou URL</label>
+          <textarea id="des-codigo-anuncio-3" rows="2" placeholder="Código ou URL do 3º anúncio..."></textarea>
+          <label style="margin-top:10px;">Segundos por anúncio (se não for vídeo)</label>
+          <input type="number" id="des-segundos-anuncio" value="20" min="10" max="120" style="width:100%;background:#15151f;border:1px solid #2a2a3a;border-radius:10px;padding:10px 14px;color:#fff;font-size:14px;">
+          <p style="font-size:11px;color:#888;margin-top:8px;">
+            Vídeos usam a duração real. HTML/URL usam este tempo. Respeite as regras da sua rede de anúncios (tráfego inválido / anúncios forçados podem suspender a conta).
+          </p>
+        </div>
+        <div class="form-grid">
+          <div class="form-row">
+            <label>Data de aparição</label>
+            <input type="date" id="des-data">
+          </div>
+          <div class="form-row">
+            <label>Hora de aparição</label>
+            <input type="time" id="des-hora" value="08:00">
+          </div>
+        </div>
+        <button type="button" class="btn-verde" onclick="criarDesafio()">⚡ Publicar desafio</button>
+      </div>
+
+      <div class="tabela-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th><th>Título</th><th>Tipo</th><th>Pontos</th><th>Aparição</th><th>Estado</th><th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-desafios"><tr><td colspan="7" class="vazio">Nenhum desafio programado.</td></tr></tbody>
+        </table>
+      </div>
+
+      <div class="form-box" style="margin-top:18px;">
+        <h3><i class="fas fa-eye"></i> Quem viu anúncios (por utilizador)</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:12px;">
+          Mostra a <strong>hora em que terminou</strong> e a <strong>hora em que o anúncio volta</strong> (+10 h).
+          Se o mesmo utilizador ver de novo, a linha é <strong>atualizada</strong> (não se duplica).
+        </p>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+          <button type="button" class="btn-laranja" onclick="carregarHistoricoAnuncios()">🔄 Atualizar lista</button>
+          <button type="button" class="btn-vermelho" onclick="limparHistoricoAnuncios()">🗑️ Limpar horas / histórico de anúncios</button>
+        </div>
+        <p style="font-size:11px;color:#888;margin-bottom:10px;">Limpar remove só a lista do Admin. <strong>Não altera</strong> pontos nem as 10 horas dos utilizadores.</p>
+        <div class="tabela-wrap" style="margin:0;box-shadow:none;border:1px solid #2a2a3a;">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Utilizador</th>
+                <th>E-mail</th>
+                <th>Desafio anúncio</th>
+                <th>Terminou às</th>
+                <th>Volta às (+10h)</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-hist-anuncios">
+              <tr><td colspan="7" class="vazio">Carregue a lista ou abra este separador.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- MISSÕES SEMANAIS -->
+    <div class="painel" id="painel-missoes">
+      <p style="font-size:13px;color:#aaa;margin-bottom:14px;">
+        Utilizadores que encontraram a missão semanal (só o primeiro de cada semana). Pode bloquear para não encontrarem de novo.
+      </p>
+      <div class="tabela-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th><th>Semana</th><th>Nome</th><th>E-mail</th><th>Data encontrou</th>
+              <th>Estado</th><th>Bloqueio missão</th><th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-missoes"><tr><td colspan="8" class="vazio">A carregar...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- RANKING -->
+    <div class="painel" id="painel-ranking">
+      <p style="font-size:13px;color:#aaa;margin-bottom:14px;">
+        Classificação por pontos. Pode ocultar pesquisas/tarefas para um utilizador específico.
+      </p>
+      <div class="tabela-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Posição</th><th>Nome</th><th>E-mail</th><th>Pontos</th><th>MZN</th>
+              <th>Pesquisas</th><th>Missão semanal</th><th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-ranking"><tr><td colspan="8" class="vazio">A carregar...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    var MINIMO_PONTOS_SAQUE = 500;
+    var todosUsers = [];
+    var todosSaques = [];
+    var todasPesquisas = [];
+    var todosDesafios = [];
+    var todasMissoes = [];
+
+    function mostrarAviso(txt) {
+      var el = document.getElementById('aviso-admin');
+      el.textContent = txt;
+      el.style.display = 'block';
+      setTimeout(function () { el.style.display = 'none'; }, 4000);
+    }
+
+    function mudarTab(nome) {
+      try {
+        document.querySelectorAll('.tab').forEach(function (t) {
+          t.classList.toggle('ativo', t.getAttribute('data-tab') === nome);
+        });
+        document.querySelectorAll('.painel').forEach(function (p) { p.classList.remove('ativo'); });
+        var painel = document.getElementById('painel-' + nome);
+        if (painel) painel.classList.add('ativo');
+        else console.warn('Painel não encontrado:', nome);
+      } catch (e) {
+        console.error('mudarTab:', e);
+        alert('Erro ao abrir separador: ' + (e.message || e));
+      }
+    }
+
+    function escHtml(s) {
+      return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    async function carregarTudo() {
+      try {
+        await carregarUsers();
+        renderConvidarBloqueados();
+      } catch (e) { console.error(e); }
+      try { await carregarSaques(); } catch (e) { console.error(e); }
+      try { await carregarPesquisas(); } catch (e) { console.error(e); }
+      try { await carregarAnunciosTarefasAdmin(); } catch (e) { console.error(e); }
+      try { await carregarDesafios(); } catch (e) { console.error(e); }
+      try { await carregarMissoes(); } catch (e) { console.error(e); }
+      atualizarResumo();
+      renderRanking();
+    }
+
+    async function carregarUsers() {
+      try {
+        var snap = await db.collection('usuarios').get();
+        todosUsers = [];
+        snap.forEach(function (doc) {
+          var d = doc.data();
+          d._id = doc.id;
+          todosUsers.push(d);
+        });
+        todosUsers.sort(function (a, b) {
+          return (b.dataCadastro || '').localeCompare(a.dataCadastro || '');
+        });
+        renderUsers(todosUsers);
+      } catch (e) {
+        var msg = (e && e.message) ? e.message : String(e);
+        if (msg.toLowerCase().indexOf('permission') !== -1) {
+          msg = 'Sem permissão no Firestore. Publica as regras (allow read, write: if true).';
+        }
+        document.getElementById('tbody-users').innerHTML =
+          '<tr><td colspan="10" class="vazio">Erro:<br>' + msg + '</td></tr>';
+      }
+    }
+
+    async function carregarSaques() {
+      try {
+        var snap = await db.collection('solicitacoesSaque').get();
+        todosSaques = [];
+        snap.forEach(function (doc) {
+          var d = doc.data();
+          d._id = doc.id;
+          todosSaques.push(d);
+        });
+        todosSaques.sort(function (a, b) {
+          return (b.dataPedido || '').localeCompare(a.dataPedido || '');
+        });
+        renderSaques(todosSaques);
+      } catch (e) {
+        todosSaques = [];
+        document.getElementById('tbody-saques').innerHTML =
+          '<tr><td colspan="9" class="vazio">Nenhum pedido de saque ainda.</td></tr>';
+      }
+    }
+
+    async function carregarPesquisas() {
+      try {
+        var snap = await db.collection('pesquisasProgramadas').get();
+        todasPesquisas = [];
+        snap.forEach(function (doc) {
+          var d = doc.data();
+          d._id = doc.id;
+          todasPesquisas.push(d);
+        });
+        todasPesquisas.sort(function (a, b) {
+          return (b.dataHora || '').localeCompare(a.dataHora || '');
+        });
+        renderPesquisas();
+      } catch (e) {
+        todasPesquisas = [];
+        document.getElementById('tbody-pesquisas').innerHTML =
+          '<tr><td colspan="6" class="vazio">Nenhuma pesquisa (ou sem permissão na coleção pesquisasProgramadas).</td></tr>';
+      }
+    }
+
+    async function carregarDesafios() {
+      try {
+        var snap = await db.collection('desafiosProgramados').get();
+        todosDesafios = [];
+        snap.forEach(function (doc) {
+          var d = doc.data();
+          d._id = doc.id;
+          todosDesafios.push(d);
+        });
+        todosDesafios.sort(function (a, b) {
+          return (b.dataHora || '').localeCompare(a.dataHora || '');
+        });
+        renderDesafiosAdmin();
+        try { carregarHistoricoAnuncios(); } catch (eH) { console.error(eH); }
+      } catch (e) {
+        todosDesafios = [];
+        var tb = document.getElementById('tbody-desafios');
+        if (tb) tb.innerHTML =
+          '<tr><td colspan="7" class="vazio">Nenhum desafio (ou sem permissão na coleção desafiosProgramados).</td></tr>';
+      }
+    }
+
+    function carregarHistoricoAnuncios() {
+      var tbody = document.getElementById('tbody-hist-anuncios');
+      if (!tbody) return;
+      tbody.innerHTML = '<tr><td colspan="7" class="vazio">A carregar...</td></tr>';
+      db.collection('historicoAnuncios').get().then(function (snap) {
+        if (snap.empty) {
+          tbody.innerHTML = '<tr><td colspan="7" class="vazio">Nenhum registo na lista do Admin.</td></tr>';
+          return;
+        }
+        var linhas = [];
+        snap.forEach(function (doc) {
+          var d = doc.data() || {};
+          d._id = doc.id;
+          linhas.push(d);
+        });
+        // 1 linha por email+desafio (já garantido pelo doc id); ordenar mais recente
+        linhas.sort(function (a, b) {
+          return String(b.terminouEm || '').localeCompare(String(a.terminouEm || ''));
+        });
+        var agora = Date.now();
+        var html = '';
+        linhas.forEach(function (L, i) {
+          var termStr = L.terminouEm ? formatarData(L.terminouEm) : '—';
+          var voltaStr = L.voltaEm ? formatarData(L.voltaEm) : '—';
+          var voltaMs = L.voltaEm ? new Date(L.voltaEm).getTime() : 0;
+          var estado, cls;
+          if (!voltaMs) {
+            estado = '—';
+            cls = 'status-pendente';
+          } else if (agora >= voltaMs) {
+            estado = 'Já pode ver de novo';
+            cls = 'status-pago';
+          } else {
+            var falta = Math.ceil((voltaMs - agora) / 3600000);
+            estado = 'Aguarda ~' + falta + 'h';
+            cls = 'status-recusado';
+          }
+          html += '<tr>' +
+            '<td>' + (i + 1) + '</td>' +
+            '<td><strong>' + esc(L.nome || '—') + '</strong></td>' +
+            '<td>' + esc(L.email || '—') + '</td>' +
+            '<td>' + esc(L.titulo || L.desafioId || '—') + '</td>' +
+            '<td>' + termStr + '</td>' +
+            '<td>' + voltaStr + '</td>' +
+            '<td><span class="status-tag ' + cls + '">' + estado + '</span></td>' +
+            '</tr>';
+        });
+        tbody.innerHTML = html;
+      }).catch(function (e) {
+        tbody.innerHTML = '<tr><td colspan="7" class="vazio">Erro: ' + String(e.message || e) +
+          '<br>Regra: match /historicoAnuncios/{doc} { allow read, write: if true; }</td></tr>';
+      });
+    }
+
+    function toggleCamposDesafio() {
+      try {
+        var tipoEl = document.getElementById('des-tipo');
+        var tipo = tipoEl ? tipoEl.value : 'link';
+        var linkEl = document.getElementById('campo-link-desafio');
+        var adEl = document.getElementById('campo-anuncio-desafio');
+        if (linkEl) linkEl.style.display = tipo === 'link' ? '' : 'none';
+        if (adEl) adEl.style.display = tipo === 'anuncio' ? '' : 'none';
+      } catch (e) { console.error('toggleCamposDesafio:', e); }
+    }
+
+    function renderDesafiosAdmin() {
+      var tbody = document.getElementById('tbody-desafios');
+      if (!tbody) return;
+      try {
+        if (!todosDesafios || !todosDesafios.length) {
+          tbody.innerHTML = '<tr><td colspan="7" class="vazio">Nenhum desafio programado.</td></tr>';
+          return;
+        }
+        var agora = new Date();
+        var html = '';
+        var escapeFn = (typeof esc === 'function') ? esc : (typeof escHtml === 'function' ? escHtml : function (s) { return String(s || ''); });
+        todosDesafios.forEach(function (d, i) {
+          var dt = d.dataHora ? new Date(d.dataHora) : null;
+          var estado = !d.ativa ? 'Desativado' : (dt && dt > agora ? 'Agendado' : 'Visivel em Desafios');
+          var cls = !d.ativa ? 'status-recusado' : (dt && dt > agora ? 'status-pendente' : 'status-pago');
+          var idSafe = String(d._id || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+          html += '<tr>' +
+            '<td>' + (i + 1) + '</td>' +
+            '<td><strong>' + escapeFn(d.titulo || '-') + '</strong><br><small style="color:#888">' + escapeFn(d.descricao || '') + '</small></td>' +
+            '<td>' + (d.tipo === 'anuncio' ? 'Anuncio (3)' : 'Link') + '</td>' +
+            '<td class="pts-alto">+' + (d.pontos || 0) + '</td>' +
+            '<td>' + formatarData(d.dataHora) + '</td>' +
+            '<td><span class="status-tag ' + cls + '">' + estado + '</span></td>' +
+            '<td>' +
+              '<button type="button" class="btn-laranja" onclick="toggleDesafio(\'' + idSafe + '\',' + (d.ativa ? 'false' : 'true') + ')">' + (d.ativa ? 'Desativar' : 'Ativar') + '</button> ' +
+              '<button type="button" class="btn-vermelho" onclick="apagarDesafio(\'' + idSafe + '\')">Apagar</button>' +
+            '</td></tr>';
+        });
+        tbody.innerHTML = html;
+      } catch (e) {
+        console.error('renderDesafiosAdmin:', e);
+        tbody.innerHTML = '<tr><td colspan="7" class="vazio">Erro ao listar desafios: ' + String(e.message || e) + '</td></tr>';
+      }
+    }
+
+    
+    
+    async function limparHistoricoAnuncios() {
+      if (!confirm('Limpar a lista de histórico de anúncios no Admin?\n\nIsto NÃO afeta os utilizadores.\nEles mantêm as suas 10 horas e os pontos.')) return;
+      try {
+        var snap = await db.collection('historicoAnuncios').get();
+        var batch = db.batch();
+        var ops = 0;
+        var n = 0;
+        async function flush() {
+          if (ops === 0) return;
+          await batch.commit();
+          batch = db.batch();
+          ops = 0;
+        }
+        for (var i = 0; i < snap.docs.length; i++) {
+          batch.delete(snap.docs[i].ref);
+          ops++;
+          n++;
+          if (ops >= 400) await flush();
+        }
+        await flush();
+        carregarHistoricoAnuncios();
+        mostrarAviso(n + ' registo(s) removido(s) só da lista do Admin. Utilizadores não foram alterados.');
+      } catch (e) {
+        alert('Erro ao limpar lista: ' + (e.message || e) + '\n\nConfirme a regra Firebase: match /historicoAnuncios/{doc} { allow read, write: if true; }');
+      }
+    }
+
+    async function limparSaquesProcessados() {
+      if (!confirm('Apagar da lista todos os saques com estado PAGO ou RECUSADO?\n\nOs pendentes mantêm-se.')) return;
+      try {
+        var snap = await db.collection('solicitacoesSaque').get();
+        var batch = db.batch();
+        var ops = 0;
+        var n = 0;
+        async function flush() {
+          if (ops === 0) return;
+          await batch.commit();
+          batch = db.batch();
+          ops = 0;
+        }
+        for (var i = 0; i < snap.docs.length; i++) {
+          var doc = snap.docs[i];
+          var st = String((doc.data() || {}).status || '').toLowerCase();
+          if (st === 'pago' || st === 'recusado' || st === 'recusada' || st === 'cancelado') {
+            batch.delete(doc.ref);
+            ops++;
+            n++;
+            if (ops >= 400) await flush();
+          }
+        }
+        await flush();
+        await carregarSaques();
+        mostrarAviso(n + ' saque(s) processado(s) apagado(s) da lista.');
+      } catch (e) {
+        alert('Erro: ' + (e.message || e));
+      }
+    }
+
+    async function limparTodosSaques() {
+      if (!confirm('Apagar TODOS os pedidos de saque (incluindo pendentes)?\\n\\nEsta ação não se pode desfazer.')) return;
+      if (!confirm('Confirma mesmo apagar TUDO?')) return;
+      try {
+        var snap = await db.collection('solicitacoesSaque').get();
+        var batch = db.batch();
+        var ops = 0;
+        var n = 0;
+        async function flush() {
+          if (ops === 0) return;
+          await batch.commit();
+          batch = db.batch();
+          ops = 0;
+        }
+        for (var i = 0; i < snap.docs.length; i++) {
+          batch.delete(snap.docs[i].ref);
+          ops++;
+          n++;
+          if (ops >= 400) await flush();
+        }
+        await flush();
+        await carregarSaques();
+        mostrarAviso(n + ' saque(s) apagado(s).');
+      } catch (e) {
+        alert('Erro: ' + (e.message || e));
+      }
+    }
+
+
+    async function criarDesafio() {
+      var titulo = (document.getElementById('des-titulo').value || '').trim();
+      var desc = (document.getElementById('des-desc').value || '').trim();
+      var imagem = (document.getElementById('des-imagem').value || '').trim();
+      var pontos = parseInt(document.getElementById('des-pontos').value, 10) || 10;
+      var tipo = document.getElementById('des-tipo').value || 'link';
+      var link = (document.getElementById('des-link').value || '').trim();
+      var cod1 = (document.getElementById('des-codigo-anuncio-1').value || '').trim();
+      var cod2 = (document.getElementById('des-codigo-anuncio-2').value || '').trim();
+      var cod3 = (document.getElementById('des-codigo-anuncio-3').value || '').trim();
+      var codigoAnuncios = [cod1, cod2, cod3].filter(function (c) { return !!c; });
+      var data = document.getElementById('des-data').value;
+      var hora = document.getElementById('des-hora').value || '08:00';
+
+      if (!titulo) return alert('Escreva o título do desafio.');
+      if (tipo === 'link' && !link) return alert('Indique o link de redirecionamento.');
+      if (tipo === 'anuncio' && codigoAnuncios.length < 1) return alert('Cole pelo menos 1 código/URL de anúncio (ideal: 3).');
+      if (!data) return alert('Escolha a data de aparição.');
+
+      var dataHora = new Date(data + 'T' + hora + ':00');
+      if (isNaN(dataHora.getTime())) return alert('Data/hora inválida.');
+
+      try {
+        await db.collection('desafiosProgramados').add({
+          titulo: titulo,
+          descricao: desc || 'Complete o desafio e ganhe pontos',
+          imagem: imagem || '',
+          pontos: pontos,
+          tipo: tipo,
+          link: link || '',
+          codigoAnuncios: codigoAnuncios,
+          tipoAnuncio: (document.getElementById('des-tipo-anuncio') && document.getElementById('des-tipo-anuncio').value) || 'interativo',
+          codigoAnuncio: codigoAnuncios[0] || '',
+          segundosAnuncio: Math.min(120, Math.max(10, parseInt((document.getElementById('des-segundos-anuncio') || {}).value, 10) || 20)),
+          dataHora: dataHora.toISOString(),
+          ativa: true,
+          criadaEm: new Date().toISOString()
+        });
+        document.getElementById('des-titulo').value = '';
+        document.getElementById('des-desc').value = '';
+        document.getElementById('des-imagem').value = '';
+        document.getElementById('des-link').value = '';
+        try {
+          document.getElementById('des-codigo-anuncio-1').value = '';
+          document.getElementById('des-codigo-anuncio-2').value = '';
+          document.getElementById('des-codigo-anuncio-3').value = '';
+        } catch (eClr) {}
+        mostrarAviso('Desafio criado! Aparecerá em Desafios a partir de ' + formatarData(dataHora.toISOString()));
+        await carregarDesafios();
+      } catch (e) {
+        alert('Erro ao criar desafio: ' + (e.message || e) +
+          '\n\nConfirme a regra Firebase para desafiosProgramados (allow read, write).');
+      }
+    }
+
+    async function toggleDesafio(id, ativa) {
+      try {
+        await db.collection('desafiosProgramados').doc(id).update({
+          ativa: ativa === true || ativa === 'true'
+        });
+        await carregarDesafios();
+        mostrarAviso('Desafio atualizado.');
+      } catch (e) { alert('Erro: ' + (e.message || e)); }
+    }
+
+    async function apagarDesafio(id) {
+      if (!confirm('Apagar este desafio programado?')) return;
+      try {
+        await db.collection('desafiosProgramados').doc(id).delete();
+        await carregarDesafios();
+        mostrarAviso('Desafio apagado.');
+      } catch (e) { alert('Erro: ' + (e.message || e)); }
+    }
+
+    async function carregarMissoes() {
+      try {
+        var snap = await db.collection('missaoSemanalGlobal').get();
+        todasMissoes = [];
+        snap.forEach(function (doc) {
+          var d = doc.data();
+          d._id = doc.id;
+          todasMissoes.push(d);
+        });
+        todasMissoes.sort(function (a, b) {
+          return (b.dataEncontrada || '').localeCompare(a.dataEncontrada || '');
+        });
+        renderMissoes();
+      } catch (e) {
+        todasMissoes = [];
+        document.getElementById('tbody-missoes').innerHTML =
+          '<tr><td colspan="8" class="vazio">Nenhuma missão encontrada ainda.</td></tr>';
+      }
+    }
+
+    function atualizarResumo() {
+      var totalPts = 0, prontos = 0;
+      todosUsers.forEach(function (u) {
+        var p = u.pontos || 0;
+        totalPts += p;
+        if (p >= MINIMO_PONTOS_SAQUE) prontos++;
+      });
+      var pendentes = todosSaques.filter(function (s) {
+        return (s.status || 'pendente') === 'pendente';
+      }).length;
+
+      document.getElementById('total-users').textContent = todosUsers.length;
+      document.getElementById('total-pts').textContent = totalPts;
+      document.getElementById('prontos-saque').textContent = prontos;
+      document.getElementById('saques-pendentes').textContent = pendentes;
+      document.getElementById('total-pesquisas').textContent = todasPesquisas.length;
+
+      var badge = document.getElementById('badge-saques');
+      if (pendentes > 0) {
+        badge.style.display = 'inline-block';
+        badge.textContent = pendentes;
+      } else {
+        badge.style.display = 'none';
+      }
+    }
+
+    function formatarData(iso) {
+      if (!iso) return '—';
+      try {
+        var d = new Date(iso);
+        if (isNaN(d.getTime())) return String(iso).substring(0, 16);
+        return String(d.getDate()).padStart(2,'0') + '/' +
+               String(d.getMonth()+1).padStart(2,'0') + '/' +
+               d.getFullYear() + ' ' +
+               String(d.getHours()).padStart(2,'0') + ':' +
+               String(d.getMinutes()).padStart(2,'0');
+      } catch (e) { return iso; }
+    }
+
+    function esc(str) {
+      return String(str == null ? '' : str)
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function renderUsers(lista) {
+      var tbody = document.getElementById('tbody-users');
+      if (!lista.length) {
+        tbody.innerHTML = '<tr><td colspan="10" class="vazio">Nenhum utilizador.</td></tr>';
+        return;
+      }
+      var html = '';
+      lista.forEach(function (u, i) {
+        var pts = u.pontos || 0;
+        var mzn = (pts / 10).toFixed(1);
+        var cls = pts >= MINIMO_PONTOS_SAQUE ? 'pts-alto' : (pts > 0 ? 'pts-ok' : 'pts-baixo');
+        var sid = 'senha-' + i;
+        var docId = u._id || '';
+        var bloqueado = !!u.bloqueadoMissaoSemanal;
+        var ocultar = !!u.ocultarPesquisas;
+        html += '<tr>' +
+          '<td>' + (i+1) + '</td>' +
+          '<td><strong>' + esc(u.nome||'—') + '</strong></td>' +
+          '<td>' + esc(u.telemovel||'—') + '</td>' +
+          '<td>' + esc(u.email||'—') + '</td>' +
+          '<td><span class="senha-oculta" id="'+sid+'" data-s="'+esc(u.senha||'')+'">••••••</span>' +
+          '<button type="button" class="btn-olho-admin" onclick="toggleSenha(\''+sid+'\')"><i class="fas fa-eye"></i></button></td>' +
+          '<td class="'+cls+'">'+pts+'</td>' +
+          '<td class="'+cls+'">'+mzn+'</td>' +
+          '<td>'+formatarData(u.dataCadastro)+'</td>' +
+          '<td><span class="status-tag '+(pts>=MINIMO_PONTOS_SAQUE?'status-pendente':'status-pago')+'">' +
+            (pts>=MINIMO_PONTOS_SAQUE?'Pode sacar':(u.status||'Ativo')) +
+          '</span>' +
+          (bloqueado ? ' <span class="status-tag status-bloqueado">Missão 🔒</span>' : '') +
+          (ocultar ? ' <span class="status-tag status-bloqueado">Pesq. 🔒</span>' : '') +
+          '</td>' +
+          '<td>' +
+            '<button class="btn-acao btn-apagar" onclick="apagarConta(\''+docId+'\')">Apagar</button>' +
+            '<button class="btn-laranja" onclick="toggleBloqueioMissao(\''+docId+'\','+(bloqueado?'false':'true')+')">' +
+              (bloqueado ? 'Desbloquear missão' : 'Bloquear missão') + '</button>' +
+            '<button class="btn-azul" onclick="toggleOcultarPesquisas(\''+docId+'\','+(ocultar?'false':'true')+')">' +
+              (ocultar ? 'Mostrar pesquisas' : 'Ocultar pesquisas') + '</button>' +
+          '</td></tr>';
+      });
+      tbody.innerHTML = html;
+    }
+
+    function renderSaques(lista) {
+      var tbody = document.getElementById('tbody-saques');
+      if (!lista.length) {
+        tbody.innerHTML = '<tr><td colspan="9" class="vazio">Nenhum pedido de saque.</td></tr>';
+        return;
+      }
+      var html = '';
+      lista.forEach(function (s, i) {
+        var status = s.status || 'pendente';
+        var cls = status==='pago'?'status-pago':(status==='recusado'?'status-recusado':'status-pendente');
+        var acoes = status==='pendente'
+          ? '<button class="btn-acao btn-pagar" onclick="marcarSaque(\''+s._id+'\',\'pago\')">Pago</button>' +
+            '<button class="btn-acao btn-recusar" onclick="marcarSaque(\''+s._id+'\',\'recusado\')">Recusar</button>'
+          : '—';
+        var bruto = s.valorMZN != null ? Number(s.valorMZN).toFixed(2) : ((s.pontos||0)/10).toFixed(1);
+        // Valor a pagar = LÍQUIDO após taxa 20% (é isto que o admin deve pagar)
+        var liquido = s.liquidoMZN != null
+          ? Number(s.liquidoMZN).toFixed(2)
+          : (Number(bruto) * 0.8).toFixed(2);
+        html += '<tr>' +
+          '<td>'+(i+1)+'</td>' +
+          '<td><strong>'+esc(s.nome||'—')+'</strong><br><small style="color:#888">'+esc(s.email||'')+'</small></td>' +
+          '<td>'+esc(s.telemovel||'—')+'</td>' +
+          '<td>'+(s.pontos||0)+'</td>' +
+          '<td style="color:#888">'+bruto+' MZN</td>' +
+          '<td style="color:#00e676;font-weight:800;font-size:15px">'+liquido+' MZN</td>' +
+          '<td>'+formatarData(s.dataPedido)+'</td>' +
+          '<td><span class="status-tag '+cls+'">'+status+'</span></td>' +
+          '<td>'+acoes+'</td></tr>';
+      });
+      tbody.innerHTML = html;
+    }
+
+    function renderPesquisas() {
+      var tbody = document.getElementById('tbody-pesquisas');
+      if (!todasPesquisas.length) {
+        tbody.innerHTML = '<tr><td colspan="6" class="vazio">Nenhuma pesquisa programada.</td></tr>';
+        return;
+      }
+      var agora = new Date();
+      var html = '';
+      todasPesquisas.forEach(function (p, i) {
+        var dt = p.dataHora ? new Date(p.dataHora) : null;
+        var estado = !p.ativa ? 'Desativada' : (dt && dt > agora ? 'Agendada' : 'Visível nas tarefas');
+        var cls = !p.ativa ? 'status-recusado' : (dt && dt > agora ? 'status-pendente' : 'status-pago');
+        html += '<tr>' +
+          '<td>'+(i+1)+'</td>' +
+          '<td><strong>'+esc(p.titulo||'—')+'</strong><br><small style="color:#888">'+esc(p.descricao||'')+'</small></td>' +
+          '<td class="pts-alto">+'+(p.pontos||0)+'</td>' +
+          '<td>'+formatarData(p.dataHora)+'</td>' +
+          '<td><span class="status-tag '+cls+'">'+estado+'</span></td>' +
+          '<td>' +
+            '<button class="btn-laranja" onclick="togglePesquisa(\''+p._id+'\','+(p.ativa?'false':'true')+')">'+(p.ativa?'Desativar':'Ativar')+'</button>' +
+            '<button class="btn-vermelho" onclick="apagarPesquisa(\''+p._id+'\')">Apagar</button>' +
+          '</td></tr>';
+      });
+      tbody.innerHTML = html;
+    }
+
+    function renderMissoes() {
+      var tbody = document.getElementById('tbody-missoes');
+      if (!todasMissoes.length) {
+        tbody.innerHTML = '<tr><td colspan="8" class="vazio">Ninguém encontrou missão semanal ainda.</td></tr>';
+        return;
+      }
+      var html = '';
+      todasMissoes.forEach(function (m, i) {
+        var user = todosUsers.find(function (u) { return (u.email||'') === (m.emailEncontrou||''); });
+        var completa = m.completa === true || (user && user.missaoSemanalCompleta && user.missaoSemanaId === m.semanaId);
+        var bloqueado = user && user.bloqueadoMissaoSemanal;
+        var estado = completa ? 'Concluída' : 'A fazer / em progresso';
+        var cls = completa ? 'status-pago' : 'status-andamento';
+        var docUser = user ? user._id : '';
+        html += '<tr>' +
+          '<td>'+(i+1)+'</td>' +
+          '<td>'+esc(m.semanaId||m._id)+'</td>' +
+          '<td><strong>'+esc(m.nomeEncontrou||(user&&user.nome)||'—')+'</strong></td>' +
+          '<td>'+esc(m.emailEncontrou||'—')+'</td>' +
+          '<td>'+formatarData(m.dataEncontrada)+'</td>' +
+          '<td><span class="status-tag '+cls+'">'+estado+'</span></td>' +
+          '<td>'+(bloqueado
+            ? '<span class="status-tag status-bloqueado">Bloqueado</span>'
+            : '<span class="status-tag status-ativo">Permitido</span>')+'</td>' +
+          '<td>' +
+            (docUser
+              ? '<button class="btn-laranja" onclick="toggleBloqueioMissao(\''+docUser+'\','+(bloqueado?'false':'true')+')">' +
+                  (bloqueado ? 'Desbloquear' : 'Bloquear') + '</button>'
+              : '—') +
+          '</td></tr>';
+      });
+      tbody.innerHTML = html;
+    }
+
+    function renderRanking() {
+      var tbody = document.getElementById('tbody-ranking');
+      if (!todosUsers.length) {
+        tbody.innerHTML = '<tr><td colspan="8" class="vazio">Sem utilizadores.</td></tr>';
+        return;
+      }
+      var lista = todosUsers.slice().sort(function (a, b) {
+        return (b.pontos || 0) - (a.pontos || 0);
+      });
+      var html = '';
+      lista.forEach(function (u, i) {
+        var pts = u.pontos || 0;
+        var posCls = i === 0 ? 'rank-1' : (i === 1 ? 'rank-2' : (i === 2 ? 'rank-3' : ''));
+        var medal = i === 0 ? '🥇 ' : (i === 1 ? '🥈 ' : (i === 2 ? '🥉 ' : ''));
+        var ocultar = !!u.ocultarPesquisas;
+        var bloqueado = !!u.bloqueadoMissaoSemanal;
+        html += '<tr>' +
+          '<td class="'+posCls+'">'+medal+(i+1)+'º</td>' +
+          '<td><strong>'+esc(u.nome||'—')+'</strong></td>' +
+          '<td>'+esc(u.email||'—')+'</td>' +
+          '<td class="pts-alto">'+pts+'</td>' +
+          '<td>'+(pts/10).toFixed(1)+' MZN</td>' +
+          '<td>'+(ocultar
+            ? '<span class="status-tag status-bloqueado">Ocultas</span>'
+            : '<span class="status-tag status-ativo">Visíveis</span>')+'</td>' +
+          '<td>'+(bloqueado
+            ? '<span class="status-tag status-bloqueado">Bloqueado</span>'
+            : '<span class="status-tag status-ativo">OK</span>')+'</td>' +
+          '<td>' +
+            '<button class="btn-azul" onclick="toggleOcultarPesquisas(\''+u._id+'\','+(ocultar?'false':'true')+')">' +
+              (ocultar ? 'Mostrar pesquisas' : 'Ocultar pesquisas') + '</button>' +
+            '<button class="btn-laranja" onclick="toggleBloqueioMissao(\''+u._id+'\','+(bloqueado?'false':'true')+')">' +
+              (bloqueado ? 'Desbloquear missão' : 'Bloquear missão') + '</button>' +
+          '</td></tr>';
+      });
+      tbody.innerHTML = html;
+    }
+
+    function toggleSenha(id) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.textContent = el.textContent === '••••••' ? (el.getAttribute('data-s') || '—') : '••••••';
+    }
+
+    function filtrarUsers() {
+      var q = (document.getElementById('busca-users').value || '').toLowerCase().trim();
+      if (!q) return renderUsers(todosUsers);
+      renderUsers(todosUsers.filter(function (u) {
+        return (u.nome||'').toLowerCase().indexOf(q)!==-1 ||
+               (u.email||'').toLowerCase().indexOf(q)!==-1 ||
+               (u.telemovel||'').indexOf(q)!==-1;
+      }));
+    }
+
+    function filtrarSaques() {
+      var q = (document.getElementById('busca-saques').value || '').toLowerCase().trim();
+      if (!q) return renderSaques(todosSaques);
+      renderSaques(todosSaques.filter(function (s) {
+        return (s.nome||'').toLowerCase().indexOf(q)!==-1 ||
+               (s.telemovel||'').indexOf(q)!==-1;
+      }));
+    }
+
+    async function marcarSaque(id, novoStatus) {
+      if (!confirm('Confirmar: ' + novoStatus + '?')) return;
+      try {
+        var ref = db.collection('solicitacoesSaque').doc(id);
+        var snap = await ref.get();
+        if (!snap.exists) return alert('Pedido não encontrado.');
+        var data = snap.data();
+        var statusAnterior = data.status || 'pendente';
+        await ref.update({ status: novoStatus, dataProcessamento: new Date().toISOString() });
+
+        // Os pontos já foram descontados no pedido.
+        // Se RECUSAR: devolve os pontos à conta do utilizador.
+        // Se PAGAR: não mexe nos pontos (já estavam descontados; o restante fica na conta).
+        if (novoStatus === 'recusado' && statusAnterior === 'pendente' && data.email && data.pontos) {
+          var emailNorm = String(data.email).trim().toLowerCase();
+          var userSnap = await db.collection('usuarios').where('email', '==', data.email).limit(1).get();
+          if (userSnap.empty && emailNorm !== data.email) {
+            userSnap = await db.collection('usuarios').where('email', '==', emailNorm).limit(1).get();
+          }
+          if (!userSnap.empty) {
+            var uData = userSnap.docs[0].data();
+            var novosPts = (uData.pontos || 0) + (data.pontos || 0);
+            await userSnap.docs[0].ref.update({
+              pontos: novosPts,
+              ultimaAtualizacao: new Date().toISOString()
+            });
+          }
+        }
+
+        await carregarTudo();
+        mostrarAviso(novoStatus === 'pago'
+          ? 'Saque marcado como PAGO. Pague ' + (data.liquidoMZN != null ? data.liquidoMZN : (data.valorMZN * 0.8).toFixed(2)) + ' MZN ao utilizador.'
+          : 'Saque recusado. Pontos devolvidos à conta do utilizador.');
+      } catch (e) {
+        alert('Erro: ' + (e.message || e));
+      }
+    }
+
+    async function apagarConta(docId) {
+      if (!docId) return alert('ID da conta em falta.');
+      var u = todosUsers.find(function (x) { return x._id === docId; });
+      var nome = u ? (u.nome || u.email || docId) : docId;
+      if (!confirm('Apagar permanentemente a conta de:\n' + nome + '\n\nEsta ação não pode ser desfeita.')) return;
+      if (!confirm('Tens a certeza? A conta será apagada do banco de dados.')) return;
+      try {
+        await db.collection('usuarios').doc(docId).delete();
+        await carregarTudo();
+        mostrarAviso('Conta apagada.');
+      } catch (e) {
+        alert('Erro ao apagar: ' + (e.message || e));
+      }
+    }
+
+    async function toggleBloqueioMissao(docId, bloquear) {
+      try {
+        await db.collection('usuarios').doc(docId).update({
+          bloqueadoMissaoSemanal: bloquear === true || bloquear === 'true',
+          ultimaAtualizacao: new Date().toISOString()
+        });
+        await carregarTudo();
+        mostrarAviso(bloquear === true || bloquear === 'true'
+          ? 'Utilizador bloqueado das missões semanais.'
+          : 'Utilizador desbloqueado para missões semanais.');
+      } catch (e) {
+        alert('Erro: ' + (e.message || e));
+      }
+    }
+
+    async function toggleOcultarPesquisas(docId, ocultar) {
+      try {
+        await db.collection('usuarios').doc(docId).update({
+          ocultarPesquisas: ocultar === true || ocultar === 'true',
+          ultimaAtualizacao: new Date().toISOString()
+        });
+        await carregarTudo();
+        mostrarAviso(ocultar === true || ocultar === 'true'
+          ? 'Pesquisas ocultas para este utilizador nas Tarefas.'
+          : 'Pesquisas visíveis novamente para este utilizador.');
+      } catch (e) {
+        alert('Erro: ' + (e.message || e));
+      }
+    }
+
+    // Banco de perguntas por tema (geração automática)
+    var BANCO_PERGUNTAS = {
+      geral: [
+        { p: 'Qual é a capital de Moçambique?', o: ['Maputo', 'Beira', 'Nampula', 'Quelimane'] },
+        { p: 'Qual a moeda de Moçambique?', o: ['Metical', 'Rand', 'Kwanza', 'Euro'] },
+        { p: 'Qual oceano banha Moçambique?', o: ['Índico', 'Atlântico', 'Pacífico', 'Ártico'] },
+        { p: 'Qual língua oficial de Moçambique?', o: ['Português', 'Inglês', 'Francês', 'Swahili'] },
+        { p: 'Qual destas é uma cidade moçambicana?', o: ['Beira', 'Luanda', 'Harare', 'Durban'] },
+        { p: 'Em que continente está Moçambique?', o: ['África', 'Ásia', 'Europa', 'América'] },
+        { p: 'Qual é um prato típico moçambicano?', o: ['Matapa', 'Sushi', 'Tacos', 'Pizza'] },
+        { p: 'Qual porto importante de Moçambique?', o: ['Maputo', 'Lagos', 'Cape Town', 'Mombasa'] },
+        { p: 'Qual província fica no norte de Moçambique?', o: ['Cabo Delgado', 'Gaza', 'Maputo', 'Inhambane'] },
+        { p: 'Em que ano Moçambique ficou independente?', o: ['1975', '1960', '1980', '1994'] }
+      ],
+      produtos: [
+        { p: 'Com que frequência compra online?', o: ['Semanalmente', 'Mensalmente', 'Raramente', 'Nunca'] },
+        { p: 'O que mais valoriza num produto?', o: ['Preço', 'Qualidade', 'Marca', 'Rapidez'] },
+        { p: 'Prefere pagar com?', o: ['M-Pesa', 'e-Mola', 'Dinheiro', 'Cartão'] },
+        { p: 'Recomendaria produtos locais?', o: ['Sim', 'Não', 'Às vezes', 'Não sei'] },
+        { p: 'Onde vê mais publicidade?', o: ['Telemóvel', 'TV', 'Rua', 'Rádio'] },
+        { p: 'Compra mais em loja física ou online?', o: ['Loja física', 'Online', 'Ambos', 'Raramente compro'] },
+        { p: 'O que o faz escolher uma marca?', o: ['Preço', 'Qualidade', 'Publicidade', 'Indicação de amigos'] },
+        { p: 'Já devolveu um produto comprado?', o: ['Sim', 'Não', 'Uma vez', 'Várias vezes'] },
+        { p: 'Prefere produtos novos ou usados?', o: ['Novos', 'Usados', 'Depende', 'Indiferente'] },
+        { p: 'Lê avaliações antes de comprar?', o: ['Sempre', 'Às vezes', 'Raramente', 'Nunca'] }
+      ],
+      tecnologia: [
+        { p: 'Qual app usa mais no dia a dia?', o: ['WhatsApp', 'Facebook', 'TikTok', 'YouTube'] },
+        { p: 'Com que frequência usa internet?', o: ['Todo o dia', 'Algumas vezes', 'Raramente', 'Quase nunca'] },
+        { p: 'O seu telemóvel é principalmente?', o: ['Android', 'iPhone', 'Outro', 'Não sei'] },
+        { p: 'Já ganhou dinheiro online?', o: ['Sim', 'Não', 'Estou a tentar', 'Não confio'] },
+        { p: 'Prefere apps em que idioma?', o: ['Português', 'Inglês', 'Indiferente', 'Outro'] },
+        { p: 'Usa quantos GB de dados por mês?', o: ['Menos de 1', '1–5', '5–15', 'Mais de 15'] },
+        { p: 'Já instalou apps para ganhar pontos?', o: ['Sim', 'Não', 'Estou a experimentar', 'Não confio'] },
+        { p: 'Qual rede social usa mais?', o: ['WhatsApp', 'Facebook', 'Instagram', 'TikTok'] },
+        { p: 'Com que frequência atualiza as apps?', o: ['Sempre', 'Às vezes', 'Raramente', 'Nunca'] },
+        { p: 'Usa Wi-Fi ou dados móveis em casa?', o: ['Wi-Fi', 'Dados móveis', 'Ambos', 'Quase não uso'] }
+      ],
+      habitos: [
+        { p: 'A que horas costuma acordar?', o: ['Antes das 6h', '6h–8h', 'Depois das 8h', 'Variável'] },
+        { p: 'Faz exercício físico?', o: ['Sim, regular', 'Às vezes', 'Raramente', 'Nunca'] },
+        { p: 'Quantas horas dorme por noite?', o: ['Menos de 5', '5–7', '7–9', 'Mais de 9'] },
+        { p: 'Prefere trabalhar de manhã ou à noite?', o: ['Manhã', 'Tarde', 'Noite', 'Indiferente'] },
+        { p: 'Usa redes sociais quantas vezes ao dia?', o: ['Muitas', 'Algumas', 'Poucas', 'Quase nunca'] },
+        { p: 'Bebe água com que frequência?', o: ['Muita', 'Normal', 'Pouca', 'Quase não bebo'] },
+        { p: 'Costuma planear o dia?', o: ['Sim', 'Às vezes', 'Raramente', 'Nunca'] },
+        { p: 'Prefere ficar em casa ou sair?', o: ['Casa', 'Sair', 'Depende', 'Indiferente'] },
+        { p: 'Come refeições à mesma hora?', o: ['Sim', 'Às vezes', 'Raramente', 'Nunca'] },
+        { p: 'Lê livros ou notícias todos os dias?', o: ['Sim', 'Às vezes', 'Raramente', 'Nunca'] }
+      ],
+      desafio: [
+        { p: 'Como conheceu o Desafio MOZ?', o: ['Amigo', 'Internet', 'Anúncio', 'Outro'] },
+        { p: 'Qual o seu objetivo principal?', o: ['Sacar dinheiro', 'Divertir-me', 'Convidar amigos', 'Aprender'] },
+        { p: 'Faz check-in diário?', o: ['Sim, todos os dias', 'Às vezes', 'Raramente', 'Ainda não'] },
+        { p: 'Já convidou alguém?', o: ['Sim', 'Ainda não', 'Vou convidar', 'Não quero'] },
+        { p: 'Recomendaria o Desafio MOZ?', o: ['Sim', 'Talvez', 'Não', 'Ainda não sei'] },
+        { p: 'Quantas tarefas faz por dia?', o: ['1–2', '3–5', 'Mais de 5', 'Variável'] },
+        { p: 'Prefere pesquisas ou anúncios?', o: ['Pesquisas', 'Anúncios', 'Jogos', 'Indiferente'] },
+        { p: 'Já atingiu o mínimo para saque?', o: ['Sim', 'Ainda não', 'Quase', 'Não sei o mínimo'] },
+        { p: 'O que mais gosta no Desafio MOZ?', o: ['Pontos', 'Pesquisas', 'Missões', 'Convidar amigos'] },
+        { p: 'Usa o app todos os dias?', o: ['Sim', 'Quase todos', 'Algumas vezes', 'Raramente'] }
+      ],
+      saude: [
+        { p: 'Com que frequência vai ao médico?', o: ['Uma vez por ano', 'Só quando preciso', 'Raramente', 'Nunca'] },
+        { p: 'Bebe água suficiente por dia?', o: ['Sim', 'Às vezes', 'Não', 'Não sei'] },
+        { p: 'Faz exercício físico regularmente?', o: ['Sim', 'Às vezes', 'Raramente', 'Nunca'] },
+        { p: 'Dorme bem na maioria das noites?', o: ['Sim', 'Às vezes', 'Não', 'Depende'] },
+        { p: 'Come fruta e vegetais todos os dias?', o: ['Sim', 'Às vezes', 'Raramente', 'Nunca'] },
+        { p: 'Já fez exame de saúde este ano?', o: ['Sim', 'Não', 'Não lembro', 'Vou fazer'] },
+        { p: 'Evita stress no dia a dia?', o: ['Sim', 'Tento', 'Raramente', 'Não consigo'] },
+        { p: 'Toma vitaminas ou suplementos?', o: ['Sim', 'Às vezes', 'Raramente', 'Nunca'] },
+        { p: 'Lava as mãos com frequência?', o: ['Sempre', 'Quase sempre', 'Às vezes', 'Raramente'] },
+        { p: 'Prefere tratamento tradicional ou hospital?', o: ['Hospital', 'Tradicional', 'Ambos', 'Depende'] }
+      ],
+      desporto: [
+        { p: 'Pratica algum desporto?', o: ['Sim, regular', 'Às vezes', 'Raramente', 'Nunca'] },
+        { p: 'Qual desporto gosta mais de ver?', o: ['Futebol', 'Basquete', 'Atletismo', 'Outro'] },
+        { p: 'Assiste jogos de futebol com que frequência?', o: ['Sempre', 'Às vezes', 'Raramente', 'Nunca'] },
+        { p: 'Prefere praticar ou só assistir desporto?', o: ['Praticar', 'Assistir', 'Ambos', 'Nenhum'] },
+        { p: 'Já participou numa competição desportiva?', o: ['Sim', 'Não', 'Uma vez', 'Várias vezes'] },
+        { p: 'Faz exercício quantas vezes por semana?', o: ['0', '1–2', '3–4', '5 ou mais'] },
+        { p: 'Qual é o seu desporto favorito para praticar?', o: ['Futebol', 'Corrida', 'Ginásio', 'Outro'] },
+        { p: 'Acompanha a seleção moçambicana?', o: ['Sim', 'Às vezes', 'Raramente', 'Não'] },
+        { p: 'Prefere desporto individual ou de equipa?', o: ['Individual', 'Equipa', 'Ambos', 'Indiferente'] },
+        { p: 'Usa app para acompanhar exercícios?', o: ['Sim', 'Não', 'Às vezes', 'Não tenho'] }
+      ],
+      alimentacao: [
+        { p: 'Quantas refeições faz por dia?', o: ['1–2', '3', '4 ou mais', 'Variável'] },
+        { p: 'Prefere comida caseira ou de restaurante?', o: ['Caseira', 'Restaurante', 'Ambos', 'Indiferente'] },
+        { p: 'Come fast-food com que frequência?', o: ['Semanalmente', 'Mensalmente', 'Raramente', 'Nunca'] },
+        { p: 'Qual prato típico moçambicano prefere?', o: ['Matapa', 'Caril de camarão', 'Xima com peixe', 'Outro'] },
+        { p: 'Bebe refrigerantes todos os dias?', o: ['Sim', 'Às vezes', 'Raramente', 'Nunca'] },
+        { p: 'Cozinha em casa regularmente?', o: ['Sim', 'Às vezes', 'Raramente', 'Nunca'] },
+        { p: 'Prefere comida picante?', o: ['Sim', 'Um pouco', 'Não', 'Depende'] },
+        { p: 'Come fruta todos os dias?', o: ['Sim', 'Às vezes', 'Raramente', 'Nunca'] },
+        { p: 'Já experimentou comida de outros países?', o: ['Sim', 'Poucas vezes', 'Não', 'Quero experimentar'] },
+        { p: 'Qual refeição é a mais importante para si?', o: ['Pequeno-almoço', 'Almoço', 'Jantar', 'Todas'] }
+      ],
+      educacao: [
+        { p: 'Estuda ou trabalha atualmente?', o: ['Estudo', 'Trabalho', 'Ambos', 'Nenhum'] },
+        { p: 'Gosta de aprender coisas novas?', o: ['Sim', 'Às vezes', 'Raramente', 'Não'] },
+        { p: 'Prefere aprender online ou presencial?', o: ['Online', 'Presencial', 'Ambos', 'Indiferente'] },
+        { p: 'Lê livros com que frequência?', o: ['Todos os dias', 'Semanalmente', 'Raramente', 'Nunca'] },
+        { p: 'Já fez algum curso online?', o: ['Sim', 'Não', 'Estou a fazer', 'Quero fazer'] },
+        { p: 'Qual área gostaria de estudar mais?', o: ['Tecnologia', 'Negócios', 'Saúde', 'Outra'] },
+        { p: 'Usa o telemóvel para estudar?', o: ['Sim', 'Às vezes', 'Raramente', 'Nunca'] },
+        { p: 'Acha a educação importante para o futuro?', o: ['Muito', 'Sim', 'Mais ou menos', 'Não sei'] },
+        { p: 'Prefere matérias práticas ou teóricas?', o: ['Práticas', 'Teóricas', 'Ambas', 'Depende'] },
+        { p: 'Já ensinou algo a outra pessoa?', o: ['Sim', 'Às vezes', 'Raramente', 'Nunca'] }
+      ],
+      viagens: [
+        { p: 'Já viajou para fora da sua cidade?', o: ['Sim', 'Não', 'Poucas vezes', 'Muitas vezes'] },
+        { p: 'Prefere viajar de autocarro, carro ou avião?', o: ['Autocarro', 'Carro', 'Avião', 'Depende'] },
+        { p: 'Qual destino em Moçambique gostaria de visitar?', o: ['Ilha de Moçambique', 'Inhambane', 'Gorongosa', 'Outro'] },
+        { p: 'Viaja mais por lazer ou por trabalho?', o: ['Lazer', 'Trabalho', 'Ambos', 'Raramente viajo'] },
+        { p: 'Prefere praia ou montanha?', o: ['Praia', 'Montanha', 'Ambos', 'Cidade'] },
+        { p: 'Planeia as viagens com antecedência?', o: ['Sim', 'Às vezes', 'Raramente', 'Nunca'] },
+        { p: 'Já ficou em hotel ou hospedagem?', o: ['Sim', 'Não', 'Uma vez', 'Várias vezes'] },
+        { p: 'Gosta de fotografar nas viagens?', o: ['Sim', 'Às vezes', 'Raramente', 'Não'] },
+        { p: 'Prefere viajar sozinho ou em grupo?', o: ['Sozinho', 'Grupo', 'Família', 'Depende'] },
+        { p: 'Qual país gostaria de visitar?', o: ['África do Sul', 'Portugal', 'Brasil', 'Outro'] }
+      ],
+      musica: [
+        { p: 'Ouve música todos os dias?', o: ['Sim', 'Quase todos', 'Às vezes', 'Raramente'] },
+        { p: 'Qual estilo de música prefere?', o: ['Marrabenta', 'Kuduro', 'Hip-hop', 'Outro'] },
+        { p: 'Prefere música moçambicana ou internacional?', o: ['Moçambicana', 'Internacional', 'Ambas', 'Indiferente'] },
+        { p: 'Usa Spotify, YouTube ou rádio?', o: ['YouTube', 'Spotify', 'Rádio', 'Outro'] },
+        { p: 'Já foi a um concerto ao vivo?', o: ['Sim', 'Não', 'Uma vez', 'Várias vezes'] },
+        { p: 'Canta ou toca algum instrumento?', o: ['Canto', 'Toco', 'Ambos', 'Nenhum'] },
+        { p: 'Prefere ouvir música sozinho ou com amigos?', o: ['Sozinho', 'Com amigos', 'Ambos', 'Depende'] },
+        { p: 'Descobre músicas novas com que frequência?', o: ['Sempre', 'Às vezes', 'Raramente', 'Nunca'] },
+        { p: 'A música ajuda a concentrar-se?', o: ['Sim', 'Às vezes', 'Não', 'Depende'] },
+        { p: 'Qual artista moçambicano gosta mais?', o: ['Stewart Sukuma', 'Lizha James', 'Outro', 'Não tenho favorito'] }
+      ],
+      carros: [
+        { p: 'Tem carro ou moto?', o: ['Carro', 'Moto', 'Ambos', 'Nenhum'] },
+        { p: 'Prefere carro novo ou usado?', o: ['Novo', 'Usado', 'Depende do preço', 'Indiferente'] },
+        { p: 'Qual marca de carro gosta mais?', o: ['Toyota', 'Volkswagen', 'Nissan', 'Outra'] },
+        { p: 'Usa transporte público com frequência?', o: ['Todos os dias', 'Às vezes', 'Raramente', 'Nunca'] },
+        { p: 'O que mais valoriza num carro?', o: ['Consumo', 'Conforto', 'Preço', 'Segurança'] },
+        { p: 'Já aprendeu a conduzir?', o: ['Sim', 'Não', 'Estou a aprender', 'Não quero'] },
+        { p: 'Prefere carro automático ou manual?', o: ['Automático', 'Manual', 'Indiferente', 'Não sei'] },
+        { p: 'Faz manutenção regular do veículo?', o: ['Sim', 'Às vezes', 'Raramente', 'Não tenho veículo'] },
+        { p: 'Usa apps de transporte (Bolt, etc.)?', o: ['Sim', 'Às vezes', 'Raramente', 'Nunca'] },
+        { p: 'Qual combustível prefere?', o: ['Gasolina', 'Diesel', 'Elétrico', 'Indiferente'] }
+      ]
+    };
+
+    function shuffleArr(arr) {
+      var a = arr.slice();
+      for (var i = a.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var t = a[i]; a[i] = a[j]; a[j] = t;
+      }
+      return a;
+    }
+
+    function hashPerguntas(perguntas) {
+      return perguntas.map(function (q) { return q.pergunta; }).join('|');
+    }
+
+    function escolherBancoPorTema(temaTexto) {
+      var t = (temaTexto || '').toLowerCase().trim();
+      if (!t) return 'geral';
+      if (/produto|marca|compra|loja|preço|publicidade|mercado|loja/.test(t)) return 'produtos';
+      if (/tecno|app|internet|telemóvel|telefone|digital|rede social|whatsapp|facebook|tiktok|instagram|smartphone|computador/.test(t)) return 'tecnologia';
+      if (/hábito|habito|rotina|sono|exercício|exercicio|água|agua|dia a dia|acordar|vida diária/.test(t)) return 'habitos';
+      if (/desafio|moz|saque|pontos|convidar|check-?in|tarefa|app desafio/.test(t)) return 'desafio';
+      if (/saúde|saude|médico|medico|doença|doenca|hospital|vitamina|bem-estar|bem estar/.test(t)) return 'saude';
+      if (/desporto|esporte|futebol|basquete|corrida|ginásio|ginasio|atletismo|jogo|seleção|selecao/.test(t)) return 'desporto';
+      if (/comida|alimentação|alimentacao|refeição|refeicao|prato|cozinhar|fruta|restaurante|matapa|xima/.test(t)) return 'alimentacao';
+      if (/educação|educacao|escola|estudo|curso|aprender|livro|universidade|formação|formacao/.test(t)) return 'educacao';
+      if (/viagem|viagens|turismo|praia|hotel|destino|viajar|férias|ferias/.test(t)) return 'viagens';
+      if (/música|musica|canção|cancao|cantor|artista|concerto|spotify|rádio|radio|marrabenta/.test(t)) return 'musica';
+      if (/carro|carros|moto|veículo|veiculo|conduzir|transporte|automóvel|automovel|toyota|combustível|combustivel/.test(t)) return 'carros';
+      if (/moçambique|mocambique|maputo|metical|afric|cidade|porto|província|provincia|independência|independencia/.test(t)) return 'geral';
+      return 'geral';
+    }
+
+    function gerarPerguntas(temaTexto, num) {
+      var chave = escolherBancoPorTema(temaTexto);
+      var principal = (BANCO_PERGUNTAS[chave] || BANCO_PERGUNTAS.geral).slice();
+      var base = shuffleArr(principal);
+      var out = [];
+      var usados = {};
+
+      // 1) Usa APENAS perguntas do tema escolhido
+      for (var i = 0; i < base.length && out.length < num; i++) {
+        var item = base[i];
+        if (usados[item.p]) continue;
+        usados[item.p] = true;
+        out.push({ pergunta: item.p, opcoes: shuffleArr(item.o) });
+      }
+
+      // 2) Só se não houver perguntas suficientes no tema, completa com "geral"
+      //    (nunca mistura temas aleatórios como antes)
+      if (out.length < num && chave !== 'geral') {
+        var extra = shuffleArr(BANCO_PERGUNTAS.geral.slice());
+        for (var j = 0; j < extra.length && out.length < num; j++) {
+          var item2 = extra[j];
+          if (usados[item2.p]) continue;
+          usados[item2.p] = true;
+          out.push({ pergunta: item2.p, opcoes: shuffleArr(item2.o) });
+        }
+      }
+
+      return out;
+    }
+
+    
+    
+    async function guardarAnuncioCurto() {
+      var nome = (document.getElementById('curto-nome').value || '').trim() || 'Banner';
+      var codigo = (document.getElementById('curto-codigo').value || '').trim();
+      var ativo = document.getElementById('curto-ativo').value !== 'false';
+      var pagsRaw = (document.getElementById('curto-paginas') && document.getElementById('curto-paginas').value || '').trim();
+      var pags = pagsRaw.split(/[,;]+/).map(function (s) {
+        return s.trim().toLowerCase().replace(/\.html$/, '');
+      }).filter(Boolean);
+      if (!codigo) return alert('Cole o código do anúncio curto.');
+      if (!pags.length) return alert('Indique pelo menos uma página (ex: regras, contacto, privacidade).');
+      // Páginas com mecânica de "assista e ganhe pontos" — nunca podem levar AdSense/banner curto,
+      // sob risco de violar as políticas do Google (tráfego incentivado) e banir a conta.
+      var paginasProibidas = ['desafios', 'tarefas', 'desafio-anuncio'];
+      var bloqueadas = pags.filter(function (p) { return paginasProibidas.indexOf(p) !== -1; });
+      if (bloqueadas.length) {
+        alert('Não é permitido colocar anúncios curtos (AdSense/banner) em: ' + bloqueadas.join(', ') +
+          '.\n\nEssas páginas já têm anúncios que dão pontos — misturar com AdSense viola as políticas do Google e pode banir a conta.\n\nRemova essas páginas da lista e tente novamente.');
+        return;
+      }
+      try {
+        await db.collection('anunciosCurtos').add({
+          nome: nome,
+          codigo: codigo,
+          paginas: pags,
+          ativo: ativo,
+          pontos: 0,
+          criadaEm: new Date().toISOString()
+        });
+        document.getElementById('curto-codigo').value = '';
+        document.getElementById('curto-nome').value = '';
+        var cp = document.getElementById('curto-paginas');
+        if (cp) cp.value = '';
+        mostrarAviso('Anúncio curto guardado (sem pontos). Páginas: ' + pags.join(', '));
+        await carregarAnunciosCurtosAdmin();
+      } catch (e) {
+        alert('Erro: ' + (e.message || e) + '\n\nRegra Firebase:\nmatch /anunciosCurtos/{doc} { allow read, write: if true; }');
+      }
+    }
+
+    async function carregarAnunciosCurtosAdmin() {
+      var tbody = document.getElementById('tbody-anuncios-curtos');
+      if (!tbody) return;
+      try {
+        var snap = await db.collection('anunciosCurtos').get();
+        if (snap.empty) {
+          tbody.innerHTML = '<tr><td colspan="4" class="vazio">Nenhum anúncio curto.</td></tr>';
+          return;
+        }
+        var html = '';
+        snap.forEach(function (doc) {
+          var d = doc.data() || {};
+          var ativo = d.ativo !== false;
+          html += '<tr>' +
+            '<td>' + esc(d.nome || '—') + '</td>' +
+            '<td>' + esc((d.paginas || []).join(', ')) + '</td>' +
+            '<td><span class="status-tag ' + (ativo ? 'status-pago' : 'status-recusado') + '">' + (ativo ? 'Ativo' : 'Off') + '</span></td>' +
+            '<td><button type="button" class="btn-vermelho" onclick="apagarAnuncioCurto(\'' + doc.id + '\')">Apagar</button></td>' +
+            '</tr>';
+        });
+        tbody.innerHTML = html;
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="4" class="vazio">Erro: ' + String(e.message || e) +
+          '<br>Regra: match /anunciosCurtos/{doc} { allow read, write: if true; }</td></tr>';
+      }
+    }
+
+    async function apagarAnuncioCurto(id) {
+      if (!confirm('Apagar este anúncio curto?')) return;
+      try {
+        await db.collection('anunciosCurtos').doc(id).delete();
+        await carregarAnunciosCurtosAdmin();
+        mostrarAviso('Anúncio curto apagado.');
+      } catch (e) { alert('Erro: ' + (e.message || e)); }
+    }
+
+async function carregarAnunciosTarefasAdmin() {
+      var tbody = document.getElementById('tbody-anuncios-tarefas');
+      if (!tbody) return;
+      try {
+        var snap = await db.collection('anunciosTarefas').get();
+        if (snap.empty) {
+          tbody.innerHTML = '<tr><td colspan="6" class="vazio">Nenhum anúncio configurado. Use o formulário acima.</td></tr>';
+          return;
+        }
+        var html = '';
+        snap.forEach(function (doc) {
+          var d = doc.data() || {};
+          var tipo = d.tipo || doc.id;
+          var ativo = d.ativo !== false;
+          html += '<tr>' +
+            '<td><strong>' + (tipo === 'rewarded' ? 'Rewarded vídeo' : 'Interativo') + '</strong></td>' +
+            '<td>' + esc(d.titulo || '—') + '</td>' +
+            '<td class="pts-alto">+' + (d.pontos || 0) + '</td>' +
+            '<td>' + (d.segundos || 15) + 's</td>' +
+            '<td><span class="status-tag ' + (ativo ? 'status-pago' : 'status-recusado') + '">' + (ativo ? 'Ativo' : 'Off') + '</span></td>' +
+            '<td>' +
+              '<button type="button" class="btn-laranja" onclick="editarAnuncioTarefa(\'' + doc.id + '\')">Editar</button> ' +
+              '<button type="button" class="btn-vermelho" onclick="apagarAnuncioTarefa(\'' + doc.id + '\')">Apagar</button>' +
+            '</td></tr>';
+        });
+        tbody.innerHTML = html;
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="6" class="vazio">Erro: ' + String(e.message || e) +
+          '<br>Regra: match /anunciosTarefas/{doc} { allow read, write: if true; }</td></tr>';
+      }
+    }
+
+    async function guardarAnuncioTarefa() {
+      var tipo = document.getElementById('ad-tipo').value;
+      var titulo = (document.getElementById('ad-titulo').value || '').trim();
+      var desc = (document.getElementById('ad-desc').value || '').trim();
+      var pontos = parseInt(document.getElementById('ad-pontos').value, 10) || 8;
+      var segundos = parseInt(document.getElementById('ad-segundos').value, 10) || 15;
+      var codigo = (document.getElementById('ad-codigo').value || '').trim();
+      var ativo = document.getElementById('ad-ativo').value !== 'false';
+      if (!codigo) return alert('Cole o código ou URL do anúncio.');
+      if (!titulo) titulo = (tipo === 'rewarded' ? 'Rewarded vídeo' : 'Anúncio interativo');
+      if (!desc) desc = (tipo === 'rewarded' ? 'Assista o vídeo e ganhe pontos' : 'Clique e interaja com o anúncio');
+      try {
+        // Um documento por tipo (substitui o anterior do mesmo tipo)
+        await db.collection('anunciosTarefas').doc(tipo).set({
+          tipo: tipo,
+          titulo: titulo,
+          descricao: desc,
+          pontos: pontos,
+          segundos: Math.min(120, Math.max(5, segundos)),
+          codigo: codigo,
+          ativo: ativo,
+          atualizadoEm: new Date().toISOString()
+        }, { merge: true });
+        document.getElementById('ad-codigo').value = '';
+        mostrarAviso('Anúncio ' + (tipo === 'rewarded' ? 'Rewarded vídeo' : 'Interativo') + ' guardado. Já aparece em Tarefas.');
+        await carregarAnunciosTarefasAdmin();
+      } catch (e) {
+        alert('Erro: ' + (e.message || e) + '\n\nAdicione a regra Firebase:\nmatch /anunciosTarefas/{doc} { allow read, write: if true; }');
+      }
+    }
+
+    async function editarAnuncioTarefa(id) {
+      try {
+        var doc = await db.collection('anunciosTarefas').doc(id).get();
+        if (!doc.exists) return alert('Não encontrado.');
+        var d = doc.data();
+        document.getElementById('ad-tipo').value = d.tipo || id;
+        document.getElementById('ad-titulo').value = d.titulo || '';
+        document.getElementById('ad-desc').value = d.descricao || '';
+        document.getElementById('ad-pontos').value = d.pontos || 8;
+        document.getElementById('ad-segundos').value = d.segundos || 15;
+        document.getElementById('ad-codigo').value = d.codigo || '';
+        document.getElementById('ad-ativo').value = (d.ativo === false) ? 'false' : 'true';
+        mudarTab('anuncios');
+        window.scrollTo(0, 0);
+        mostrarAviso('Dados carregados no formulário. Altere e clique Guardar.');
+      } catch (e) { alert('Erro: ' + (e.message || e)); }
+    }
+
+    async function apagarAnuncioTarefa(id) {
+      if (!confirm('Apagar este anúncio? O botão em Tarefas ficará indisponível até configurar outro.')) return;
+      try {
+        await db.collection('anunciosTarefas').doc(id).delete();
+        await carregarAnunciosTarefasAdmin();
+        mostrarAviso('Anúncio apagado.');
+      } catch (e) { alert('Erro: ' + (e.message || e)); }
+    }
+
+
+    async function criarPesquisa() {
+      var titulo = (document.getElementById('pesq-titulo').value || '').trim();
+      var desc = (document.getElementById('pesq-desc').value || '').trim();
+      var pontos = parseInt(document.getElementById('pesq-pontos').value, 10) || 5;
+      var numQ = parseInt(document.getElementById('pesq-num-q').value, 10) || 3;
+      var data = document.getElementById('pesq-data').value;
+      var hora = document.getElementById('pesq-hora').value || '08:00';
+      var tema = (document.getElementById('pesq-tema').value || '').trim() || 'geral';
+
+      if (!titulo) return alert('Escreva o título da pesquisa.');
+      if (!data) return alert('Escolha a data de aparição.');
+
+      var dataHora = new Date(data + 'T' + hora + ':00');
+      if (isNaN(dataHora.getTime())) return alert('Data/hora inválida.');
+
+      var perguntas = gerarPerguntas(tema, Math.min(10, Math.max(1, numQ)));
+      var assinatura = hashPerguntas(perguntas);
+
+      // Evita pesquisas idênticas (mesmo conjunto de perguntas)
+      try {
+        var existentes = await db.collection('pesquisasProgramadas').get();
+        var duplicada = false;
+        existentes.forEach(function (doc) {
+          var d = doc.data();
+          if (d.assinaturaPerguntas && d.assinaturaPerguntas === assinatura) duplicada = true;
+          if (!d.assinaturaPerguntas && d.perguntas) {
+            if (hashPerguntas(d.perguntas) === assinatura) duplicada = true;
+          }
+        });
+        if (duplicada) {
+          // Tenta de novo com outro shuffle
+          perguntas = gerarPerguntas(tema, Math.min(10, Math.max(1, numQ)));
+          assinatura = hashPerguntas(perguntas);
+          existentes.forEach(function (doc) {
+            var d = doc.data();
+            if (d.assinaturaPerguntas === assinatura) {
+              alert('Não foi possível gerar perguntas diferentes. Mude o tema ou o número de perguntas e tente outra vez.');
+              throw new Error('DUPLICADA');
+            }
+          });
+        }
+      } catch (eDup) {
+        if (eDup && eDup.message === 'DUPLICADA') return;
+      }
+
+      try {
+        await db.collection('pesquisasProgramadas').add({
+          titulo: titulo,
+          descricao: desc || 'Pesquisa rápida – ganhe pontos',
+          pontos: pontos,
+          tema: tema,
+          perguntas: perguntas,
+          assinaturaPerguntas: assinatura,
+          dataHora: dataHora.toISOString(),
+          ativa: true,
+          criadaEm: new Date().toISOString()
+        });
+        document.getElementById('pesq-titulo').value = '';
+        document.getElementById('pesq-desc').value = '';
+        mostrarAviso('Pesquisa criada! Aparecerá nas Tarefas a partir de ' + formatarData(dataHora.toISOString()));
+        await carregarPesquisas();
+        atualizarResumo();
+      } catch (e) {
+        alert('Erro ao criar pesquisa: ' + (e.message || e) +
+          '\n\nConfirme a regra Firebase para pesquisasProgramadas.');
+      }
+    }
+
+    async function togglePesquisa(id, ativa) {
+      try {
+        await db.collection('pesquisasProgramadas').doc(id).update({
+          ativa: ativa === true || ativa === 'true'
+        });
+        await carregarPesquisas();
+        mostrarAviso('Pesquisa atualizada.');
+      } catch (e) { alert('Erro: ' + (e.message || e)); }
+    }
+
+    async function apagarPesquisa(id) {
+      if (!confirm('Apagar esta pesquisa programada?')) return;
+      try {
+        await db.collection('pesquisasProgramadas').doc(id).delete();
+        await carregarPesquisas();
+        atualizarResumo();
+        mostrarAviso('Pesquisa apagada.');
+      } catch (e) { alert('Erro: ' + (e.message || e)); }
+    }
+
+
+    async function hashSenha(texto) {
+      var encoder = new TextEncoder();
+      var dados = encoder.encode(texto);
+      var hashBuffer = await crypto.subtle.digest('SHA-256', dados);
+      var hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map(function (b) { return b.toString(16).padStart(2, '0'); }).join('');
+    }
+
+    async function trocarSenhaUtilizador() {
+      var email = (document.getElementById('troca-senha-email').value || '').trim().toLowerCase();
+      var novaSenha = document.getElementById('troca-senha-valor').value;
+      if (!email) return alert('Escreva o e-mail do utilizador.');
+      if (!novaSenha || novaSenha.length < 6) return alert('A senha deve ter pelo menos 6 caracteres.');
+      try {
+        var snap = await db.collection('usuarios').where('email', '==', email).limit(1).get();
+        if (snap.empty) {
+          var emailRaw = (document.getElementById('troca-senha-email').value || '').trim();
+          snap = await db.collection('usuarios').where('email', '==', emailRaw).limit(1).get();
+        }
+        if (snap.empty) return alert('Utilizador não encontrado com esse e-mail.');
+        var senhaHash = await hashSenha(novaSenha);
+        await snap.docs[0].ref.update({
+          senha: senhaHash,
+          ultimaAtualizacao: new Date().toISOString()
+        });
+        document.getElementById('troca-senha-email').value = '';
+        document.getElementById('troca-senha-valor').value = '';
+        mostrarAviso('Senha alterada com sucesso para ' + email + '.');
+      } catch (e) {
+        alert('Erro: ' + (e.message || e));
+      }
+    }
+
+    async function ajustarPontosUtilizador() {
+      var email = (document.getElementById('ajuste-pts-email').value || '').trim().toLowerCase();
+      var delta = parseInt(document.getElementById('ajuste-pts-valor').value, 10);
+      if (!email) return alert('Escreva o e-mail do utilizador.');
+      if (isNaN(delta) || delta === 0) return alert('Indique quantos pontos adicionar (+) ou remover (−).');
+      try {
+        var snap = await db.collection('usuarios').where('email', '==', email).limit(1).get();
+        if (snap.empty) {
+          // tenta case original
+          var emailRaw = (document.getElementById('ajuste-pts-email').value || '').trim();
+          snap = await db.collection('usuarios').where('email', '==', emailRaw).limit(1).get();
+        }
+        if (snap.empty) return alert('Utilizador não encontrado com esse e-mail.');
+        var ref = snap.docs[0].ref;
+        var dados = snap.docs[0].data();
+        var atual = dados.pontos || 0;
+        var novo = Math.max(0, atual + delta);
+        await ref.update({
+          pontos: novo,
+          ultimaAtualizacao: new Date().toISOString(),
+          ultimoAjustePontos: {
+            delta: delta,
+            antes: atual,
+            depois: novo,
+            em: new Date().toISOString()
+          }
+        });
+        document.getElementById('ajuste-pts-email').value = '';
+        document.getElementById('ajuste-pts-valor').value = '';
+        await carregarTudo();
+        mostrarAviso('Pontos atualizados para ' + email + ': ' + atual + ' → ' + novo + ' (' + (delta > 0 ? '+' : '') + delta + ')');
+      } catch (e) {
+        alert('Erro: ' + (e.message || e));
+      }
+    }
+
+
+    function renderConvidarBloqueados() {
+      var tbody = document.getElementById('tbody-convidar-bloqueados');
+      if (!tbody) return;
+      var bloqueados = (typeof todosUsers !== 'undefined' ? todosUsers : []).filter(function (u) {
+        return u.ocultarConvidar === true;
+      });
+      if (!bloqueados.length) {
+        tbody.innerHTML = '<tr><td colspan="6" class="vazio">Nenhum utilizador com convites bloqueados.</td></tr>';
+        return;
+      }
+      // ordenar por pontos desc
+      bloqueados.sort(function (a, b) { return (b.pontos || 0) - (a.pontos || 0); });
+      var html = '';
+      bloqueados.forEach(function (u, i) {
+        var pts = u.pontos || 0;
+        var cls = pts >= 500 ? 'pts-alto' : (pts >= 100 ? 'pts-ok' : 'pts-baixo');
+        var emailEsc = String(u.email || '').replace(/'/g, "\\'");
+        html += '<tr>' +
+          '<td>' + (i + 1) + '</td>' +
+          '<td>' + escHtml(u.nome || '—') + '</td>' +
+          '<td>' + escHtml(u.email || '—') + '</td>' +
+          '<td>' + escHtml(u.telemovel || u.telefone || '—') + '</td>' +
+          '<td class="' + cls + '">' + pts + '</td>' +
+          '<td><button type="button" class="btn-verde" style="width:auto;padding:5px 10px;font-size:11px;" onclick="desbloquearConvidarRapido(\'' + emailEsc + '\')">🔓 Desbloquear</button></td>' +
+          '</tr>';
+      });
+      tbody.innerHTML = html;
+    }
+
+    async function desbloquearConvidarRapido(email) {
+      if (!email) return;
+      if (!confirm('Desbloquear convites para ' + email + '?')) return;
+      try {
+        var snap = await db.collection('usuarios').where('email', '==', email).limit(1).get();
+        if (snap.empty) {
+          var emailLow = String(email).trim().toLowerCase();
+          snap = await db.collection('usuarios').where('email', '==', emailLow).limit(1).get();
+        }
+        if (snap.empty) return alert('Utilizador não encontrado.');
+        await snap.docs[0].ref.update({
+          ocultarConvidar: false,
+          ultimaAtualizacao: new Date().toISOString()
+        });
+        await carregarTudo();
+        mostrarAviso('Convites desbloqueados para ' + email + '.');
+      } catch (e) {
+        alert('Erro: ' + (e.message || e));
+      }
+    }
+
+    async function bloquearConvidarPorEmail(bloquear) {
+      var email = (document.getElementById('bloqueio-convidar-email').value || '').trim().toLowerCase();
+      if (!email) return alert('Escreva o e-mail do utilizador.');
+      try {
+        var snap = await db.collection('usuarios').where('email', '==', email).limit(1).get();
+        if (snap.empty) {
+          var emailRaw = (document.getElementById('bloqueio-convidar-email').value || '').trim();
+          snap = await db.collection('usuarios').where('email', '==', emailRaw).limit(1).get();
+        }
+        if (snap.empty) return alert('Utilizador não encontrado com esse e-mail.');
+        await snap.docs[0].ref.update({
+          ocultarConvidar: !!bloquear,
+          ultimaAtualizacao: new Date().toISOString()
+        });
+        document.getElementById('bloqueio-convidar-email').value = '';
+        await carregarTudo();
+        mostrarAviso(bloquear
+          ? 'Convites bloqueados para ' + email + '.'
+          : 'Convites desbloqueados para ' + email + '.');
+      } catch (e) {
+        alert('Erro: ' + (e.message || e));
+      }
+    }
+
+    async function bloquearPesquisasPorEmail(bloquear) {
+      var email = (document.getElementById('bloqueio-email').value || '').trim().toLowerCase();
+      if (!email) return alert('Escreva o e-mail do utilizador.');
+      try {
+        var snap = await db.collection('usuarios').where('email', '==', email).limit(1).get();
+        if (snap.empty) return alert('Utilizador não encontrado com esse e-mail.');
+        await snap.docs[0].ref.update({
+          ocultarPesquisas: !!bloquear,
+          ultimaAtualizacao: new Date().toISOString()
+        });
+        document.getElementById('bloqueio-email').value = '';
+        await carregarTudo();
+        mostrarAviso(bloquear
+          ? 'Pesquisas bloqueadas para ' + email + ' (fixas + automáticas).'
+          : 'Pesquisas desbloqueadas para ' + email + '.');
+      } catch (e) {
+        alert('Erro: ' + (e.message || e));
+      }
+    }
+
+    // Data padrão = amanhã (pesquisas e desafios; desafio força mín. 24h ao criar)
+
+    (function () {
+      var d = new Date();
+      d.setDate(d.getDate() + 1);
+      var y = d.getFullYear();
+      var m = String(d.getMonth() + 1).padStart(2, '0');
+      var day = String(d.getDate()).padStart(2, '0');
+      var val = y + '-' + m + '-' + day;
+      var el = document.getElementById('pesq-data');
+      if (el) el.value = val;
+      var el2 = document.getElementById('des-data');
+      if (el2) el2.value = val;
+    })();
+
+    // carregarTudo() agora é chamado pelo onAuthStateChanged, após login confirmado.
+  </script>
+</body>
+</html>
