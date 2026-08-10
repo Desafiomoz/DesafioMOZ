@@ -25,6 +25,27 @@
       window.db = firebase.firestore();
     }
     var db = window.db;
+
+    // Sempre que o convidado ultrapassa um novo marco de 50 pontos, o convidador recebe +10 pontos.
+    // Não mexe nos pontos do convidado.
+    async function creditarBonusMarcoIndicacao(codigo, pontosAntes, pontosDepois) {
+      try {
+        var marcosAntes = Math.floor((pontosAntes || 0) / 50);
+        var marcosDepois = Math.floor((pontosDepois || 0) / 50);
+        var marcosNovos = marcosDepois - marcosAntes;
+        if (marcosNovos <= 0) return;
+        var bonus = marcosNovos * 10;
+        var indSnap = await db.collection('usuarios').where('codigoIndicacao', '==', codigo).limit(1).get();
+        if (indSnap.empty) return;
+        var indRef = indSnap.docs[0].ref;
+        var indData = indSnap.docs[0].data();
+        await indRef.update({
+          pontos: (indData.pontos || 0) + bonus,
+          pontosIndicacao: (indData.pontosIndicacao || 0) + bonus,
+          ultimaAtualizacao: new Date().toISOString()
+        });
+      } catch (e) { console.error('bonus marco indicador', e); }
+    }
     var auth = firebase.auth();
   </script>
 
@@ -610,6 +631,15 @@
 
     <!-- MISSÕES SEMANAIS -->
     <div class="painel" id="painel-missoes">
+      <div class="form-box">
+        <h3><i class="fas fa-clock"></i> Horários reais da missão (só Admin vê)</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:12px;line-height:1.45;">
+          Estes são os momentos exactos em que a missão fica disponível esta semana.
+          Os utilizadores só vêem previsões genéricas; <strong>tu vês hora e minuto exactos</strong>.
+        </p>
+        <div id="admin-horarios-missao" style="font-size:13px;color:#ccc;">A calcular...</div>
+        <button type="button" class="btn-laranja" style="margin-top:10px;" onclick="renderHorariosMissaoAdmin()">🔄 Recalcular horários</button>
+      </div>
       <p style="font-size:13px;color:#aaa;margin-bottom:14px;">
         Utilizadores que encontraram a missão semanal (só o primeiro de cada semana). Pode bloquear para não encontrarem de novo.
       </p>
@@ -654,7 +684,68 @@
     var todosDesafios = [];
     var todasMissoes = [];
 
-    function mostrarAviso(txt) {
+    
+    function getSemanaIdAdmin(d) {
+      d = d || new Date();
+      var onejan = new Date(d.getFullYear(), 0, 1);
+      var week = Math.ceil((((d - onejan) / 86400000) + onejan.getDay() + 1) / 7);
+      return d.getFullYear() + '-S' + week;
+    }
+
+    function gerarPrevisoesAdmin(semana) {
+      var seed = 0;
+      for (var i = 0; i < semana.length; i++) seed += semana.charCodeAt(i) * (i + 1);
+      function rnd() {
+        seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+        return seed / 0x7fffffff;
+      }
+      var agora = new Date();
+      var inicioSemana = new Date(agora);
+      inicioSemana.setDate(agora.getDate() - agora.getDay());
+      inicioSemana.setHours(0, 0, 0, 0);
+      var slots = [];
+      for (var n = 0; n < 5; n++) {
+        var diaOffset = Math.floor(rnd() * 7);
+        var hora = 8 + Math.floor(rnd() * 13);
+        var minuto = rnd() > 0.5 ? 0 : 30;
+        var inicio = new Date(inicioSemana);
+        inicio.setDate(inicioSemana.getDate() + diaOffset);
+        inicio.setHours(hora, minuto, 0, 0);
+        var fim = new Date(inicio.getTime() + 90 * 60 * 1000);
+        slots.push({ inicio: inicio, fim: fim });
+      }
+      slots.sort(function (a, b) { return a.inicio - b.inicio; });
+      return slots;
+    }
+
+    function renderHorariosMissaoAdmin() {
+      var el = document.getElementById('admin-horarios-missao');
+      if (!el) return;
+      var DIAS = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+      var semana = getSemanaIdAdmin();
+      var slots = gerarPrevisoesAdmin(semana);
+      var agora = new Date();
+      var html = '<p style="margin-bottom:10px;color:#00e676;"><strong>Semana ' + semana + '</strong></p>';
+      html += '<div class="tabela-wrap"><table style="min-width:0;"><thead><tr><th>#</th><th>Dia</th><th>Início (exacto)</th><th>Fim</th><th>Estado</th></tr></thead><tbody>';
+      slots.forEach(function (s, i) {
+        var h1 = String(s.inicio.getHours()).padStart(2,'0') + ':' + String(s.inicio.getMinutes()).padStart(2,'0');
+        var h2 = String(s.fim.getHours()).padStart(2,'0') + ':' + String(s.fim.getMinutes()).padStart(2,'0');
+        var data = String(s.inicio.getDate()).padStart(2,'0') + '/' + String(s.inicio.getMonth()+1).padStart(2,'0');
+        var st = 'Depois';
+        var cls = 'status-andamento';
+        if (agora >= s.inicio && agora <= s.fim) { st = 'AGORA'; cls = 'status-pago'; }
+        else if (s.fim < agora) { st = 'Passou'; cls = 'status-recusado'; }
+        else if ((s.inicio - agora) < 24*3600*1000) { st = 'Em breve'; cls = 'status-pendente'; }
+        html += '<tr><td>' + (i+1) + '</td><td>' + DIAS[s.inicio.getDay()] + ' ' + data + '</td>' +
+          '<td class="pts-alto">' + h1 + '</td><td>' + h2 + '</td>' +
+          '<td><span class="status-tag ' + cls + '">' + st + '</span></td></tr>';
+      });
+      html += '</tbody></table></div>';
+      html += '<p style="font-size:11px;color:#666;margin-top:8px;">Mesmo algoritmo da página Missão Semanal (seed pela semana).</p>';
+      el.innerHTML = html;
+    }
+
+function mostrarAviso(txt) {
       var el = document.getElementById('aviso-admin');
       el.textContent = txt;
       el.style.display = 'block';
@@ -670,6 +761,7 @@
         var painel = document.getElementById('painel-' + nome);
         if (painel) painel.classList.add('ativo');
         else console.warn('Painel não encontrado:', nome);
+        if (nome === 'missoes') try { renderHorariosMissaoAdmin(); } catch (eH) {}
       } catch (e) {
         console.error('mudarTab:', e);
         alert('Erro ao abrir separador: ' + (e.message || e));
@@ -1331,6 +1423,7 @@
               pontos: novosPts,
               ultimaAtualizacao: new Date().toISOString()
             });
+            if (uData.indicadoPor) { await creditarBonusMarcoIndicacao(uData.indicadoPor, uData.pontos || 0, novosPts); }
           }
         }
 
@@ -1914,6 +2007,7 @@ async function carregarAnunciosTarefasAdmin() {
             em: new Date().toISOString()
           }
         });
+        if (dados.indicadoPor) { await creditarBonusMarcoIndicacao(dados.indicadoPor, atual, novo); }
         document.getElementById('ajuste-pts-email').value = '';
         document.getElementById('ajuste-pts-valor').value = '';
         await carregarTudo();

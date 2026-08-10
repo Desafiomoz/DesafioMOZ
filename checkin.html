@@ -253,6 +253,27 @@
   </div>
 
   <script>
+    // Sempre que o convidado ultrapassa um novo marco de 50 pontos, o convidador recebe +10 pontos.
+    // Não mexe nos pontos do convidado.
+    async function creditarBonusMarcoIndicacao(codigo, pontosAntes, pontosDepois) {
+      try {
+        var marcosAntes = Math.floor((pontosAntes || 0) / 50);
+        var marcosDepois = Math.floor((pontosDepois || 0) / 50);
+        var marcosNovos = marcosDepois - marcosAntes;
+        if (marcosNovos <= 0) return;
+        var bonus = marcosNovos * 10;
+        var indSnap = await db.collection('usuarios').where('codigoIndicacao', '==', codigo).limit(1).get();
+        if (indSnap.empty) return;
+        var indRef = indSnap.docs[0].ref;
+        var indData = indSnap.docs[0].data();
+        await indRef.update({
+          pontos: (indData.pontos || 0) + bonus,
+          pontosIndicacao: (indData.pontosIndicacao || 0) + bonus,
+          ultimaAtualizacao: new Date().toISOString()
+        });
+      } catch (e) { console.error('bonus marco indicador', e); }
+    }
+
     var meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
     var checkins = [];
     var docRef = null;
@@ -418,6 +439,8 @@
           ultimoCheckin: hojeStr,
           ultimaAtualizacao: new Date().toISOString()
         });
+
+        if (data.indicadoPor) { await creditarBonusMarcoIndicacao(data.indicadoPor, pontosAtuais, novosPontos); }
 
         checkins = lista;
         localStorage.setItem('pontosUtilizador', String(novosPontos));

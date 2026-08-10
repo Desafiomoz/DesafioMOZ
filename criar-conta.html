@@ -384,7 +384,7 @@
       var senhaHash = await hashSenha(senha);
       var dadosNovo = {
         nome: nome, telemovel: telemovel, email: email, senha: senhaHash,
-        pontos: 0, status: 'Ativo',
+        pontos: refCodigo ? 10 : 0, status: 'Ativo',
         pesquisaDadosCompleta: false,
         pesquisaRapidaCompleta: false,
         pesquisaOpiniaoCompleta: false,
@@ -415,7 +415,7 @@
       localStorage.setItem('nomeUtilizador', nome);
       localStorage.setItem('telUtilizador', telemovel);
       localStorage.setItem('emailUtilizador', email);
-      localStorage.setItem('pontosUtilizador', '0');
+      localStorage.setItem('pontosUtilizador', String(dadosNovo.pontos));
       localStorage.setItem('pesquisaDadosCompleta', 'false');
       localStorage.setItem('pesquisaRapidaCompleta', 'false');
       localStorage.setItem('pesquisaOpiniaoCompleta', 'false');

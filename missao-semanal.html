@@ -156,6 +156,37 @@
     .ad-box .ico { font-size: 36px; margin-bottom: 8px; }
     .ad-box p { font-size: 13px; color: #888; margin-bottom: 12px; }
     .ad-done { border-color: #00c853; color: #00e676; }
+    .ad-overlay {
+      display: none; position: fixed; inset: 0; z-index: 3000;
+      background: rgba(0,0,0,0.95); flex-direction: column;
+    }
+    .ad-overlay.show { display: flex; }
+    .ad-overlay-top {
+      flex-shrink: 0; display: flex; justify-content: space-between; align-items: center;
+      padding: 12px 14px; border-bottom: 1px solid rgba(0,200,83,0.3);
+    }
+    .ad-overlay-top span { color: #00e676; font-weight: 700; font-size: 14px; }
+    .ad-overlay-top button {
+      background: rgba(255,255,255,0.1); border: 1px solid #444; color: #ccc;
+      border-radius: 8px; padding: 8px 12px; font-size: 12px; cursor: pointer;
+    }
+    .ad-overlay-body {
+      flex: 1; overflow: auto; display: flex; align-items: center; justify-content: center;
+      padding: 12px; background: #0a0a0f;
+    }
+    .ad-overlay-body .ad-slot { width: 100%; max-width: 480px; min-height: 280px; }
+    .ad-overlay-foot {
+      flex-shrink: 0; padding: 14px 16px 20px; text-align: center;
+      border-top: 1px solid rgba(0,200,83,0.25); background: rgba(0,0,0,0.9);
+    }
+    .ad-overlay-foot .timer { font-size: 22px; font-weight: 800; color: #FFD700; margin-bottom: 6px; }
+    .ad-overlay-foot p { font-size: 12px; color: #888; margin-bottom: 10px; }
+    .ad-overlay-foot .btn-receber {
+      background: linear-gradient(90deg, #00c853, #00e676); color: #000; border: none;
+      border-radius: 10px; padding: 12px 20px; font-weight: 700; font-size: 14px;
+      cursor: pointer; width: 100%; max-width: 320px; opacity: 0.4; pointer-events: none;
+    }
+    .ad-overlay-foot .btn-receber.ativo { opacity: 1; pointer-events: auto; }
 
     .sucesso { text-align: center; padding: 24px 8px; }
     .sucesso .pts { font-size: 42px; font-weight: 800; color: #FFD700; margin: 12px 0; }
@@ -223,7 +254,7 @@
       <div class="card">
         <h2><i class="fas fa-tasks"></i> Progresso da missão</h2>
         <div class="progresso"><div class="progresso-bar" id="barra"></div></div>
-        <div class="progresso-txt" id="progresso-txt">0 / 13 etapas</div>
+        <div class="progresso-txt" id="progresso-txt">0 / 12 etapas</div>
       </div>
 
       <!-- PERGUNTAS -->
@@ -351,27 +382,36 @@
         </div>
       </div>
 
-      <!-- ANÚNCIOS (3 vídeos) -->
+      <!-- ANÚNCIOS (código do Admin: interativo + rewarded) -->
       <div class="card" id="card-anuncios" style="display:none;">
-        <h2><i class="fas fa-play-circle"></i> Anúncios da missão (3 vídeos)</h2>
+        <h2><i class="fas fa-play-circle"></i> Anúncios da missão</h2>
         <p style="font-size:13px;color:#aaa;margin-bottom:14px;">
-          Assista 3 anúncios para concluir a missão semanal.
+          Assista os anúncios configurados no Admin (interativo / rewarded). Só conta se o anúncio carregar de verdade.
+          Se não houver anúncio disponível agora, pode voltar mais tarde — a missão continua só para si.
         </p>
-
         <div class="ad-box" id="ad1">
-          <div class="ico">🎬</div>
-          <p>Anúncio 1 de 3</p>
-          <button class="btn" type="button" onclick="verAnuncio(1)">Ver anúncio (15s)</button>
+          <div class="ico">📱</div>
+          <p id="ad1-label">Anúncio interativo</p>
+          <button class="btn" type="button" id="btn-ad1" onclick="abrirAnuncioMissao('interativo',1)">Ver anúncio</button>
         </div>
         <div class="ad-box" id="ad2">
-          <div class="ico">📺</div>
-          <p>Anúncio 2 de 3</p>
-          <button class="btn" type="button" onclick="verAnuncio(2)" disabled>Bloqueado</button>
+          <div class="ico">🎬</div>
+          <p id="ad2-label">Rewarded vídeo</p>
+          <button class="btn" type="button" id="btn-ad2" onclick="abrirAnuncioMissao('rewarded',2)" disabled>Bloqueado</button>
         </div>
-        <div class="ad-box" id="ad3">
-          <div class="ico">📱</div>
-          <p>Anúncio 3 de 3</p>
-          <button class="btn" type="button" onclick="verAnuncio(3)" disabled>Bloqueado</button>
+        <p class="aviso-mini" id="ad-aviso-extra">Os códigos vêm da aba Anúncios do Admin (os mesmos de Tarefas).</p>
+      </div>
+
+      <div class="ad-overlay" id="ad-overlay">
+        <div class="ad-overlay-top">
+          <span id="ad-ov-titulo">Anúncio</span>
+          <button type="button" onclick="fecharAnuncioMissao()">Fechar</button>
+        </div>
+        <div class="ad-overlay-body"><div class="ad-slot" id="ad-ov-slot"></div></div>
+        <div class="ad-overlay-foot">
+          <div class="timer" id="ad-ov-timer">—</div>
+          <p id="ad-ov-txt">Aguarde o anúncio…</p>
+          <button type="button" class="btn-receber" id="ad-ov-btn" onclick="confirmarAnuncioMissao()">Continuar</button>
         </div>
       </div>
 
@@ -390,6 +430,27 @@
   </div>
 
   <script>
+    // Sempre que o convidado ultrapassa um novo marco de 50 pontos, o convidador recebe +10 pontos.
+    // Não mexe nos pontos do convidado.
+    async function creditarBonusMarcoIndicacao(codigo, pontosAntes, pontosDepois) {
+      try {
+        var marcosAntes = Math.floor((pontosAntes || 0) / 50);
+        var marcosDepois = Math.floor((pontosDepois || 0) / 50);
+        var marcosNovos = marcosDepois - marcosAntes;
+        if (marcosNovos <= 0) return;
+        var bonus = marcosNovos * 10;
+        var indSnap = await db.collection('usuarios').where('codigoIndicacao', '==', codigo).limit(1).get();
+        if (indSnap.empty) return;
+        var indRef = indSnap.docs[0].ref;
+        var indData = indSnap.docs[0].data();
+        await indRef.update({
+          pontos: (indData.pontos || 0) + bonus,
+          pontosIndicacao: (indData.pontosIndicacao || 0) + bonus,
+          ultimaAtualizacao: new Date().toISOString()
+        });
+      } catch (e) { console.error('bonus marco indicador', e); }
+    }
+
     /*
      * Missão semanal:
      * - Janelas aleatórias por semana (baseadas no número da semana)
@@ -478,7 +539,7 @@
     }
 
     function atualizarProgresso() {
-      var total = 13; // 10 perguntas + 3 anúncios
+      var total = 12; // 10 perguntas + 2 anúncios
       var feito = perguntasFeitas + anunciosVistos;
       var pct = Math.min(100, (feito / total) * 100);
       document.getElementById('barra').style.width = pct + '%';
@@ -507,34 +568,186 @@
         document.getElementById('card-perguntas').style.display = 'none';
         document.getElementById('card-anuncios').style.display = 'block';
         atualizarProgresso();
+        guardarProgressoMissao();
       }
     }
 
-    function verAnuncio(n) {
-      var box = document.getElementById('ad' + n);
-      var btn = box.querySelector('button');
-      btn.disabled = true;
-      btn.textContent = 'A assistir... 15s';
-      var rest = 15;
-      var t = setInterval(function () {
-        rest--;
-        btn.textContent = 'A assistir... ' + rest + 's';
-        if (rest <= 0) {
-          clearInterval(t);
-          box.classList.add('ad-done');
-          btn.textContent = '✅ Visto';
-          anunciosVistos = Math.max(anunciosVistos, n);
-          atualizarProgresso();
-          if (n < 3) {
-            var nextBtn = document.getElementById('ad' + (n + 1)).querySelector('button');
-            nextBtn.disabled = false;
-            nextBtn.textContent = 'Ver anúncio (15s)';
-          } else {
-            finalizarMissao();
+    // ——— Anúncios reais (Admin: anunciosTarefas interativo + rewarded) ———
+    var anunciosCfg = { interativo: null, rewarded: null };
+    var adEmCurso = null;
+    var adTimerId = null;
+    var adCargaTimeoutId = null;
+    var adObserver = null;
+    var adAnuncioCarregado = false;
+    var adPodeReceber = false;
+    var TOTAL_ANUNCIOS_MISSAO = 2; // interativo + rewarded
+
+    async function carregarAnunciosMissao() {
+      try {
+        var snap = await db.collection('anunciosTarefas').get();
+        anunciosCfg = { interativo: null, rewarded: null };
+        snap.forEach(function (doc) {
+          var d = doc.data() || {};
+          if (d.tipo === 'interativo' || doc.id === 'interativo') anunciosCfg.interativo = d;
+          if (d.tipo === 'rewarded' || doc.id === 'rewarded') anunciosCfg.rewarded = d;
+        });
+      } catch (e) { console.warn('anunciosTarefas missao', e); }
+      var int = anunciosCfg.interativo;
+      var rew = anunciosCfg.rewarded;
+      if (int && int.titulo) document.getElementById('ad1-label').textContent = int.titulo;
+      if (rew && rew.titulo) document.getElementById('ad2-label').textContent = rew.titulo;
+    }
+
+    function limparObsAd() {
+      if (adObserver) { adObserver.disconnect(); adObserver = null; }
+    }
+
+    function injetarCodigoAd(container, html) {
+      var tpl = document.createElement('template');
+      tpl.innerHTML = html || '';
+      var frag = tpl.content;
+      Array.prototype.forEach.call(frag.querySelectorAll('script'), function (old) {
+        var s = document.createElement('script');
+        Array.prototype.forEach.call(old.attributes, function (a) { s.setAttribute(a.name, a.value); });
+        s.text = old.textContent || '';
+        old.parentNode.replaceChild(s, old);
+      });
+      container.appendChild(frag);
+    }
+
+    function abrirAnuncioMissao(tipo, n) {
+      var cfg = anunciosCfg[tipo];
+      if (!cfg || !(cfg.codigo || '').trim()) {
+        alert('Não há anúncio disponível neste momento. Pode voltar mais tarde — a missão continua disponível para si.');
+        return;
+      }
+      adEmCurso = { tipo: tipo, n: n, cfg: cfg };
+      adAnuncioCarregado = false;
+      adPodeReceber = false;
+      limparObsAd();
+      if (adCargaTimeoutId) { clearTimeout(adCargaTimeoutId); adCargaTimeoutId = null; }
+      if (adTimerId) { clearInterval(adTimerId); adTimerId = null; }
+
+      var slot = document.getElementById('ad-ov-slot');
+      slot.innerHTML = '';
+      document.getElementById('ad-ov-titulo').textContent = cfg.titulo || (tipo === 'rewarded' ? 'Rewarded vídeo' : 'Anúncio interativo');
+      document.getElementById('ad-ov-timer').textContent = '—';
+      document.getElementById('ad-ov-txt').textContent = 'A carregar o anúncio…';
+      var btn = document.getElementById('ad-ov-btn');
+      btn.classList.remove('ativo');
+      btn.textContent = 'A carregar…';
+      document.getElementById('ad-overlay').classList.add('show');
+
+      var cod = (cfg.codigo || '').trim();
+      if (/^https?:\/\//i.test(cod) && cod.indexOf('<') === -1) {
+        var ifr = document.createElement('iframe');
+        ifr.style.cssText = 'width:100%;min-height:320px;border:none;border-radius:12px;background:#111;';
+        ifr.allow = 'autoplay; fullscreen';
+        ifr.onload = function () { confirmarCargaAd(tipo); };
+        ifr.onerror = falhaCargaAd;
+        slot.appendChild(ifr);
+        ifr.src = cod;
+      } else {
+        injetarCodigoAd(slot, cod);
+        limparObsAd();
+        adObserver = new MutationObserver(function () {
+          if (slot.querySelector('iframe, img, video, canvas, ins') || slot.children.length > 0) {
+            confirmarCargaAd(tipo);
           }
+        });
+        adObserver.observe(slot, { childList: true, subtree: true });
+        if (slot.children.length > 0) setTimeout(function () { confirmarCargaAd(tipo); }, 400);
+      }
+      adCargaTimeoutId = setTimeout(function () {
+        if (!adAnuncioCarregado) falhaCargaAd();
+      }, 12000);
+    }
+
+    function confirmarCargaAd(tipo) {
+      if (adAnuncioCarregado) return;
+      adAnuncioCarregado = true;
+      limparObsAd();
+      if (adCargaTimeoutId) { clearTimeout(adCargaTimeoutId); adCargaTimeoutId = null; }
+      var segs = parseInt(adEmCurso && adEmCurso.cfg && adEmCurso.cfg.segundos, 10);
+      if (isNaN(segs) || segs < 5) segs = (tipo === 'rewarded' ? 20 : 15);
+      if (adTimerId) clearInterval(adTimerId);
+      var rest = segs;
+      document.getElementById('ad-ov-timer').textContent = rest;
+      document.getElementById('ad-ov-txt').textContent = 'Segundos restantes';
+      adTimerId = setInterval(function () {
+        rest--;
+        document.getElementById('ad-ov-timer').textContent = Math.max(0, rest);
+        if (rest <= 0) {
+          clearInterval(adTimerId); adTimerId = null;
+          adPodeReceber = true;
+          document.getElementById('ad-ov-txt').textContent = 'Pode continuar';
+          var btn = document.getElementById('ad-ov-btn');
+          btn.classList.add('ativo');
+          btn.textContent = 'Continuar';
         }
       }, 1000);
     }
+
+    function falhaCargaAd() {
+      limparObsAd();
+      if (adCargaTimeoutId) { clearTimeout(adCargaTimeoutId); adCargaTimeoutId = null; }
+      if (adTimerId) { clearInterval(adTimerId); adTimerId = null; }
+      adPodeReceber = false;
+      document.getElementById('ad-ov-timer').textContent = '—';
+      document.getElementById('ad-ov-txt').textContent = 'Anúncio indisponível agora. Feche e tente mais tarde — a missão continua só para si.';
+      var btn = document.getElementById('ad-ov-btn');
+      btn.classList.remove('ativo');
+      btn.textContent = 'Sem anúncio';
+    }
+
+    function fecharAnuncioMissao() {
+      if (adTimerId) { clearInterval(adTimerId); adTimerId = null; }
+      if (adCargaTimeoutId) { clearTimeout(adCargaTimeoutId); adCargaTimeoutId = null; }
+      limparObsAd();
+      document.getElementById('ad-overlay').classList.remove('show');
+      document.getElementById('ad-ov-slot').innerHTML = '';
+      adEmCurso = null;
+      adAnuncioCarregado = false;
+      adPodeReceber = false;
+    }
+
+    async function confirmarAnuncioMissao() {
+      if (!adAnuncioCarregado || !adPodeReceber || !adEmCurso) return;
+      var n = adEmCurso.n;
+      fecharAnuncioMissao();
+      var box = document.getElementById('ad' + n);
+      if (box) {
+        box.classList.add('ad-done');
+        var b = box.querySelector('button');
+        if (b) { b.disabled = true; b.textContent = '✅ Visto'; }
+      }
+      anunciosVistos = Math.max(anunciosVistos, n);
+      atualizarProgresso();
+      await guardarProgressoMissao();
+      if (n < TOTAL_ANUNCIOS_MISSAO) {
+        var next = document.getElementById('btn-ad' + (n + 1));
+        if (next) { next.disabled = false; next.textContent = 'Ver anúncio'; }
+      } else {
+        finalizarMissao();
+      }
+    }
+
+    async function guardarProgressoMissao() {
+      if (!docRef) return;
+      try {
+        await docRef.update({
+          missaoSemanaId: semanaId,
+          missaoSemanalCompleta: false,
+          missaoPerguntasFeitas: perguntasFeitas,
+          missaoAnunciosVistos: anunciosVistos,
+          missaoSemanalRespostas: respostas,
+          ultimaAtualizacao: new Date().toISOString()
+        });
+        userData.missaoPerguntasFeitas = perguntasFeitas;
+        userData.missaoAnunciosVistos = anunciosVistos;
+      } catch (e) { console.warn('progresso missao', e); }
+    }
+
 
     async function finalizarMissao() {
       if (jaCompletouEstaSemana) return;
@@ -555,6 +768,9 @@
           missoesSemanaisEncontradas: encontradas,
           ultimaAtualizacao: new Date().toISOString()
         });
+
+        if (userData.indicadoPor) { await creditarBonusMarcoIndicacao(userData.indicadoPor, pontosAtuais, novos); }
+
         try {
           await missaoGlobalRef().update({ completa: true, dataCompleta: new Date().toISOString() });
         } catch (eg) { console.warn(eg); }
@@ -564,7 +780,7 @@
         document.getElementById('card-anuncios').style.display = 'none';
         document.getElementById('card-sucesso').style.display = 'block';
         document.getElementById('barra').style.width = '100%';
-        document.getElementById('progresso-txt').textContent = '13 / 13 etapas';
+        document.getElementById('progresso-txt').textContent = '12 / 12 etapas';
         jaCompletouEstaSemana = true;
       } catch (e) {
         alert('Erro ao guardar: ' + (e.message || e));
@@ -620,6 +836,27 @@
       }
     }
 
+    function retomarAnunciosMissao() {
+      document.getElementById('zona-missao').style.display = 'block';
+      document.getElementById('card-previsoes').style.display = 'none';
+      document.getElementById('card-perguntas').style.display = 'none';
+      document.getElementById('card-anuncios').style.display = 'block';
+      // Marcar ads já vistos
+      for (var i = 1; i <= anunciosVistos; i++) {
+        var box = document.getElementById('ad' + i);
+        if (box) {
+          box.classList.add('ad-done');
+          var b = box.querySelector('button');
+          if (b) { b.disabled = true; b.textContent = '✅ Visto'; }
+        }
+      }
+      if (anunciosVistos < TOTAL_ANUNCIOS_MISSAO) {
+        var next = document.getElementById('btn-ad' + (anunciosVistos + 1));
+        if (next) { next.disabled = false; next.textContent = 'Ver anúncio'; }
+      }
+      atualizarProgresso();
+    }
+
     async function iniciarMissaoEncontrada() {
       // Só o primeiro pode começar
       var claim = await tentarSerPrimeiro();
@@ -657,8 +894,34 @@
       document.getElementById('card-previsoes').style.display = 'none';
       document.getElementById('status-banner').className = 'status-banner status-ok';
       document.getElementById('status-banner').textContent =
-        '🏆 Foi o PRIMEIRO a encontrar! Complete as 10 perguntas e os 3 anúncios para ganhar +100 pts.';
+        '🏆 Foi o PRIMEIRO a encontrar! Complete as 10 perguntas e os anúncios para ganhar +100 pts.';
       document.getElementById('zona-acao').innerHTML = '';
+      // Retomar se já tinha progresso
+      if (perguntasFeitas >= 10) {
+        document.getElementById('card-perguntas').style.display = 'none';
+        document.getElementById('card-anuncios').style.display = 'block';
+        for (var i = 1; i <= anunciosVistos; i++) {
+          var box = document.getElementById('ad' + i);
+          if (box) {
+            box.classList.add('ad-done');
+            var b = box.querySelector('button');
+            if (b) { b.disabled = true; b.textContent = '✅ Visto'; }
+          }
+        }
+        if (anunciosVistos < TOTAL_ANUNCIOS_MISSAO) {
+          var next = document.getElementById('btn-ad' + (anunciosVistos + 1));
+          if (next) { next.disabled = false; next.textContent = 'Ver anúncio'; }
+        }
+      } else if (perguntasFeitas > 0) {
+        for (var q = 1; q <= 10; q++) {
+          var el = document.getElementById('qpasso' + q);
+          if (el) el.classList.remove('ativo');
+        }
+        var nextQ = Math.min(10, perguntasFeitas + 1);
+        var eln = document.getElementById('qpasso' + nextQ);
+        if (eln) eln.classList.add('ativo');
+      }
+      atualizarProgresso();
     }
 
     async function carregar() {
@@ -697,6 +960,15 @@
           || (globalData && globalData.completa === true && souODono);
         var ativaAgora = estaAtiva(slots);
 
+        await carregarAnunciosMissao();
+
+        // Retomar progresso (perguntas feitas / anúncios)
+        if (userData.missaoSemanaId === semanaId) {
+          perguntasFeitas = parseInt(userData.missaoPerguntasFeitas || 0, 10) || 0;
+          anunciosVistos = parseInt(userData.missaoAnunciosVistos || 0, 10) || 0;
+          if (userData.missaoSemanalRespostas) respostas = userData.missaoSemanalRespostas;
+        }
+
         document.getElementById('loading').style.display = 'none';
         document.getElementById('conteudo').style.display = 'block';
 
@@ -713,10 +985,22 @@
           document.getElementById('zona-acao').innerHTML = '';
         } else if (souODono && !jaCompletouEstaSemana) {
           document.getElementById('status-banner').className = 'status-banner status-ok';
-          document.getElementById('status-banner').textContent =
-            '🏆 É o primeiro desta semana! Continue a missão para ganhar +100 pts.';
-          document.getElementById('zona-acao').innerHTML =
-            '<button class="btn" type="button" onclick="iniciarMissaoEncontrada()">Continuar missão</button>';
+          if (perguntasFeitas >= 10 && anunciosVistos < TOTAL_ANUNCIOS_MISSAO) {
+            document.getElementById('status-banner').textContent =
+              '🏆 Já respondeu às perguntas. Falta ver os anúncios. Pode voltar quando houver anúncio disponível.';
+            document.getElementById('zona-acao').innerHTML =
+              '<button class="btn" type="button" onclick="retomarAnunciosMissao()">Continuar anúncios</button>';
+          } else if (perguntasFeitas > 0 && perguntasFeitas < 10) {
+            document.getElementById('status-banner').textContent =
+              '🏆 Missão em curso. Continue as perguntas e depois os anúncios (+100 pts).';
+            document.getElementById('zona-acao').innerHTML =
+              '<button class="btn" type="button" onclick="iniciarMissaoEncontrada()">Continuar missão</button>';
+          } else {
+            document.getElementById('status-banner').textContent =
+              '🏆 É o primeiro desta semana! Complete perguntas + anúncios para +100 pts.';
+            document.getElementById('zona-acao').innerHTML =
+              '<button class="btn" type="button" onclick="iniciarMissaoEncontrada()">Continuar missão</button>';
+          }
         } else if (ativaAgora) {
           document.getElementById('status-banner').className = 'status-banner status-ok';
           document.getElementById('status-banner').textContent =

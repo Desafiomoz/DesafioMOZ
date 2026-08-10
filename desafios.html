@@ -296,6 +296,27 @@
     }
     var db = window.db;
 
+    // Sempre que o convidado ultrapassa um novo marco de 50 pontos, o convidador recebe +10 pontos.
+    // Não mexe nos pontos do convidado.
+    async function creditarBonusMarcoIndicacao(codigo, pontosAntes, pontosDepois) {
+        try {
+            var marcosAntes = Math.floor((pontosAntes || 0) / 50);
+            var marcosDepois = Math.floor((pontosDepois || 0) / 50);
+            var marcosNovos = marcosDepois - marcosAntes;
+            if (marcosNovos <= 0) return;
+            var bonus = marcosNovos * 10;
+            var indSnap = await db.collection('usuarios').where('codigoIndicacao', '==', codigo).limit(1).get();
+            if (indSnap.empty) return;
+            var indRef = indSnap.docs[0].ref;
+            var indData = indSnap.docs[0].data();
+            await indRef.update({
+                pontos: (indData.pontos || 0) + bonus,
+                pontosIndicacao: (indData.pontosIndicacao || 0) + bonus,
+                ultimaAtualizacao: new Date().toISOString()
+            });
+        } catch (e) { console.error('bonus marco indicador', e); }
+    }
+
     var YOUTUBE_URL = 'https://www.youtube.com/@DesafioMoz';
     var PONTOS_YT = 10;
     var emailUtilizador = '';
@@ -415,6 +436,8 @@
                 desafioYoutubeData: new Date().toISOString(),
                 ultimaAtualizacao: new Date().toISOString()
             });
+
+            if (dados.indicadoPor) { await creditarBonusMarcoIndicacao(dados.indicadoPor, dados.pontos || 0, pts); }
 
             jaFezYoutube = true;
             atualizarPontosUI(pts);
@@ -621,6 +644,7 @@
                 desafiosProgramadosFeitos: feitos,
                 ultimaAtualizacao: new Date().toISOString()
             });
+            if (dados.indicadoPor) { await creditarBonusMarcoIndicacao(dados.indicadoPor, dados.pontos || 0, novosPts); }
             if (userDataCache) userDataCache.desafiosProgramadosFeitos = feitos;
             atualizarPontosUI(novosPts);
             alert('✅ +' + pts + ' pontos recebidos!');
