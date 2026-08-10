@@ -14,7 +14,10 @@
         }
 
         body {
-            background-color: #0a0a0f;
+            background:
+                radial-gradient(circle at 12% 0%, rgba(0,200,83,0.11), transparent 42%),
+                radial-gradient(circle at 95% 15%, rgba(255,201,77,0.06), transparent 38%),
+                #0e1118;
             color: #ffffff;
             min-height: 100vh;
             padding-bottom: 90px;
@@ -25,11 +28,12 @@
             align-items: center;
             justify-content: space-between;
             padding: 12px 16px;
-            background: rgba(10, 10, 15, 0.97);
+            background: rgba(14, 17, 24, 0.95);
             border-bottom: 2px solid #00c853;
             position: sticky;
             top: 0;
             z-index: 100;
+            backdrop-filter: blur(10px);
         }
 
         .logo-area {
@@ -41,11 +45,12 @@
         .logo {
             width: 42px;
             height: 42px;
-            border-radius: 50%;
+            border-radius: 12px;
             object-fit: cover;
             border: 2px solid #00e676;
             background: rgba(0, 200, 83, 0.15);
             flex-shrink: 0;
+            box-shadow: 0 0 12px rgba(0,200,83,0.25);
         }
 
         .app-title {
@@ -72,25 +77,26 @@
         }
 
         .sec-titulo {
-            font-size: 18px;
+            font-size: 16px;
             font-weight: 700;
             color: #00e676;
-            margin: 22px 0 14px;
+            margin: 20px 0 12px;
             display: flex;
             align-items: center;
             gap: 8px;
         }
 
         .tarefa-card {
-            background: rgba(21, 21, 31, 0.95);
-            border: 1px solid rgba(0, 200, 83, 0.25);
+            background: rgba(24, 28, 40, 0.95);
+            border: 1px solid rgba(0, 200, 83, 0.22);
             border-radius: 16px;
-            padding: 16px;
-            margin-bottom: 14px;
+            padding: 15px;
+            margin-bottom: 12px;
             display: flex;
             align-items: center;
             gap: 14px;
             transition: 0.2s;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
         }
 
         .tarefa-card:active {
@@ -98,13 +104,13 @@
         }
 
         .tarefa-icon {
-            width: 54px;
-            height: 54px;
+            width: 52px;
+            height: 52px;
             border-radius: 14px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 24px;
+            font-size: 22px;
             flex-shrink: 0;
         }
 
@@ -120,98 +126,105 @@
 
         .tarefa-info {
             flex: 1;
+            min-width: 0;
         }
 
         .tarefa-info h3 {
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 700;
             margin-bottom: 3px;
         }
 
         .tarefa-info p {
-            font-size: 13px;
-            color: #aaa;
+            font-size: 12px;
+            color: #a8b0c8;
         }
 
         .tarefa-ganho {
             text-align: right;
+            flex-shrink: 0;
         }
 
         .pontos {
-            font-size: 16px;
-            font-weight: 700;
+            font-size: 15px;
+            font-weight: 800;
             color: #FFD700;
             margin-bottom: 6px;
         }
 
         .btn-fazer {
-            background: #00c853;
-            color: #000;
+            background: linear-gradient(90deg, #00c853, #00e676);
+            color: #003d1a;
             border: none;
-            padding: 7px 14px;
-            border-radius: 8px;
-            font-weight: 600;
+            padding: 8px 14px;
+            border-radius: 9px;
+            font-weight: 700;
             font-size: 13px;
             cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,200,83,0.25);
         }
 
         .btn-fazer:active {
-            background: #00e676;
+            opacity: 0.9;
         }
 
         .banner {
-            background: linear-gradient(135deg, rgba(0,200,83,0.2), rgba(34,255,153,0.08));
-            border: 1px solid #00c853;
+            background: linear-gradient(135deg, rgba(0,200,83,0.22), rgba(34,255,153,0.08));
+            border: 1px solid rgba(0,200,83,0.4);
             border-radius: 16px;
-            padding: 18px;
-            margin-bottom: 10px;
+            padding: 18px 16px;
+            margin-bottom: 8px;
             text-align: center;
+            box-shadow: 0 8px 22px rgba(0,0,0,0.18);
         }
 
         .banner h2 {
-            font-size: 18px;
+            font-size: 17px;
             color: #00e676;
             margin-bottom: 6px;
         }
 
         .banner p {
             font-size: 13px;
-            color: #ccc;
+            color: #c5cdd8;
         }
 
         .jogos-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-bottom: 10px;
+            gap: 10px;
+            margin-bottom: 8px;
         }
 
         .jogo-card {
-            background: rgba(21, 21, 31, 0.95);
+            background: rgba(24, 28, 40, 0.95);
             border: 1px solid rgba(0,200,83,0.2);
             border-radius: 14px;
             padding: 16px 12px;
             text-align: center;
+            transition: transform 0.15s, border-color 0.2s;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.12);
         }
+        .jogo-card:active { transform: scale(0.97); border-color: rgba(0,200,83,0.45); }
 
         .jogo-card .emoji {
-            font-size: 32px;
+            font-size: 30px;
             margin-bottom: 8px;
         }
 
         .jogo-card h4 {
-            font-size: 14px;
+            font-size: 13px;
             margin-bottom: 4px;
         }
 
         .jogo-card .pts {
             color: #FFD700;
-            font-weight: 700;
+            font-weight: 800;
             font-size: 13px;
         }
 
         .msg-indisponivel {
-            background: rgba(21, 21, 31, 0.95);
+            background: rgba(24, 28, 40, 0.95);
             border: 1px dashed rgba(0, 200, 83, 0.35);
             border-radius: 16px;
             padding: 28px 18px;
@@ -239,14 +252,15 @@
             bottom: 0;
             left: 0;
             right: 0;
-            background: rgba(12, 12, 18, 0.97);
-            border-top: 1px solid #1e1e2a;
+            background: rgba(12, 14, 20, 0.97);
+            border-top: 1px solid #1e2430;
             display: flex;
             justify-content: space-around;
             align-items: center;
             padding: 10px 0 12px;
             z-index: 1000;
-            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
         }
 
         .menu-baixo a {
@@ -272,7 +286,7 @@
 
         .ad-overlay {
             display: none; position: fixed; inset: 0; z-index: 2000;
-            background: rgba(0,0,0,0.92); flex-direction: column;
+            background: rgba(8,10,16,0.94); flex-direction: column;
         }
         .ad-overlay.show { display: flex; }
         .ad-overlay-top {
@@ -286,12 +300,12 @@
         }
         .ad-overlay-body {
             flex: 1; overflow: auto; display: flex; align-items: center; justify-content: center;
-            padding: 12px; background: #0a0a0f;
+            padding: 12px; background: #0e1118;
         }
         .ad-overlay-body .ad-slot { width: 100%; max-width: 480px; min-height: 280px; }
         .ad-overlay-foot {
             flex-shrink: 0; padding: 14px 16px 20px; text-align: center;
-            border-top: 1px solid rgba(0,200,83,0.25); background: rgba(0,0,0,0.9);
+            border-top: 1px solid rgba(0,200,83,0.25); background: rgba(10,12,18,0.95);
         }
         .ad-overlay-foot .timer { font-size: 22px; font-weight: 800; color: #FFD700; margin-bottom: 6px; }
         .ad-overlay-foot p { font-size: 12px; color: #888; margin-bottom: 10px; }

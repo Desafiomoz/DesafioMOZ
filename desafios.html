@@ -8,49 +8,58 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
-            --preto-fundo: #0A0C14;
+            --preto-fundo: #0e1118;
             --verde: #00C853;
             --verde-claro: #22FF99;
             --texto: #FFFFFF;
             --texto-claro: #A8B0C8;
             --destaque: #FFD700;
+            --card: rgba(24, 28, 40, 0.95);
+            --linha: rgba(0,200,83,0.22);
         }
         body {
-            background: var(--preto-fundo);
+            background:
+                radial-gradient(circle at 15% 0%, rgba(0,200,83,0.12), transparent 40%),
+                radial-gradient(circle at 90% 20%, rgba(255,201,77,0.07), transparent 35%),
+                var(--preto-fundo);
             color: var(--texto);
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             min-height: 100vh;
-            padding: 20px 15px 90px;
+            padding: 18px 15px 90px;
         }
         .cabecalho {
             display: flex;
             align-items: center;
             gap: 14px;
-            margin-bottom: 25px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid rgba(0,200,83,0.2);
+            margin-bottom: 18px;
+            padding: 12px 14px;
+            background: rgba(18, 22, 32, 0.9);
+            border: 1px solid var(--linha);
+            border-radius: 16px;
         }
         .cabecalho .logo {
-            width: 56px;
-            height: 56px;
-            border-radius: 12px;
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
             object-fit: cover;
             flex-shrink: 0;
             border: 2px solid var(--verde);
-            background: rgba(0,200,83,0.1);
+            background: rgba(0,200,83,0.12);
+            box-shadow: 0 0 16px rgba(0,200,83,0.25);
         }
         .typing-area {
             flex: 1;
-            min-height: 52px;
+            min-height: 48px;
             display: flex;
             flex-direction: column;
             justify-content: center;
         }
         .typing-area h1 {
-            font-size: 22px;
+            font-size: 20px;
             color: var(--verde-claro);
-            min-height: 28px;
+            min-height: 26px;
             line-height: 1.3;
+            font-weight: 800;
         }
         .typing-area .cursor {
             display: inline-block;
@@ -64,50 +73,68 @@
         @keyframes blink { 50% { opacity: 0; } }
 
         .saldo {
-            background: linear-gradient(90deg, rgba(0,200,83,0.15), rgba(34,255,153,0.05));
-            border: 1px solid var(--verde);
-            border-radius: 12px;
-            padding: 15px;
+            background: linear-gradient(135deg, rgba(0,200,83,0.18), rgba(34,255,153,0.06));
+            border: 1px solid rgba(0,200,83,0.4);
+            border-radius: 16px;
+            padding: 18px 16px;
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
         }
-        .saldo .pontos { font-size: 32px; font-weight: 700; color: var(--destaque); }
-        .saldo .valor { font-size: 14px; color: var(--texto-claro); margin-top: 5px; }
+        .saldo .pontos { font-size: 30px; font-weight: 800; color: var(--destaque); letter-spacing: -0.02em; }
+        .saldo .valor { font-size: 13px; color: var(--texto-claro); margin-top: 6px; }
 
         .meus-dados {
-            background: rgba(22,26,43,0.9);
-            border: 1px solid rgba(0,200,83,0.3);
-            border-radius: 12px;
-            padding: 18px;
-            margin-bottom: 25px;
+            background: var(--card);
+            border: 1px solid var(--linha);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 20px;
         }
-        .meus-dados h2 { font-size: 18px; color: var(--verde-claro); margin-bottom: 12px; }
+        .meus-dados h2 { font-size: 16px; color: var(--verde-claro); margin-bottom: 10px; }
         .dado-item {
-            padding: 8px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.08);
-            font-size: 15px;
+            padding: 9px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
         }
         .dado-item:last-child { border-bottom: none; }
-        .dado-item span { color: var(--texto-claro); margin-right: 6px; }
+        .dado-item span { color: var(--texto-claro); }
+        .dado-item strong { color: #eee; text-align: right; word-break: break-all; }
 
         .sec-titulo {
-            font-size: 17px;
+            font-size: 16px;
             margin-bottom: 12px;
             color: var(--verde-claro);
             display: flex;
             align-items: center;
             gap: 8px;
+            font-weight: 700;
         }
 
-        /* Cartão do desafio YouTube - corrigido */
+        .aviso-regras {
+            font-size: 12px;
+            color: #ffab40;
+            margin: -2px 0 14px;
+            line-height: 1.45;
+            text-align: center;
+            background: rgba(255,171,64,0.08);
+            border: 1px solid rgba(255,171,64,0.25);
+            border-radius: 12px;
+            padding: 10px 12px;
+        }
+
         .cartao-yt {
-            background: rgba(22,26,43,0.95);
-            border: 1px solid rgba(255, 0, 0, 0.35);
+            background: var(--card);
+            border: 1px solid rgba(255, 0, 0, 0.28);
             border-radius: 16px;
-            padding: 18px;
-            margin-bottom: 14px;
+            padding: 16px;
+            margin-bottom: 12px;
             position: relative;
             overflow: hidden;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.18);
         }
         .cartao-yt::before {
             content: "";
@@ -116,25 +143,25 @@
             height: 3px;
             background: linear-gradient(90deg, #ff0000, #cc0000, #ff4444);
         }
-        .cartao-yt-topo { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+        .cartao-yt-topo { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
         .yt-logo {
-            width: 52px;
-            height: 52px;
+            width: 50px;
+            height: 50px;
             border-radius: 12px;
             object-fit: cover;
             flex-shrink: 0;
-            border: 2px solid rgba(255,0,0,0.5);
+            border: 2px solid rgba(255,0,0,0.4);
             background: #fff;
         }
-        .yt-info h3 { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+        .yt-info h3 { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
         .yt-info p { font-size: 13px; color: var(--texto-claro); line-height: 1.35; }
         .yt-ganho {
             display: inline-block;
-            background: rgba(255, 215, 0, 0.15);
-            border: 1px solid rgba(255, 215, 0, 0.4);
+            background: rgba(255, 215, 0, 0.14);
+            border: 1px solid rgba(255, 215, 0, 0.35);
             color: var(--destaque);
             font-weight: 800;
-            font-size: 14px;
+            font-size: 13px;
             padding: 4px 10px;
             border-radius: 8px;
             margin-top: 8px;
@@ -143,15 +170,15 @@
         .yt-botoes {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 8px;
             margin-top: 4px;
         }
         .btn-yt {
             width: 100%;
             border: none;
             border-radius: 12px;
-            padding: 14px 16px;
-            font-size: 15px;
+            padding: 13px 16px;
+            font-size: 14px;
             font-weight: 700;
             cursor: pointer;
             display: flex;
@@ -165,19 +192,19 @@
         .btn-yt-inscrever {
             background: linear-gradient(135deg, #ff0000, #cc0000);
             color: #fff;
-            box-shadow: 0 6px 20px rgba(255, 0, 0, 0.35);
+            box-shadow: 0 6px 18px rgba(255, 0, 0, 0.3);
         }
         .btn-yt-confirmar {
             background: linear-gradient(135deg, #00c853, #00e676);
             color: #003d1a;
-            box-shadow: 0 6px 20px rgba(0, 200, 83, 0.35);
+            box-shadow: 0 6px 18px rgba(0, 200, 83, 0.3);
             display: none;
         }
         .btn-yt-confirmar.show { display: flex; }
         .btn-yt-feito {
-            background: rgba(0, 200, 83, 0.15);
+            background: rgba(0, 200, 83, 0.14);
             color: #00e676;
-            border: 1px solid rgba(0, 200, 83, 0.4);
+            border: 1px solid rgba(0, 200, 83, 0.35);
             cursor: default;
             display: none;
         }
@@ -193,12 +220,13 @@
 
         .menu-baixo {
             position: fixed; bottom: 0; left: 0; width: 100%;
-            background: rgba(5,6,15,0.97);
-            border-top: 1px solid rgba(0,200,83,0.3);
+            background: rgba(12,14,20,0.97);
+            border-top: 1px solid rgba(0,200,83,0.25);
             display: flex;
             justify-content: space-around;
             padding: 11px 0 14px;
             z-index: 100;
+            backdrop-filter: blur(10px);
         }
         .menu-baixo a { color: var(--texto-claro); text-decoration: none; text-align: center; font-size: 11px; width: 70px; }
         .menu-baixo a.ativo { color: var(--verde-claro); }
@@ -227,8 +255,8 @@
 </div>
 
 <div class="sec-titulo"><i class="fas fa-calendar-day"></i> Desafios do Dia</div>
-<p style="font-size:12px;color:#ffab40;margin:-4px 0 14px;line-height:1.45;text-align:center;">
-  ⚠️ Se não cumprir as regras dos desafios (ex.: fingir inscrição ou não ver os anúncios), <strong>os pontos serão diminuídos</strong> pelo administrador.
+<p class="aviso-regras">
+  ⚠️ Se não cumprir as regras dos desafios (ex.: fingir inscrição ou não ver os anúncios), <strong>os pontos serão diminuídos</strong> pelos agentes do site.
 </p>
 
 <!-- DESAFIO YOUTUBE - CORRIGIDO -->
@@ -296,12 +324,12 @@
     }
     var db = window.db;
 
-    // Sempre que o convidado ultrapassa um novo marco de 50 pontos, o convidador recebe +10 pontos.
+    // Sempre que o convidado ultrapassa um novo marco de 100 pontos, o convidador recebe +10 pontos.
     // Não mexe nos pontos do convidado.
     async function creditarBonusMarcoIndicacao(codigo, pontosAntes, pontosDepois) {
         try {
-            var marcosAntes = Math.floor((pontosAntes || 0) / 50);
-            var marcosDepois = Math.floor((pontosDepois || 0) / 50);
+            var marcosAntes = Math.floor((pontosAntes || 0) / 100);
+            var marcosDepois = Math.floor((pontosDepois || 0) / 100);
             var marcosNovos = marcosDepois - marcosAntes;
             if (marcosNovos <= 0) return;
             var bonus = marcosNovos * 10;
