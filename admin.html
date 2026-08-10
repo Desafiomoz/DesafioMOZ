@@ -366,7 +366,7 @@
         <table>
           <thead>
             <tr>
-              <th>#</th><th>Nome</th><th>Telemóvel</th><th>Pontos</th><th>Bruto (MZN)</th><th>A pagar (líquido)</th>
+              <th>#</th><th>Nome</th><th>Telemóvel</th><th>Pontos</th><th>Bruto (MZN)</th><th>A pagar (líquido −10%)</th>
               <th>Data pedido</th><th>Status</th><th>Ações</th>
             </tr>
           </thead>
@@ -1327,17 +1327,17 @@ function mostrarAviso(txt) {
             '<button class="btn-acao btn-recusar" onclick="marcarSaque(\''+s._id+'\',\'recusado\')">Recusar</button>'
           : '—';
         var bruto = s.valorMZN != null ? Number(s.valorMZN).toFixed(2) : ((s.pontos||0)/10).toFixed(1);
-        // Valor a pagar = LÍQUIDO após taxa 20% (é isto que o admin deve pagar)
+        // Valor a pagar = LÍQUIDO após taxa 10% (é isto que o admin deve pagar)
         var liquido = s.liquidoMZN != null
           ? Number(s.liquidoMZN).toFixed(2)
-          : (Number(bruto) * 0.8).toFixed(2);
+          : (Number(bruto) * 0.9).toFixed(2);
         html += '<tr>' +
           '<td>'+(i+1)+'</td>' +
           '<td><strong>'+esc(s.nome||'—')+'</strong><br><small style="color:#888">'+esc(s.email||'')+'</small></td>' +
           '<td>'+esc(s.telemovel||'—')+'</td>' +
           '<td>'+(s.pontos||0)+'</td>' +
           '<td style="color:#888">'+bruto+' MZN</td>' +
-          '<td style="color:#00e676;font-weight:800;font-size:15px">'+liquido+' MZN</td>' +
+          '<td style="color:#00e676;font-weight:800;font-size:15px">'+liquido+' MZN <small style="color:#888;font-weight:500">(taxa 10%)</small></td>' +
           '<td>'+formatarData(s.dataPedido)+'</td>' +
           '<td><span class="status-tag '+cls+'">'+status+'</span></td>' +
           '<td>'+acoes+'</td></tr>';
@@ -1500,7 +1500,7 @@ function mostrarAviso(txt) {
 
         await carregarTudo();
         mostrarAviso(novoStatus === 'pago'
-          ? 'Saque marcado como PAGO. Pague ' + (data.liquidoMZN != null ? data.liquidoMZN : (data.valorMZN * 0.8).toFixed(2)) + ' MZN ao utilizador.'
+          ? 'Saque marcado como PAGO. Pague ' + (data.liquidoMZN != null ? data.liquidoMZN : (data.valorMZN * 0.9).toFixed(2)) + ' MZN ao utilizador.'
           : 'Saque recusado. Pontos devolvidos à conta do utilizador.');
       } catch (e) {
         alert('Erro: ' + (e.message || e));
