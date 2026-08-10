@@ -26,12 +26,12 @@
     }
     var db = window.db;
 
-    // Sempre que o convidado ultrapassa um novo marco de 50 pontos, o convidador recebe +10 pontos.
+    // Sempre que o convidado ultrapassa um novo marco de 100 pontos, o convidador recebe +10 pontos.
     // Não mexe nos pontos do convidado.
     async function creditarBonusMarcoIndicacao(codigo, pontosAntes, pontosDepois) {
       try {
-        var marcosAntes = Math.floor((pontosAntes || 0) / 50);
-        var marcosDepois = Math.floor((pontosDepois || 0) / 50);
+        var marcosAntes = Math.floor((pontosAntes || 0) / 100);
+        var marcosDepois = Math.floor((pontosDepois || 0) / 100);
         var marcosNovos = marcosDepois - marcosAntes;
         if (marcosNovos <= 0) return;
         var bonus = marcosNovos * 10;
@@ -221,6 +221,7 @@
     <button class="tab" data-tab="desafios" onclick="mudarTab('desafios')"><i class="fas fa-bolt"></i> Desafios</button>
     <button class="tab" data-tab="missoes" onclick="mudarTab('missoes')"><i class="fas fa-trophy"></i> Missões</button>
     <button class="tab" data-tab="ranking" onclick="mudarTab('ranking')"><i class="fas fa-medal"></i> Ranking</button>
+    <button class="tab" data-tab="convites" onclick="mudarTab('convites')"><i class="fas fa-user-plus"></i> Convites</button>
   </div>
 
   <div class="conteudo">
@@ -278,8 +279,8 @@
       <div class="form-box">
         <h3><i class="fas fa-user-friends"></i> Bloquear / desbloquear “Convidar amigo”</h3>
         <p style="font-size:12px;color:#888;margin-bottom:12px;">
-          Quando bloqueado, o utilizador <strong>não vê</strong> a opção de convidar amigos na página Tarefas.
-          Desbloqueie quando quiser voltar a permitir.
+          Quando bloqueado (manual ou por atingir <strong>5 convites</strong>), o utilizador vê a mensagem «Convites não disponíveis».
+          Desbloqueie quando quiser voltar a permitir (útil após o limite de 5).
         </p>
         <div class="form-row">
           <label>E-mail do utilizador</label>
@@ -299,6 +300,36 @@
             </thead>
             <tbody id="tbody-convidar-bloqueados">
               <tr><td colspan="6" class="vazio">Nenhum utilizador com convites bloqueados.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="form-box">
+        <h3><i class="fas fa-calendar-check"></i> Bloquear / desbloquear Check-in Diário</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:12px;">
+          Quando bloqueado, o utilizador <strong>não consegue</strong> fazer o check-in diário.
+          Na página de check-in aparece a mensagem: <em>«O check-in de hoje ainda não está disponível. Aguarde.»</em>
+          Desbloqueie quando quiser voltar a permitir. O check-in dá <strong>+5 pontos</strong> por dia.
+        </p>
+        <div class="form-row">
+          <label>E-mail do utilizador</label>
+          <input type="email" id="bloqueio-checkin-email" placeholder="email@exemplo.com">
+        </div>
+        <div class="form-grid">
+          <button type="button" class="btn-vermelho" style="width:100%;padding:12px;border-radius:10px;font-size:14px;" onclick="bloquearCheckinPorEmail(true)">🔒 Bloquear check-in</button>
+          <button type="button" class="btn-verde" style="width:100%;" onclick="bloquearCheckinPorEmail(false)">🔓 Desbloquear check-in</button>
+        </div>
+        <h3 style="color:#00e676;font-size:14px;margin:18px 0 10px;"><i class="fas fa-list"></i> Utilizadores com check-in bloqueado</h3>
+        <div class="tabela-wrap" style="margin-top:0;">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th><th>Nome</th><th>E-mail</th><th>Telemóvel</th><th>Pontos</th><th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-checkin-bloqueados">
+              <tr><td colspan="6" class="vazio">Nenhum utilizador com check-in bloqueado.</td></tr>
             </tbody>
           </table>
         </div>
@@ -641,7 +672,7 @@
         <button type="button" class="btn-laranja" style="margin-top:10px;" onclick="renderHorariosMissaoAdmin()">🔄 Recalcular horários</button>
       </div>
       <p style="font-size:13px;color:#aaa;margin-bottom:14px;">
-        Utilizadores que encontraram a missão semanal (só o primeiro de cada semana). Pode bloquear para não encontrarem de novo.
+        Utilizadores que encontraram a missão semanal (só o primeiro de cada semana). Por defeito todos estão bloqueados — use «Liberar missão» para permitir o acesso.
       </p>
       <div class="tabela-wrap">
         <table>
@@ -670,6 +701,44 @@
             </tr>
           </thead>
           <tbody id="tbody-ranking"><tr><td colspan="8" class="vazio">A carregar...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- CONVITES -->
+    <div class="painel" id="painel-convites">
+      <div class="form-box">
+        <h3><i class="fas fa-user-plus"></i> Sistema de convites</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:10px;line-height:1.45;">
+          Cada utilizador tem <strong>máximo 5 convites</strong>. Por cada amigo: convidador <strong>+10 pts</strong>, convidado <strong>+5 pts</strong>.
+          A cada <strong>100 pontos</strong> que o convidado acumula, o convidador ganha +10 pts.
+          Ao atingir 5 convites, o utilizador fica bloqueado automaticamente (pode desbloquear em Utilizadores).
+        </p>
+      </div>
+      <div class="busca">
+        <input type="text" id="busca-convites" placeholder="Pesquisar por nome, e-mail ou código..." oninput="filtrarConvites()">
+      </div>
+      <div class="tabela-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th><th>Convidador</th><th>E-mail</th><th>Código</th>
+              <th>Convites</th><th>Pts indicação</th><th>Estado</th><th>Convidados (pontos)</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-convites"><tr><td colspan="8" class="vazio">A carregar...</td></tr></tbody>
+        </table>
+      </div>
+      <h3 style="color:#00e676;font-size:14px;margin:20px 0 10px;"><i class="fas fa-link"></i> Quem convidou quem</h3>
+      <div class="tabela-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th><th>Convidado</th><th>E-mail</th><th>Pontos</th><th>Código do convidador</th>
+              <th>Convidador</th><th>Cadastro</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-convites-relacoes"><tr><td colspan="7" class="vazio">A carregar...</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -776,6 +845,8 @@ function mostrarAviso(txt) {
       try {
         await carregarUsers();
         renderConvidarBloqueados();
+        renderCheckinBloqueados();
+        renderConvitesAdmin();
       } catch (e) { console.error(e); }
       try { await carregarSaques(); } catch (e) { console.error(e); }
       try { await carregarPesquisas(); } catch (e) { console.error(e); }
@@ -1212,7 +1283,7 @@ function mostrarAviso(txt) {
         var cls = pts >= MINIMO_PONTOS_SAQUE ? 'pts-alto' : (pts > 0 ? 'pts-ok' : 'pts-baixo');
         var sid = 'senha-' + i;
         var docId = u._id || '';
-        var bloqueado = !!u.bloqueadoMissaoSemanal;
+        var bloqueado = u.missaoLiberada !== true;
         var ocultar = !!u.ocultarPesquisas;
         html += '<tr>' +
           '<td>' + (i+1) + '</td>' +
@@ -1233,7 +1304,7 @@ function mostrarAviso(txt) {
           '<td>' +
             '<button class="btn-acao btn-apagar" onclick="apagarConta(\''+docId+'\')">Apagar</button>' +
             '<button class="btn-laranja" onclick="toggleBloqueioMissao(\''+docId+'\','+(bloqueado?'false':'true')+')">' +
-              (bloqueado ? 'Desbloquear missão' : 'Bloquear missão') + '</button>' +
+              (bloqueado ? 'Liberar missão' : 'Bloquear missão') + '</button>' +
             '<button class="btn-azul" onclick="toggleOcultarPesquisas(\''+docId+'\','+(ocultar?'false':'true')+')">' +
               (ocultar ? 'Mostrar pesquisas' : 'Ocultar pesquisas') + '</button>' +
           '</td></tr>';
@@ -1310,7 +1381,7 @@ function mostrarAviso(txt) {
       todasMissoes.forEach(function (m, i) {
         var user = todosUsers.find(function (u) { return (u.email||'') === (m.emailEncontrou||''); });
         var completa = m.completa === true || (user && user.missaoSemanalCompleta && user.missaoSemanaId === m.semanaId);
-        var bloqueado = user && user.bloqueadoMissaoSemanal;
+        var bloqueado = user && user.missaoLiberada !== true;
         var estado = completa ? 'Concluída' : 'A fazer / em progresso';
         var cls = completa ? 'status-pago' : 'status-andamento';
         var docUser = user ? user._id : '';
@@ -1327,7 +1398,7 @@ function mostrarAviso(txt) {
           '<td>' +
             (docUser
               ? '<button class="btn-laranja" onclick="toggleBloqueioMissao(\''+docUser+'\','+(bloqueado?'false':'true')+')">' +
-                  (bloqueado ? 'Desbloquear' : 'Bloquear') + '</button>'
+                  (bloqueado ? 'Liberar' : 'Bloquear') + '</button>'
               : '—') +
           '</td></tr>';
       });
@@ -1349,7 +1420,7 @@ function mostrarAviso(txt) {
         var posCls = i === 0 ? 'rank-1' : (i === 1 ? 'rank-2' : (i === 2 ? 'rank-3' : ''));
         var medal = i === 0 ? '🥇 ' : (i === 1 ? '🥈 ' : (i === 2 ? '🥉 ' : ''));
         var ocultar = !!u.ocultarPesquisas;
-        var bloqueado = !!u.bloqueadoMissaoSemanal;
+        var bloqueado = u.missaoLiberada !== true;
         html += '<tr>' +
           '<td class="'+posCls+'">'+medal+(i+1)+'º</td>' +
           '<td><strong>'+esc(u.nome||'—')+'</strong></td>' +
@@ -1366,7 +1437,7 @@ function mostrarAviso(txt) {
             '<button class="btn-azul" onclick="toggleOcultarPesquisas(\''+u._id+'\','+(ocultar?'false':'true')+')">' +
               (ocultar ? 'Mostrar pesquisas' : 'Ocultar pesquisas') + '</button>' +
             '<button class="btn-laranja" onclick="toggleBloqueioMissao(\''+u._id+'\','+(bloqueado?'false':'true')+')">' +
-              (bloqueado ? 'Desbloquear missão' : 'Bloquear missão') + '</button>' +
+              (bloqueado ? 'Liberar missão' : 'Bloquear missão') + '</button>' +
           '</td></tr>';
       });
       tbody.innerHTML = html;
@@ -1453,14 +1524,17 @@ function mostrarAviso(txt) {
 
     async function toggleBloqueioMissao(docId, bloquear) {
       try {
+        var bloquearAgora = bloquear === true || bloquear === 'true';
         await db.collection('usuarios').doc(docId).update({
-          bloqueadoMissaoSemanal: bloquear === true || bloquear === 'true',
+          // missaoLiberada: só true permite aceder à missão (por defeito todos bloqueados)
+          missaoLiberada: !bloquearAgora,
+          bloqueadoMissaoSemanal: bloquearAgora,
           ultimaAtualizacao: new Date().toISOString()
         });
         await carregarTudo();
-        mostrarAviso(bloquear === true || bloquear === 'true'
-          ? 'Utilizador bloqueado das missões semanais.'
-          : 'Utilizador desbloqueado para missões semanais.');
+        mostrarAviso(bloquearAgora
+          ? 'Missão semanal bloqueada para este utilizador.'
+          : 'Missão semanal LIBERADA para este utilizador.');
       } catch (e) {
         alert('Erro: ' + (e.message || e));
       }
@@ -2022,7 +2096,7 @@ async function carregarAnunciosTarefasAdmin() {
       var tbody = document.getElementById('tbody-convidar-bloqueados');
       if (!tbody) return;
       var bloqueados = (typeof todosUsers !== 'undefined' ? todosUsers : []).filter(function (u) {
-        return u.ocultarConvidar === true;
+        return u.ocultarConvidar === true || (u.totalConvidados || 0) >= 5;
       });
       if (!bloqueados.length) {
         tbody.innerHTML = '<tr><td colspan="6" class="vazio">Nenhum utilizador com convites bloqueados.</td></tr>';
@@ -2059,6 +2133,7 @@ async function carregarAnunciosTarefasAdmin() {
         if (snap.empty) return alert('Utilizador não encontrado.');
         await snap.docs[0].ref.update({
           ocultarConvidar: false,
+          convitesExtra: true,
           ultimaAtualizacao: new Date().toISOString()
         });
         await carregarTudo();
@@ -2078,10 +2153,13 @@ async function carregarAnunciosTarefasAdmin() {
           snap = await db.collection('usuarios').where('email', '==', emailRaw).limit(1).get();
         }
         if (snap.empty) return alert('Utilizador não encontrado com esse e-mail.');
-        await snap.docs[0].ref.update({
+        var upd = {
           ocultarConvidar: !!bloquear,
           ultimaAtualizacao: new Date().toISOString()
-        });
+        };
+        if (!bloquear) upd.convitesExtra = true;
+        if (bloquear) upd.convitesExtra = false;
+        await snap.docs[0].ref.update(upd);
         document.getElementById('bloqueio-convidar-email').value = '';
         await carregarTudo();
         mostrarAviso(bloquear
@@ -2090,6 +2168,176 @@ async function carregarAnunciosTarefasAdmin() {
       } catch (e) {
         alert('Erro: ' + (e.message || e));
       }
+    }
+
+
+    function renderCheckinBloqueados() {
+      var tbody = document.getElementById('tbody-checkin-bloqueados');
+      if (!tbody) return;
+      var bloqueados = (typeof todosUsers !== 'undefined' ? todosUsers : []).filter(function (u) {
+        return u.ocultarCheckin === true;
+      });
+      if (!bloqueados.length) {
+        tbody.innerHTML = '<tr><td colspan="6" class="vazio">Nenhum utilizador com check-in bloqueado.</td></tr>';
+        return;
+      }
+      bloqueados.sort(function (a, b) { return (b.pontos || 0) - (a.pontos || 0); });
+      var html = '';
+      bloqueados.forEach(function (u, i) {
+        var pts = u.pontos || 0;
+        var cls = pts >= 500 ? 'pts-alto' : (pts >= 100 ? 'pts-ok' : 'pts-baixo');
+        var emailEsc = String(u.email || '').replace(/'/g, "\\'");
+        html += '<tr>' +
+          '<td>' + (i + 1) + '</td>' +
+          '<td>' + escHtml(u.nome || '—') + '</td>' +
+          '<td>' + escHtml(u.email || '—') + '</td>' +
+          '<td>' + escHtml(u.telemovel || u.telefone || '—') + '</td>' +
+          '<td class="' + cls + '">' + pts + '</td>' +
+          '<td><button type="button" class="btn-verde" style="width:auto;padding:5px 10px;font-size:11px;" onclick="desbloquearCheckinRapido(\'' + emailEsc + '\')">🔓 Desbloquear</button></td>' +
+          '</tr>';
+      });
+      tbody.innerHTML = html;
+    }
+
+    async function desbloquearCheckinRapido(email) {
+      if (!email) return;
+      if (!confirm('Desbloquear check-in diário para ' + email + '?')) return;
+      try {
+        var snap = await db.collection('usuarios').where('email', '==', email).limit(1).get();
+        if (snap.empty) {
+          var emailLow = String(email).trim().toLowerCase();
+          snap = await db.collection('usuarios').where('email', '==', emailLow).limit(1).get();
+        }
+        if (snap.empty) return alert('Utilizador não encontrado.');
+        await snap.docs[0].ref.update({
+          ocultarCheckin: false,
+          ultimaAtualizacao: new Date().toISOString()
+        });
+        await carregarTudo();
+        mostrarAviso('Check-in desbloqueado para ' + email + '.');
+      } catch (e) {
+        alert('Erro: ' + (e.message || e));
+      }
+    }
+
+    async function bloquearCheckinPorEmail(bloquear) {
+      var email = (document.getElementById('bloqueio-checkin-email').value || '').trim().toLowerCase();
+      if (!email) return alert('Escreva o e-mail do utilizador.');
+      try {
+        var snap = await db.collection('usuarios').where('email', '==', email).limit(1).get();
+        if (snap.empty) {
+          var emailRaw = (document.getElementById('bloqueio-checkin-email').value || '').trim();
+          snap = await db.collection('usuarios').where('email', '==', emailRaw).limit(1).get();
+        }
+        if (snap.empty) return alert('Utilizador não encontrado com esse e-mail.');
+        await snap.docs[0].ref.update({
+          ocultarCheckin: !!bloquear,
+          ultimaAtualizacao: new Date().toISOString()
+        });
+        document.getElementById('bloqueio-checkin-email').value = '';
+        await carregarTudo();
+        mostrarAviso(bloquear
+          ? 'Check-in diário bloqueado para ' + email + '.'
+          : 'Check-in diário desbloqueado para ' + email + '.');
+      } catch (e) {
+        alert('Erro: ' + (e.message || e));
+      }
+    }
+
+
+    function renderConvitesAdmin() {
+      var tbody = document.getElementById('tbody-convites');
+      var tbodyRel = document.getElementById('tbody-convites-relacoes');
+      if (!tbody) return;
+      var users = (typeof todosUsers !== 'undefined' ? todosUsers : []).slice();
+
+      // Mapa codigo -> user
+      var porCodigo = {};
+      users.forEach(function (u) {
+        if (u.codigoIndicacao) porCodigo[String(u.codigoIndicacao).toUpperCase()] = u;
+      });
+
+      // Lista de quem tem convites ou código
+      var lista = users.filter(function (u) {
+        return (u.totalConvidados || 0) > 0 || u.codigoIndicacao || u.indicadoPor;
+      });
+      lista.sort(function (a, b) { return (b.totalConvidados || 0) - (a.totalConvidados || 0); });
+
+      if (!lista.length) {
+        tbody.innerHTML = '<tr><td colspan="8" class="vazio">Ainda não há dados de convites.</td></tr>';
+      } else {
+        var html = '';
+        lista.forEach(function (u, i) {
+          var total = u.totalConvidados || 0;
+          var bloqueado = u.ocultarConvidar === true || total >= 5;
+          var estado = bloqueado
+            ? '<span class="status-tag status-bloqueado">Bloqueado' + (total >= 5 ? ' (limite 5)' : '') + '</span>'
+            : '<span class="status-tag status-ativo">Ativo</span>';
+          // Listar convidados com pontos de cada um
+          var convidadosInfo = [];
+          var cod = String(u.codigoIndicacao || '').toUpperCase();
+          if (cod) {
+            users.forEach(function (c) {
+              if (String(c.indicadoPor || '').toUpperCase() === cod) {
+                convidadosInfo.push((c.nome || c.email || '?') + ' (' + (c.pontos || 0) + ' pts)');
+              }
+            });
+          }
+          html += '<tr data-busca="' + escHtml((u.nome || '') + ' ' + (u.email || '') + ' ' + (u.codigoIndicacao || '')).toLowerCase() + '">' +
+            '<td>' + (i + 1) + '</td>' +
+            '<td>' + escHtml(u.nome || '—') + '</td>' +
+            '<td>' + escHtml(u.email || '—') + '</td>' +
+            '<td><code>' + escHtml(u.codigoIndicacao || '—') + '</code></td>' +
+            '<td class="' + (total >= 5 ? 'pts-alto' : 'pts-ok') + '">' + total + ' / 5</td>' +
+            '<td class="pts-ok">' + (u.pontosIndicacao || 0) + '</td>' +
+            '<td>' + estado + '</td>' +
+            '<td style="font-size:11px;max-width:220px;line-height:1.4;">' + escHtml(convidadosInfo.join(' · ') || '—') + '</td>' +
+            '</tr>';
+        });
+        tbody.innerHTML = html;
+      }
+
+      // Relações: quem foi convidado por quem
+      if (tbodyRel) {
+        var rels = users.filter(function (u) { return !!u.indicadoPor; });
+        rels.sort(function (a, b) {
+          return String(b.dataCadastro || '').localeCompare(String(a.dataCadastro || ''));
+        });
+        if (!rels.length) {
+          tbodyRel.innerHTML = '<tr><td colspan="7" class="vazio">Nenhuma relação de convite registada.</td></tr>';
+        } else {
+          var hr = '';
+          rels.forEach(function (u, i) {
+            var cod = String(u.indicadoPor || '').toUpperCase();
+            var conv = porCodigo[cod];
+            var nomeConv = conv ? (conv.nome || conv.email) : '—';
+            var dataCad = u.dataCadastro || u.criadoEm || '—';
+            if (dataCad !== '—' && dataCad.length > 10) dataCad = dataCad.substring(0, 10);
+            hr += '<tr data-busca="' + escHtml((u.nome || '') + ' ' + (u.email || '') + ' ' + cod + ' ' + nomeConv).toLowerCase() + '">' +
+              '<td>' + (i + 1) + '</td>' +
+              '<td>' + escHtml(u.nome || '—') + '</td>' +
+              '<td>' + escHtml(u.email || '—') + '</td>' +
+              '<td class="pts-alto">' + (u.pontos || 0) + ' pts</td>' +
+              '<td><code>' + escHtml(cod || '—') + '</code></td>' +
+              '<td>' + escHtml(nomeConv) + '</td>' +
+              '<td>' + escHtml(dataCad) + '</td>' +
+              '</tr>';
+          });
+          tbodyRel.innerHTML = hr;
+        }
+      }
+    }
+
+    function filtrarConvites() {
+      var q = (document.getElementById('busca-convites') && document.getElementById('busca-convites').value || '').trim().toLowerCase();
+      ['tbody-convites', 'tbody-convites-relacoes'].forEach(function (id) {
+        var tb = document.getElementById(id);
+        if (!tb) return;
+        tb.querySelectorAll('tr[data-busca]').forEach(function (tr) {
+          var ok = !q || (tr.getAttribute('data-busca') || '').indexOf(q) !== -1;
+          tr.style.display = ok ? '' : 'none';
+        });
+      });
     }
 
     async function bloquearPesquisasPorEmail(bloquear) {

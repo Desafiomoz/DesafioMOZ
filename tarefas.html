@@ -460,12 +460,12 @@
         <div class="tarefa-card" id="card-convidar-amigo">
             <div class="tarefa-icon icon-extra">👥</div>
             <div class="tarefa-info">
-                <h3>Convidar 1 amigo</h3>
-                <p>Ganha quando ele se cadastrar</p>
+                <h3 id="convidar-titulo">Convidar amigo</h3>
+                <p id="convidar-desc">Ganha quando ele se cadastrar (máx. 5)</p>
             </div>
             <div class="tarefa-ganho">
-                <div class="pontos">+30 Pts</div>
-                <button class="btn-fazer" onclick="window.location.href='convidar.html'">Convidar</button>
+                <div class="pontos" id="convidar-pts">+10 Pts</div>
+                <button class="btn-fazer" id="btn-convidar" onclick="window.location.href='convidar.html'">Convidar</button>
             </div>
         </div>
 
@@ -476,7 +476,7 @@
                 <p>Entre todos os dias e ganhe</p>
             </div>
             <div class="tarefa-ganho">
-                <div class="pontos">+10 Pts</div>
+                <div class="pontos">+5 Pts</div>
                 <button class="btn-fazer" onclick="window.location.href='checkin.html'">Fazer</button>
             </div>
         </div>
@@ -521,12 +521,12 @@
         }
         var db = window.db;
 
-        // Sempre que o convidado ultrapassa um novo marco de 50 pontos, o convidador recebe +10 pontos.
+        // Sempre que o convidado ultrapassa um novo marco de 100 pontos, o convidador recebe +10 pontos.
         // Não mexe nos pontos do convidado.
         async function creditarBonusMarcoIndicacao(codigo, pontosAntes, pontosDepois) {
             try {
-                var marcosAntes = Math.floor((pontosAntes || 0) / 50);
-                var marcosDepois = Math.floor((pontosDepois || 0) / 50);
+                var marcosAntes = Math.floor((pontosAntes || 0) / 100);
+                var marcosDepois = Math.floor((pontosDepois || 0) / 100);
                 var marcosNovos = marcosDepois - marcosAntes;
                 if (marcosNovos <= 0) return;
                 var bonus = marcosNovos * 10;
@@ -811,10 +811,29 @@
                     if (encontrado) {
                         userData = encontrado.data;
 
-                        if (userData.ocultarConvidar === true) {
+                        // Convites bloqueados ou limite de 5: NÃO esconde o card — mostra mensagem
+                        (function () {
                             var cardConv = document.getElementById('card-convidar-amigo');
-                            if (cardConv) cardConv.style.display = 'none';
-                        }
+                            if (!cardConv) return;
+                            var totalConv = userData.totalConvidados || 0;
+                            var bloqueado = userData.ocultarConvidar === true || (totalConv >= 5 && userData.convitesExtra !== true);
+                            var titulo = document.getElementById('convidar-titulo');
+                            var desc = document.getElementById('convidar-desc');
+                            var btn = document.getElementById('btn-convidar');
+                            if (bloqueado) {
+                                if (titulo) titulo.textContent = 'Convites não disponíveis';
+                                if (desc) {
+                                    desc.textContent = totalConv >= 5
+                                        ? 'Usaste os teus 5 convites. Aguarde ter acesso novamente.'
+                                        : 'Usaste os teus convites. Aguarde ter acesso novamente.';
+                                    desc.style.color = '#ffab40';
+                                }
+                                if (btn) {
+                                    btn.textContent = 'Ver';
+                                    btn.style.opacity = '0.7';
+                                }
+                            }
+                        })();
                         if (userData.ocultarPesquisas === true) {
                             ocultarTodasPesquisas('As pesquisas estão bloqueadas para a sua conta. Contacte o suporte se for um erro.');
                             if (userData.pontos != null) localStorage.setItem('pontosUtilizador', String(userData.pontos));

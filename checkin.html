@@ -203,7 +203,7 @@
     <a href="tarefas.html" class="btn-voltar"><i class="fas fa-arrow-left"></i></a>
     <div>
       <h1>Check-in Diário</h1>
-      <p>Entre todos os dias e ganhe +10 pontos</p>
+      <p>Entre todos os dias e ganhe +5 pontos</p>
     </div>
   </div>
 
@@ -277,6 +277,7 @@
     var meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
     var checkins = [];
     var docRef = null;
+    var checkinBloqueado = false;
     var hoje = new Date();
     var viewAno = hoje.getFullYear();
     var viewMes = hoje.getMonth();
@@ -314,7 +315,7 @@
       (lista || []).forEach(function (x) {
         if (x.indexOf(prefix) === 0) n++;
       });
-      return n * 10;
+      return n * 5;
     }
 
     function renderCalendario() {
@@ -357,14 +358,22 @@
       var msg = document.getElementById('msg');
       var hojeStr = hojeISO();
 
+      if (checkinBloqueado) {
+        btn.disabled = true;
+        btn.textContent = '🔒 Check-in indisponível';
+        msg.className = 'msg err';
+        msg.textContent = 'O check-in de hoje ainda não está disponível. Aguarde.';
+        return;
+      }
+
       if (checkins.indexOf(hojeStr) !== -1) {
         btn.disabled = true;
         btn.textContent = '✅ Check-in de hoje já feito';
         msg.className = 'msg ok';
-        msg.textContent = 'Volte amanhã para ganhar mais +10 pontos!';
+        msg.textContent = 'Volte amanhã para ganhar mais +5 pontos!';
       } else {
         btn.disabled = false;
-        btn.textContent = '🎁 Fazer Check-in e Ganhar +10 Pontos';
+        btn.textContent = '🎁 Fazer Check-in e Ganhar +5 Pontos';
         msg.className = 'msg';
         msg.textContent = 'Só pode fazer 1 check-in por dia.';
       }
@@ -400,6 +409,7 @@
         docRef = snap.docs[0].ref;
         var data = snap.docs[0].data();
         checkins = Array.isArray(data.checkins) ? data.checkins.slice() : [];
+        checkinBloqueado = data.ocultarCheckin === true;
 
         document.getElementById('loading').style.display = 'none';
         document.getElementById('conteudo').style.display = 'block';
@@ -412,6 +422,11 @@
 
     async function fazerCheckin() {
       var hojeStr = hojeISO();
+      if (checkinBloqueado) {
+        document.getElementById('msg').className = 'msg err';
+        document.getElementById('msg').textContent = 'O check-in de hoje ainda não está disponível. Aguarde.';
+        return;
+      }
       if (checkins.indexOf(hojeStr) !== -1) return;
 
       var btn = document.getElementById('btn-checkin');
@@ -421,6 +436,14 @@
       try {
         var snap = await docRef.get();
         var data = snap.data() || {};
+
+        // Reconfirma bloqueio no servidor (caso o Admin tenha bloqueado entretanto)
+        if (data.ocultarCheckin === true) {
+          checkinBloqueado = true;
+          renderCalendario();
+          return;
+        }
+
         var lista = Array.isArray(data.checkins) ? data.checkins.slice() : [];
 
         if (lista.indexOf(hojeStr) !== -1) {
@@ -431,7 +454,7 @@
 
         lista.push(hojeStr);
         var pontosAtuais = data.pontos || 0;
-        var novosPontos = pontosAtuais + 10;
+        var novosPontos = pontosAtuais + 5;
 
         await docRef.update({
           checkins: lista,
@@ -444,17 +467,17 @@
 
         checkins = lista;
         localStorage.setItem('pontosUtilizador', String(novosPontos));
-        localStorage.setItem('ultimoGanho', '10');
+        localStorage.setItem('ultimoGanho', '5');
 
         renderCalendario();
 
         var msg = document.getElementById('msg');
         msg.className = 'msg ok';
-        msg.textContent = '🎉 +10 pontos adicionados! Volte amanhã.';
+        msg.textContent = '🎉 +5 pontos adicionados! Volte amanhã.';
       } catch (erro) {
         console.error(erro);
         btn.disabled = false;
-        btn.textContent = '🎁 Fazer Check-in e Ganhar +10 Pontos';
+        btn.textContent = '🎁 Fazer Check-in e Ganhar +5 Pontos';
         document.getElementById('msg').className = 'msg err';
         document.getElementById('msg').textContent = 'Erro: ' + (erro.message || erro);
       }

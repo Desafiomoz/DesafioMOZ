@@ -349,8 +349,8 @@
           <div class="num-q">Pergunta 8 de 10</div>
           <div class="pergunta">O check-in diário no Desafio MOZ dá quantos pontos?</div>
           <div class="opcoes">
-            <div class="opcao" onclick="sel(8,this,'10')">+10 pontos</div>
             <div class="opcao" onclick="sel(8,this,'5')">+5 pontos</div>
+            <div class="opcao" onclick="sel(8,this,'10')">+10 pontos</div>
             <div class="opcao" onclick="sel(8,this,'30')">+30 pontos</div>
             <div class="opcao" onclick="sel(8,this,'50')">+50 pontos</div>
           </div>
@@ -858,6 +858,16 @@
     }
 
     async function iniciarMissaoEncontrada() {
+      // Bloqueado pelo Admin: mostra como se a missão ainda não estivesse ativa (sem avisar o bloqueio)
+      if (!userData || userData.missaoLiberada !== true) {
+        document.getElementById('status-banner').className = 'status-banner status-wait';
+        document.getElementById('status-banner').textContent =
+          '⏳ Missão ainda não está ativa. Só quem encontrar PRIMEIRO nos horários previstos fica com a chance.';
+        document.getElementById('zona-acao').innerHTML =
+          '<button class="btn-sec" type="button" onclick="location.reload()">Verificar novamente</button>';
+        document.getElementById('zona-missao').style.display = 'none';
+        return;
+      }
       // Só o primeiro pode começar
       var claim = await tentarSerPrimeiro();
       if (!claim.ok) {
@@ -971,6 +981,18 @@
 
         document.getElementById('loading').style.display = 'none';
         document.getElementById('conteudo').style.display = 'block';
+
+        // Por defeito TODOS bloqueados até Admin liberar (missaoLiberada === true).
+        // NÃO avisar o utilizador — aparece como se a missão ainda não estivesse ativa.
+        if (userData.missaoLiberada !== true) {
+          document.getElementById('status-banner').className = 'status-banner status-wait';
+          document.getElementById('status-banner').textContent =
+            '⏳ Missão ainda não está ativa. Só quem encontrar PRIMEIRO nos horários previstos fica com a chance.';
+          document.getElementById('zona-acao').innerHTML =
+            '<button class="btn-sec" type="button" onclick="location.reload()">Verificar novamente</button>';
+          document.getElementById('zona-missao').style.display = 'none';
+          return;
+        }
 
         if (jaCompletouEstaSemana && souODono) {
           document.getElementById('status-banner').className = 'status-banner status-done';

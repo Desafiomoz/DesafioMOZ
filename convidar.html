@@ -215,11 +215,31 @@
 
   <div id="loading" class="loading">A carregar o seu link...</div>
 
+  <div id="msg-bloqueado" style="display:none;max-width:420px;margin:0 auto 16px;">
+    <div class="card" style="text-align:center;border-color:rgba(255,107,107,0.4);">
+      <div style="font-size:36px;margin-bottom:10px;">🔒</div>
+      <h2 style="color:#ff6b6b;font-size:16px;margin-bottom:10px;">Convites não disponíveis</h2>
+      <p id="msg-bloqueado-texto" style="font-size:13px;color:#aaa;line-height:1.5;">
+        Usaste os teus convites. Aguarde ter acesso novamente.
+      </p>
+      <div class="stats" style="margin-top:16px;margin-bottom:0;">
+        <div class="stat">
+          <div class="num" id="total-convidados-bloq">0</div>
+          <div class="txt">Amigos convidados</div>
+        </div>
+        <div class="stat">
+          <div class="num" id="pts-indicacao-bloq">0</div>
+          <div class="txt">Pontos ganhos</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="conteudo" style="display:none;">
     <div class="card">
       <div class="premio">
-        <div class="pts">+30</div>
-        <div class="lbl">pontos assim que o seu amigo se cadastrar pelo seu link</div>
+        <div class="pts">+10</div>
+        <div class="lbl">pontos por cada amigo que se cadastrar pelo seu link (máx. 5 convites)</div>
       </div>
 
       <div class="stats">
@@ -269,15 +289,15 @@
       </div>
       <div class="passo-item">
         <div class="passo-num">3</div>
-        <div class="passo-txt">Quando ele se cadastrar, você recebe automaticamente <strong style="color:#FFD700">+30 pontos</strong> e ele começa com <strong style="color:#FFD700">+10 pontos</strong> de bónus.</div>
+        <div class="passo-txt">Quando ele se cadastrar, você recebe automaticamente <strong style="color:#FFD700">+10 pontos</strong> e ele começa com <strong style="color:#FFD700">+5 pontos</strong> de bónus.</div>
       </div>
       <div class="passo-item">
         <div class="passo-num">4</div>
-        <div class="passo-txt">A partir daí, sempre que o seu amigo acumular <strong>mais 50 pontos</strong> (chegar aos 50, depois aos 100, 150...), você ganha automaticamente <strong style="color:#FFD700">+10 pontos</strong> — sem tirar nada dos pontos dele.</div>
+        <div class="passo-txt">A partir daí, sempre que o seu amigo acumular <strong>mais 100 pontos</strong> (chegar aos 100, depois aos 200, 300...), você ganha automaticamente <strong style="color:#FFD700">+10 pontos</strong> — sem tirar nada dos pontos dele.</div>
       </div>
 
       <div class="aviso">
-        ⚠️ Só conta se o amigo se cadastrar pelo <strong>seu</strong> link. Cada amigo só pode ser indicado uma vez, mas os +10 pontos a cada marco de 50 continuam enquanto ele estiver ativo na plataforma.
+        ⚠️ Só conta se o amigo se cadastrar pelo <strong>seu</strong> link. Cada amigo só pode ser indicado uma vez, se os seus convidados mostrarem um bom desempenho você tem chance dos seus convites virarem disponíveis o mas rápido possível na sua conta, mas os +10 pontos a cada marco de 100 continuam enquanto ele estiver ativo na plataforma. Tem no máximo <strong>5 convites</strong>.
       </div>
     </div>
   </div>
@@ -391,14 +411,31 @@
         }
         localStorage.setItem('codigoIndicacao', codigoIndicacao);
 
-        document.getElementById('total-convidados').textContent = data.totalConvidados || 0;
-        document.getElementById('pts-indicacao').textContent = data.pontosIndicacao || 0;
-
-        var link = montarLink(codigoIndicacao);
-        atualizarUI(link);
+        var totalConv = data.totalConvidados || 0;
+        var ptsInd = data.pontosIndicacao || 0;
+        var bloqueado = data.ocultarConvidar === true || (totalConv >= 5 && data.convitesExtra !== true);
 
         document.getElementById('loading').style.display = 'none';
-        document.getElementById('conteudo').style.display = 'block';
+
+        if (bloqueado) {
+          document.getElementById('total-convidados-bloq').textContent = totalConv;
+          document.getElementById('pts-indicacao-bloq').textContent = ptsInd;
+          var msgEl = document.getElementById('msg-bloqueado-texto');
+          if (data.ocultarConvidar === true && totalConv < 5) {
+            msgEl.textContent = 'Convites não disponíveis de momento. Aguarde ter acesso novamente.';
+          } else {
+            msgEl.textContent = 'Usaste os teus 5 convites. Aguarde ter acesso novamente.';
+          }
+          document.getElementById('msg-bloqueado').style.display = 'block';
+          document.getElementById('conteudo').style.display = 'none';
+        } else {
+          document.getElementById('total-convidados').textContent = totalConv;
+          document.getElementById('pts-indicacao').textContent = ptsInd;
+          var link = montarLink(codigoIndicacao);
+          atualizarUI(link);
+          document.getElementById('msg-bloqueado').style.display = 'none';
+          document.getElementById('conteudo').style.display = 'block';
+        }
       } catch (erro) {
         console.error(erro);
         document.getElementById('loading').textContent = 'Erro: ' + (erro.message || erro);

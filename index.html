@@ -194,19 +194,56 @@ nav.links-nav a:hover{ color:var(--verde-vivo); }
 
 /* ---------- APP ---------- */
 .faixa-app{
-    background:linear-gradient(120deg,rgba(0,200,83,0.10),rgba(255,201,77,0.05));
-    border:1px solid rgba(0,200,83,0.25);
-    border-radius:24px; padding:40px;
-    display:flex; align-items:center; gap:44px; flex-wrap:wrap;
+    background:
+        radial-gradient(circle at 20% 30%, rgba(0,200,83,0.22), transparent 50%),
+        radial-gradient(circle at 90% 70%, rgba(255,201,77,0.12), transparent 45%),
+        linear-gradient(135deg, rgba(18,22,31,0.98), rgba(13,16,23,0.98));
+    border:1px solid rgba(0,200,83,0.35);
+    border-radius:28px; padding:48px 44px;
+    display:flex; align-items:center; gap:48px; flex-wrap:wrap;
+    position:relative; overflow:hidden;
+    box-shadow:0 20px 50px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04);
+}
+.faixa-app::before{
+    content:''; position:absolute; top:-40%; right:-10%;
+    width:280px; height:280px; border-radius:50%;
+    background:radial-gradient(circle, rgba(34,255,153,0.12), transparent 70%);
+    pointer-events:none;
+}
+.faixa-app .app-visual{
+    position:relative; flex-shrink:0;
 }
 .faixa-app img{
-    width:190px; border-radius:18px; box-shadow:0 22px 45px rgba(0,0,0,0.5);
+    width:200px; border-radius:22px;
+    box-shadow:0 28px 55px rgba(0,0,0,0.55), 0 0 0 1px rgba(0,200,83,0.25);
     animation:flutuar 4s ease-in-out infinite;
+    display:block;
+}
+.faixa-app .badge-breve{
+    position:absolute; top:-8px; right:-12px;
+    background:linear-gradient(90deg, var(--ouro), #ff9f1a);
+    color:#1a1000; font-family:'Space Mono',monospace; font-size:11px; font-weight:700;
+    padding:6px 12px; border-radius:99px;
+    box-shadow:0 6px 16px rgba(255,201,77,0.4);
+    letter-spacing:0.04em; text-transform:uppercase;
 }
 @keyframes flutuar{ 0%,100%{ transform:translateY(0);} 50%{ transform:translateY(-14px);} }
-.faixa-app .txt{ flex:1; min-width:260px; }
-.faixa-app h3{ font-size:22px; margin-bottom:10px; font-family:'Sora',sans-serif; }
-.faixa-app p{ color:var(--suave); margin-bottom:18px; }
+.faixa-app .txt{ flex:1; min-width:260px; position:relative; z-index:1; }
+.faixa-app h3{ font-size:24px; margin-bottom:12px; font-family:'Sora',sans-serif; line-height:1.25; }
+.faixa-app p{ color:var(--suave); margin-bottom:16px; font-size:15.5px; }
+.faixa-app .lista-app{
+    list-style:none; margin:0 0 22px; padding:0;
+    display:grid; gap:10px;
+}
+.faixa-app .lista-app li{
+    display:flex; align-items:center; gap:10px;
+    font-size:14px; color:var(--texto);
+}
+.faixa-app .lista-app li i{
+    width:28px; height:28px; border-radius:8px;
+    background:rgba(0,200,83,0.15); color:var(--verde-vivo);
+    display:flex; align-items:center; justify-content:center; font-size:12px; flex-shrink:0;
+}
 
 /* ---------- PROVAS ---------- */
 .grade-provas{ display:grid; grid-template-columns:repeat(3,1fr); gap:22px; }
@@ -246,16 +283,48 @@ nav.links-nav a:hover{ color:var(--verde-vivo); }
 }
 
 /* ---------- MAIS FORMAS ---------- */
-.grade-formas{ display:grid; grid-template-columns:repeat(3,1fr); gap:22px; }
-@media (max-width:900px){ .grade-formas{ grid-template-columns:1fr; } }
+.grade-formas{ display:grid; grid-template-columns:repeat(3,1fr); gap:18px; }
+@media (max-width:900px){ .grade-formas{ grid-template-columns:1fr 1fr; } }
+@media (max-width:560px){ .grade-formas{ grid-template-columns:1fr; } }
 .cartao-forma{
     background:var(--painel); border:1px solid var(--linha); border-radius:18px;
-    padding:26px; text-align:center;
+    padding:26px 22px; text-align:center;
+    transition:transform .25s, border-color .25s, box-shadow .25s;
+    position:relative; overflow:hidden;
 }
-.cartao-forma img{ width:100%; max-height:150px; object-fit:contain; margin-bottom:18px; }
-.cartao-forma h4{ font-size:17px; margin-bottom:8px; font-family:'Sora',sans-serif; }
-.cartao-forma p{ font-size:13.5px; color:var(--suave); }
-.cartao-forma i.icone-grande{ font-size:40px; color:var(--ouro); margin-bottom:16px; display:block; }
+.cartao-forma:hover{
+    transform:translateY(-6px);
+    border-color:rgba(0,200,83,0.4);
+    box-shadow:0 16px 36px rgba(0,0,0,0.3);
+}
+.cartao-forma.destaque{
+    background:linear-gradient(160deg, rgba(0,200,83,0.14), var(--painel));
+    border-color:rgba(0,200,83,0.35);
+}
+.cartao-forma.destaque-ouro{
+    background:linear-gradient(160deg, rgba(255,201,77,0.12), var(--painel));
+    border-color:rgba(255,201,77,0.35);
+}
+.cartao-forma img{ width:100%; max-height:140px; object-fit:contain; margin-bottom:16px; }
+.cartao-forma h4{ font-size:16px; margin-bottom:8px; font-family:'Sora',sans-serif; }
+.cartao-forma p{ font-size:13.5px; color:var(--suave); line-height:1.5; }
+.cartao-forma i.icone-grande{
+    font-size:36px; margin-bottom:14px; display:block;
+    width:64px; height:64px; line-height:64px; margin-left:auto; margin-right:auto;
+    border-radius:18px;
+}
+.cartao-forma .pts-tag{
+    display:inline-block; margin-top:12px;
+    font-family:'Space Mono',monospace; font-size:12px; font-weight:700;
+    color:var(--verde-vivo); background:rgba(0,200,83,0.12);
+    border:1px solid rgba(0,200,83,0.3); padding:5px 12px; border-radius:99px;
+}
+.cartao-forma.destaque-ouro .pts-tag{
+    color:var(--ouro); background:rgba(255,201,77,0.12); border-color:rgba(255,201,77,0.35);
+}
+.cartao-forma i.icone-grande.verde{ background:rgba(0,200,83,0.15); color:var(--verde-vivo); }
+.cartao-forma i.icone-grande.ouro{ background:rgba(255,201,77,0.15); color:var(--ouro); }
+.cartao-forma i.icone-grande.terracota{ background:rgba(226,87,43,0.15); color:#ff8a65; }
 
 /* ---------- TABELA ---------- */
 .painel-tabela{
@@ -312,18 +381,59 @@ nav.links-nav a:hover{ color:var(--verde-vivo); }
 @keyframes flutuar2{ 0%,100%{ transform:translateY(0);} 50%{ transform:translateY(-12px);} }
 @media (min-width:992px){ .cta-flutuante{ right:30px; bottom:30px; padding:16px 26px; font-size:15px; } }
 
-/* ---------- RODAPÉ (mantido igual ao original) ---------- */
-footer{ background:#05060F; padding:80px 0 30px; }
-.grade-rodape{ display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:40px; }
-.logo-rodape{ width:48px; height:48px; border-radius:10px; object-fit:contain; margin-bottom:10px; }
+/* ---------- RODAPÉ ---------- */
+footer{
+    background:#05060F;
+    padding:64px 0 28px;
+    border-top:1px solid rgba(255,255,255,0.06);
+    margin-top:20px;
+}
+.grade-rodape{
+    display:grid;
+    grid-template-columns:1.4fr 1fr 1fr 1.2fr;
+    gap:36px 28px;
+    align-items:start;
+}
+.grade-rodape h4{
+    font-family:'Sora',sans-serif; font-size:14px; color:var(--texto);
+    margin-bottom:14px; letter-spacing:0.01em;
+}
+.grade-rodape ul{ list-style:none; padding:0; margin:0; }
+.grade-rodape li{ margin-bottom:8px; }
+.grade-rodape a{
+    color:var(--suave); text-decoration:none; font-size:14px;
+    transition:color .2s;
+}
+.grade-rodape a:hover{ color:var(--verde-vivo); }
+.logo-rodape{ width:48px; height:48px; border-radius:10px; object-fit:contain; margin-bottom:12px; }
+.rodape-marca p{ color:var(--suave); font-size:14px; max-width:260px; line-height:1.55; }
+.rodape-pagamentos{
+    display:flex; gap:14px; flex-wrap:wrap; align-items:center; margin-top:8px;
+}
+.rodape-pagamentos img{
+    height:44px; width:auto; object-fit:contain;
+    background:rgba(255,255,255,0.04); border-radius:8px; padding:6px 10px;
+}
+.rodape-copy{
+    text-align:center; padding-top:28px; margin-top:40px;
+    border-top:1px solid rgba(255,255,255,0.08);
+    color:#666; font-size:13px;
+}
 
+@media (max-width:900px){
+    .grade-rodape{ grid-template-columns:1fr 1fr; }
+}
 @media (max-width:768px){
     nav.links-nav{ display:none; }
     .hero{ padding:50px 0 40px; }
     .bloco-imagem, .bloco-imagem.inverter{ flex-direction:column; text-align:center; }
-    .faixa-app{ flex-direction:column; text-align:center; padding:30px 24px; }
+    .faixa-app{ flex-direction:column; text-align:center; padding:32px 22px; }
+    .faixa-app .badge-breve{ right:50%; transform:translateX(50%); top:-12px; }
     .cabecalho{ justify-content:center; text-align:center; }
     .cta-final{ padding:44px 22px; }
+    .grade-rodape{ grid-template-columns:1fr; gap:28px; text-align:center; }
+    .rodape-marca p{ max-width:none; margin:0 auto; }
+    .rodape-pagamentos{ justify-content:center; }
 }
 </style>
 </head>
@@ -422,11 +532,19 @@ footer{ background:#05060F; padding:80px 0 30px; }
     <!-- APP -->
     <section class="sec" style="padding-top:0;">
         <div class="faixa-app">
-            <img src="https://consistent-white-lkucepnl.edgeone.dev/Gemini_Generated_Image_raug3mraug3mraug.png" alt="Aplicativo Desafio MOZ">
+            <div class="app-visual">
+                <img src="https://consistent-white-lkucepnl.edgeone.dev/Gemini_Generated_Image_raug3mraug3mraug.png" alt="Aplicativo Desafio MOZ">
+                <span class="badge-breve">Brevemente</span>
+            </div>
             <div class="txt">
-                <h3>📱 O Desafio MOZ na palma da tua mão</h3>
-                <p>Ganha dinheiro de qualquer lugar de Moçambique, direto do teu celular, tablet ou computador.</p>
-                <a href="criar-conta.html" class="btn btn-cheio">Começar Agora (Brevemente)</a>
+                <h3>O Desafio MOZ na palma da tua mão</h3>
+                <p>Uma experiência pensada para celular. Ganha de qualquer lugar de Moçambique — em casa, no trabalho ou a caminho.</p>
+                <ul class="lista-app">
+                    <li><i class="fas fa-mobile-alt"></i> Interface rápida e leve no telemóvel</li>
+                    <li><i class="fas fa-tasks"></i> Desafios, pesquisas e check-in no mesmo sítio</li>
+                    <li><i class="fas fa-wallet"></i> Saques por M‑Pesa e e‑Mola</li>
+                </ul>
+                <a href="criar-conta.html" class="btn btn-cheio"><i class="fas fa-rocket"></i> Começar no browser agora</a>
             </div>
         </div>
     </section>
@@ -481,24 +599,43 @@ footer{ background:#05060F; padding:80px 0 30px; }
     <!-- MAIS FORMAS -->
     <section class="sec">
         <div class="cabecalho-sec">
-            <span class="eyebrow">Também podes</span>
-            <h2 class="titulo-display">Mais formas de ganhar e receber</h2>
+            <span class="eyebrow">Todas as formas</span>
+            <h2 class="titulo-display">Várias formas de ganhar todos os dias</h2>
+            <p>Check-in, missão semanal, convites, pesquisas e muito mais — escolhe o que combina contigo.</p>
         </div>
         <div class="grade-formas">
-            <div class="cartao-forma">
-                <img src="https://i.supaimg.com/9447b725-0914-4700-9681-fccbd9cb5399/ed8cda03-eea7-4425-ba79-d78a2a841832.png" alt="Jogos">
-                <h4>Testa jogos e aplicativos</h4>
-                <p>Joga, testa novos aplicativos e acumula pontos rapidamente.</p>
+            <div class="cartao-forma destaque">
+                <i class="fas fa-calendar-check icone-grande verde"></i>
+                <h4>Check-in diário</h4>
+                <p>Entra todos os dias e marca presença. Simples, rápido e garante pontos todos os dias.</p>
+                <span class="pts-tag">+5 pts / dia</span>
+            </div>
+            <div class="cartao-forma destaque-ouro">
+                <i class="fas fa-trophy icone-grande ouro"></i>
+                <h4>Missão semanal</h4>
+                <p>Aparece em horários especiais. Quem a encontrar primeiro e concluir leva a grande recompensa.</p>
+                <span class="pts-tag">+100 pts</span>
             </div>
             <div class="cartao-forma">
-                <i class="fas fa-users icone-grande"></i>
+                <i class="fas fa-users icone-grande terracota"></i>
                 <h4>Convida amigos</h4>
-                <p>Ganha uma percentagem de tudo o que os teus convidados acumularem.</p>
+                <p>Partilha o teu link. Quando o amigo se cadastra, os dois ganham — e tu continua a ganhar com a actividade dele.</p>
+                <span class="pts-tag">+10 pts / amigo</span>
+            </div>
+            <div class="cartao-forma">
+                <img src="https://i.supaimg.com/9447b725-0914-4700-9681-fccbd9cb5399/ed8cda03-eea7-4425-ba79-d78a2a841832.png" alt="Jogos">
+                <h4>Jogos e aplicativos</h4>
+                <p>Testa jogos e apps e acumula pontos no teu ritmo.</p>
+            </div>
+            <div class="cartao-forma">
+                <i class="fas fa-search icone-grande verde"></i>
+                <h4>Pesquisas e anúncios</h4>
+                <p>Responde pesquisas e vê anúncios para somar pontos extra.</p>
             </div>
             <div class="cartao-forma">
                 <img src="https://cdn.phototourl.com/free/2026-07-16-31cd801f-6ae4-493e-8a90-5891a6cb9eb9.png" alt="Pagamentos">
-                <h4>Recebe por M‑Pesa e Emola</h4>
-                <p>Saque direto para a tua operadora em menos de 72 horas.</p>
+                <h4>Recebe por M‑Pesa e e‑Mola</h4>
+                <p>Saque directo para a tua operadora em até 72 horas.</p>
             </div>
         </div>
     </section>
@@ -574,40 +711,42 @@ footer{ background:#05060F; padding:80px 0 30px; }
 
 <!-- RODAPÉ (igual ao original) -->
 <footer>
-    <div class="envolucro grade-rodape">
-        <div>
-            <img src="https://i.supaimg.com/b173afd9-4344-4026-a5d7-6a53e4b6efdc/8f054a24-2746-4a43-9f1c-354584289dc3.png" alt="Desafio MOZ" class="logo-rodape">
-            <h4 style="color: var(--verde-vivo); margin-top: 12px;">💎 Desafio MOZ</h4>
-            <p style="color: var(--suave);">A plataforma nº1 de ganhos online em Moçambique.</p>
-        </div>
-        <div>
-            <h4>Páginas</h4>
-            <ul style="list-style: none; color: var(--suave);">
-                <li><a href="index-novo.html" style="color: inherit; text-decoration: none;">Início</a></li>
-                <li><a href="criar-conta.html" style="color: inherit; text-decoration: none;">Desafios</a></li>
-                <li><a href="criar-conta.html" style="color: inherit; text-decoration: none;">Meu Saldo</a></li>
-                <li><a href="criar-conta.html" style="color: inherit; text-decoration: none;">Pedir Saque</a></li>
-            </ul>
-        </div>
-        <div>
-            <h4>Ajuda</h4>
-            <ul style="list-style: none; color: var(--suave);">
-                <li><a href="Regras.html" style="color: inherit; text-decoration: none;">Regras Oficiais</a></li>
-                <li><a href="contato.html" style="color: inherit; text-decoration: none;">Contacto</a></li>
-                <li><a href="termos.html" style="color: inherit; text-decoration: none;">Termos de Uso</a></li>
-                <li><a href="privacidade.html" style="color: inherit; text-decoration: none;">Privacidade</a></li>
-            </ul>
-        </div>
-        <div>
-            <h4>Pagamentos</h4>
-            <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 10px;">
-                <img src="https://cdn.phototourl.com/free/2026-07-16-b2c96625-02ed-4253-9dc4-914c1056bdb1.png" alt="M-Pesa" style="height: 60px;">
-                <img src="https://cdn.phototourl.com/free/2026-07-16-89e855d7-40ba-4202-9d7a-3843619d54c1.webp" alt="Emola" style="height: 60px;">
+    <div class="envolucro">
+        <div class="grade-rodape">
+            <div class="rodape-marca">
+                <img src="https://i.supaimg.com/b173afd9-4344-4026-a5d7-6a53e4b6efdc/8f054a24-2746-4a43-9f1c-354584289dc3.png" alt="Desafio MOZ" class="logo-rodape">
+                <h4 style="color:var(--verde-vivo);">Desafio MOZ</h4>
+                <p>A plataforma de ganhos online feita para Moçambique. Pontos reais, saques por M‑Pesa e e‑Mola.</p>
+            </div>
+            <div>
+                <h4>Páginas</h4>
+                <ul>
+                    <li><a href="index.html">Início</a></li>
+                    <li><a href="criar-conta.html">Criar conta</a></li>
+                    <li><a href="criar-conta.html">Desafios</a></li>
+                    <li><a href="criar-conta.html">Pedir saque</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4>Ajuda</h4>
+                <ul>
+                    <li><a href="Regras.html">Regras oficiais</a></li>
+                    <li><a href="contato.html">Contacto</a></li>
+                    <li><a href="termos.html">Termos de uso</a></li>
+                    <li><a href="privacidade.html">Privacidade</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4>Pagamentos</h4>
+                <div class="rodape-pagamentos">
+                    <img src="https://cdn.phototourl.com/free/2026-07-16-b2c96625-02ed-4253-9dc4-914c1056bdb1.png" alt="M-Pesa">
+                    <img src="https://cdn.phototourl.com/free/2026-07-16-89e855d7-40ba-4202-9d7a-3843619d54c1.webp" alt="e-Mola">
+                </div>
             </div>
         </div>
-    </div>
-    <div style="text-align: center; padding-top: 40px; border-top: 1px solid rgba(255,255,255,0.1); color: #666; font-size: 14px; margin-top: 40px;">
-        © 2026 Desafio MOZ — Todos os direitos reservados. Plataforma 100% gratuita para participantes.
+        <div class="rodape-copy">
+            © 2026 Desafio MOZ — Todos os direitos reservados. Plataforma 100% gratuita para participantes.
+        </div>
     </div>
 </footer>
 

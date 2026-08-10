@@ -384,7 +384,7 @@
       var senhaHash = await hashSenha(senha);
       var dadosNovo = {
         nome: nome, telemovel: telemovel, email: email, senha: senhaHash,
-        pontos: refCodigo ? 10 : 0, status: 'Ativo',
+        pontos: refCodigo ? 5 : 0, status: 'Ativo',
         pesquisaDadosCompleta: false,
         pesquisaRapidaCompleta: false,
         pesquisaOpiniaoCompleta: false,
@@ -401,12 +401,19 @@
             var indRef = indSnap.docs[0].ref;
             var indData = indSnap.docs[0].data();
             if ((indData.email || '').toLowerCase() !== email) {
-              await indRef.update({
-                pontos: (indData.pontos || 0) + 30,
-                totalConvidados: (indData.totalConvidados || 0) + 1,
-                pontosIndicacao: (indData.pontosIndicacao || 0) + 30,
+              var novoTotal = (indData.totalConvidados || 0) + 1;
+              var updInd = {
+                pontos: (indData.pontos || 0) + 10,
+                totalConvidados: novoTotal,
+                pontosIndicacao: (indData.pontosIndicacao || 0) + 10,
                 ultimaAtualizacao: new Date().toISOString()
-              });
+              };
+              // Limite de 5 convites: bloqueia automaticamente
+              if (novoTotal >= 5) {
+                updInd.ocultarConvidar = true;
+                updInd.convitesExtra = false;
+              }
+              await indRef.update(updInd);
             }
           }
         } catch (eInd) { console.error(eInd); }

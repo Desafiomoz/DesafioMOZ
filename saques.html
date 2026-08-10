@@ -27,13 +27,59 @@
             z-index: -1;
         }
 
+        /* ===== AURA AMBIENTE ===== */
+        .aura-orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(70px);
+            z-index: -2;
+            pointer-events: none;
+            opacity: 0.65;
+            will-change: transform;
+        }
+        .aura-orb-1 {
+            width: 340px; height: 340px;
+            top: -80px; left: -90px;
+            background: radial-gradient(circle, rgba(0,230,118,0.55), transparent 70%);
+            animation: auraDrift1 16s ease-in-out infinite;
+        }
+        .aura-orb-2 {
+            width: 300px; height: 300px;
+            top: 40%; right: -110px;
+            background: radial-gradient(circle, rgba(0,188,212,0.45), transparent 70%);
+            animation: auraDrift2 20s ease-in-out infinite;
+        }
+        .aura-orb-3 {
+            width: 260px; height: 260px;
+            bottom: -60px; left: 30%;
+            background: radial-gradient(circle, rgba(0,200,83,0.4), transparent 70%);
+            animation: auraDrift3 18s ease-in-out infinite;
+        }
+        @keyframes auraDrift1 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(40px, 60px) scale(1.15); }
+        }
+        @keyframes auraDrift2 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(-50px, -30px) scale(1.1); }
+        }
+        @keyframes auraDrift3 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(30px, -40px) scale(1.2); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .aura-orb { animation: none; }
+        }
+
         .header {
             display: flex;
             align-items: center;
             justify-content: space-between;
             padding: 12px 16px;
             background: rgba(10, 10, 15, 0.95);
-            border-bottom: 2px solid #00c853;
+            border-bottom: 1px solid rgba(0, 200, 83, 0.4);
+            box-shadow: 0 1px 18px rgba(0, 230, 118, 0.25);
+            backdrop-filter: blur(10px);
             position: sticky;
             top: 0;
             z-index: 100;
@@ -43,8 +89,18 @@
             width: 42px; height: 42px; border-radius: 50%;
             object-fit: cover; border: 2px solid #00e676;
             background: rgba(0, 200, 83, 0.15); flex-shrink: 0;
+            box-shadow: 0 0 0 0 rgba(0, 230, 118, 0.6);
+            animation: logoAura 2.8s ease-out infinite;
         }
-        .app-title { font-size: 20px; font-weight: 700; color: #00e676; }
+        @keyframes logoAura {
+            0% { box-shadow: 0 0 0 0 rgba(0, 230, 118, 0.45); }
+            70% { box-shadow: 0 0 0 8px rgba(0, 230, 118, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(0, 230, 118, 0); }
+        }
+        .app-title {
+            font-size: 20px; font-weight: 700; color: #00e676;
+            text-shadow: 0 0 14px rgba(0, 230, 118, 0.55);
+        }
 
         .balance-circle {
             width: 56px; height: 56px; border-radius: 50%;
@@ -52,6 +108,20 @@
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             font-weight: 700; color: #000;
             box-shadow: 0 0 16px rgba(0, 200, 83, 0.55);
+            position: relative;
+        }
+        .balance-circle::after {
+            content: "";
+            position: absolute;
+            inset: -6px;
+            border-radius: 50%;
+            border: 1.5px solid rgba(0, 230, 118, 0.55);
+            animation: ringPulse 2.6s ease-out infinite;
+            pointer-events: none;
+        }
+        @keyframes ringPulse {
+            0% { transform: scale(0.9); opacity: 0.9; }
+            100% { transform: scale(1.5); opacity: 0; }
         }
         .balance-circle .amount { font-size: 16px; line-height: 1; }
         .balance-circle .currency { font-size: 10px; line-height: 1; margin-top: 1px; }
@@ -70,11 +140,23 @@
         .content { padding: 16px; }
 
         .wallet-card {
-            background: rgba(21, 21, 31, 0.92);
+            background: rgba(21, 21, 31, 0.8);
+            backdrop-filter: blur(14px);
             border-radius: 16px;
             padding: 20px;
             margin-bottom: 20px;
-            border: 1px solid #1e1e2a;
+            border: 1px solid rgba(0, 230, 118, 0.16);
+            box-shadow: 0 0 30px rgba(0, 200, 83, 0.08), inset 0 1px 0 rgba(255,255,255,0.04);
+            position: relative;
+            overflow: hidden;
+        }
+        .wallet-card::before {
+            content: "";
+            position: absolute;
+            top: -40%; left: -20%;
+            width: 60%; height: 180%;
+            background: radial-gradient(circle, rgba(0, 230, 118, 0.14), transparent 65%);
+            pointer-events: none;
         }
         .wallet-title { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
         .wallet-title h2 { font-size: 20px; font-weight: 700; }
@@ -113,45 +195,82 @@
 
         .section-title { font-size: 17px; font-weight: 700; margin: 22px 0 14px; color: #fff; }
 
+        .payment-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 18px;
+        }
         .payment-option {
             background: rgba(21, 21, 31, 0.92);
             border-radius: 14px;
-            padding: 14px 16px;
-            margin-bottom: 12px;
+            padding: 16px 12px;
             display: flex;
+            flex-direction: column;
             align-items: center;
-            gap: 14px;
-            border: 2px solid transparent;
+            gap: 8px;
+            border: 2px solid #2a2a3a;
             cursor: pointer;
-            transition: all 0.25s ease;
+            transition: all 0.2s ease;
+            text-align: center;
         }
         .payment-option.active {
             border-color: #00c853;
-            background: rgba(15, 26, 20, 0.95);
-            box-shadow: 0 0 12px rgba(0, 200, 83, 0.25);
+            background: rgba(0, 200, 83, 0.12);
+            box-shadow: 0 0 20px rgba(0, 230, 118, 0.35), inset 0 0 12px rgba(0, 230, 118, 0.08);
         }
         .payment-option .logo-img {
-            width: 52px; height: 52px; border-radius: 10px;
-            object-fit: contain; background: #fff; padding: 6px;
+            width: 48px; height: 48px; border-radius: 12px;
+            object-fit: contain; background: #fff; padding: 5px;
         }
-        .payment-option .info h3 { font-size: 17px; font-weight: 700; margin-bottom: 2px; }
-        .payment-option .info p { font-size: 13px; color: #aaa; }
+        .payment-option .info h3 { font-size: 15px; font-weight: 700; margin: 0; }
+        .payment-option .info p { display: none; }
+        .payment-option .check {
+            font-size: 12px; color: #00e676; font-weight: 600; min-height: 16px;
+            opacity: 0;
+        }
+        .payment-option.active .check { opacity: 1; }
 
-        .form-group { margin-bottom: 16px; }
+        .form-card {
+            background: rgba(21, 21, 31, 0.92);
+            border: 1px solid rgba(0, 200, 83, 0.22);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        .form-group { margin-bottom: 14px; }
+        .form-group:last-child { margin-bottom: 0; }
         .form-group label {
-            display: flex; align-items: center; gap: 8px;
-            font-size: 14px; color: #ccc; margin-bottom: 8px;
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: #00e676;
+            margin-bottom: 7px;
+            letter-spacing: 0.2px;
         }
         .form-group input {
             width: 100%;
-            background: rgba(18, 18, 26, 0.95);
+            background: rgba(10, 10, 15, 0.95);
             border: 1px solid #2a2a3a;
             border-radius: 12px;
-            padding: 14px 16px;
-            color: #fff; font-size: 15px; outline: none;
+            padding: 13px 14px;
+            color: #fff;
+            font-size: 15px;
+            outline: none;
+            transition: border-color 0.2s;
         }
         .form-group input::placeholder { color: #555; }
-        .form-group input:focus { border-color: #00c853; }
+        .form-group input:focus {
+            border-color: #00c853;
+            box-shadow: 0 0 0 3px rgba(0, 200, 83, 0.12), 0 0 16px rgba(0, 230, 118, 0.25);
+        }
+        .form-hint {
+            font-size: 11px;
+            color: #666;
+            margin-top: 6px;
+            line-height: 1.35;
+        }
+        .form-hint strong { color: #00e676; }
 
         /* ===== BOTÃO DE SAQUE ATRAENTE ===== */
         .btn-saque-wrap { margin-top: 12px; position: relative; }
@@ -189,6 +308,19 @@
             color: #003d1a;
             box-shadow: 0 8px 28px rgba(0, 200, 83, 0.45), 0 0 0 1px rgba(0, 230, 118, 0.3);
             animation: pulseGlow 2.4s ease-in-out infinite;
+        }
+        .btn-saque.ativo::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: 16px;
+            border: 2px solid rgba(0, 230, 118, 0.6);
+            animation: btnAuraPing 2.4s ease-out infinite;
+            pointer-events: none;
+        }
+        @keyframes btnAuraPing {
+            0% { transform: scale(1); opacity: 0.8; }
+            100% { transform: scale(1.08); opacity: 0; }
         }
         .btn-saque.ativo:hover::before,
         .btn-saque.ativo:focus::before {
@@ -274,32 +406,41 @@
         }
 
         .resumo-card {
-            background: rgba(21, 21, 31, 0.92);
+            background: rgba(21, 21, 31, 0.85);
+            backdrop-filter: blur(12px);
             border-radius: 16px;
-            padding: 4px 0;
-            margin-top: 24px;
-            border: 1px solid #1e1e2a;
+            padding: 16px;
+            margin-top: 8px;
+            border: 1px solid rgba(0, 200, 83, 0.25);
+            box-shadow: 0 0 24px rgba(0, 200, 83, 0.06);
         }
-        .resumo-row {
+        .resumo-simples {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .resumo-linha {
             display: flex;
             justify-content: space-between;
-            padding: 14px 18px;
-            border-bottom: 1px solid #1e1e2a;
-            font-size: 15px;
+            align-items: center;
+            font-size: 14px;
         }
-        .resumo-row:last-child { border-bottom: none; }
-        .resumo-row .label { color: #aaa; }
-        .resumo-row .value { font-weight: 600; }
-        .resumo-row .value.red { color: #ef5350; }
-        .resumo-row.highlight {
-            background: rgba(15, 26, 20, 0.95);
-            border-radius: 0 0 14px 14px;
+        .resumo-linha .lbl { color: #888; }
+        .resumo-linha .val { font-weight: 600; color: #eee; }
+        .resumo-linha .val.taxa { color: #ffab40; }
+        .resumo-linha.total {
+            margin-top: 4px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(0, 200, 83, 0.3);
         }
-        .resumo-row.highlight .label {
-            color: #00e676; font-weight: 700;
-            display: flex; align-items: center; gap: 6px;
+        .resumo-linha.total .lbl { color: #00e676; font-weight: 700; font-size: 15px; }
+        .resumo-linha.total .val { color: #00e676; font-size: 20px; font-weight: 800; }
+        .resumo-restante {
+            font-size: 12px;
+            color: #666;
+            text-align: center;
+            margin-top: 10px;
         }
-        .resumo-row.highlight .value { color: #00e676; font-size: 18px; }
 
         .prazo {
             display: flex; align-items: flex-start; gap: 10px;
@@ -325,6 +466,10 @@
     </style>
 </head>
 <body>
+
+    <div class="aura-orb aura-orb-1"></div>
+    <div class="aura-orb aura-orb-2"></div>
+    <div class="aura-orb aura-orb-3"></div>
 
     <div class="header">
         <div class="logo-area">
@@ -373,44 +518,43 @@
             </div>
         </div>
 
-        <h3 class="section-title">Escolha o Método de Pagamento</h3>
+        <h3 class="section-title">Como quer receber?</h3>
 
-        <div class="payment-option active" data-metodo="M-Pesa" onclick="selecionarPagamento(this)">
-            <img src="https://i.supaimg.com/b173afd9-4344-4026-a5d7-6a53e4b6efdc/78870cb5-ab0a-4108-a5ef-6e76fa9a7db1.jpg"
-                 alt="M-Pesa" class="logo-img"
-                 onerror="this.src='https://img.logokit.com/m-pesa.com'">
-            <div class="info">
-                <h3>M-Pesa</h3>
-                <p>Carteira móvel segura e rápida da Vodacom</p>
+        <div class="payment-grid">
+            <div class="payment-option active" data-metodo="M-Pesa" onclick="selecionarPagamento(this)">
+                <img src="https://i.supaimg.com/b173afd9-4344-4026-a5d7-6a53e4b6efdc/78870cb5-ab0a-4108-a5ef-6e76fa9a7db1.jpg"
+                     alt="M-Pesa" class="logo-img"
+                     onerror="this.src='https://img.logokit.com/m-pesa.com'">
+                <div class="info"><h3>M-Pesa</h3></div>
+                <div class="check">✓ Escolhido</div>
+            </div>
+            <div class="payment-option" data-metodo="e-Mola" onclick="selecionarPagamento(this)">
+                <img src="https://i.supaimg.com/b173afd9-4344-4026-a5d7-6a53e4b6efdc/e9c09751-c70f-4a5a-88ed-eabc95779bb6.png"
+                     alt="e-Mola" class="logo-img"
+                     onerror="this.src='https://seeklogo.com/images/M/movitel-logo-405014.png'">
+                <div class="info"><h3>e-Mola</h3></div>
+                <div class="check">✓ Escolhido</div>
             </div>
         </div>
 
-        <div class="payment-option" data-metodo="e-Mola" onclick="selecionarPagamento(this)">
-            <img src="https://i.supaimg.com/b173afd9-4344-4026-a5d7-6a53e4b6efdc/e9c09751-c70f-4a5a-88ed-eabc95779bb6.png"
-                 alt="e-Mola" class="logo-img"
-                 onerror="this.src='https://seeklogo.com/images/M/movitel-logo-405014.png'">
-            <div class="info">
-                <h3>e-Mola</h3>
-                <p>Serviço de dinheiro móvel da Movitel</p>
+        <div class="form-card">
+            <div class="form-group">
+                <label>Número de telemóvel</label>
+                <input type="tel" id="telefone-saque" placeholder="84 123 4567" maxlength="12">
+                <p class="form-hint">M-Pesa ou e-Mola — o número onde vai receber</p>
             </div>
-        </div>
 
-        <div class="form-group">
-            <label>📞 Número de Telefone (M-Pesa / e-Mola)</label>
-            <input type="tel" id="telefone-saque" placeholder="Ex: 84 123 4567" maxlength="12">
-        </div>
+            <div class="form-group">
+                <label>Nome do titular</label>
+                <input type="text" id="nome-saque" placeholder="Nome como está na operadora">
+                <p class="form-hint">Tem de coincidir com o nome da carteira móvel</p>
+            </div>
 
-        <div class="form-group">
-            <label>👤 Nome Completo do Titular</label>
-            <input type="text" id="nome-saque" placeholder="Nome exato como na operadora">
-        </div>
-
-        <div class="form-group">
-            <label>🎯 Pontos que deseja sacar</label>
-            <input type="number" id="pontos-saque" placeholder="Ex: 800" min="500" step="10" oninput="atualizarResumoEscolha()">
-            <p style="font-size:12px;color:#888;margin-top:6px;">
-                Mínimo: <strong style="color:#00e676;">500 pontos</strong> (50 MZN) · Máximo: o seu saldo atual
-            </p>
+            <div class="form-group">
+                <label>Pontos a sacar</label>
+                <input type="number" id="pontos-saque" placeholder="Ex: 800" min="500" step="10" oninput="atualizarResumoEscolha()">
+                <p class="form-hint">Mínimo <strong>500 pts</strong> (50 MZN) · máximo = o seu saldo</p>
+            </div>
         </div>
 
         <div class="btn-saque-wrap">
@@ -420,40 +564,30 @@
             </button>
         </div>
 
-        <h3 class="section-title" style="display: flex; align-items: center; gap: 8px;">
-            <span style="font-size: 20px;">📊</span> Resumo da Operação
-        </h3>
+        <h3 class="section-title">O que vai receber</h3>
 
         <div class="resumo-card">
-            <div class="resumo-row">
-                <span class="label">Saldo Disponível</span>
-                <span class="value" id="resumo-saldo">0 pts · 0.00 MZN</span>
+            <div class="resumo-simples">
+                <div class="resumo-linha">
+                    <span class="lbl">A sacar</span>
+                    <span class="val" id="resumo-deseja">0 pts</span>
+                </div>
+                <div class="resumo-linha">
+                    <span class="lbl">Taxa (10%)</span>
+                    <span class="val taxa" id="resumo-taxa">0.00 MZN</span>
+                </div>
+                <div class="resumo-linha total">
+                    <span class="lbl">Recebe</span>
+                    <span class="val" id="resumo-liquido">0.00 MZN</span>
+                </div>
             </div>
-            <div class="resumo-row">
-                <span class="label">Valor Mínimo para Saque</span>
-                <span class="value">500 pts · 50.00 MZN</span>
-            </div>
-            <div class="resumo-row">
-                <span class="label">Pontos a sacar</span>
-                <span class="value" id="resumo-deseja">0 pts · 0.00 MZN</span>
-            </div>
-            <div class="resumo-row">
-                <span class="label">Taxa de Serviço (20%)</span>
-                <span class="value red" id="resumo-taxa">0.00 MZN</span>
-            </div>
-            <div class="resumo-row highlight">
-                <span class="label">✅ Valor Líquido a Receber</span>
-                <span class="value" id="resumo-liquido">0.00 MZN</span>
-            </div>
-            <div class="resumo-row">
-                <span class="label">Pontos que ficam na conta</span>
-                <span class="value" id="resumo-restantes" style="color:#00e676;">0 pts</span>
-            </div>
+            <div class="resumo-restante" id="resumo-restantes">Ficam 0 pts na conta</div>
+            <span id="resumo-saldo" style="display:none;">0</span>
         </div>
 
         <div class="prazo">
             <span>⏱️</span>
-            <span>Prazo de Recebimento: Após a solicitação, o pagamento é processado em até 72 horas úteis. O pedido aparece imediatamente no painel do administrador.</span>
+            <span>Prazo: após o pedido, o pagamento é processado em até 72 horas úteis.</span>
         </div>
     </div>
 
@@ -526,15 +660,15 @@
         function atualizarResumoEscolha() {
             var ptsEscolha = getPontosEscolhidos();
             var mznEscolha = ptsEscolha / 10;
-            var taxa = mznEscolha * 0.20;
+            var taxa = mznEscolha * 0.10;
             var liquido = mznEscolha - taxa;
             var restantes = Math.max(0, pontosAtuais - ptsEscolha);
 
             document.getElementById('resumo-deseja').textContent =
                 ptsEscolha + ' pts · ' + mznEscolha.toFixed(2) + ' MZN';
-            document.getElementById('resumo-taxa').textContent = taxa.toFixed(2) + ' MZN';
+            document.getElementById('resumo-taxa').textContent = '- ' + taxa.toFixed(2) + ' MZN';
             document.getElementById('resumo-liquido').textContent = liquido.toFixed(2) + ' MZN';
-            document.getElementById('resumo-restantes').textContent = restantes + ' pts';
+            document.getElementById('resumo-restantes').textContent = 'Ficam ' + restantes + ' pts na conta';
 
             atualizarBotao();
         }
@@ -545,7 +679,7 @@
             var btn = document.getElementById('btn-saque');
             var ptsEscolha = getPontosEscolhidos();
             var mznEscolha = ptsEscolha / 10;
-            var liquido = mznEscolha - (mznEscolha * 0.20);
+            var liquido = mznEscolha - (mznEscolha * 0.10);
 
             if (pedidoPendente) {
                 warningBox.className = 'warning-box ok';
@@ -732,7 +866,7 @@
             btn.innerHTML = '<span class="btn-icon"><i class="fas fa-spinner fa-spin"></i></span><span class="btn-text"><strong>A enviar pedido...</strong></span>';
 
             var mznEscolha = ptsEscolha / 10;
-            var taxa = mznEscolha * 0.20;
+            var taxa = mznEscolha * 0.10;
             var liquido = mznEscolha - taxa;
             var pontosRestantes = pontosAtuais - ptsEscolha;
 
@@ -752,7 +886,7 @@
                     });
                 }
 
-                // 2) Cria o pedido no Admin — o valor principal é o LÍQUIDO (após 20%)
+                // 2) Cria o pedido no Admin — o valor principal é o LÍQUIDO (após 10%)
                 await db.collection('solicitacoesSaque').add({
                     email: emailUtilizador,
                     nome: nome,
@@ -783,7 +917,7 @@
                 mostrarToast(
                     'Pedido de saque enviado!',
                     'Foram descontados ' + ptsEscolha + ' pontos. Restam ' + pontosRestantes +
-                    ' pts na conta. O admin irá pagar ' + liquido.toFixed(2) + ' MZN via ' + metodoPagamento + '.'
+                    ' pts na conta. Receberá ' + liquido.toFixed(2) + ' MZN via ' + metodoPagamento + '.'
                 );
 
                 setTimeout(function () { atualizarUI(); }, 2500);
