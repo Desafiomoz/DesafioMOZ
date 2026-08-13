@@ -93,7 +93,9 @@ export async function onRequestGet({ request, env }) {
   }
 
   const hash = md5(`${email}-${secureHashKey}`);
-  const offerwallUrl = `https://offers.cpx-research.com/index.php?app_id=${APP_ID}&ext_user_id=${encodeURIComponent(email)}&secure_hash=${hash}`;
+  // "main_info=true&user_country_code=MZ" ajuda a CPX a mostrar ofertas
+  // mais adequadas a Moçambique (idioma/ofertas mais relevantes).
+  const offerwallUrl = `https://offers.cpx-research.com/index.php?app_id=${APP_ID}&ext_user_id=${encodeURIComponent(email)}&secure_hash=${hash}&main_info=true&user_country_code=MZ`;
 
   return new Response(JSON.stringify({ url: offerwallUrl }), {
     headers: { "Content-Type": "application/json" },
