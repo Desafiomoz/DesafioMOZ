@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="pt-MZ">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ofertas – Desafio MOZ</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --preto-fundo: #0e1118;
+            --verde: #00C853;
+            --verde-claro: #22FF99;
+            --texto: #FFFFFF;
+            --texto-claro: #A8B0C8;
+            --destaque: #FFD700;
+            --card: rgba(24, 28, 40, 0.95);
+            --linha: rgba(0,200,83,0.22);
+        }
+        body {
+            background:
+                radial-gradient(circle at 15% 0%, rgba(0,200,83,0.12), transparent 40%),
+                radial-gradient(circle at 90% 20%, rgba(255,201,77,0.07), transparent 35%),
+                var(--preto-fundo);
+            color: var(--texto);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            min-height: 100vh;
+            padding: 18px 15px 30px;
+        }
+        .cabecalho {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 18px;
+            padding: 14px 16px;
+            background: rgba(18, 22, 32, 0.9);
+            border: 1px solid var(--linha);
+            border-radius: 16px;
+        }
+        .cabecalho h1 {
+            font-size: 18px;
+        }
+        .cabecalho p {
+            color: var(--texto-claro);
+            font-size: 12.5px;
+            margin-top: 3px;
+        }
+        .aviso {
+            background: var(--card);
+            border: 1px solid var(--linha);
+            border-radius: 14px;
+            padding: 14px 16px;
+            margin-bottom: 16px;
+            font-size: 13px;
+            color: var(--texto-claro);
+            line-height: 1.5;
+        }
+        .aviso b { color: var(--verde-claro); }
+        .caixa-iframe {
+            background: var(--card);
+            border: 1px solid var(--linha);
+            border-radius: 16px;
+            overflow: hidden;
+            min-height: 70vh;
+            position: relative;
+        }
+        .carregando {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            color: var(--texto-claro);
+        }
+        .spinner {
+            width: 34px;
+            height: 34px;
+            border: 3px solid rgba(0,200,83,0.2);
+            border-top-color: var(--verde);
+            border-radius: 50%;
+            animation: girar 0.8s linear infinite;
+        }
+        @keyframes girar { to { transform: rotate(360deg); } }
+        iframe {
+            width: 100%;
+            height: 78vh;
+            border: none;
+            display: block;
+        }
+        .erro {
+            padding: 30px 16px;
+            text-align: center;
+            color: var(--texto-claro);
+        }
+        .erro i { font-size: 32px; color: var(--destaque); margin-bottom: 10px; display: block; }
+        .erro a {
+            display: inline-block;
+            margin-top: 14px;
+            color: var(--verde-claro);
+            text-decoration: none;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="cabecalho">
+        <div>
+            <h1>🎁 Ofertas & Jogos</h1>
+            <p>Complete ofertas e jogos para ganhar pontos extra</p>
+        </div>
+    </div>
+
+    <div class="aviso">
+        Escolha uma oferta abaixo, siga as instruções até o fim (ex: instalar um jogo e chegar ao nível pedido) e os pontos são creditados <b>automaticamente</b> na sua conta assim que a oferta for confirmada. Pode levar alguns minutos.
+    </div>
+
+    <div class="caixa-iframe" id="caixaIframe">
+        <div class="carregando" id="carregando">
+            <div class="spinner"></div>
+            <span>A carregar ofertas…</span>
+        </div>
+    </div>
+
+    <script>
+        (async function () {
+            var email = localStorage.getItem('emailUtilizador');
+            var caixa = document.getElementById('caixaIframe');
+            var carregando = document.getElementById('carregando');
+
+            if (!email) {
+                caixa.innerHTML = '<div class="erro"><i class="fa-solid fa-user-lock"></i>Precisa de entrar na sua conta para ver as ofertas.<br><a href="criar-conta.html">Entrar / Criar conta</a></div>';
+                return;
+            }
+
+            try {
+                var resp = await fetch('/get-offerwall-link?email=' + encodeURIComponent(email));
+                var dados = await resp.json();
+
+                if (!dados.url) {
+                    throw new Error('sem url');
+                }
+
+                var iframe = document.createElement('iframe');
+                iframe.src = dados.url;
+                iframe.onload = function () {
+                    if (carregando) carregando.remove();
+                };
+                caixa.appendChild(iframe);
+            } catch (e) {
+                caixa.innerHTML = '<div class="erro"><i class="fa-solid fa-triangle-exclamation"></i>Não foi possível carregar as ofertas agora.<br>Tente novamente mais tarde.</div>';
+            }
+        })();
+    </script>
+
+</body>
+</html>
