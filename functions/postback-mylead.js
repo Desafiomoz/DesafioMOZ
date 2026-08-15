@@ -45,10 +45,19 @@ export async function onRequestGet({ request }) {
     // Só credita se o status indicar aprovado (status "1" ou "approved")
     const statusAprovado = status === "1" || status.toLowerCase() === "approved";
 
+    // 2. O player_id agora é um UUID — precisamos descobrir o e-mail
+    //    associado a ele (guardado quando o usuário abriu o mylead.html).
+    let emailDecoded = null;
     if (statusAprovado) {
-      const emailDecoded = decodeURIComponent(playerId);
+      const playerRes = await fetch(`${FIRESTORE_BASE}/myleadPlayers/${encodeURIComponent(playerId)}`);
+      if (playerRes.status === 200) {
+        const playerData = await playerRes.json();
+        emailDecoded = playerData?.fields?.email?.stringValue || null;
+      }
+    }
 
-      // 2. Busca o usuário no Firestore pelo campo "email"
+    if (statusAprovado && emailDecoded) {
+      // 3. Busca o usuário no Firestore pelo campo "email"
       const queryBody = {
         structuredQuery: {
           from: [{ collectionId: "usuarios" }],

@@ -658,6 +658,33 @@
           </table>
         </div>
       </div>
+
+      <div class="form-box" style="margin-top:18px;">
+        <h3><i class="fas fa-id-badge"></i> MyLead — UUID → E-mail</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:12px;">
+          Cada utilizador recebe um código (UUID) para usar na MyLead. Use esta lista para
+          descobrir de quem é um UUID que aparecer nos relatórios da MyLead, e montar a URL
+          de postback manual com o e-mail certo.
+        </p>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+          <button type="button" class="btn-laranja" onclick="carregarMyleadPlayers()">🔄 Atualizar lista</button>
+        </div>
+        <div class="tabela-wrap" style="margin:0;box-shadow:none;border:1px solid #2a2a3a;">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>UUID (player_id)</th>
+                <th>E-mail</th>
+                <th>Copiar URL de postback</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-mylead-players">
+              <tr><td colspan="4" class="vazio">Carregue a lista ou abra este separador.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
 
     <!-- MISSÕES SEMANAIS -->
@@ -934,6 +961,7 @@ function mostrarAviso(txt) {
         });
         renderDesafiosAdmin();
         try { carregarHistoricoAnuncios(); } catch (eH) { console.error(eH); }
+        try { carregarMyleadPlayers(); } catch (eM) { console.error(eM); }
       } catch (e) {
         todosDesafios = [];
         var tb = document.getElementById('tbody-desafios');
@@ -993,6 +1021,36 @@ function mostrarAviso(txt) {
       }).catch(function (e) {
         tbody.innerHTML = '<tr><td colspan="7" class="vazio">Erro: ' + String(e.message || e) +
           '<br>Regra: match /historicoAnuncios/{doc} { allow read, write: if true; }</td></tr>';
+      });
+    }
+
+    function carregarMyleadPlayers() {
+      var tbody = document.getElementById('tbody-mylead-players');
+      if (!tbody) return;
+      tbody.innerHTML = '<tr><td colspan="4" class="vazio">A carregar...</td></tr>';
+      db.collection('myleadPlayers').get().then(function (snap) {
+        if (snap.empty) {
+          tbody.innerHTML = '<tr><td colspan="4" class="vazio">Nenhum utilizador usou a MyLead ainda.</td></tr>';
+          return;
+        }
+        var linhas = [];
+        snap.forEach(function (doc) {
+          linhas.push({ uuid: doc.id, email: (doc.data() || {}).email || '—' });
+        });
+        var html = '';
+        linhas.forEach(function (L, i) {
+          var urlExemplo = 'https://desafiomoz.pages.dev/postback-mylead?player_id=' + encodeURIComponent(L.uuid) + '&transaction_id=SUBSTITUIR&amount=SUBSTITUIR&status=1';
+          html += '<tr>' +
+            '<td>' + (i + 1) + '</td>' +
+            '<td style="font-size:11px;">' + esc(L.uuid) + '</td>' +
+            '<td>' + esc(L.email) + '</td>' +
+            '<td><button type="button" class="btn-laranja" style="font-size:11px;padding:4px 8px;" ' +
+            'onclick="navigator.clipboard.writeText(\'' + urlExemplo.replace(/'/g, "\\'") + '\'); this.textContent=\'Copiado!\';">📋 Copiar</button></td>' +
+            '</tr>';
+        });
+        tbody.innerHTML = html;
+      }).catch(function (e) {
+        tbody.innerHTML = '<tr><td colspan="4" class="vazio">Erro: ' + String(e.message || e) + '</td></tr>';
       });
     }
 

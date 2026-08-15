@@ -189,7 +189,7 @@
     <div class="topo">
         <a class="voltar" href="ofertas.html">← Voltar</a>
         <div class="logo-mini">
-            <i class="fas fa-gift" style="font-size:20px;color:#00C853;"></i>
+            <img src="https://i.supaimg.com/9447b725-0914-4700-9681-fccbd9cb5399/0e6355c8-344c-43f6-8810-a9a59062b10a.png" alt="MyLead">
         </div>
         <div>
             <h1>MyLead</h1>
@@ -212,7 +212,7 @@
     </div>
 
     <script>
-        (function () {
+        (async function () {
             var email = (
                 localStorage.getItem('emailUtilizador') ||
                 localStorage.getItem('email') ||
@@ -232,11 +232,40 @@
                 return;
             }
 
-            // Link da MyLead — o e-mail do usuário vai como player_id,
-            // para sabermos quem completou cada oferta.
+            function gerarUUID() {
+                if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+                return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+                    var r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+                    return v.toString(16);
+                });
+            }
+
+            // A MyLead exige player_id em formato UUID/número — não aceita
+            // e-mail direto. Guardamos um UUID fixo por usuário no navegador,
+            // e associamos esse UUID ao e-mail no Firestore (para o postback
+            // saber depois a quem creditar os pontos).
+            var playerId = localStorage.getItem('myleadPlayerId');
+            if (!playerId) {
+                playerId = gerarUUID();
+                localStorage.setItem('myleadPlayerId', playerId);
+            }
+
+            var FIREBASE_PROJECT_ID = 'desafio-moz-61b70';
+            var FIRESTORE_BASE = 'https://firestore.googleapis.com/v1/projects/' + FIREBASE_PROJECT_ID + '/databases/(default)/documents';
+
+            try {
+                await fetch(FIRESTORE_BASE + '/myleadPlayers/' + encodeURIComponent(playerId) + '?documentId=' + encodeURIComponent(playerId), {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ fields: { email: { stringValue: email } } })
+                });
+            } catch (e) {
+                // se falhar, tenta na mesma continuar — o link ainda abre
+            }
+
             var wallUrl =
                 'https://reward-me.eu/beedda9e-989e-11f1-b19e-8a5fb7be40ea?player_id=' +
-                encodeURIComponent(email);
+                encodeURIComponent(playerId);
 
             btnAbrir.href = wallUrl;
             btnAbrir.style.display = 'flex';
