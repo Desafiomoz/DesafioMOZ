@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="pt-MZ">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MyLead – Desafio MOZ</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --preto-fundo: #0e1118;
+            --verde: #00C853;
+            --verde-claro: #22FF99;
+            --texto: #FFFFFF;
+            --texto-claro: #A8B0C8;
+            --card: rgba(24, 28, 40, 0.95);
+            --linha: rgba(0,200,83,0.22);
+        }
+        body {
+            background:
+                radial-gradient(circle at 15% 0%, rgba(0,200,83,0.12), transparent 40%),
+                radial-gradient(circle at 90% 20%, rgba(255,201,77,0.07), transparent 35%),
+                var(--preto-fundo);
+            color: var(--texto);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            min-height: 100vh;
+            padding: 14px 12px 90px;
+        }
+        .menu-baixo {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(12, 14, 20, 0.97);
+            border-top: 1px solid #1e2430;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 10px 0 12px;
+            z-index: 1000;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+        }
+        .menu-baixo a {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            text-decoration: none;
+            color: #777;
+            font-size: 11px;
+            font-weight: 500;
+            width: 70px;
+        }
+        .menu-baixo a i { font-size: 20px; }
+        .menu-baixo a.ativo { color: var(--verde-claro); }
+
+        .topo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+            padding: 12px 14px;
+            background: rgba(18, 22, 32, 0.95);
+            border: 1px solid var(--linha);
+            border-radius: 16px;
+        }
+        .topo a.voltar {
+            color: var(--verde-claro);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .topo .logo-mini {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: #fff;
+            overflow: hidden;
+            flex-shrink: 0;
+            border: 1px solid rgba(0,200,83,0.3);
+        }
+        .topo .logo-mini img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            padding: 3px;
+        }
+        .topo h1 {
+            font-size: 16px;
+            font-weight: 700;
+        }
+        .topo p {
+            font-size: 11.5px;
+            color: var(--texto-claro);
+            margin-top: 2px;
+        }
+
+        .aviso {
+            background: var(--card);
+            border: 1px solid var(--linha);
+            border-radius: 12px;
+            padding: 12px 14px;
+            margin-bottom: 12px;
+            font-size: 12.5px;
+            color: var(--texto-claro);
+            line-height: 1.5;
+        }
+        .aviso b { color: var(--verde-claro); }
+
+        .btn-abrir {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            margin-bottom: 12px;
+            padding: 13px 16px;
+            border-radius: 14px;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 700;
+            color: #04140a;
+            background: linear-gradient(135deg, #22FF99 0%, #00C853 55%, #00a844 100%);
+            box-shadow: 0 6px 18px rgba(0,200,83,0.35);
+        }
+
+        .caixa-wall {
+            background: var(--card);
+            border: 1px solid var(--linha);
+            border-radius: 16px;
+            overflow: hidden;
+            min-height: 65vh;
+            position: relative;
+        }
+        .carregando {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            color: var(--texto-claro);
+            z-index: 2;
+            background: rgba(14, 17, 24, 0.85);
+        }
+        .spinner {
+            width: 34px;
+            height: 34px;
+            border: 3px solid rgba(0,200,83,0.2);
+            border-top-color: var(--verde);
+            border-radius: 50%;
+            animation: girar 0.8s linear infinite;
+        }
+        @keyframes girar { to { transform: rotate(360deg); } }
+        iframe {
+            width: 100%;
+            height: 72vh;
+            min-height: 480px;
+            border: none;
+            display: block;
+            background: #fff;
+        }
+        .erro {
+            padding: 36px 18px;
+            text-align: center;
+            color: var(--texto-claro);
+            line-height: 1.55;
+        }
+        .erro i {
+            font-size: 36px;
+            color: #FFD700;
+            margin-bottom: 12px;
+            display: block;
+        }
+        .erro a {
+            display: inline-block;
+            margin-top: 14px;
+            color: var(--verde-claro);
+            text-decoration: none;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="topo">
+        <a class="voltar" href="ofertas.html">← Voltar</a>
+        <div class="logo-mini">
+            <i class="fas fa-gift" style="font-size:20px;color:#00C853;"></i>
+        </div>
+        <div>
+            <h1>MyLead</h1>
+            <p>Ofertas, jogos e cupões — ganhe pontos</p>
+        </div>
+    </div>
+
+    <div class="aviso">
+        Complete a oferta até ao fim. Os pontos entram <b>automaticamente</b> na sua conta (pode demorar alguns minutos).
+    </div>
+
+    <a id="btnAbrir" class="btn-abrir" href="#" target="_blank" rel="noopener" style="display:none;">
+        <i class="fas fa-external-link-alt"></i>
+        Abrir em ecrã completo
+    </a>
+
+    <div class="caixa-wall" id="caixa">
+        <div class="carregando" id="carregando">
+            <div class="spinner"></div>
+            <span>A carregar ofertas…</span>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            var email = (
+                localStorage.getItem('emailUtilizador') ||
+                localStorage.getItem('email') ||
+                localStorage.getItem('userEmail') ||
+                localStorage.getItem('user_email') ||
+                ''
+            ).trim().toLowerCase();
+
+            var caixa = document.getElementById('caixa');
+            var carregando = document.getElementById('carregando');
+            var btnAbrir = document.getElementById('btnAbrir');
+
+            if (!email) {
+                caixa.innerHTML =
+                    '<div class="erro"><i class="fa-solid fa-user-lock"></i>' +
+                    'Precisa de entrar na conta para ver as ofertas.<br>' +
+                    '<a href="criar-conta.html">Entrar / Criar conta</a></div>';
+                return;
+            }
+
+            // Link da MyLead — o e-mail do usuário vai como player_id,
+            // para sabermos quem completou cada oferta.
+            var wallUrl =
+                'https://reward-me.eu/beedda9e-989e-11f1-b19e-8a5fb7be40ea?player_id=' +
+                encodeURIComponent(email);
+
+            btnAbrir.href = wallUrl;
+            btnAbrir.style.display = 'flex';
+
+            var iframe = document.createElement('iframe');
+            iframe.src = wallUrl;
+            iframe.title = 'MyLead';
+            iframe.setAttribute('allow', 'fullscreen');
+            iframe.onload = function () {
+                if (carregando) carregando.remove();
+            };
+            setTimeout(function () {
+                if (carregando && carregando.parentNode) carregando.remove();
+            }, 8000);
+
+            caixa.appendChild(iframe);
+        })();
+    </script>
+
+    <div class="menu-baixo">
+        <a href="desafios.html"><i class="fas fa-home"></i> Início</a>
+        <a href="tarefas.html"><i class="fas fa-tasks"></i> Tarefas</a>
+        <a href="saques.html"><i class="fas fa-wallet"></i> Sacar</a>
+        <a href="ofertas.html" class="ativo"><i class="fas fa-gift"></i> Ofertas</a>
+        <a href="perfil.html"><i class="fas fa-cog"></i> Conta</a>
+    </div>
+
+</body>
+</html>

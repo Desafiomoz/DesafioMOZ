@@ -295,25 +295,27 @@
             </div>
         </a>
 
-        <!-- Placeholder para futuras redes (MyLead OfferWall, etc.) -->
-        <div class="card-oferta em-breve">
+        <!-- MyLead OfferWall -->
+        <a href="mylead.html" class="card-oferta" id="cardMylead">
             <div class="card-topo">
-                <div class="logo-box" style="background: linear-gradient(145deg,#1a2030,#121820); border-color: rgba(168,176,200,0.25);">
-                    <i class="fas fa-gamepad" style="font-size:28px;color:#6b7388;"></i>
+                <div class="logo-box" style="background: linear-gradient(145deg,#1a2030,#121820); border-color: rgba(0,200,83,0.25);">
+                    <i class="fas fa-gamepad" style="font-size:28px;color:#22FF99;"></i>
                 </div>
                 <div class="card-info">
                     <h2>Jogos &amp; Ofertas</h2>
                     <p>Instalar apps, jogos e ofertas especiais</p>
-                    <span class="badge"><i class="fas fa-clock"></i> Em breve</span>
+                    <span class="badge"><i class="fas fa-bolt"></i> Disponível agora</span>
                 </div>
             </div>
             <div class="btn-oferta">
-                <i class="fas fa-lock"></i>
-                Em breve
+                <i class="fas fa-gamepad"></i>
+                Ver ofertas
+                <i class="fas fa-arrow-right seta"></i>
             </div>
-        </div>
+        </a>
 
     </div>
+
 
     <p class="rodape-dica">
         Quanto mais pesquisas completar com sucesso, mais pontos acumula.<br>
@@ -326,11 +328,15 @@
                         localStorage.getItem('email') ||
                         localStorage.getItem('userEmail') || '';
 
-            var card = document.getElementById('cardCpx');
-            if (!email && card) {
-                card.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    window.location.href = 'criar-conta.html';
+            if (!email) {
+                ['cardCpx', 'cardMylead'].forEach(function (id) {
+                    var card = document.getElementById(id);
+                    if (card) {
+                        card.addEventListener('click', function (e) {
+                            e.preventDefault();
+                            window.location.href = 'criar-conta.html';
+                        });
+                    }
                 });
             }
         })();
