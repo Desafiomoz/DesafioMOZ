@@ -19,13 +19,14 @@
         }
         body {
             background:
-                radial-gradient(circle at 15% 0%, rgba(0,200,83,0.12), transparent 40%),
-                radial-gradient(circle at 90% 20%, rgba(255,201,77,0.07), transparent 35%),
+                radial-gradient(circle at 15% 0%, rgba(0,200,83,0.14), transparent 42%),
+                radial-gradient(circle at 90% 15%, rgba(255,201,77,0.08), transparent 38%),
+                radial-gradient(circle at 50% 100%, rgba(0,200,83,0.06), transparent 45%),
                 var(--preto-fundo);
             color: var(--texto);
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             min-height: 100vh;
-            padding: 18px 15px 90px;
+            padding: 18px 15px 100px;
         }
         .menu-baixo {
             position: fixed;
@@ -53,136 +54,284 @@
             font-weight: 500;
             width: 70px;
         }
-        .menu-baixo a i {
-            font-size: 20px;
-        }
-        .menu-baixo a.ativo {
-            color: var(--verde-claro);
-        }
+        .menu-baixo a i { font-size: 20px; }
+        .menu-baixo a.ativo { color: var(--verde-claro); }
+
         .cabecalho {
             display: flex;
             align-items: center;
             gap: 14px;
-            margin-bottom: 18px;
-            padding: 14px 16px;
-            background: rgba(18, 22, 32, 0.9);
+            margin-bottom: 16px;
+            padding: 16px 18px;
+            background: linear-gradient(135deg, rgba(18, 22, 32, 0.95), rgba(24, 40, 32, 0.9));
             border: 1px solid var(--linha);
-            border-radius: 16px;
+            border-radius: 18px;
+            box-shadow: 0 8px 28px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255,255,255,0.04);
+        }
+        .cabecalho .icone {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            background: linear-gradient(145deg, rgba(0,200,83,0.25), rgba(34,255,153,0.1));
+            border: 1px solid rgba(0,200,83,0.35);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            flex-shrink: 0;
         }
         .cabecalho h1 {
-            font-size: 18px;
+            font-size: 19px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
         }
         .cabecalho p {
             color: var(--texto-claro);
             font-size: 12.5px;
-            margin-top: 3px;
+            margin-top: 4px;
+            line-height: 1.4;
         }
+
         .aviso {
             background: var(--card);
             border: 1px solid var(--linha);
             border-radius: 14px;
             padding: 14px 16px;
-            margin-bottom: 16px;
+            margin-bottom: 20px;
             font-size: 13px;
             color: var(--texto-claro);
-            line-height: 1.5;
+            line-height: 1.55;
+            position: relative;
+            overflow: hidden;
+        }
+        .aviso::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: linear-gradient(180deg, var(--verde), var(--verde-claro));
         }
         .aviso b { color: var(--verde-claro); }
-        .caixa-iframe {
-            background: var(--card);
-            border: 1px solid var(--linha);
-            border-radius: 16px;
-            overflow: hidden;
-            min-height: 70vh;
-            position: relative;
-        }
-        .carregando {
-            position: absolute;
-            inset: 0;
+
+        .lista-ofertas {
             display: flex;
             flex-direction: column;
+            gap: 16px;
+        }
+
+        .card-oferta {
+            display: block;
+            text-decoration: none;
+            color: inherit;
+            background: linear-gradient(160deg, rgba(28, 34, 48, 0.98), rgba(18, 24, 36, 0.98));
+            border: 1px solid rgba(0,200,83,0.28);
+            border-radius: 20px;
+            padding: 18px 16px 16px;
+            position: relative;
+            overflow: hidden;
+            box-shadow:
+                0 10px 32px rgba(0, 0, 0, 0.35),
+                0 0 0 1px rgba(255,255,255,0.03) inset,
+                0 1px 0 rgba(255,255,255,0.05) inset;
+            transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+        }
+        .card-oferta:active {
+            transform: scale(0.985);
+        }
+        .card-oferta::after {
+            content: "";
+            position: absolute;
+            top: -40%;
+            right: -20%;
+            width: 160px;
+            height: 160px;
+            background: radial-gradient(circle, rgba(0,200,83,0.12), transparent 70%);
+            pointer-events: none;
+        }
+
+        .card-topo {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 14px;
+            position: relative;
+            z-index: 1;
+        }
+        .logo-box {
+            width: 64px;
+            height: 64px;
+            border-radius: 16px;
+            background: #fff;
+            display: flex;
             align-items: center;
             justify-content: center;
-            gap: 12px;
-            color: var(--texto-claro);
+            flex-shrink: 0;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.3);
+            overflow: hidden;
+            border: 2px solid rgba(0,200,83,0.25);
         }
-        .spinner {
-            width: 34px;
-            height: 34px;
-            border: 3px solid rgba(0,200,83,0.2);
-            border-top-color: var(--verde);
-            border-radius: 50%;
-            animation: girar 0.8s linear infinite;
-        }
-        @keyframes girar { to { transform: rotate(360deg); } }
-        iframe {
+        .logo-box img {
             width: 100%;
-            height: 78vh;
-            border: none;
-            display: block;
+            height: 100%;
+            object-fit: contain;
+            padding: 6px;
         }
-        .erro {
-            padding: 30px 16px;
-            text-align: center;
+        .card-info { flex: 1; min-width: 0; }
+        .card-info h2 {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 4px;
+            color: #fff;
+        }
+        .card-info p {
+            font-size: 12.5px;
             color: var(--texto-claro);
+            line-height: 1.4;
         }
-        .erro i { font-size: 32px; color: var(--destaque); margin-bottom: 10px; display: block; }
-        .erro a {
-            display: inline-block;
-            margin-top: 14px;
-            color: var(--verde-claro);
-            text-decoration: none;
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 8px;
+            font-size: 11px;
             font-weight: 600;
+            color: var(--verde-claro);
+            background: rgba(0,200,83,0.12);
+            border: 1px solid rgba(0,200,83,0.3);
+            padding: 4px 10px;
+            border-radius: 20px;
+        }
+        .badge i { font-size: 10px; }
+
+        .btn-oferta {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            padding: 14px 16px;
+            border: none;
+            border-radius: 14px;
+            font-size: 14.5px;
+            font-weight: 700;
+            color: #04140a;
+            background: linear-gradient(135deg, #22FF99 0%, #00C853 55%, #00a844 100%);
+            box-shadow:
+                0 6px 20px rgba(0,200,83,0.4),
+                0 1px 0 rgba(255,255,255,0.25) inset;
+            cursor: pointer;
+            position: relative;
+            z-index: 1;
+            letter-spacing: 0.01em;
+        }
+        .btn-oferta i {
+            font-size: 15px;
+        }
+        .btn-oferta .seta {
+            margin-left: auto;
+            opacity: 0.85;
+        }
+
+        .card-oferta.em-breve {
+            opacity: 0.72;
+            border-color: rgba(168,176,200,0.2);
+        }
+        .card-oferta.em-breve .btn-oferta {
+            background: linear-gradient(135deg, #3a4254, #2a3140);
+            color: #A8B0C8;
+            box-shadow: none;
+            pointer-events: none;
+        }
+        .card-oferta.em-breve .badge {
+            color: #A8B0C8;
+            background: rgba(168,176,200,0.1);
+            border-color: rgba(168,176,200,0.2);
+        }
+
+        .rodape-dica {
+            margin-top: 22px;
+            text-align: center;
+            font-size: 12px;
+            color: #6b7388;
+            line-height: 1.5;
+            padding: 0 8px;
         }
     </style>
 </head>
 <body>
 
     <div class="cabecalho">
+        <div class="icone">🎁</div>
         <div>
-            <h1>🎁 Ofertas & Jogos</h1>
-            <p>Complete ofertas e jogos para ganhar pontos extra</p>
+            <h1>Ofertas &amp; Pesquisas &amp; Jogos</h1>
+            <p>Escolha uma opção abaixo e ganhe pontos extra na sua conta</p>
         </div>
     </div>
 
     <div class="aviso">
-        Escolha uma oferta abaixo, siga as instruções até o fim (ex: instalar um jogo e chegar ao nível pedido) e os pontos são creditados <b>automaticamente</b> na sua conta assim que a oferta for confirmada. Pode levar alguns minutos.
+        Toque numa oferta para abrir. Complete até ao fim e os pontos entram <b>automaticamente</b> na sua conta (pode demorar alguns minutos após a confirmação).
     </div>
 
-    <div class="caixa-iframe" id="caixaIframe">
-        <div class="carregando" id="carregando">
-            <div class="spinner"></div>
-            <span>A carregar ofertas…</span>
+    <div class="lista-ofertas">
+
+        <!-- CPX Research -->
+        <a href="disponivel.html" class="card-oferta" id="cardCpx">
+            <div class="card-topo">
+                <div class="logo-box">
+                    <img src="https://i.supaimg.com/9447b725-0914-4700-9681-fccbd9cb5399/27d1b877-62c3-4d81-b5e8-67b946eb7178.png" alt="CPX Research" onerror="this.style.display='none'">
+                </div>
+                <div class="card-info">
+                    <h2>CPX Research</h2>
+                    <p>Responda a pesquisas e inquéritos rápidos e ganhe pontos</p>
+                    <span class="badge"><i class="fas fa-bolt"></i> Disponível agora</span>
+                </div>
+            </div>
+            <div class="btn-oferta">
+                <i class="fas fa-clipboard-list"></i>
+                Responder pesquisas
+                <i class="fas fa-arrow-right seta"></i>
+            </div>
+        </a>
+
+        <!-- Placeholder para futuras redes (MyLead OfferWall, etc.) -->
+        <div class="card-oferta em-breve">
+            <div class="card-topo">
+                <div class="logo-box" style="background: linear-gradient(145deg,#1a2030,#121820); border-color: rgba(168,176,200,0.25);">
+                    <i class="fas fa-gamepad" style="font-size:28px;color:#6b7388;"></i>
+                </div>
+                <div class="card-info">
+                    <h2>Jogos &amp; Ofertas</h2>
+                    <p>Instalar apps, jogos e ofertas especiais</p>
+                    <span class="badge"><i class="fas fa-clock"></i> Em breve</span>
+                </div>
+            </div>
+            <div class="btn-oferta">
+                <i class="fas fa-lock"></i>
+                Em breve
+            </div>
         </div>
+
     </div>
+
+    <p class="rodape-dica">
+        Quanto mais pesquisas completar com sucesso, mais pontos acumula.<br>
+        Evite fechar a página a meio do inquérito.
+    </p>
 
     <script>
-        (async function () {
-            var email = localStorage.getItem('emailUtilizador');
-            var caixa = document.getElementById('caixaIframe');
-            var carregando = document.getElementById('carregando');
+        (function () {
+            var email = localStorage.getItem('emailUtilizador') ||
+                        localStorage.getItem('email') ||
+                        localStorage.getItem('userEmail') || '';
 
-            if (!email) {
-                caixa.innerHTML = '<div class="erro"><i class="fa-solid fa-user-lock"></i>Precisa de entrar na sua conta para ver as ofertas.<br><a href="criar-conta.html">Entrar / Criar conta</a></div>';
-                return;
-            }
-
-            try {
-                var resp = await fetch('/get-offerwall-link?email=' + encodeURIComponent(email));
-                var dados = await resp.json();
-
-                if (!dados.url) {
-                    throw new Error('sem url');
-                }
-
-                var iframe = document.createElement('iframe');
-                iframe.src = dados.url;
-                iframe.onload = function () {
-                    if (carregando) carregando.remove();
-                };
-                caixa.appendChild(iframe);
-            } catch (e) {
-                caixa.innerHTML = '<div class="erro"><i class="fa-solid fa-triangle-exclamation"></i>Não foi possível carregar as ofertas agora.<br>Tente novamente mais tarde.</div>';
+            var card = document.getElementById('cardCpx');
+            if (!email && card) {
+                card.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    window.location.href = 'criar-conta.html';
+                });
             }
         })();
     </script>
