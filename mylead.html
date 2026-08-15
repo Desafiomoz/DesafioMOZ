@@ -203,14 +203,12 @@
 
     <a id="btnAbrir" class="btn-abrir" href="#" target="_blank" rel="noopener" style="display:none;">
         <i class="fas fa-external-link-alt"></i>
-        Abrir em ecrã completo
+        Abrir ofertas MyLead
     </a>
 
-    <div class="caixa-wall" id="caixa">
-        <div class="carregando" id="carregando">
-            <div class="spinner"></div>
-            <span>A carregar ofertas…</span>
-        </div>
+    <div class="aviso" id="avisoRedirect" style="display:none;">
+        <i class="fas fa-circle-info"></i>
+        A MyLead não permite abrir dentro desta caixa — toque no botão verde acima para ver a lista de ofertas numa nova aba.
     </div>
 
     <script>
@@ -223,15 +221,14 @@
                 ''
             ).trim().toLowerCase();
 
-            var caixa = document.getElementById('caixa');
-            var carregando = document.getElementById('carregando');
             var btnAbrir = document.getElementById('btnAbrir');
+            var avisoRedirect = document.getElementById('avisoRedirect');
 
             if (!email) {
-                caixa.innerHTML =
-                    '<div class="erro"><i class="fa-solid fa-user-lock"></i>' +
-                    'Precisa de entrar na conta para ver as ofertas.<br>' +
-                    '<a href="criar-conta.html">Entrar / Criar conta</a></div>';
+                avisoRedirect.style.display = 'block';
+                avisoRedirect.innerHTML =
+                    '<i class="fa-solid fa-user-lock"></i> Precisa de entrar na conta para ver as ofertas. ' +
+                    '<a href="criar-conta.html" style="color:var(--verde-claro);font-weight:600;">Entrar / Criar conta</a>';
                 return;
             }
 
@@ -243,19 +240,7 @@
 
             btnAbrir.href = wallUrl;
             btnAbrir.style.display = 'flex';
-
-            var iframe = document.createElement('iframe');
-            iframe.src = wallUrl;
-            iframe.title = 'MyLead';
-            iframe.setAttribute('allow', 'fullscreen');
-            iframe.onload = function () {
-                if (carregando) carregando.remove();
-            };
-            setTimeout(function () {
-                if (carregando && carregando.parentNode) carregando.remove();
-            }, 8000);
-
-            caixa.appendChild(iframe);
+            avisoRedirect.style.display = 'block';
         })();
     </script>
 
