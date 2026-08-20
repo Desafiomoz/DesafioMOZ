@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "dev.pages.desafiomoz.twa",
+        "sha256_cert_fingerprints": ["31:B5:32:47:D5:C4:72:42:E4:D8:49:64:44:2D:D8:65:FA:76:83:0C:F2:98:3E:49:94:91:02:73:42:59:EF:62"]
+      }
+    }]
