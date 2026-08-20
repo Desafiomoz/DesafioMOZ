@@ -2,7 +2,7 @@
   "name": "Desafio MOZ",
   "short_name": "Desafio MOZ",
   "description": "Desafios, anúncios, inquéritos e recompensas — ganhe pontos e saque via M-Pesa/e-Mola.",
-  "start_url": "/desafios.html",
+  "start_url": "/index.html",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
