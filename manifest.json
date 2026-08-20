@@ -1,0 +1,38 @@
+{
+  "name": "Desafio MOZ",
+  "short_name": "Desafio MOZ",
+  "description": "Desafios, anúncios, inquéritos e recompensas — ganhe pontos e saque via M-Pesa/e-Mola.",
+  "start_url": "/desafios.html",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#06080e",
+  "theme_color": "#06080e",
+  "lang": "pt-MZ",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
