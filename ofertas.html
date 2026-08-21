@@ -231,28 +231,10 @@
             z-index: 1;
             letter-spacing: 0.01em;
         }
-        .btn-oferta i {
-            font-size: 15px;
-        }
+        .btn-oferta i { font-size: 15px; }
         .btn-oferta .seta {
             margin-left: auto;
             opacity: 0.85;
-        }
-
-        .card-oferta.em-breve {
-            opacity: 0.72;
-            border-color: rgba(168,176,200,0.2);
-        }
-        .card-oferta.em-breve .btn-oferta {
-            background: linear-gradient(135deg, #3a4254, #2a3140);
-            color: #A8B0C8;
-            box-shadow: none;
-            pointer-events: none;
-        }
-        .card-oferta.em-breve .badge {
-            color: #A8B0C8;
-            background: rgba(168,176,200,0.1);
-            border-color: rgba(168,176,200,0.2);
         }
 
         .rodape-dica {
@@ -300,7 +282,7 @@
             </div>
         </a>
 
-        <!-- MyLead OfferWall -->
+        <!-- MyLead -->
         <a href="mylead.html" class="card-oferta" id="cardMylead">
             <div class="card-topo">
                 <div class="logo-box">
@@ -319,12 +301,30 @@
             </div>
         </a>
 
+        <!-- CPAGrip -->
+        <a href="#" class="card-oferta" id="cardCpagrip">
+            <div class="card-topo">
+                <div class="logo-box">
+                    <img src="https://i.supaimg.com/9447b725-0914-4700-9681-fccbd9cb5399/bb402b9c-5df3-4b74-978f-67e6c8d9ae8b.jpg" alt="CPAGrip" onerror="this.style.display='none'">
+                </div>
+                <div class="card-info">
+                    <h2>CPAGrip Ofertas</h2>
+                    <p>Complete ofertas, instale apps e ganhe pontos extra</p>
+                    <span class="badge"><i class="fas fa-bolt"></i> Disponível agora</span>
+                </div>
+            </div>
+            <div class="btn-oferta">
+                <i class="fas fa-gift"></i>
+                Ver ofertas CPAGrip
+                <i class="fas fa-arrow-right seta"></i>
+            </div>
+        </a>
+
     </div>
 
-
     <p class="rodape-dica">
-        Quanto mais pesquisas completar com sucesso, mais pontos acumula.<br>
-        Evite fechar a página a meio do inquérito.
+        Quanto mais ofertas completar com sucesso, mais pontos acumula.<br>
+        Evite fechar a página a meio da oferta.
     </p>
 
     <script>
@@ -333,8 +333,9 @@
                         localStorage.getItem('email') ||
                         localStorage.getItem('userEmail') || '';
 
+            // Se não estiver logado
             if (!email) {
-                ['cardCpx', 'cardMylead'].forEach(function (id) {
+                ['cardCpx', 'cardMylead', 'cardCpagrip'].forEach(function (id) {
                     var card = document.getElementById(id);
                     if (card) {
                         card.addEventListener('click', function (e) {
@@ -342,6 +343,17 @@
                             window.location.href = 'criar-conta.html';
                         });
                     }
+                });
+                return;
+            }
+
+            // CPAGrip - abre com o email do utilizador
+            var cardCpagrip = document.getElementById('cardCpagrip');
+            if (cardCpagrip) {
+                cardCpagrip.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    var link = 'https://installyourfiles.com/1910102?tracking_id=' + encodeURIComponent(email);
+                    window.open(link, '_blank');
                 });
             }
         })();
