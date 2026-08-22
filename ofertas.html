@@ -34,9 +34,7 @@
         }
         .menu-baixo {
             position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
+            bottom: 0; left: 0; right: 0;
             background: rgba(12, 14, 20, 0.97);
             border-top: 1px solid #1e2430;
             display: flex;
@@ -73,8 +71,7 @@
             box-shadow: 0 8px 28px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255,255,255,0.04);
         }
         .cabecalho .icone {
-            width: 48px;
-            height: 48px;
+            width: 48px; height: 48px;
             border-radius: 14px;
             background: linear-gradient(145deg, rgba(0,200,83,0.25), rgba(34,255,153,0.1));
             border: 1px solid rgba(0,200,83,0.35);
@@ -84,7 +81,7 @@
             font-size: 22px;
             flex-shrink: 0;
         }
-        .cabecalho h1 { font-size: 19px; font-weight: 700; letter-spacing: -0.02em; }
+        .cabecalho h1 { font-size: 19px; font-weight: 700; }
         .cabecalho p {
             color: var(--texto-claro);
             font-size: 12.5px;
@@ -129,21 +126,10 @@
             padding: 18px 16px 16px;
             position: relative;
             overflow: hidden;
-            box-shadow:
-                0 10px 32px rgba(0, 0, 0, 0.35),
-                0 0 0 1px rgba(255,255,255,0.03) inset,
-                0 1px 0 rgba(255,255,255,0.05) inset;
+            box-shadow: 0 10px 32px rgba(0, 0, 0, 0.35);
             transition: transform 0.18s ease;
         }
         .card-oferta:active { transform: scale(0.985); }
-        .card-oferta::after {
-            content: "";
-            position: absolute;
-            top: -40%; right: -20%;
-            width: 160px; height: 160px;
-            background: radial-gradient(circle, rgba(0,200,83,0.12), transparent 70%);
-            pointer-events: none;
-        }
 
         .card-topo {
             display: flex;
@@ -209,7 +195,7 @@
             font-weight: 700;
             color: #04140a;
             background: linear-gradient(135deg, #22FF99 0%, #00C853 55%, #00a844 100%);
-            box-shadow: 0 6px 20px rgba(0,200,83,0.4), 0 1px 0 rgba(255,255,255,0.25) inset;
+            box-shadow: 0 6px 20px rgba(0,200,83,0.4);
             cursor: pointer;
             position: relative;
             z-index: 1;
@@ -242,11 +228,11 @@
 
     <div class="lista-ofertas">
 
-        <!-- CPX Research -->
+        <!-- CPX -->
         <a href="disponivel.html" class="card-oferta" id="cardCpx">
             <div class="card-topo">
                 <div class="logo-box">
-                    <img src="https://i.supaimg.com/9447b725-0914-4700-9681-fccbd9cb5399/27d1b877-62c3-4d81-b5e8-67b946eb7178.png" alt="CPX Research" onerror="this.style.display='none'">
+                    <img src="https://i.supaimg.com/9447b725-0914-4700-9681-fccbd9cb5399/27d1b877-62c3-4d81-b5e8-67b946eb7178.png" alt="CPX" onerror="this.style.display='none'">
                 </div>
                 <div class="card-info">
                     <h2>CPX Research</h2>
@@ -318,6 +304,25 @@
             </div>
         </a>
 
+        <!-- Offerwall.ad (NOVO) -->
+        <a href="#" class="card-oferta" id="cardOfferwallAd">
+            <div class="card-topo">
+                <div class="logo-box">
+                    <img src="https://offerwall.ad/favicon.ico" alt="Offerwall.ad" onerror="this.style.display='none'">
+                </div>
+                <div class="card-info">
+                    <h2>Offerwall.ad</h2>
+                    <p>Complete ofertas e ganhe pontos na sua conta</p>
+                    <span class="badge"><i class="fas fa-bolt"></i> Disponível agora</span>
+                </div>
+            </div>
+            <div class="btn-oferta">
+                <i class="fas fa-gift"></i>
+                Ver ofertas
+                <i class="fas fa-arrow-right seta"></i>
+            </div>
+        </a>
+
     </div>
 
     <p class="rodape-dica">
@@ -331,9 +336,8 @@
                         localStorage.getItem('email') ||
                         localStorage.getItem('userEmail') || '';
 
-            // Se não estiver logado
             if (!email) {
-                ['cardCpx', 'cardMylead', 'cardCpagrip', 'cardOfferwall'].forEach(function (id) {
+                ['cardCpx', 'cardMylead', 'cardCpagrip', 'cardOfferwall', 'cardOfferwallAd'].forEach(function (id) {
                     var card = document.getElementById(id);
                     if (card) {
                         card.addEventListener('click', function (e) {
@@ -351,6 +355,16 @@
                 cardOfferwall.addEventListener('click', function (e) {
                     e.preventDefault();
                     var link = 'https://offerwall.me/ptp/6a7b75baf626f717ba554f0f?user_id=' + encodeURIComponent(email);
+                    window.open(link, '_blank');
+                });
+            }
+
+            // Offerwall.ad
+            var cardOfferwallAd = document.getElementById('cardOfferwallAd');
+            if (cardOfferwallAd) {
+                cardOfferwallAd.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    var link = 'https://offerwall.ad/wall/d6813264db869f8febf6b58f2023a6e4?uid=' + encodeURIComponent(email);
                     window.open(link, '_blank');
                 });
             }
