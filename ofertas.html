@@ -18,7 +18,6 @@
             --verde-claro: #22FF99;
             --texto: #FFFFFF;
             --texto-claro: #A8B0C8;
-            --destaque: #FFD700;
             --card: rgba(24, 28, 40, 0.95);
             --linha: rgba(0,200,83,0.22);
         }
@@ -85,11 +84,7 @@
             font-size: 22px;
             flex-shrink: 0;
         }
-        .cabecalho h1 {
-            font-size: 19px;
-            font-weight: 700;
-            letter-spacing: -0.02em;
-        }
+        .cabecalho h1 { font-size: 19px; font-weight: 700; letter-spacing: -0.02em; }
         .cabecalho p {
             color: var(--texto-claro);
             font-size: 12.5px;
@@ -112,9 +107,7 @@
         .aviso::before {
             content: "";
             position: absolute;
-            left: 0;
-            top: 0;
-            bottom: 0;
+            left: 0; top: 0; bottom: 0;
             width: 3px;
             background: linear-gradient(180deg, var(--verde), var(--verde-claro));
         }
@@ -140,18 +133,14 @@
                 0 10px 32px rgba(0, 0, 0, 0.35),
                 0 0 0 1px rgba(255,255,255,0.03) inset,
                 0 1px 0 rgba(255,255,255,0.05) inset;
-            transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+            transition: transform 0.18s ease;
         }
-        .card-oferta:active {
-            transform: scale(0.985);
-        }
+        .card-oferta:active { transform: scale(0.985); }
         .card-oferta::after {
             content: "";
             position: absolute;
-            top: -40%;
-            right: -20%;
-            width: 160px;
-            height: 160px;
+            top: -40%; right: -20%;
+            width: 160px; height: 160px;
             background: radial-gradient(circle, rgba(0,200,83,0.12), transparent 70%);
             pointer-events: none;
         }
@@ -165,8 +154,7 @@
             z-index: 1;
         }
         .logo-box {
-            width: 64px;
-            height: 64px;
+            width: 64px; height: 64px;
             border-radius: 16px;
             background: #fff;
             display: flex;
@@ -178,8 +166,7 @@
             border: 2px solid rgba(0,200,83,0.25);
         }
         .logo-box img {
-            width: 100%;
-            height: 100%;
+            width: 100%; height: 100%;
             object-fit: contain;
             padding: 6px;
         }
@@ -208,7 +195,6 @@
             padding: 4px 10px;
             border-radius: 20px;
         }
-        .badge i { font-size: 10px; }
 
         .btn-oferta {
             display: flex;
@@ -223,19 +209,12 @@
             font-weight: 700;
             color: #04140a;
             background: linear-gradient(135deg, #22FF99 0%, #00C853 55%, #00a844 100%);
-            box-shadow:
-                0 6px 20px rgba(0,200,83,0.4),
-                0 1px 0 rgba(255,255,255,0.25) inset;
+            box-shadow: 0 6px 20px rgba(0,200,83,0.4), 0 1px 0 rgba(255,255,255,0.25) inset;
             cursor: pointer;
             position: relative;
             z-index: 1;
-            letter-spacing: 0.01em;
         }
-        .btn-oferta i { font-size: 15px; }
-        .btn-oferta .seta {
-            margin-left: auto;
-            opacity: 0.85;
-        }
+        .btn-oferta .seta { margin-left: auto; opacity: 0.85; }
 
         .rodape-dica {
             margin-top: 22px;
@@ -302,7 +281,7 @@
         </a>
 
         <!-- CPAGrip -->
-        <a href="#" class="card-oferta" id="cardCpagrip">
+        <a href="cpagrip.html" class="card-oferta" id="cardCpagrip">
             <div class="card-topo">
                 <div class="logo-box">
                     <img src="https://i.supaimg.com/9447b725-0914-4700-9681-fccbd9cb5399/bb402b9c-5df3-4b74-978f-67e6c8d9ae8b.jpg" alt="CPAGrip" onerror="this.style.display='none'">
@@ -316,6 +295,25 @@
             <div class="btn-oferta">
                 <i class="fas fa-gift"></i>
                 Ver ofertas CPAGrip
+                <i class="fas fa-arrow-right seta"></i>
+            </div>
+        </a>
+
+        <!-- Offerwall.me -->
+        <a href="#" class="card-oferta" id="cardOfferwall">
+            <div class="card-topo">
+                <div class="logo-box">
+                    <img src="https://offerwall.me/favicon.ico" alt="Offerwall.me" onerror="this.style.display='none'">
+                </div>
+                <div class="card-info">
+                    <h2>Offerwall.me</h2>
+                    <p>Complete ofertas e tarefas e ganhe pontos extra</p>
+                    <span class="badge"><i class="fas fa-bolt"></i> Disponível agora</span>
+                </div>
+            </div>
+            <div class="btn-oferta">
+                <i class="fas fa-external-link-alt"></i>
+                Ver ofertas
                 <i class="fas fa-arrow-right seta"></i>
             </div>
         </a>
@@ -335,7 +333,7 @@
 
             // Se não estiver logado
             if (!email) {
-                ['cardCpx', 'cardMylead', 'cardCpagrip'].forEach(function (id) {
+                ['cardCpx', 'cardMylead', 'cardCpagrip', 'cardOfferwall'].forEach(function (id) {
                     var card = document.getElementById(id);
                     if (card) {
                         card.addEventListener('click', function (e) {
@@ -347,12 +345,12 @@
                 return;
             }
 
-            // CPAGrip - abre com o email do utilizador
-            var cardCpagrip = document.getElementById('cardCpagrip');
-            if (cardCpagrip) {
-                cardCpagrip.addEventListener('click', function (e) {
+            // Offerwall.me
+            var cardOfferwall = document.getElementById('cardOfferwall');
+            if (cardOfferwall) {
+                cardOfferwall.addEventListener('click', function (e) {
                     e.preventDefault();
-                    var link = 'https://installyourfiles.com/1910102?tracking_id=' + encodeURIComponent(email);
+                    var link = 'https://offerwall.me/ptp/6a7b75baf626f717ba554f0f?user_id=' + encodeURIComponent(email);
                     window.open(link, '_blank');
                 });
             }
