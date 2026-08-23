@@ -6,7 +6,7 @@ const FIRESTORE_BASE = `https://firestore.googleapis.com/v1/projects/${FIREBASE_
 const PONTOS_POR_DOLLAR = 100;
 
 // Senha da Offerwall.ad (se usares password no postback). Deixa vazio se não usares.
-const CALLBACK_PASSWORD = "601879b9e6613bba"; // cola a senha completa se for diferente
+const CALLBACK_PASSWORD = "601879b9e6613bba6c725c5041ac9373c03f284b55d696ce"; // cola a senha completa se for diferente
 
 export async function onRequestGet({ request }) {
   try {
