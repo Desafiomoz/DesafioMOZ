@@ -228,7 +228,26 @@
 
     <div class="lista-ofertas">
 
-        <!-- CPX -->
+        <!-- 1. Offerwall.ad -->
+        <a href="#" class="card-oferta" id="cardOfferwallAd">
+            <div class="card-topo">
+                <div class="logo-box">
+                    <img src="https://i.supaimg.com/9447b725-0914-4700-9681-fccbd9cb5399/d5f8f268-07f8-4797-aa9a-37b9d218b2d1.jpg" alt="Offerwall.ad" onerror="this.style.display='none'">
+                </div>
+                <div class="card-info">
+                    <h2>Offerwall ad</h2>
+                    <p>Complete ofertas e ganhe pontos na sua conta</p>
+                    <span class="badge"><i class="fas fa-bolt"></i> Disponível agora</span>
+                </div>
+            </div>
+            <div class="btn-oferta">
+                <i class="fas fa-gift"></i>
+                Ver ofertas
+                <i class="fas fa-arrow-right seta"></i>
+            </div>
+        </a>
+
+        <!-- 2. CPX Research -->
         <a href="disponivel.html" class="card-oferta" id="cardCpx">
             <div class="card-topo">
                 <div class="logo-box">
@@ -247,45 +266,7 @@
             </div>
         </a>
 
-        <!-- MyLead -->
-        <a href="mylead.html" class="card-oferta" id="cardMylead">
-            <div class="card-topo">
-                <div class="logo-box">
-                    <img src="https://i.supaimg.com/9447b725-0914-4700-9681-fccbd9cb5399/f96292ac-9b0f-4e16-bd5c-7b260ed43da5.jpg" alt="MyLead" onerror="this.style.display='none'">
-                </div>
-                <div class="card-info">
-                    <h2>Jogos &amp; Ofertas</h2>
-                    <p>Instalar apps, jogos e ofertas especiais</p>
-                    <span class="badge"><i class="fas fa-bolt"></i> Disponível agora</span>
-                </div>
-            </div>
-            <div class="btn-oferta">
-                <i class="fas fa-gamepad"></i>
-                Ver ofertas
-                <i class="fas fa-arrow-right seta"></i>
-            </div>
-        </a>
-
-        <!-- CPAGrip -->
-        <a href="#" class="card-oferta" id="cardCpagrip">
-            <div class="card-topo">
-                <div class="logo-box">
-                    <img src="https://i.supaimg.com/9447b725-0914-4700-9681-fccbd9cb5399/bb402b9c-5df3-4b74-978f-67e6c8d9ae8b.jpg" alt="CPAGrip" onerror="this.style.display='none'">
-                </div>
-                <div class="card-info">
-                    <h2>CPAGrip Ofertas</h2>
-                    <p>Complete ofertas, instale apps e ganhe pontos extra</p>
-                    <span class="badge"><i class="fas fa-bolt"></i> Disponível agora</span>
-                </div>
-            </div>
-            <div class="btn-oferta">
-                <i class="fas fa-gift"></i>
-                Ver ofertas CPAGrip
-                <i class="fas fa-arrow-right seta"></i>
-            </div>
-        </a>
-
-        <!-- Offerwall.me -->
+        <!-- 3. Offerwall.me -->
         <a href="#" class="card-oferta" id="cardOfferwall">
             <div class="card-topo">
                 <div class="logo-box">
@@ -304,21 +285,40 @@
             </div>
         </a>
 
-        <!-- Offerwall.ad (NOVO) -->
-        <a href="#" class="card-oferta" id="cardOfferwallAd">
+        <!-- 4. MyLead -->
+        <a href="mylead.html" class="card-oferta" id="cardMylead">
             <div class="card-topo">
                 <div class="logo-box">
-                    <img src="https://i.supaimg.com/9447b725-0914-4700-9681-fccbd9cb5399/d5f8f268-07f8-4797-aa9a-37b9d218b2d1.jpg" alt="Offerwall.ad" onerror="this.style.display='none'">
+                    <img src="https://i.supaimg.com/9447b725-0914-4700-9681-fccbd9cb5399/f96292ac-9b0f-4e16-bd5c-7b260ed43da5.jpg" alt="MyLead" onerror="this.style.display='none'">
                 </div>
                 <div class="card-info">
-                    <h2>Offerwall ad</h2>
-                    <p>Complete ofertas e ganhe pontos na sua conta</p>
+                    <h2>Jogos &amp; Ofertas</h2>
+                    <p>Instalar apps, jogos e ofertas especiais</p>
+                    <span class="badge"><i class="fas fa-bolt"></i> Disponível agora</span>
+                </div>
+            </div>
+            <div class="btn-oferta">
+                <i class="fas fa-gamepad"></i>
+                Ver ofertas
+                <i class="fas fa-arrow-right seta"></i>
+            </div>
+        </a>
+
+        <!-- 5. CPAGrip -->
+        <a href="#" class="card-oferta" id="cardCpagrip">
+            <div class="card-topo">
+                <div class="logo-box">
+                    <img src="https://i.supaimg.com/9447b725-0914-4700-9681-fccbd9cb5399/bb402b9c-5df3-4b74-978f-67e6c8d9ae8b.jpg" alt="CPAGrip" onerror="this.style.display='none'">
+                </div>
+                <div class="card-info">
+                    <h2>CPAGrip Ofertas</h2>
+                    <p>Complete ofertas, instale apps e ganhe pontos extra</p>
                     <span class="badge"><i class="fas fa-bolt"></i> Disponível agora</span>
                 </div>
             </div>
             <div class="btn-oferta">
                 <i class="fas fa-gift"></i>
-                Ver ofertas
+                Ver ofertas CPAGrip
                 <i class="fas fa-arrow-right seta"></i>
             </div>
         </a>
@@ -347,6 +347,16 @@
                     }
                 });
                 return;
+            }
+
+            // CPAGrip
+            var cardCpagrip = document.getElementById('cardCpagrip');
+            if (cardCpagrip) {
+                cardCpagrip.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    var link = 'https://installyourfiles.com/1910102?tracking_id=' + encodeURIComponent(email);
+                    window.open(link, '_blank');
+                });
             }
 
             // Offerwall.me
