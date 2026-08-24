@@ -33,9 +33,7 @@
         }
         .menu-baixo {
             position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
+            bottom: 0; left: 0; right: 0;
             background: rgba(12, 14, 20, 0.97);
             border-top: 1px solid #1e2430;
             display: flex;
@@ -78,8 +76,7 @@
             white-space: nowrap;
         }
         .topo .logo-mini {
-            width: 36px;
-            height: 36px;
+            width: 36px; height: 36px;
             border-radius: 10px;
             background: #fff;
             overflow: hidden;
@@ -87,15 +84,11 @@
             border: 1px solid rgba(0,200,83,0.3);
         }
         .topo .logo-mini img {
-            width: 100%;
-            height: 100%;
+            width: 100%; height: 100%;
             object-fit: contain;
             padding: 3px;
         }
-        .topo h1 {
-            font-size: 16px;
-            font-weight: 700;
-        }
+        .topo h1 { font-size: 16px; font-weight: 700; }
         .topo p {
             font-size: 11.5px;
             color: var(--texto-claro);
@@ -113,9 +106,13 @@
             line-height: 1.5;
         }
         .aviso b { color: var(--verde-claro); }
+        .aviso.erro-box {
+            border-color: rgba(255,80,80,0.4);
+            color: #ffb4b4;
+        }
 
         .btn-abrir {
-            display: flex;
+            display: none;
             align-items: center;
             justify-content: center;
             gap: 8px;
@@ -131,62 +128,21 @@
             box-shadow: 0 6px 18px rgba(0,200,83,0.35);
         }
 
-        .caixa-wall {
-            background: var(--card);
-            border: 1px solid var(--linha);
-            border-radius: 16px;
-            overflow: hidden;
-            min-height: 65vh;
-            position: relative;
-        }
-        .carregando {
-            position: absolute;
-            inset: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
+        .estado {
+            text-align: center;
+            padding: 20px 12px;
             color: var(--texto-claro);
-            z-index: 2;
-            background: rgba(14, 17, 24, 0.85);
+            font-size: 13px;
         }
         .spinner {
-            width: 34px;
-            height: 34px;
+            width: 34px; height: 34px;
+            margin: 0 auto 12px;
             border: 3px solid rgba(0,200,83,0.2);
             border-top-color: var(--verde);
             border-radius: 50%;
             animation: girar 0.8s linear infinite;
         }
         @keyframes girar { to { transform: rotate(360deg); } }
-        iframe {
-            width: 100%;
-            height: 72vh;
-            min-height: 480px;
-            border: none;
-            display: block;
-            background: #fff;
-        }
-        .erro {
-            padding: 36px 18px;
-            text-align: center;
-            color: var(--texto-claro);
-            line-height: 1.55;
-        }
-        .erro i {
-            font-size: 36px;
-            color: #FFD700;
-            margin-bottom: 12px;
-            display: block;
-        }
-        .erro a {
-            display: inline-block;
-            margin-top: 14px;
-            color: var(--verde-claro);
-            text-decoration: none;
-            font-weight: 600;
-        }
     </style>
 </head>
 <body>
@@ -206,18 +162,24 @@
         Complete a oferta até ao fim. Os pontos entram <b>automaticamente</b> na sua conta (pode demorar alguns minutos).
     </div>
 
-    <a id="btnAbrir" class="btn-abrir" href="#" target="_blank" rel="noopener" style="display:none;">
+    <div class="estado" id="estado">
+        <div class="spinner"></div>
+        A preparar as ofertas...
+    </div>
+
+    <a id="btnAbrir" class="btn-abrir" href="#" target="_blank" rel="noopener">
         <i class="fas fa-external-link-alt"></i>
         Abrir ofertas MyLead
     </a>
 
-    <div class="aviso" id="avisoRedirect" style="display:none;">
-        <i class="fas fa-circle-info"></i>
-        A MyLead não permite abrir dentro desta caixa — toque no botão verde acima para ver a lista de ofertas numa nova aba.
-    </div>
+    <div class="aviso" id="avisoExtra" style="display:none;"></div>
 
     <script>
         (async function () {
+            var estado = document.getElementById('estado');
+            var btnAbrir = document.getElementById('btnAbrir');
+            var avisoExtra = document.getElementById('avisoExtra');
+
             var email = (
                 localStorage.getItem('emailUtilizador') ||
                 localStorage.getItem('email') ||
@@ -226,13 +188,9 @@
                 ''
             ).trim().toLowerCase();
 
-            var btnAbrir = document.getElementById('btnAbrir');
-            var avisoRedirect = document.getElementById('avisoRedirect');
-
             if (!email) {
-                avisoRedirect.style.display = 'block';
-                avisoRedirect.innerHTML =
-                    '<i class="fa-solid fa-user-lock"></i> Precisa de entrar na conta para ver as ofertas. ' +
+                estado.innerHTML =
+                    'Precisa de entrar na conta para ver as ofertas.<br><br>' +
                     '<a href="criar-conta.html" style="color:var(--verde-claro);font-weight:600;">Entrar / Criar conta</a>';
                 return;
             }
@@ -245,10 +203,6 @@
                 });
             }
 
-            // A MyLead exige player_id em formato UUID/número — não aceita
-            // e-mail direto. Guardamos um UUID fixo por usuário no navegador,
-            // e associamos esse UUID ao e-mail no Firestore (para o postback
-            // saber depois a quem creditar os pontos).
             var playerId = localStorage.getItem('myleadPlayerId');
             if (!playerId) {
                 playerId = gerarUUID();
@@ -257,24 +211,62 @@
 
             var FIREBASE_PROJECT_ID = 'desafio-moz-61b70';
             var FIRESTORE_BASE = 'https://firestore.googleapis.com/v1/projects/' + FIREBASE_PROJECT_ID + '/databases/(default)/documents';
+            var docUrl = FIRESTORE_BASE + '/myleadPlayers/' + encodeURIComponent(playerId) +
+                '?documentId=' + encodeURIComponent(playerId);
 
+            var gravou = false;
             try {
-                await fetch(FIRESTORE_BASE + '/myleadPlayers/' + encodeURIComponent(playerId) + '?documentId=' + encodeURIComponent(playerId), {
+                var res = await fetch(docUrl, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ fields: { email: { stringValue: email } } })
+                    body: JSON.stringify({
+                        fields: {
+                            email: { stringValue: email },
+                            updatedAt: { timestampValue: new Date().toISOString() }
+                        }
+                    })
                 });
+                gravou = res.ok || res.status === 200 || res.status === 201;
+
+                // Confirmar leitura
+                if (gravou) {
+                    var check = await fetch(FIRESTORE_BASE + '/myleadPlayers/' + encodeURIComponent(playerId));
+                    if (check.status === 200) {
+                        var data = await check.json();
+                        var emailGuardado = data?.fields?.email?.stringValue || '';
+                        gravou = emailGuardado.toLowerCase() === email;
+                    } else {
+                        gravou = false;
+                    }
+                }
             } catch (e) {
-                // se falhar, tenta na mesma continuar — o link ainda abre
+                gravou = false;
+            }
+
+            // Plano B: se Firestore bloquear, usa o email directamente no player_id
+            var idParaMyLead = playerId;
+            if (!gravou) {
+                idParaMyLead = email;
+                avisoExtra.style.display = 'block';
+                avisoExtra.className = 'aviso';
+                avisoExtra.innerHTML =
+                    'Modo alternativo activo: a MyLead vai usar o seu email como ID. ' +
+                    'Os pontos devem continuar a funcionar.';
             }
 
             var wallUrl =
                 'https://reward-me.eu/beedda9e-989e-11f1-b19e-8a5fb7be40ea?player_id=' +
-                encodeURIComponent(playerId);
+                encodeURIComponent(idParaMyLead);
 
             btnAbrir.href = wallUrl;
             btnAbrir.style.display = 'flex';
-            avisoRedirect.style.display = 'block';
+            estado.style.display = 'none';
+
+            if (gravou) {
+                avisoExtra.style.display = 'block';
+                avisoExtra.innerHTML =
+                    'Conta ligada. Toque no botão verde para abrir as ofertas MyLead.';
+            }
         })();
     </script>
 
