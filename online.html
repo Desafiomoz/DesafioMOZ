@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="pt-MZ">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Online – Desafio MOZ</title>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/icons/icon-16.png">
+    <meta name="theme-color" content="#06080e">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --preto-fundo: #0e1118;
+            --verde: #00C853;
+            --verde-claro: #22FF99;
+            --texto: #FFFFFF;
+            --texto-claro: #A8B0C8;
+        }
+        body {
+            background: var(--preto-fundo);
+            color: var(--texto);
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            padding-bottom: 90px;
+            min-height: 100vh;
+            background-image:
+                radial-gradient(circle at 20% 10%, rgba(59,158,255,0.10), transparent 35%),
+                radial-gradient(circle at 85% 20%, rgba(168,85,247,0.10), transparent 38%),
+                radial-gradient(circle at 30% 80%, rgba(0,200,83,0.10), transparent 38%);
+        }
+        .topo-online {
+            padding: 26px 20px 18px;
+            text-align: center;
+        }
+        .topo-online h1 {
+            font-size: 24px;
+            font-weight: 800;
+            background: linear-gradient(90deg, #3b9eff, var(--verde-claro) 50%, #ffcf4d);
+            -webkit-background-clip: text; background-clip: text; color: transparent;
+        }
+        .topo-online p {
+            color: var(--texto-claro);
+            font-size: 13px;
+            margin-top: 6px;
+        }
+        .lista-jogos {
+            padding: 6px 18px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .card-jogo {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            background: linear-gradient(160deg, rgba(255,255,255,0.05), rgba(18,22,31,0.85));
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 20px;
+            padding: 16px;
+            text-decoration: none;
+            color: var(--texto);
+            box-shadow: 0 0 24px rgba(0,200,83,0.08), 0 6px 20px rgba(0,0,0,0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        .card-jogo .emblema {
+            width: 62px; height: 62px; border-radius: 16px; flex-shrink: 0;
+            background: linear-gradient(135deg, #3b9eff, var(--verde-claro) 55%, #ffcf4d);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 28px;
+            box-shadow: 0 0 22px rgba(0,200,83,0.35);
+        }
+        .card-jogo .info h3 {
+            font-size: 16px; font-weight: 800; margin-bottom: 3px;
+        }
+        .card-jogo .info p {
+            font-size: 12px; color: var(--texto-claro); line-height: 1.4;
+        }
+        .card-jogo .seta {
+            margin-left: auto; color: var(--verde-claro); font-size: 18px;
+        }
+        .card-brevemente {
+            display: flex; align-items: center; gap: 14px;
+            background: rgba(255,255,255,0.03);
+            border: 1px dashed rgba(255,255,255,0.14);
+            border-radius: 20px;
+            padding: 16px;
+            opacity: 0.6;
+        }
+        .card-brevemente .emblema {
+            width: 62px; height: 62px; border-radius: 16px; flex-shrink: 0;
+            background: rgba(255,255,255,0.06);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 26px; color: var(--texto-claro);
+        }
+        .card-brevemente h3 { font-size: 15px; font-weight: 700; }
+        .card-brevemente p { font-size: 12px; color: var(--texto-claro); margin-top: 3px; }
+
+        .menu-baixo {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: rgba(12, 14, 20, 0.97);
+            border-top: 1px solid #1e2430;
+            display: flex; justify-content: space-around; align-items: center;
+            padding: 10px 0 12px; z-index: 1000;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+        }
+        .menu-baixo a {
+            display: flex; flex-direction: column; align-items: center; gap: 4px;
+            text-decoration: none; color: #777; font-size: 11px; font-weight: 500; width: 56px;
+        }
+        .menu-baixo a i { font-size: 20px; margin-bottom: 2px; }
+        .menu-baixo a.ativo { color: var(--verde-claro); }
+    </style>
+</head>
+<body>
+
+    <div class="topo-online">
+        <h1>🎮 Online</h1>
+        <p>Joga, combina e ganha moedas — novos jogos a caminho</p>
+    </div>
+
+    <div class="lista-jogos">
+        <a href="desafio-match.html" class="card-jogo">
+            <div class="emblema">🧩</div>
+            <div class="info">
+                <h3>Homejub</h3>
+                <p>Combina peças, cumpre objetivos e ganha moedas. 300 níveis à espera de ti.</p>
+            </div>
+            <i class="fas fa-chevron-right seta"></i>
+        </a>
+
+        <div class="card-brevemente">
+            <div class="emblema">➕</div>
+            <div>
+                <h3>Mais jogos em breve</h3>
+                <p>Estamos a preparar novos jogos para esta área.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="menu-baixo">
+        <a href="desafios.html"><i class="fas fa-home"></i> Início</a>
+        <a href="tarefas.html"><i class="fas fa-tasks"></i> Tarefas</a>
+        <a href="saques.html"><i class="fas fa-wallet"></i> Sacar</a>
+        <a href="ofertas.html"><i class="fas fa-gift"></i> Ofertas</a>
+        <a href="online.html" class="ativo"><i class="fas fa-gamepad"></i> Online</a>
+        <a href="perfil.html"><i class="fas fa-cog"></i> Conta</a>
+    </div>
+
+</body>
+</html>
