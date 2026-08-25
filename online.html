@@ -98,6 +98,50 @@
         .card-brevemente h3 { font-size: 15px; font-weight: 700; }
         .card-brevemente p { font-size: 12px; color: var(--texto-claro); margin-top: 3px; }
 
+        .secao-titulo {
+            padding: 4px 20px 10px;
+            font-size: 13px; font-weight: 700; color: var(--texto-claro);
+            text-transform: uppercase; letter-spacing: .05em;
+        }
+        .caixa-missoes {
+            margin: 0 18px 22px;
+            background: linear-gradient(160deg, rgba(0,200,83,0.10), rgba(18,22,31,0.9));
+            border: 1px solid rgba(0,200,83,0.22);
+            border-radius: 20px;
+            padding: 18px;
+            box-shadow: 0 0 26px rgba(0,200,83,0.12);
+        }
+        .caixa-missoes h3 {
+            font-size: 16px; font-weight: 800; margin-bottom: 6px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .caixa-missoes > p {
+            font-size: 12.5px; color: var(--texto-claro); line-height: 1.5; margin-bottom: 14px;
+        }
+        .marco-linha {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 10px 4px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .marco-linha:last-child { border-bottom: none; }
+        .marco-nivel {
+            display: flex; align-items: center; gap: 10px;
+            font-size: 13.5px; font-weight: 700;
+        }
+        .marco-nivel .bandeira {
+            width: 30px; height: 30px; border-radius: 9px;
+            background: linear-gradient(135deg, var(--verde), var(--verde-claro));
+            display: flex; align-items: center; justify-content: center;
+            font-size: 13px; font-weight: 800; color: #0e1118;
+        }
+        .marco-valor {
+            font-size: 14px; font-weight: 800; color: var(--verde-claro);
+        }
+        .missoes-rodape {
+            margin-top: 12px; font-size: 11.5px; color: var(--texto-claro);
+            text-align: center; line-height: 1.5;
+        }
+
         .menu-baixo {
             position: fixed; bottom: 0; left: 0; right: 0;
             background: rgba(12, 14, 20, 0.97);
@@ -139,6 +183,23 @@
                 <p>Estamos a preparar novos jogos para esta área.</p>
             </div>
         </div>
+    </div>
+
+    <div class="secao-titulo">🏆 Missões — ganha dinheiro a jogar</div>
+    <div class="caixa-missoes">
+        <h3>💰 Sobe de nível, ganha meticais</h3>
+        <p>No Homejub, cada nível que passas vale 1 metical. Ao chegares a um destes níveis, o dinheiro entra automaticamente na tua conta Desafio MOZ — sem precisares de fazer nada.</p>
+
+        <div class="marco-linha"><div class="marco-nivel"><div class="bandeira">10</div> Nível 10</div><div class="marco-valor">+10 MT</div></div>
+        <div class="marco-linha"><div class="marco-nivel"><div class="bandeira">20</div> Nível 20</div><div class="marco-valor">+10 MT</div></div>
+        <div class="marco-linha"><div class="marco-nivel"><div class="bandeira">30</div> Nível 30</div><div class="marco-valor">+10 MT</div></div>
+        <div class="marco-linha"><div class="marco-nivel"><div class="bandeira">50</div> Nível 50</div><div class="marco-valor">+20 MT</div></div>
+        <div class="marco-linha"><div class="marco-nivel"><div class="bandeira">100</div> Nível 100</div><div class="marco-valor">+50 MT</div></div>
+        <div class="marco-linha"><div class="marco-nivel"><div class="bandeira">150</div> Nível 150</div><div class="marco-valor">+50 MT</div></div>
+        <div class="marco-linha"><div class="marco-nivel"><div class="bandeira">250</div> Nível 250</div><div class="marco-valor">+100 MT</div></div>
+        <div class="marco-linha"><div class="marco-nivel"><div class="bandeira">300</div> Nível 300</div><div class="marco-valor">+50 MT</div></div>
+
+        <div class="missoes-rodape">Chegando ao nível 300, terás ganho <strong style="color:var(--verde-claro);">300 MT no total</strong>, direto na tua carteira Desafio MOZ. Precisas de estar com sessão iniciada para o dinheiro ser guardado na tua conta.</div>
     </div>
 
     <div class="menu-baixo">

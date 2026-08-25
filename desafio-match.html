@@ -809,43 +809,48 @@ let jogoTerminado = false;   // trava novas jogadas após vitória/derrota
 let moedasTotais = 0;        // moeda persistente do jogador, nunca reinicia entre níveis
 let ajudasDisponiveis = 0;   // "ajudas" pré-compradas na loja — usadas antes de cobrar moedas diretamente
 let jogadasExtraArmazenadas = 0; // jogadas extra compradas na loja — aplicadas no início do próximo nível jogado
+let marcosPagos = [];        // níveis-marco (10,20,30...) cujo prémio em MT já foi creditado na conta real
+
+// chave do localStorage específica por jogador — evita que o progresso de uma conta "vaze" para outra no mesmo telemóvel
+function chaveLocal(){ return emailJogador ? ('homejub_estado_'+emailJogador) : 'homejub_estado_convidado'; }
+
+function estadoPadrao(){
+  return { vidas: VIDAS_MAX, proximaRecarga: 0, nivelDesbloqueado: 1, moedasTotais: 0, ajudasDisponiveis: 0, jogadasExtraArmazenadas: 0, marcosPagos: [] };
+}
+function aplicarEstado(d){
+  vidas = typeof d.vidas==='number' ? d.vidas : VIDAS_MAX;
+  proximaRecarga = d.proximaRecarga || 0;
+  nivelDesbloqueado = d.nivelDesbloqueado || 1;
+  moedasTotais = typeof d.moedasTotais==='number' ? d.moedasTotais : 0;
+  ajudasDisponiveis = d.ajudasDisponiveis || 0;
+  jogadasExtraArmazenadas = d.jogadasExtraArmazenadas || 0;
+  marcosPagos = Array.isArray(d.marcosPagos) ? d.marcosPagos : [];
+}
 
 function salvarEstado(){
-  const dados = { vidas, proximaRecarga, nivelDesbloqueado, moedasTotais, ajudasDisponiveis, jogadasExtraArmazenadas };
-  try{ localStorage.setItem('homejub_estado', JSON.stringify(dados)); }catch(e){}
+  const dados = { vidas, proximaRecarga, nivelDesbloqueado, moedasTotais, ajudasDisponiveis, jogadasExtraArmazenadas, marcosPagos };
+  try{ localStorage.setItem(chaveLocal(), JSON.stringify(dados)); }catch(e){}
   if(emailJogador && db){
     db.collection('jogoEstado').doc(emailJogador).set(dados, { merge:true }).catch(function(e){ console.warn('Homejub: falha ao guardar na conta', e); });
   }
 }
 async function carregarEstado(){
-  // primeiro tenta o localStorage (rápido, evita ecrã em branco enquanto a rede responde)
+  // primeiro tenta o localStorage desta conta específica (rápido, evita ecrã em branco enquanto a rede responde)
   try{
-    const raw = localStorage.getItem('homejub_estado');
-    if(raw){
-      const d = JSON.parse(raw);
-      vidas = typeof d.vidas==='number' ? d.vidas : VIDAS_MAX;
-      proximaRecarga = d.proximaRecarga || 0;
-      nivelDesbloqueado = d.nivelDesbloqueado || 1;
-      moedasTotais = d.moedasTotais || 0;
-      ajudasDisponiveis = d.ajudasDisponiveis || 0;
-      jogadasExtraArmazenadas = d.jogadasExtraArmazenadas || 0;
-    }
-  }catch(e){}
+    const raw = localStorage.getItem(chaveLocal());
+    if(raw) aplicarEstado(JSON.parse(raw));
+    else aplicarEstado(estadoPadrao());
+  }catch(e){ aplicarEstado(estadoPadrao()); }
 
   // se o jogador estiver logado no site, a conta dele (Firestore) manda — substitui o que veio do telemóvel
   if(emailJogador && db){
     try{
       const doc = await db.collection('jogoEstado').doc(emailJogador).get();
       if(doc.exists){
-        const d = doc.data();
-        vidas = typeof d.vidas==='number' ? d.vidas : vidas;
-        proximaRecarga = d.proximaRecarga || 0;
-        nivelDesbloqueado = d.nivelDesbloqueado || 1;
-        moedasTotais = typeof d.moedasTotais==='number' ? d.moedasTotais : moedasTotais;
-        ajudasDisponiveis = d.ajudasDisponiveis || 0;
-        jogadasExtraArmazenadas = d.jogadasExtraArmazenadas || 0;
+        aplicarEstado(doc.data());
       } else {
-        // primeira vez deste jogador no jogo — cria o registo dele já com o que tinha localmente (se algo)
+        // conta nova neste jogo — começa mesmo do zero, nunca herda dados de outra conta usada no mesmo telemóvel
+        aplicarEstado(estadoPadrao());
         salvarEstado();
       }
     }catch(e){
@@ -853,6 +858,34 @@ async function carregarEstado(){
     }
   }
 }
+
+/* ---------- marcos de progresso — dinheiro real creditado na conta Desafio MOZ ---------- */
+const MARCOS_NIVEL = [10, 20, 30, 50, 100, 150, 250, 300]; // cada nível vale 1 MT; estes níveis depositam o acumulado desde o marco anterior
+function incrementoDoMarco(nivel){
+  const idx = MARCOS_NIVEL.indexOf(nivel);
+  if(idx<0) return 0;
+  const anterior = idx>0 ? MARCOS_NIVEL[idx-1] : 0;
+  return nivel - anterior; // em MT
+}
+async function creditarMarcoNaContaReal(mt){
+  if(!emailJogador || !db || mt<=0) return;
+  try{
+    const snap = await db.collection('usuarios').where('email','==',emailJogador).limit(1).get();
+    if(!snap.empty){
+      await snap.docs[0].ref.update({ pontos: firebase.firestore.FieldValue.increment(mt*10) }); // 10 pontos = 1 MT
+    }
+  }catch(e){ console.warn('Homejub: falha ao creditar marco na conta real', e); }
+}
+function verificarMarcoDeNivel(nivel){
+  if(MARCOS_NIVEL.includes(nivel) && !marcosPagos.includes(nivel)){
+    const mt = incrementoDoMarco(nivel);
+    marcosPagos.push(nivel);
+    creditarMarcoNaContaReal(mt);
+    salvarEstado();
+    mostrarToast('🎉 +' + mt + ' MT creditados na tua conta Desafio MOZ!');
+  }
+}
+
 function verificarRecargaVidas(){
   if(vidas<=0 && proximaRecarga>0 && Date.now()>=proximaRecarga){
     vidas = VIDAS_MAX;
@@ -1539,6 +1572,7 @@ function vitoria(){
   const moedasGanhas = Math.floor(Math.max(jogadasRestantes,0)*0.8); // 80% das jogadas que sobraram — ex: 10 sobram → 8 moedas, 20 sobram → 16
   moedasTotais += moedasGanhas;
   salvarEstado();
+  verificarMarcoDeNivel(nivelAtual);
   document.getElementById('pontos-vitoria').textContent = '+'+moedasGanhas;
   document.getElementById('overlay-vitoria').classList.add('ativo');
 }
