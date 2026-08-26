@@ -831,8 +831,17 @@ function salvarEstado(){
   const dados = { vidas, proximaRecarga, nivelDesbloqueado, moedasTotais, ajudasDisponiveis, jogadasExtraArmazenadas, marcosPagos };
   try{ localStorage.setItem(chaveLocal(), JSON.stringify(dados)); }catch(e){}
   if(emailJogador && db){
-    db.collection('jogoEstado').doc(emailJogador).set(dados, { merge:true }).catch(function(e){ console.warn('Homejub: falha ao guardar na conta', e); });
+    db.collection('jogoEstado').doc(emailJogador).set(dados, { merge:true }).catch(function(e){
+      console.warn('Homejub: falha ao guardar na conta', e);
+      avisarFalhaDeConta();
+    });
   }
+}
+let avisoFalhaMostrado = false;
+function avisarFalhaDeConta(){
+  if(avisoFalhaMostrado) return; // não repete o aviso várias vezes seguidas
+  avisoFalhaMostrado = true;
+  mostrarToast('⚠️ Não foi possível guardar na tua conta agora — o progresso pode não sincronizar');
 }
 async function carregarEstado(){
   // primeiro tenta o localStorage desta conta específica (rápido, evita ecrã em branco enquanto a rede responde)
@@ -855,6 +864,7 @@ async function carregarEstado(){
       }
     }catch(e){
       console.warn('Homejub: não foi possível ler a conta, a usar dados locais', e);
+      avisarFalhaDeConta();
     }
   }
 }
