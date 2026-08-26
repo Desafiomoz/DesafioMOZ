@@ -31,7 +31,7 @@ export async function onRequestGet({ request, env }) {
     const estado = (cobranca.status || "").toLowerCase();
 
     if (ESTADOS_FALHADOS.includes(estado)) {
-      return json({ status: "failed" }, 200);
+      return json({ status: "failed", motivo: cobranca.failed_reason || null }, 200);
     }
     if (!ESTADOS_PAGOS.includes(estado)) {
       return json({ status: "pending" }, 200); // ainda a aguardar confirmação do jogador no telemóvel
@@ -43,14 +43,13 @@ export async function onRequestGet({ request, env }) {
       return json({ status: "paid", credited: true }, 200); // já tinha sido creditado — só confirma ao jogo
     }
 
-    // 3. Extrai o item comprado e o e-mail a partir da referência que enviámos ao criar a cobrança
-    const referencia = cobranca.reference || "";
-    const partes = referencia.split("|"); // formato: HOMEJUB|item|email
-    if (partes[0] !== "HOMEJUB" || partes.length < 3) {
-      return json({ status: "paid", credited: false, erro: "referência desconhecida" }, 200);
+    // 3. Extrai o item comprado e o e-mail a partir do metadata que enviámos ao criar a cobrança
+    const meta = cobranca.metadata || {};
+    const item = meta.item;
+    const email = meta.email;
+    if (!item || !email) {
+      return json({ status: "paid", credited: false, erro: "metadata em falta na cobrança" }, 200);
     }
-    const item = partes[1];
-    const email = partes.slice(2).join("|"); // por segurança, caso o e-mail tivesse um "|" (não deveria, mas evita cortar)
 
     await creditarCompra(item, email);
 

@@ -29,9 +29,9 @@ export async function onRequestPost({ request, env }) {
     }
 
     const item_info = ITENS_LOJA[item];
-    const amountCentavos = item_info.mt * 100; // a API espera a unidade mais pequena (centavos)
+    const amountMT = item_info.mt; // a API espera o valor direto em Meticais, não em cêntimos
 
-    const referencia = `HOMEJUB|${item}|${email}`;
+    const referencia = `HOMEJUB-${item}-${Date.now()}`;
 
     const resp = await fetch("https://www.netshop.co.mz/api/v1/charges", {
       method: "POST",
@@ -42,23 +42,28 @@ export async function onRequestPost({ request, env }) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        amount: amountCentavos,
+        amount: amountMT,
         currency: "MZN",
         method: method,
         msisdn: msisdn,
+        customer_email: email,
         reference: referencia,
+        metadata: { item: item, email: email },
       }),
     });
 
-    const data = await resp.json();
+    const textoResposta = await resp.text();
+    let data = {};
+    try { data = JSON.parse(textoResposta); } catch (e) { /* resposta não era JSON — fica em textoResposta */ }
 
     if (!resp.ok) {
-      return json({ erro: data?.message || "Falha ao criar cobrança na NetShop" }, 502);
+      const detalhe = data?.message || data?.error || data?.detail || textoResposta || "sem detalhe";
+      return json({ erro: `NetShop recusou (HTTP ${resp.status}): ${detalhe}` }, 502);
     }
 
     return json({ id: data.id, status: data.status || "pending" }, 200);
   } catch (err) {
-    return json({ erro: "Erro interno ao criar cobrança" }, 500);
+    return json({ erro: "Erro interno ao criar cobrança: " + (err?.message || err) }, 500);
   }
 }
 

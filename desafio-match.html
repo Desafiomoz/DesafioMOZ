@@ -1982,7 +1982,7 @@ async function verificarPagamentoCheckout(){
       await aplicarCompraConfirmada(itemEmCompra);
     } else if(dados.status==='failed'){
       pararPolling();
-      document.getElementById('checkout-erro-txt').textContent = 'O pagamento foi recusado ou cancelado.';
+      document.getElementById('checkout-erro-txt').textContent = dados.motivo || 'O pagamento foi recusado ou cancelado.';
       mostrarPassoCheckout('erro');
     }
     // se "pending", continua a tentar no próximo intervalo
