@@ -139,6 +139,7 @@ canvas{ touch-action:none; display:block; }
   flex-direction:column; gap:14px;
   text-align:center; padding:30px;
 }
+#overlay-checkout{ z-index:70; }
 .overlay.ativo{ display:flex; }
 .overlay h2{ font-family:'Sora',sans-serif; font-size:26px; font-weight:800; }
 .overlay .resumo{ font-size:15px; color:var(--suave); }
@@ -784,38 +785,38 @@ canvas{ touch-action:none; display:block; }
     <button class="btn" id="btn-recarregar-teste" style="background:var(--painel); color:var(--suave); font-size:11.5px; padding:9px 16px;">Recarregar vidas (modo teste)</button>
     <button class="btn-voltar-mapa" id="btn-semvidas-mapa">← Voltar ao mapa</button>
   </div>
+</div>
 
-  <div class="overlay" id="overlay-checkout">
-    <div id="checkout-passo-form">
-      <h2>💳 Pagamento</h2>
-      <div class="resumo" id="checkout-descricao">Item</div>
-      <input type="tel" id="checkout-telefone" placeholder="+258 84 123 4567" class="checkout-input">
-      <div class="checkout-metodos">
-        <button class="checkout-metodo ativo" data-metodo="mpesa">M-Pesa</button>
-        <button class="checkout-metodo" data-metodo="emola">e-Mola</button>
-        <button class="checkout-metodo" data-metodo="mkesh">mKesh</button>
-      </div>
-      <button class="btn" id="btn-checkout-confirmar" style="margin-top:14px;">Pagar agora</button>
-      <button class="btn-voltar-mapa" id="btn-checkout-cancelar" style="margin-top:8px;">Cancelar</button>
+<div class="overlay" id="overlay-checkout">
+  <div id="checkout-passo-form">
+    <h2>💳 Pagamento</h2>
+    <div class="resumo" id="checkout-descricao">Item</div>
+    <input type="tel" id="checkout-telefone" placeholder="+258 84 123 4567" class="checkout-input">
+    <div class="checkout-metodos">
+      <button class="checkout-metodo ativo" data-metodo="mpesa">M-Pesa</button>
+      <button class="checkout-metodo" data-metodo="emola">e-Mola</button>
+      <button class="checkout-metodo" data-metodo="mkesh">mKesh</button>
     </div>
-    <div id="checkout-passo-aguardar" style="display:none;">
-      <h2>📲 Confirma no teu telemóvel</h2>
-      <div class="resumo">Vais receber um pedido de confirmação do pagamento. Aprova-o com o teu PIN.</div>
-      <div class="checkout-spinner"></div>
-      <div class="resumo" id="checkout-status-txt" style="font-size:12px; margin-top:6px;">A aguardar confirmação...</div>
-      <button class="btn-voltar-mapa" id="btn-checkout-desistir" style="margin-top:14px;">Cancelar</button>
-    </div>
-    <div id="checkout-passo-sucesso" style="display:none;">
-      <h2>✅ Pagamento confirmado!</h2>
-      <div class="resumo" id="checkout-sucesso-txt">A tua compra já está na tua conta.</div>
-      <button class="btn" id="btn-checkout-fechar">Fechar</button>
-    </div>
-    <div id="checkout-passo-erro" style="display:none;">
-      <h2>😕 Não foi possível</h2>
-      <div class="resumo" id="checkout-erro-txt">O pagamento não foi confirmado.</div>
-      <button class="btn" id="btn-checkout-tentar-de-novo">Tentar novamente</button>
-      <button class="btn-voltar-mapa" id="btn-checkout-erro-fechar" style="margin-top:8px;">Fechar</button>
-    </div>
+    <button class="btn" id="btn-checkout-confirmar" style="margin-top:14px;">Pagar agora</button>
+    <button class="btn-voltar-mapa" id="btn-checkout-cancelar" style="margin-top:8px;">Cancelar</button>
+  </div>
+  <div id="checkout-passo-aguardar" style="display:none;">
+    <h2>📲 Confirma no teu telemóvel</h2>
+    <div class="resumo">Vais receber um pedido de confirmação do pagamento. Aprova-o com o teu PIN.</div>
+    <div class="checkout-spinner"></div>
+    <div class="resumo" id="checkout-status-txt" style="font-size:12px; margin-top:6px;">A aguardar confirmação...</div>
+    <button class="btn-voltar-mapa" id="btn-checkout-desistir" style="margin-top:14px;">Cancelar</button>
+  </div>
+  <div id="checkout-passo-sucesso" style="display:none;">
+    <h2>✅ Pagamento confirmado!</h2>
+    <div class="resumo" id="checkout-sucesso-txt">A tua compra já está na tua conta.</div>
+    <button class="btn" id="btn-checkout-fechar">Fechar</button>
+  </div>
+  <div id="checkout-passo-erro" style="display:none;">
+    <h2>😕 Não foi possível</h2>
+    <div class="resumo" id="checkout-erro-txt">O pagamento não foi confirmado.</div>
+    <button class="btn" id="btn-checkout-tentar-de-novo">Tentar novamente</button>
+    <button class="btn-voltar-mapa" id="btn-checkout-erro-fechar" style="margin-top:8px;">Fechar</button>
   </div>
 </div>
 
