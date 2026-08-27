@@ -92,7 +92,8 @@ async function creditarCompra(item, email) {
     return;
   }
 
-  if (item === "moedas100") return commitIncrementos(docPath, { moedasTotais: 100 });
+  if (item === "moedas30") return commitIncrementos(docPath, { moedasTotais: 30 });
+  if (item === "moedas70") return commitIncrementos(docPath, { moedasTotais: 70 });
   if (item === "ajudas20") return commitIncrementos(docPath, { ajudasDisponiveis: 20 });
   if (item === "jogadas10") return commitIncrementos(docPath, { jogadasExtraArmazenadas: 10 });
   // "jogadasOferta20" não credita nada aqui — é aplicado de imediato no telemóvel do jogador (partida em curso)

@@ -662,13 +662,6 @@ canvas{ touch-action:none; display:block; }
         </div>
         <button class="loja-btn" id="btn-comprar-vidas">20 🪙</button>
       </div>
-      <div class="loja-item" style="margin-top:10px; background:linear-gradient(160deg, rgba(46,230,160,0.14), rgba(18,22,31,0.85)); border-color:rgba(46,230,160,0.28);">
-        <div class="loja-item-info">
-          <div class="loja-item-titulo">5 vidas grátis</div>
-          <div class="loja-item-sub">Por enquanto, sem limite — para continuares a testar</div>
-        </div>
-        <button class="loja-btn" id="btn-vidas-gratis" style="background:linear-gradient(90deg, var(--verde), #22ffcc); color:#06120f;">Receber</button>
-      </div>
     </div>
 
     <div class="loja-secao">
@@ -714,11 +707,15 @@ canvas{ touch-action:none; display:block; }
       <h3>🪙 Comprar moedas</h3>
       <div class="loja-tabela">
         <div class="loja-linha">
-          <div class="loja-linha-info"><span class="loja-linha-moedas">100 🪙</span><span class="loja-linha-preco">5 MT</span></div>
-          <button class="loja-btn" id="btn-mt-moedas100" data-item="moedas100">5 MT</button>
+          <div class="loja-linha-info"><span class="loja-linha-moedas">30 🪙</span><span class="loja-linha-preco">2 MT</span></div>
+          <button class="loja-btn" id="btn-mt-moedas30" data-item="moedas30">2 MT</button>
+        </div>
+        <div class="loja-linha">
+          <div class="loja-linha-info"><span class="loja-linha-moedas">70 🪙</span><span class="loja-linha-preco">4 MT</span></div>
+          <button class="loja-btn" id="btn-mt-moedas70" data-item="moedas70">4 MT</button>
         </div>
       </div>
-      <div class="loja-aviso">Pagamento seguro por M-Pesa ou mKesh.</div>
+      <div class="loja-aviso">Pagamento seguro por M-Pesa.</div>
     </div>
   </div>
   <div class="loja-rodape">
@@ -789,7 +786,6 @@ canvas{ touch-action:none; display:block; }
     <input type="tel" id="checkout-telefone" placeholder="+258 84 123 4567" class="checkout-input">
     <div class="checkout-metodos">
       <button class="checkout-metodo ativo" data-metodo="mpesa">M-Pesa</button>
-      <button class="checkout-metodo" data-metodo="mkesh">mKesh</button>
     </div>
     <button class="btn" id="btn-checkout-confirmar" style="margin-top:14px;">Pagar agora</button>
     <button class="btn-voltar-mapa" id="btn-checkout-cancelar" style="margin-top:8px;">Cancelar</button>
@@ -1870,7 +1866,8 @@ function abrirRegras(){
 
 /* ---------- checkout de pagamento real (NetShop) ---------- */
 const DESCRICOES_ITEM = {
-  moedas100: '100 moedas — 5 MT',
+  moedas30: '30 moedas — 2 MT',
+  moedas70: '70 moedas — 4 MT',
   ajudas20: '20 ajudas — 2 MT',
   jogadas10: '10 jogadas extra — 2 MT (aplicadas no próximo nível)',
   jogadasOferta20: '20 jogadas — 2 MT (continuas já este nível)',
@@ -2029,14 +2026,6 @@ document.getElementById('btn-comprar-vidas').addEventListener('click', ()=>{
   atualizarVidasUI();
   document.getElementById('loja-moedas').textContent = moedasTotais;
   mostrarToast('5 vidas compradas! 🎉');
-});
-
-document.getElementById('btn-vidas-gratis').addEventListener('click', ()=>{
-  vidas = VIDAS_MAX;
-  proximaRecarga = 0;
-  salvarEstado();
-  atualizarVidasUI();
-  mostrarToast('5 vidas grátis recebidas! ❤️');
 });
 
 const PRECO_AJUDAS_MOEDAS = 5;
