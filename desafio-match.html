@@ -1814,6 +1814,10 @@ function aoTocarNivel(n){
     mostrarToast('Termina o nível ' + nivelDesbloqueado + ' para desbloquear este');
     return;
   }
+  if(n<=10 && nivelDesbloqueado>10 && n<nivelDesbloqueado){
+    mostrarToast('Já concluíste os níveis 1-10 — não podes voltar a jogá-los');
+    return;
+  }
   if(vidas<=0){
     atualizarContagemOverlay();
     document.getElementById('overlay-sem-vidas').classList.add('ativo');
@@ -2066,7 +2070,19 @@ function iniciarNivel(n){
   if(!loopIniciado){ loopIniciado = true; animar(); }
 }
 
-document.getElementById('btn-voltar-mapa').addEventListener('click', entrarNoMapa);
+document.getElementById('btn-voltar-mapa').addEventListener('click', ()=>{
+  if(!jogoTerminado){
+    jogoTerminado = true;
+    vidas = Math.max(0, vidas-1);
+    if(vidas<=0 && !proximaRecarga){
+      proximaRecarga = Date.now() + TEMPO_RECARGA;
+    }
+    salvarEstado();
+    atualizarVidasUI();
+    mostrarToast('Saíste a meio do nível — perdeste 1 vida ❤️');
+  }
+  entrarNoMapa();
+});
 document.getElementById('btn-fim-mapa').addEventListener('click', ()=>{
   document.getElementById('overlay-fim').classList.remove('ativo');
   entrarNoMapa();
