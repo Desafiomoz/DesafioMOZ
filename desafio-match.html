@@ -673,13 +673,13 @@ canvas{ touch-action:none; display:block; }
 
     <div class="loja-secao">
       <h3>💡 Comprar ajudas</h3>
-      <div class="loja-item">
-        <div class="loja-item-info">
-          <div class="loja-item-titulo">10 Ajudas</div>
-          <div class="loja-item-sub">Mostra sempre uma jogada válida no tabuleiro</div>
+      <div class="loja-tabela">
+        <div class="loja-linha">
+          <div class="loja-linha-info"><span class="loja-linha-moedas">20 ajudas</span><span class="loja-linha-preco">2 MT</span></div>
+          <button class="loja-btn" id="btn-mt-ajudas20" data-item="ajudas20">2 MT</button>
         </div>
-        <div class="loja-item-opcoes">
-          <button class="loja-btn" id="btn-mt-ajudas10" data-item="ajudas10">1 MT</button>
+        <div class="loja-linha">
+          <div class="loja-linha-info"><span class="loja-linha-moedas">10 ajudas</span><span class="loja-linha-preco">5 🪙</span></div>
           <button class="loja-btn" id="btn-comprar-ajudas">5 🪙</button>
         </div>
       </div>
@@ -714,15 +714,11 @@ canvas{ touch-action:none; display:block; }
       <h3>🪙 Comprar moedas</h3>
       <div class="loja-tabela">
         <div class="loja-linha">
-          <div class="loja-linha-info"><span class="loja-linha-moedas">30 🪙</span><span class="loja-linha-preco">2 MT</span></div>
-          <button class="loja-btn" id="btn-mt-moedas30" data-item="moedas30">2 MT</button>
-        </div>
-        <div class="loja-linha">
-          <div class="loja-linha-info"><span class="loja-linha-moedas">70 🪙</span><span class="loja-linha-preco">4 MT</span></div>
-          <button class="loja-btn" id="btn-mt-moedas70" data-item="moedas70">4 MT</button>
+          <div class="loja-linha-info"><span class="loja-linha-moedas">100 🪙</span><span class="loja-linha-preco">5 MT</span></div>
+          <button class="loja-btn" id="btn-mt-moedas100" data-item="moedas100">5 MT</button>
         </div>
       </div>
-      <div class="loja-aviso">Pagamento seguro por M-Pesa, e-Mola ou mKesh.</div>
+      <div class="loja-aviso">Pagamento seguro por M-Pesa ou mKesh.</div>
     </div>
   </div>
   <div class="loja-rodape">
@@ -756,8 +752,8 @@ canvas{ touch-action:none; display:block; }
   <div class="overlay" id="overlay-oferta-jogadas">
     <h2>Sem jogadas! 😮</h2>
     <div class="resumo">Compra mais jogadas para continuar este nível — ou perdes 1 vida.</div>
-    <button class="loja-btn" id="btn-oferta-comprar-moedas" style="margin-top:6px;">10 jogadas — 5 🪙</button>
-    <button class="loja-btn" id="btn-mt-oferta-jogadas" data-item="jogadasOferta10">10 jogadas — 1 MT</button>
+    <button class="loja-btn" id="btn-oferta-comprar-moedas" style="margin-top:6px;">10 jogadas — 4 🪙</button>
+    <button class="loja-btn" id="btn-mt-oferta-jogadas" data-item="jogadasOferta20">20 jogadas — 2 MT</button>
     <button class="btn-voltar-mapa" id="btn-oferta-recusar" style="margin-top:6px;">Não, obrigado</button>
   </div>
 
@@ -782,7 +778,6 @@ canvas{ touch-action:none; display:block; }
     <div class="resumo">As tuas 5 vidas voltam todas de uma vez em:</div>
     <div class="grande" id="contagem-vidas" style="font-size:30px;">--</div>
     <button class="btn" id="btn-semvidas-loja">🛍️ Comprar vidas na loja</button>
-    <button class="btn" id="btn-recarregar-teste" style="background:var(--painel); color:var(--suave); font-size:11.5px; padding:9px 16px;">Recarregar vidas (modo teste)</button>
     <button class="btn-voltar-mapa" id="btn-semvidas-mapa">← Voltar ao mapa</button>
   </div>
 </div>
@@ -794,7 +789,6 @@ canvas{ touch-action:none; display:block; }
     <input type="tel" id="checkout-telefone" placeholder="+258 84 123 4567" class="checkout-input">
     <div class="checkout-metodos">
       <button class="checkout-metodo ativo" data-metodo="mpesa">M-Pesa</button>
-      <button class="checkout-metodo" data-metodo="emola">e-Mola</button>
       <button class="checkout-metodo" data-metodo="mkesh">mKesh</button>
     </div>
     <button class="btn" id="btn-checkout-confirmar" style="margin-top:14px;">Pagar agora</button>
@@ -1648,7 +1642,7 @@ function vitoria(){
   document.getElementById('overlay-vitoria').classList.add('ativo');
 }
 
-const PRECO_OFERTA_JOGADAS_MOEDAS = 5;
+const PRECO_OFERTA_JOGADAS_MOEDAS = 4;
 
 function mostrarOfertaJogadas(){
   document.getElementById('overlay-oferta-jogadas').classList.add('ativo');
@@ -1876,11 +1870,10 @@ function abrirRegras(){
 
 /* ---------- checkout de pagamento real (NetShop) ---------- */
 const DESCRICOES_ITEM = {
-  moedas30: '30 moedas — 2 MT',
-  moedas70: '70 moedas — 4 MT',
-  ajudas10: '10 ajudas — 1 MT',
+  moedas100: '100 moedas — 5 MT',
+  ajudas20: '20 ajudas — 2 MT',
   jogadas10: '10 jogadas extra — 2 MT (aplicadas no próximo nível)',
-  jogadasOferta10: '10 jogadas — 1 MT (continuas já este nível)',
+  jogadasOferta20: '20 jogadas — 2 MT (continuas já este nível)',
   bonus: 'Bónus: 6 vidas + 70 🪙 + 6 ajudas + 10 jogadas — 5 MT',
 };
 
@@ -1991,14 +1984,14 @@ async function verificarPagamentoCheckout(){
 
 async function aplicarCompraConfirmada(item){
   // a compra já foi creditada na conta (Firestore) pelo servidor — aqui só refletimos no ecrã atual
-  if(item==='jogadasOferta10'){
+  if(item==='jogadasOferta20'){
     // esta é aplicada de imediato à partida em curso, não fica guardada para o próximo nível
-    jogadasRestantes += 10;
+    jogadasRestantes += 20;
     atualizarHud();
     document.getElementById('overlay-oferta-jogadas').classList.remove('ativo');
     bloqueado = false;
     fecharCheckout();
-    mostrarToast('+10 jogadas! Continua a jogar 🎯');
+    mostrarToast('+20 jogadas! Continua a jogar 🎯');
     return;
   }
   await carregarEstado(); // recarrega o saldo atualizado da conta
@@ -2100,13 +2093,6 @@ document.getElementById('btn-vitoria-mapa').addEventListener('click', ()=>{
 document.getElementById('btn-semvidas-mapa').addEventListener('click', ()=>{
   document.getElementById('overlay-sem-vidas').classList.remove('ativo');
   entrarNoMapa();
-});
-document.getElementById('btn-recarregar-teste').addEventListener('click', ()=>{
-  vidas = VIDAS_MAX;
-  proximaRecarga = 0;
-  salvarEstado();
-  atualizarVidasUI();
-  document.getElementById('overlay-sem-vidas').classList.remove('ativo');
 });
 
 /* ---------- arranque ---------- */

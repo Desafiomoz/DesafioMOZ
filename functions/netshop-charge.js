@@ -1,16 +1,16 @@
 // Cloudflare Pages Function
-// Cria uma cobrança (M-Pesa / e-Mola / mKesh) na NetShop para a loja do jogo Homejub.
+// Cria uma cobrança (M-Pesa / mKesh) na NetShop para a loja do jogo Homejub.
 // O valor a cobrar NUNCA vem do telemóvel do jogador — vem sempre desta lista fixa,
 // para ninguém conseguir "enganar" o preço a pagar.
 //
 // URL desta função depois de publicada: https://SEUDOMINIO/netshop-charge
 
 const ITENS_LOJA = {
-  moedas30:  { mt: 2,  descricao: "30 moedas" },
-  moedas70:  { mt: 4,  descricao: "70 moedas" },
-  ajudas10:  { mt: 1,  descricao: "10 ajudas" },
-  jogadas10: { mt: 2,  descricao: "10 jogadas extra" },
-  bonus:     { mt: 5,  descricao: "Bónus: 6 vidas + 70 moedas + 6 ajudas + 10 jogadas" },
+  moedas100:       { mt: 5, descricao: "100 moedas" },
+  ajudas20:        { mt: 2, descricao: "20 ajudas" },
+  jogadas10:       { mt: 2, descricao: "10 jogadas extra" },
+  jogadasOferta20: { mt: 2, descricao: "20 jogadas (continuação imediata)" },
+  bonus:           { mt: 5, descricao: "Bónus: 6 vidas + 70 moedas + 6 ajudas + 10 jogadas" },
 };
 
 export async function onRequestPost({ request, env }) {
@@ -18,10 +18,10 @@ export async function onRequestPost({ request, env }) {
     const body = await request.json();
     const email = (body.email || "").trim().toLowerCase();
     const msisdn = (body.msisdn || "").trim();
-    const method = (body.method || "").trim().toLowerCase(); // mpesa | emola | mkesh
+    const method = (body.method || "").trim().toLowerCase(); // mpesa | mkesh (e-Mola removido — a NetShop recusa)
     const item = (body.item || "").trim();
 
-    if (!email || !msisdn || !ITENS_LOJA[item] || !["mpesa", "emola", "mkesh"].includes(method)) {
+    if (!email || !msisdn || !ITENS_LOJA[item] || !["mpesa", "mkesh"].includes(method)) {
       return json({ erro: "Pedido inválido" }, 400);
     }
     if (!/^\+258\d{9}$/.test(msisdn)) {
