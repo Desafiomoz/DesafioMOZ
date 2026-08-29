@@ -62,13 +62,15 @@ export async function onRequestPost({ request, env }) {
     try { data = JSON.parse(textoResposta); } catch (e) { /* resposta não era JSON — fica em textoResposta */ }
 
     if (!resp.ok) {
-      const detalhe = data?.message || data?.error || data?.detail || textoResposta || "sem detalhe";
-      return json({ erro: `NetShop recusou (HTTP ${resp.status}): ${detalhe}` }, 502);
+      // guarda o detalhe técnico só nos registos do servidor (Cloudflare) — o jogador NUNCA vê isto
+      console.error("Falha ao criar cobrança:", resp.status, textoResposta);
+      return json({ erro: "Não foi possível processar o pagamento agora. Verifica o número de telefone e tenta novamente." }, 502);
     }
 
     return json({ id: data.id, status: data.status || "pending" }, 200);
   } catch (err) {
-    return json({ erro: "Erro interno ao criar cobrança: " + (err?.message || err) }, 500);
+    console.error("Erro interno ao criar cobrança:", err);
+    return json({ erro: "Não foi possível processar o pagamento agora. Tenta novamente." }, 500);
   }
 }
 

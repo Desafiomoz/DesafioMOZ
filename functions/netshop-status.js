@@ -31,7 +31,8 @@ export async function onRequestGet({ request, env }) {
     const estado = (cobranca.status || "").toLowerCase();
 
     if (ESTADOS_FALHADOS.includes(estado)) {
-      return json({ status: "failed", motivo: cobranca.failed_reason || null }, 200);
+      console.error("Pagamento falhou:", cobranca.failed_reason || "sem motivo indicado");
+      return json({ status: "failed" }, 200);
     }
     if (!ESTADOS_PAGOS.includes(estado)) {
       return json({ status: "pending" }, 200); // ainda a aguardar confirmação do jogador no telemóvel
