@@ -1,9 +1,9 @@
 // Cloudflare Pages Function
-// Recebe webhooks da NetShop (charge.paid / charge.failed).
-// URL pública: https://desafiomoz.pages.dev/netshop-webhook
+// Webhook NetShop — credita a compra quando chega charge.paid.
+// URL: https://desafiomoz.pages.dev/netshop-webhook
 //
-// Variável de ambiente na Cloudflare Pages:
-//   NETSHOP_WEBHOOK_SECRET  → o whsec_... da NetShop
+// Variável obrigatória:
+//   NETSHOP_WEBHOOK_SECRET  = whsec_...
 
 const FIREBASE_PROJECT_ID = "desafio-moz-61b70";
 const FIRESTORE_BASE = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents`;
@@ -16,7 +16,7 @@ export async function onRequestPost({ request, env }) {
 
     const secret = env.NETSHOP_WEBHOOK_SECRET || "";
     if (!secret) {
-      console.error("NETSHOP_WEBHOOK_SECRET não configurado");
+      console.error("NETSHOP_WEBHOOK_SECRET em falta");
       return json({ erro: "config" }, 500);
     }
 
@@ -24,7 +24,7 @@ export async function onRequestPost({ request, env }) {
     const expected = await hmacSha256Hex(secret, rawBody);
 
     if (!timingSafeEqual(expected, signatureHeader)) {
-      console.error("Assinatura inválida");
+      console.error("Assinatura webhook inválida");
       return json({ erro: "assinatura inválida" }, 401);
     }
 
@@ -35,8 +35,7 @@ export async function onRequestPost({ request, env }) {
       return json({ erro: "json inválido" }, 400);
     }
 
-    const tipo =
-      (evento.event || evento.type || evento.name || "").toLowerCase();
+    const tipo = (evento.event || evento.type || evento.name || "").toLowerCase();
     const cobranca = evento.data || evento.charge || evento;
 
     const ePago =
@@ -50,14 +49,14 @@ export async function onRequestPost({ request, env }) {
 
     const chargeId = cobranca.id || cobranca.charge_id || null;
     if (!chargeId) {
-      console.error("Webhook sem id de cobrança", evento);
+      console.error("Webhook sem id", evento);
       return json({ ok: true, aviso: "sem id" }, 200);
     }
 
-    const jaProcessado = await fetch(
-      `\( {FIRESTORE_BASE}/lojaCargas/ \){encodeURIComponent(chargeId)}`
+    const ja = await fetch(
+      `${FIRESTORE_BASE}/lojaCargas/${encodeURIComponent(chargeId)}`
     );
-    if (jaProcessado.status === 200) {
+    if (ja.status === 200) {
       return json({ ok: true, credited: true, ja: true }, 200);
     }
 
@@ -78,19 +77,14 @@ export async function onRequestPost({ request, env }) {
       email = email || meta.email;
     }
     if (!item || !email) {
-      console.error(
-        "Webhook: não foi possível identificar item/email",
-        chargeId,
-        referencia,
-        cobranca.metadata
-      );
+      console.error("Webhook: item/email em falta", chargeId, referencia);
       return json({ ok: true, credited: false }, 200);
     }
 
     await creditarCompra(item, email);
 
     await fetch(
-      `\( {FIRESTORE_BASE}/lojaCargas/ \){encodeURIComponent(chargeId)}?documentId=${encodeURIComponent(chargeId)}`,
+      `${FIRESTORE_BASE}/lojaCargas/${encodeURIComponent(chargeId)}?documentId=${encodeURIComponent(chargeId)}`,
       {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -107,7 +101,7 @@ export async function onRequestPost({ request, env }) {
 
     return json({ ok: true, credited: true }, 200);
   } catch (err) {
-    console.error("Erro no webhook NetShop:", err);
+    console.error("Erro webhook NetShop:", err);
     return json({ erro: "interno" }, 500);
   }
 }
@@ -116,22 +110,28 @@ export async function onRequestGet() {
   return json({ ok: true, service: "netshop-webhook" }, 200);
 }
 
+export async function onRequestOptions() {
+  return new Response(null, { status: 204, headers: corsHeaders() });
+}
+
 async function creditarCompra(item, email) {
-  const docPath = `\( {FIRESTORE_BASE}/jogoEstado/ \){encodeURIComponent(email)}`;
+  const docPath = `${FIRESTORE_BASE}/jogoEstado/${encodeURIComponent(email)}`;
 
   if (item === "bonus" || item === "bonus2") {
     const vidasPrometidas = item === "bonus" ? 6 : 8;
-    const urlComMask = `${docPath}?updateMask.fieldPaths=vidas&updateMask.fieldPaths=proximaRecarga`;
-    await fetch(urlComMask, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        fields: {
-          vidas: { integerValue: vidasPrometidas },
-          proximaRecarga: { integerValue: 0 },
-        },
-      }),
-    });
+    await fetch(
+      `${docPath}?updateMask.fieldPaths=vidas&updateMask.fieldPaths=proximaRecarga`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fields: {
+            vidas: { integerValue: vidasPrometidas },
+            proximaRecarga: { integerValue: 0 },
+          },
+        }),
+      }
+    );
     if (item === "bonus") {
       await commitIncrementos(docPath, {
         moedasTotais: 70,
@@ -221,6 +221,14 @@ function timingSafeEqual(a, b) {
 function json(obj, status) {
   return new Response(JSON.stringify(obj), {
     status,
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...corsHeaders() },
   });
+}
+
+function corsHeaders() {
+  return {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, X-NetShop-Signature",
+  };
 }
