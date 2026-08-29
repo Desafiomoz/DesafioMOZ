@@ -76,14 +76,14 @@ async function creditarCompra(item, email) {
   const docPath = `${FIRESTORE_BASE}/jogoEstado/${encodeURIComponent(email)}`;
 
   if (item === "bonus" || item === "bonus2") {
-    // atualiza só "vidas" e "proximaRecarga" (updateMask) — sem isto, o PATCH apagaria os outros campos do documento
+    const vidasPrometidas = item === "bonus" ? 6 : 8; // a promessa do pacote tem de ser cumprida à letra
     const urlComMask = `${docPath}?updateMask.fieldPaths=vidas&updateMask.fieldPaths=proximaRecarga`;
     await fetch(urlComMask, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         fields: {
-          vidas: { integerValue: 5 }, // o jogo tem um máximo de 5 vidas — "8 vidas" do pacote enche a barra e o resto fica como bónus de moedas/ajudas/jogadas
+          vidas: { integerValue: vidasPrometidas },
           proximaRecarga: { integerValue: 0 },
         },
       }),
@@ -101,6 +101,24 @@ async function creditarCompra(item, email) {
   if (item === "ajudas20") return commitIncrementos(docPath, { ajudasDisponiveis: 20 });
   if (item === "jogadas10") return commitIncrementos(docPath, { jogadasExtraArmazenadas: 10 });
   // "jogadasOferta20" não credita nada aqui — é aplicado de imediato no telemóvel do jogador (partida em curso)
+
+  if (item === "moedasInfinitas") {
+    return fetch(`${docPath}?updateMask.fieldPaths=moedasInfinitas`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ fields: { moedasInfinitas: { booleanValue: true } } }),
+    });
+  }
+  if (item === "ajudasInfinitas") {
+    return fetch(`${docPath}?updateMask.fieldPaths=ajudasInfinitas`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ fields: { ajudasInfinitas: { booleanValue: true } } }),
+    });
+  }
+  if (item === "desbloqueio10") {
+    return commitIncrementos(docPath, { nivelDesbloqueado: 10 });
+  }
 }
 
 async function commitIncrementos(docPath, incrementos) {

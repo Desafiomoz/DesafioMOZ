@@ -711,6 +711,24 @@ canvas{ touch-action:none; display:block; }
     </div>
 
     <div class="loja-secao">
+      <h3>♾️ Infinitos</h3>
+      <div class="loja-tabela">
+        <div class="loja-linha">
+          <div class="loja-linha-info"><span class="loja-linha-moedas">Moedas infinitas</span><span class="loja-linha-preco">para sempre</span></div>
+          <button class="loja-btn" id="btn-mt-moedasinfinitas" data-item="moedasInfinitas">100 MT</button>
+        </div>
+        <div class="loja-linha">
+          <div class="loja-linha-info"><span class="loja-linha-moedas">Ajudas infinitas</span><span class="loja-linha-preco">para sempre</span></div>
+          <button class="loja-btn" id="btn-mt-ajudasinfinitas" data-item="ajudasInfinitas">50 MT</button>
+        </div>
+        <div class="loja-linha">
+          <div class="loja-linha-info"><span class="loja-linha-moedas">+10 níveis</span><span class="loja-linha-preco">desbloqueio direto</span></div>
+          <button class="loja-btn" id="btn-mt-desbloqueio10" data-item="desbloqueio10">15 MT</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="loja-secao">
       <h3>🪙 Comprar moedas</h3>
       <div class="loja-tabela">
         <div class="loja-linha">
@@ -870,12 +888,14 @@ let moedasTotais = 0;        // moeda persistente do jogador, nunca reinicia ent
 let ajudasDisponiveis = 0;   // "ajudas" pré-compradas na loja — usadas antes de cobrar moedas diretamente
 let jogadasExtraArmazenadas = 0; // jogadas extra compradas na loja — aplicadas no início do próximo nível jogado
 let marcosPagos = [];        // níveis-marco (10,20,30...) cujo prémio em MT já foi creditado na conta real
+let moedasInfinitas = false; // comprado na loja — nunca mais gasta moedas
+let ajudasInfinitas = false; // comprado na loja — Ajuda sempre grátis
 
 // chave do localStorage específica por jogador — evita que o progresso de uma conta "vaze" para outra no mesmo telemóvel
 function chaveLocal(){ return emailJogador ? ('homejub_estado_'+emailJogador) : 'homejub_estado_convidado'; }
 
 function estadoPadrao(){
-  return { vidas: VIDAS_MAX, proximaRecarga: 0, nivelDesbloqueado: 1, moedasTotais: 0, ajudasDisponiveis: 0, jogadasExtraArmazenadas: 0, marcosPagos: [] };
+  return { vidas: VIDAS_MAX, proximaRecarga: 0, nivelDesbloqueado: 1, moedasTotais: 0, ajudasDisponiveis: 0, jogadasExtraArmazenadas: 0, marcosPagos: [], moedasInfinitas: false, ajudasInfinitas: false };
 }
 function aplicarEstado(d){
   vidas = typeof d.vidas==='number' ? d.vidas : VIDAS_MAX;
@@ -885,10 +905,12 @@ function aplicarEstado(d){
   ajudasDisponiveis = d.ajudasDisponiveis || 0;
   jogadasExtraArmazenadas = d.jogadasExtraArmazenadas || 0;
   marcosPagos = Array.isArray(d.marcosPagos) ? d.marcosPagos : [];
+  moedasInfinitas = !!d.moedasInfinitas;
+  ajudasInfinitas = !!d.ajudasInfinitas;
 }
 
 function salvarEstado(){
-  const dados = { vidas, proximaRecarga, nivelDesbloqueado, moedasTotais, ajudasDisponiveis, jogadasExtraArmazenadas, marcosPagos };
+  const dados = { vidas, proximaRecarga, nivelDesbloqueado, moedasTotais, ajudasDisponiveis, jogadasExtraArmazenadas, marcosPagos, moedasInfinitas, ajudasInfinitas };
   try{ localStorage.setItem(chaveLocal(), JSON.stringify(dados)); }catch(e){}
   if(emailJogador && db){
     db.collection('jogoEstado').doc(emailJogador).set(dados, { merge:true }).catch(function(e){
@@ -1393,19 +1415,19 @@ function usarAjuda(){
   const dica = encontrarDicaValida();
   if(!dica){ mostrarToast('Sem jogadas óbvias agora — continua a explorar'); return; }
 
-  if(ajudasDisponiveis>0){
+  if(ajudasInfinitas || ehCriador){
+    mostrarToast('💡 Ajuda usada (ajudas infinitas)');
+  } else if(ajudasDisponiveis>0){
     ajudasDisponiveis--;
     salvarEstado();
     atualizarBotaoAjuda();
     mostrarToast('💡 Ajuda usada — restam ' + ajudasDisponiveis);
-  } else if(ehCriador){
-    mostrarToast('💡 Ajuda usada (criador — moedas infinitas)');
   } else {
-    if(moedasTotais<CUSTO_AJUDA_MOEDAS){
+    if(moedasTotais<CUSTO_AJUDA_MOEDAS && !moedasInfinitas){
       mostrarToast('Precisas de ' + CUSTO_AJUDA_MOEDAS + ' 🪙 — ou compra Ajudas na loja');
       return;
     }
-    moedasTotais -= CUSTO_AJUDA_MOEDAS;
+    if(!moedasInfinitas) moedasTotais -= CUSTO_AJUDA_MOEDAS;
     salvarEstado();
     mostrarToast('💡 -' + CUSTO_AJUDA_MOEDAS + ' 🪙 pela ajuda');
   }
@@ -1617,7 +1639,8 @@ function atualizarVidasUI(){
   const lab = document.getElementById('mapa-vidas-lab');
   if(!alvo) return;
   alvo.innerHTML = '';
-  for(let i=0;i<VIDAS_MAX;i++){
+  const totalCoracoes = Math.max(vidas, VIDAS_MAX); // mostra sempre todas as vidas reais, mesmo acima do normal (bónus)
+  for(let i=0;i<totalCoracoes;i++){
     const s = document.createElement('span');
     s.className = 'coracao' + (i<vidas ? '' : ' vazio');
     s.textContent = '❤';
@@ -1656,7 +1679,7 @@ function mostrarOfertaJogadas(){
 }
 
 document.getElementById('btn-oferta-comprar-moedas').addEventListener('click', ()=>{
-  if(!ehCriador){
+  if(!ehCriador && !moedasInfinitas){
     if(moedasTotais<PRECO_OFERTA_JOGADAS_MOEDAS){
       mostrarToast('Moedas insuficientes — precisas de ' + PRECO_OFERTA_JOGADAS_MOEDAS + ' 🪙');
       return;
@@ -1856,7 +1879,7 @@ function entrarNoMapa(){
   document.getElementById('tela-loja').classList.remove('ativo');
   document.getElementById('tela-regras').classList.remove('ativo');
   document.getElementById('tela-mapa').classList.add('ativo');
-  document.getElementById('mapa-moedas').textContent = ehCriador ? '∞' : moedasTotais;
+  document.getElementById('mapa-moedas').textContent = (ehCriador||moedasInfinitas) ? '∞' : moedasTotais;
   atualizarVidasUI();
   gerarMapa();
   if(!emailJogador && !window.__avisoContaMostrado){
@@ -1875,7 +1898,7 @@ function abrirLoja(){
   verificarRecargaVidas();
   document.getElementById('tela-mapa').classList.remove('ativo');
   document.getElementById('tela-loja').classList.add('ativo');
-  document.getElementById('loja-moedas').textContent = ehCriador ? '∞' : moedasTotais;
+  document.getElementById('loja-moedas').textContent = (ehCriador||moedasInfinitas) ? '∞' : moedasTotais;
 }
 
 function abrirRegras(){
@@ -1892,6 +1915,9 @@ const DESCRICOES_ITEM = {
   jogadasOferta20: '20 jogadas — 2 MT (continuas já este nível)',
   bonus: 'Bónus: 6 vidas + 70 🪙 + 6 ajudas + 10 jogadas — 5 MT',
   bonus2: 'Bónus grande: 8 vidas + 100 🪙 + 20 ajudas + 20 jogadas — 10 MT',
+  moedasInfinitas: 'Moedas infinitas — 100 MT',
+  ajudasInfinitas: 'Ajudas infinitas — 50 MT',
+  desbloqueio10: '+10 níveis desbloqueados — 15 MT',
 };
 
 let itemEmCompra = null;
@@ -1999,6 +2025,22 @@ async function verificarPagamentoCheckout(){
   }catch(e){ /* falha de rede momentânea — tenta de novo na próxima */ }
 }
 
+function mensagemSucessoCompra(item){
+  const moedasTxt = (ehCriador||moedasInfinitas) ? '∞' : moedasTotais;
+  switch(item){
+    case 'moedas30':
+    case 'moedas70': return 'Moedas creditadas! Tens agora ' + moedasTxt + ' 🪙 na tua conta.';
+    case 'ajudas20': return '20 ajudas creditadas! Tens agora ' + ajudasDisponiveis + ' ajudas disponíveis.';
+    case 'jogadas10': return '10 jogadas extra guardadas — entram no próximo nível que jogares.';
+    case 'bonus': return 'Bónus entregue: 6 vidas + 70 🪙 + 6 ajudas + 10 jogadas — tudo já na tua conta!';
+    case 'bonus2': return 'Bónus grande entregue: 8 vidas + 100 🪙 + 20 ajudas + 20 jogadas — tudo já na tua conta!';
+    case 'moedasInfinitas': return 'Moedas infinitas ativadas! Nunca mais vais precisar de comprar moedas.';
+    case 'ajudasInfinitas': return 'Ajudas infinitas ativadas! Podes usar a Ajuda sempre que quiseres, sem custo.';
+    case 'desbloqueio10': return '10 níveis desbloqueados! Já podes jogar até ao nível ' + nivelDesbloqueado + '.';
+    default: return 'A tua compra já está na tua conta.';
+  }
+}
+
 async function aplicarCompraConfirmada(item){
   // a compra já foi creditada na conta (Firestore) pelo servidor — aqui só refletimos no ecrã atual
   if(item==='jogadasOferta20'){
@@ -2013,7 +2055,10 @@ async function aplicarCompraConfirmada(item){
   }
   await carregarEstado(); // recarrega o saldo atualizado da conta
   atualizarBotaoAjuda();
-  document.getElementById('checkout-sucesso-txt').textContent = 'A tua compra já está na tua conta.';
+  atualizarVidasUI();
+  document.getElementById('loja-moedas').textContent = (ehCriador||moedasInfinitas) ? '∞' : moedasTotais;
+  document.getElementById('mapa-moedas').textContent = (ehCriador||moedasInfinitas) ? '∞' : moedasTotais;
+  document.getElementById('checkout-sucesso-txt').textContent = mensagemSucessoCompra(item);
   mostrarPassoCheckout('sucesso');
 }
 
@@ -2035,7 +2080,7 @@ document.getElementById('btn-comprar-vidas').addEventListener('click', ()=>{
     mostrarToast('Já tens as 5 vidas completas');
     return;
   }
-  if(!ehCriador){
+  if(!ehCriador && !moedasInfinitas){
     if(moedasTotais<PRECO_VIDAS_MOEDAS){
       mostrarToast('Moedas insuficientes — precisas de ' + PRECO_VIDAS_MOEDAS + ' 🪙');
       return;
@@ -2046,13 +2091,13 @@ document.getElementById('btn-comprar-vidas').addEventListener('click', ()=>{
   proximaRecarga = 0;
   salvarEstado();
   atualizarVidasUI();
-  document.getElementById('loja-moedas').textContent = ehCriador ? '∞' : moedasTotais;
+  document.getElementById('loja-moedas').textContent = (ehCriador||moedasInfinitas) ? '∞' : moedasTotais;
   mostrarToast('5 vidas compradas! 🎉');
 });
 
 const PRECO_AJUDAS_MOEDAS = 5;
 document.getElementById('btn-comprar-ajudas').addEventListener('click', ()=>{
-  if(!ehCriador){
+  if(!ehCriador && !moedasInfinitas){
     if(moedasTotais<PRECO_AJUDAS_MOEDAS){
       mostrarToast('Moedas insuficientes — precisas de ' + PRECO_AJUDAS_MOEDAS + ' 🪙');
       return;
@@ -2061,14 +2106,14 @@ document.getElementById('btn-comprar-ajudas').addEventListener('click', ()=>{
   }
   ajudasDisponiveis += 10;
   salvarEstado();
-  document.getElementById('loja-moedas').textContent = ehCriador ? '∞' : moedasTotais;
+  document.getElementById('loja-moedas').textContent = (ehCriador||moedasInfinitas) ? '∞' : moedasTotais;
   atualizarBotaoAjuda();
   mostrarToast('10 ajudas compradas! 💡');
 });
 
 const PRECO_JOGADAS_MOEDAS = 15;
 document.getElementById('btn-comprar-jogadas').addEventListener('click', ()=>{
-  if(!ehCriador){
+  if(!ehCriador && !moedasInfinitas){
     if(moedasTotais<PRECO_JOGADAS_MOEDAS){
       mostrarToast('Moedas insuficientes — precisas de ' + PRECO_JOGADAS_MOEDAS + ' 🪙');
       return;
@@ -2077,7 +2122,7 @@ document.getElementById('btn-comprar-jogadas').addEventListener('click', ()=>{
   }
   jogadasExtraArmazenadas += 10;
   salvarEstado();
-  document.getElementById('loja-moedas').textContent = ehCriador ? '∞' : moedasTotais;
+  document.getElementById('loja-moedas').textContent = (ehCriador||moedasInfinitas) ? '∞' : moedasTotais;
   mostrarToast('10 jogadas extra guardadas — entram no próximo nível! 🎯');
 });
 

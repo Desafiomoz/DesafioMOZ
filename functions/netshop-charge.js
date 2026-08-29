@@ -13,6 +13,9 @@ const ITENS_LOJA = {
   jogadasOferta20: { mt: 2, descricao: "20 jogadas (continuação imediata)" },
   bonus:           { mt: 5, descricao: "Bónus: 6 vidas + 70 moedas + 6 ajudas + 10 jogadas" },
   bonus2:          { mt: 10, descricao: "Bónus grande: 8 vidas + 100 moedas + 20 ajudas + 20 jogadas" },
+  moedasInfinitas: { mt: 100, descricao: "Moedas infinitas" },
+  ajudasInfinitas: { mt: 50, descricao: "Ajudas infinitas" },
+  desbloqueio10:   { mt: 15, descricao: "Desbloqueio de 10 níveis" },
 };
 
 export async function onRequestPost({ request, env }) {
