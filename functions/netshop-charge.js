@@ -12,6 +12,7 @@ const ITENS_LOJA = {
   jogadas10:       { mt: 2, descricao: "10 jogadas extra" },
   jogadasOferta20: { mt: 2, descricao: "20 jogadas (continuação imediata)" },
   bonus:           { mt: 5, descricao: "Bónus: 6 vidas + 70 moedas + 6 ajudas + 10 jogadas" },
+  bonus2:          { mt: 10, descricao: "Bónus grande: 8 vidas + 100 moedas + 20 ajudas + 20 jogadas" },
 };
 
 export async function onRequestPost({ request, env }) {

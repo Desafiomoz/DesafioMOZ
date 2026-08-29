@@ -610,7 +610,7 @@ canvas{ touch-action:none; display:block; }
       <div class="regra-icone" style="background:linear-gradient(135deg, #ff5c8a, var(--laranja));">❤️</div>
       <div class="regra-texto">
         <h4>Vidas</h4>
-        <p>Começas com 5 vidas. Se as jogadas acabarem sem cumprires os objetivos, antes de perderes a vida podes comprar mais jogadas para continuar. Perdes uma vida só se recusares. Sem vidas, ficas 3 dias à espera — ou compras/recebes mais na loja.</p>
+        <p>Começas com 5 vidas. Se as jogadas acabarem sem cumprires os objetivos, antes de perderes a vida podes comprar mais jogadas para continuar. Perdes uma vida só se recusares. Sem vidas, ficas 3 dias à espera — ou compras/recebes mais na loja. <strong>Atenção:</strong> sair de um nível a meio (botão "← Mapa") também desconta 1 vida, mesmo sem chegares ao fim das jogadas.</p>
       </div>
     </div>
 
@@ -687,7 +687,7 @@ canvas{ touch-action:none; display:block; }
         </div>
         <div class="loja-item-opcoes">
           <button class="loja-btn" id="btn-mt-jogadas10" data-item="jogadas10">2 MT</button>
-          <button class="loja-btn" id="btn-comprar-jogadas">7 🪙</button>
+          <button class="loja-btn" id="btn-comprar-jogadas">15 🪙</button>
         </div>
       </div>
     </div>
@@ -700,6 +700,13 @@ canvas{ touch-action:none; display:block; }
           <div class="loja-item-sub">O melhor pacote — tudo junto</div>
         </div>
         <button class="loja-btn" id="btn-mt-bonus" data-item="bonus">5 MT</button>
+      </div>
+      <div class="loja-item loja-item-bonus" style="margin-top:10px;">
+        <div class="loja-item-info">
+          <div class="loja-item-titulo">8 vidas + 100 🪙 + 20 ajudas + 20 jogadas</div>
+          <div class="loja-item-sub">Pacote grande — o maior de todos</div>
+        </div>
+        <button class="loja-btn" id="btn-mt-bonus2" data-item="bonus2">10 MT</button>
       </div>
     </div>
 
@@ -749,7 +756,7 @@ canvas{ touch-action:none; display:block; }
   <div class="overlay" id="overlay-oferta-jogadas">
     <h2>Sem jogadas! 😮</h2>
     <div class="resumo">Compra mais jogadas para continuar este nível — ou perdes 1 vida.</div>
-    <button class="loja-btn" id="btn-oferta-comprar-moedas" style="margin-top:6px;">10 jogadas — 4 🪙</button>
+    <button class="loja-btn" id="btn-oferta-comprar-moedas" style="margin-top:6px;">10 jogadas — 10 🪙</button>
     <button class="loja-btn" id="btn-mt-oferta-jogadas" data-item="jogadasOferta20">20 jogadas — 2 MT</button>
     <button class="btn-voltar-mapa" id="btn-oferta-recusar" style="margin-top:6px;">Não, obrigado</button>
   </div>
@@ -831,6 +838,8 @@ canvas{ touch-action:none; display:block; }
     }
     var db = window.db;
     var emailJogador = localStorage.getItem('emailUtilizador') || null;
+    var EMAIL_CRIADOR = 'rochajosepaulo7@gmail.com';
+    var ehCriador = !!(emailJogador && emailJogador.trim().toLowerCase() === EMAIL_CRIADOR);
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
@@ -1389,6 +1398,8 @@ function usarAjuda(){
     salvarEstado();
     atualizarBotaoAjuda();
     mostrarToast('💡 Ajuda usada — restam ' + ajudasDisponiveis);
+  } else if(ehCriador){
+    mostrarToast('💡 Ajuda usada (criador — moedas infinitas)');
   } else {
     if(moedasTotais<CUSTO_AJUDA_MOEDAS){
       mostrarToast('Precisas de ' + CUSTO_AJUDA_MOEDAS + ' 🪙 — ou compra Ajudas na loja');
@@ -1638,18 +1649,20 @@ function vitoria(){
   document.getElementById('overlay-vitoria').classList.add('ativo');
 }
 
-const PRECO_OFERTA_JOGADAS_MOEDAS = 4;
+const PRECO_OFERTA_JOGADAS_MOEDAS = 10;
 
 function mostrarOfertaJogadas(){
   document.getElementById('overlay-oferta-jogadas').classList.add('ativo');
 }
 
 document.getElementById('btn-oferta-comprar-moedas').addEventListener('click', ()=>{
-  if(moedasTotais<PRECO_OFERTA_JOGADAS_MOEDAS){
-    mostrarToast('Moedas insuficientes — precisas de ' + PRECO_OFERTA_JOGADAS_MOEDAS + ' 🪙');
-    return;
+  if(!ehCriador){
+    if(moedasTotais<PRECO_OFERTA_JOGADAS_MOEDAS){
+      mostrarToast('Moedas insuficientes — precisas de ' + PRECO_OFERTA_JOGADAS_MOEDAS + ' 🪙');
+      return;
+    }
+    moedasTotais -= PRECO_OFERTA_JOGADAS_MOEDAS;
   }
-  moedasTotais -= PRECO_OFERTA_JOGADAS_MOEDAS;
   jogadasRestantes += 10;
   salvarEstado();
   atualizarHud();
@@ -1738,6 +1751,7 @@ function animar(){
 
 /* ---------- capa / carregamento ---------- */
 const TOTAL_NIVEIS = 300;
+function nivelEfetivo(){ return ehCriador ? TOTAL_NIVEIS : nivelDesbloqueado; }
 let nivelAtual = 1;
 let nivelDesbloqueado = 1; // por agora só o nível 1 está desbloqueado
 let loopIniciado = false;
@@ -1793,7 +1807,7 @@ function gerarMapa(){
     const y = (i-1)*alturaPasso + 20;
     const x = 50 + Math.sin(i*0.62)*((amplitude/300)*100)/1; // percentagem
     const no = document.createElement('div');
-    no.className = 'no-nivel' + (i<=nivelDesbloqueado ? (i===nivelDesbloqueado?' ativo':' concluido') : ' bloqueado');
+    no.className = 'no-nivel' + (i<=nivelEfetivo() ? (i===nivelDesbloqueado?' ativo':' concluido') : ' bloqueado');
     no.style.top = y+'px';
     no.style.left = 'calc(' + x + '% )';
     no.textContent = i;
@@ -1810,6 +1824,7 @@ function gerarMapa(){
 
 function aoTocarNivel(n){
   verificarRecargaVidas();
+  if(ehCriador){ iniciarNivel(n); return; } // criador: acesso total, sem restrições
   if(n>nivelDesbloqueado){
     mostrarToast('Termina o nível ' + nivelDesbloqueado + ' para desbloquear este');
     return;
@@ -1841,7 +1856,7 @@ function entrarNoMapa(){
   document.getElementById('tela-loja').classList.remove('ativo');
   document.getElementById('tela-regras').classList.remove('ativo');
   document.getElementById('tela-mapa').classList.add('ativo');
-  document.getElementById('mapa-moedas').textContent = moedasTotais;
+  document.getElementById('mapa-moedas').textContent = ehCriador ? '∞' : moedasTotais;
   atualizarVidasUI();
   gerarMapa();
   if(!emailJogador && !window.__avisoContaMostrado){
@@ -1860,7 +1875,7 @@ function abrirLoja(){
   verificarRecargaVidas();
   document.getElementById('tela-mapa').classList.remove('ativo');
   document.getElementById('tela-loja').classList.add('ativo');
-  document.getElementById('loja-moedas').textContent = moedasTotais;
+  document.getElementById('loja-moedas').textContent = ehCriador ? '∞' : moedasTotais;
 }
 
 function abrirRegras(){
@@ -1876,6 +1891,7 @@ const DESCRICOES_ITEM = {
   jogadas10: '10 jogadas extra — 2 MT (aplicadas no próximo nível)',
   jogadasOferta20: '20 jogadas — 2 MT (continuas já este nível)',
   bonus: 'Bónus: 6 vidas + 70 🪙 + 6 ajudas + 10 jogadas — 5 MT',
+  bonus2: 'Bónus grande: 8 vidas + 100 🪙 + 20 ajudas + 20 jogadas — 10 MT',
 };
 
 let itemEmCompra = null;
@@ -2019,43 +2035,49 @@ document.getElementById('btn-comprar-vidas').addEventListener('click', ()=>{
     mostrarToast('Já tens as 5 vidas completas');
     return;
   }
-  if(moedasTotais<PRECO_VIDAS_MOEDAS){
-    mostrarToast('Moedas insuficientes — precisas de ' + PRECO_VIDAS_MOEDAS + ' 🪙');
-    return;
+  if(!ehCriador){
+    if(moedasTotais<PRECO_VIDAS_MOEDAS){
+      mostrarToast('Moedas insuficientes — precisas de ' + PRECO_VIDAS_MOEDAS + ' 🪙');
+      return;
+    }
+    moedasTotais -= PRECO_VIDAS_MOEDAS;
   }
-  moedasTotais -= PRECO_VIDAS_MOEDAS;
   vidas = VIDAS_MAX;
   proximaRecarga = 0;
   salvarEstado();
   atualizarVidasUI();
-  document.getElementById('loja-moedas').textContent = moedasTotais;
+  document.getElementById('loja-moedas').textContent = ehCriador ? '∞' : moedasTotais;
   mostrarToast('5 vidas compradas! 🎉');
 });
 
 const PRECO_AJUDAS_MOEDAS = 5;
 document.getElementById('btn-comprar-ajudas').addEventListener('click', ()=>{
-  if(moedasTotais<PRECO_AJUDAS_MOEDAS){
-    mostrarToast('Moedas insuficientes — precisas de ' + PRECO_AJUDAS_MOEDAS + ' 🪙');
-    return;
+  if(!ehCriador){
+    if(moedasTotais<PRECO_AJUDAS_MOEDAS){
+      mostrarToast('Moedas insuficientes — precisas de ' + PRECO_AJUDAS_MOEDAS + ' 🪙');
+      return;
+    }
+    moedasTotais -= PRECO_AJUDAS_MOEDAS;
   }
-  moedasTotais -= PRECO_AJUDAS_MOEDAS;
   ajudasDisponiveis += 10;
   salvarEstado();
-  document.getElementById('loja-moedas').textContent = moedasTotais;
+  document.getElementById('loja-moedas').textContent = ehCriador ? '∞' : moedasTotais;
   atualizarBotaoAjuda();
   mostrarToast('10 ajudas compradas! 💡');
 });
 
-const PRECO_JOGADAS_MOEDAS = 7;
+const PRECO_JOGADAS_MOEDAS = 15;
 document.getElementById('btn-comprar-jogadas').addEventListener('click', ()=>{
-  if(moedasTotais<PRECO_JOGADAS_MOEDAS){
-    mostrarToast('Moedas insuficientes — precisas de ' + PRECO_JOGADAS_MOEDAS + ' 🪙');
-    return;
+  if(!ehCriador){
+    if(moedasTotais<PRECO_JOGADAS_MOEDAS){
+      mostrarToast('Moedas insuficientes — precisas de ' + PRECO_JOGADAS_MOEDAS + ' 🪙');
+      return;
+    }
+    moedasTotais -= PRECO_JOGADAS_MOEDAS;
   }
-  moedasTotais -= PRECO_JOGADAS_MOEDAS;
   jogadasExtraArmazenadas += 10;
   salvarEstado();
-  document.getElementById('loja-moedas').textContent = moedasTotais;
+  document.getElementById('loja-moedas').textContent = ehCriador ? '∞' : moedasTotais;
   mostrarToast('10 jogadas extra guardadas — entram no próximo nível! 🎯');
 });
 

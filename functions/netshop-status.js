@@ -75,7 +75,7 @@ export async function onRequestGet({ request, env }) {
 async function creditarCompra(item, email) {
   const docPath = `${FIRESTORE_BASE}/jogoEstado/${encodeURIComponent(email)}`;
 
-  if (item === "bonus") {
+  if (item === "bonus" || item === "bonus2") {
     // atualiza só "vidas" e "proximaRecarga" (updateMask) — sem isto, o PATCH apagaria os outros campos do documento
     const urlComMask = `${docPath}?updateMask.fieldPaths=vidas&updateMask.fieldPaths=proximaRecarga`;
     await fetch(urlComMask, {
@@ -83,12 +83,16 @@ async function creditarCompra(item, email) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         fields: {
-          vidas: { integerValue: 5 },
+          vidas: { integerValue: 5 }, // o jogo tem um máximo de 5 vidas — "8 vidas" do pacote enche a barra e o resto fica como bónus de moedas/ajudas/jogadas
           proximaRecarga: { integerValue: 0 },
         },
       }),
     });
-    await commitIncrementos(docPath, { moedasTotais: 70, ajudasDisponiveis: 6, jogadasExtraArmazenadas: 10 });
+    if (item === "bonus") {
+      await commitIncrementos(docPath, { moedasTotais: 70, ajudasDisponiveis: 6, jogadasExtraArmazenadas: 10 });
+    } else {
+      await commitIncrementos(docPath, { moedasTotais: 100, ajudasDisponiveis: 20, jogadasExtraArmazenadas: 20 });
+    }
     return;
   }
 
