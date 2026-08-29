@@ -36,7 +36,9 @@ export async function onRequestPost({ request, env }) {
     const item_info = ITENS_LOJA[item];
     const amountMT = item_info.mt; // a API espera o valor direto em Meticais, não em cêntimos
 
-    const referencia = `HOMEJUB-${item}-${Date.now()}`;
+    // guarda o item e o e-mail de forma garantida na "reference" (não depende do "metadata" ser devolvido pela API)
+    const emailCodificado = btoa(email);
+    const referencia = `HOMEJUB-${item}-${emailCodificado}-${Date.now()}`;
 
     const resp = await fetch("https://www.netshop.co.mz/api/v1/charges", {
       method: "POST",

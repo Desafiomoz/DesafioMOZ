@@ -1938,6 +1938,7 @@ function abrirCheckout(item){
   document.getElementById('checkout-telefone').value = '';
   metodoEscolhido = 'mpesa';
   document.querySelectorAll('.checkout-metodo').forEach(b=>b.classList.toggle('ativo', b.dataset.metodo==='mpesa'));
+  document.getElementById('btn-checkout-tentar-de-novo').style.display = '';
   mostrarPassoCheckout('form');
   document.getElementById('overlay-checkout').classList.add('ativo');
 }
@@ -2015,6 +2016,12 @@ async function verificarPagamentoCheckout(){
     const dados = await resp.json();
     if(dados.status==='paid'){
       pararPolling();
+      if(dados.credited===false){
+        document.getElementById('checkout-erro-txt').textContent = 'O pagamento foi recebido, mas houve um problema a entregar a compra. Guarda este código e contacta o suporte: ' + pollingCheckoutId;
+        mostrarPassoCheckout('erro');
+        document.getElementById('btn-checkout-tentar-de-novo').style.display = 'none';
+        return;
+      }
       await aplicarCompraConfirmada(itemEmCompra);
     } else if(dados.status==='failed'){
       pararPolling();

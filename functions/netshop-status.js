@@ -44,12 +44,23 @@ export async function onRequestGet({ request, env }) {
       return json({ status: "paid", credited: true }, 200); // já tinha sido creditado — só confirma ao jogo
     }
 
-    // 3. Extrai o item comprado e o e-mail a partir do metadata que enviámos ao criar a cobrança
-    const meta = cobranca.metadata || {};
-    const item = meta.item;
-    const email = meta.email;
+    // 3. Extrai o item comprado e o e-mail — principalmente a partir da "reference" (garantido, fomos nós que a definimos)
+    let item, email;
+    const referencia = cobranca.reference || "";
+    const partes = referencia.split("-"); // formato: HOMEJUB-item-emailEmBase64-timestamp
+    if (partes[0] === "HOMEJUB" && partes.length >= 4) {
+      item = partes[1];
+      try { email = atob(partes[2]); } catch(e) { email = null; }
+    }
+    // reforço: se por algum motivo a reference não vier completa, tenta o metadata como reserva
     if (!item || !email) {
-      return json({ status: "paid", credited: false, erro: "metadata em falta na cobrança" }, 200);
+      const meta = cobranca.metadata || {};
+      item = item || meta.item;
+      email = email || meta.email;
+    }
+    if (!item || !email) {
+      console.error("Não foi possível identificar item/email da cobrança", chargeId, referencia, cobranca.metadata);
+      return json({ status: "paid", credited: false }, 200);
     }
 
     await creditarCompra(item, email);
