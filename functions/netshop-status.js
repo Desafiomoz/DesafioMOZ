@@ -1,21 +1,10 @@
 // Cloudflare Pages Function
-// Polling de backup: o jogo pergunta se já pagou.
-// Crédito principal deve vir do webhook; isto garante a UX e cobre falhas.
-// URL: https://desafiomoz.pages.dev/netshop-status?id=CHARGE_ID
+// O jogo pergunta a esta função, repetidamente, "este pagamento já foi feito?" — funciona
+// como reserva mesmo que o webhook (netshop-webhook.js) já tenha tratado tudo mais depressa.
 //
-// Env: NETSHOP_API_KEY, NETSHOP_WALLET_ID
+// URL desta função depois de publicada: https://SEUDOMINIO/netshop-status?id=CHARGE_ID
 
-import {
-  ESTADOS_PAGOS,
-  ESTADOS_FALHADOS,
-  processarCobrancaPaga,
-  json,
-  corsOptions,
-} from "./_netshop-lib.js";
-
-export async function onRequestOptions() {
-  return corsOptions();
-}
+import { ESTADOS_PAGOS, ESTADOS_FALHADOS, processarCobrancaPaga } from "./_netshop-lib.js";
 
 export async function onRequestGet({ request, env }) {
   try {
@@ -23,43 +12,36 @@ export async function onRequestGet({ request, env }) {
     const chargeId = url.searchParams.get("id");
     if (!chargeId) return json({ erro: "Falta o id da cobrança" }, 400);
 
-    if (!env.NETSHOP_API_KEY || !env.NETSHOP_WALLET_ID) {
-      return json({ status: "erro" }, 500);
-    }
-
-    const resp = await fetch(
-      `https://www.netshop.co.mz/api/v1/charges/${encodeURIComponent(chargeId)}`,
-      {
-        headers: {
-          Authorization: `Bearer ${env.NETSHOP_API_KEY}`,
-          "X-Wallet-ID": String(env.NETSHOP_WALLET_ID),
-        },
-      }
-    );
-
-    const cobranca = await resp.json().catch(() => ({}));
-    if (!resp.ok) {
-      console.error("Falha ao consultar charge:", resp.status, cobranca);
-      return json({ status: "erro" }, 502);
-    }
+    const resp = await fetch(`https://www.netshop.co.mz/api/v1/charges/${encodeURIComponent(chargeId)}`, {
+      headers: {
+        "Authorization": `Bearer ${env.NETSHOP_API_KEY}`,
+        "X-Wallet-ID": env.NETSHOP_WALLET_ID,
+      },
+    });
+    const cobranca = await resp.json();
+    if (!resp.ok) return json({ status: "erro" }, 502);
 
     const estado = (cobranca.status || "").toLowerCase();
 
     if (ESTADOS_FALHADOS.includes(estado)) {
+      console.error("Pagamento falhou:", cobranca.failed_reason || "sem motivo indicado");
       return json({ status: "failed" }, 200);
     }
     if (!ESTADOS_PAGOS.includes(estado)) {
-      return json({ status: "pending" }, 200);
+      return json({ status: "pending" }, 200); // ainda a aguardar confirmação do jogador no telemóvel
     }
 
-    // Pago → creditar (idempotente; se o webhook já creditou, só confirma)
-    const resultado = await processarCobrancaPaga(chargeId, "status-poll");
-    return json({
-      status: "paid",
-      credited: !!resultado.credited,
-    }, 200);
+    const resultado = await processarCobrancaPaga(chargeId);
+    return json({ status: "paid", credited: resultado.credited, diagnostico: { chargeIdRecebido: chargeId, estadoNetShop: estado, detalhe: resultado.diag } }, 200);
   } catch (err) {
-    console.error("Erro netshop-status:", err);
-    return json({ status: "erro" }, 500);
+    console.error("Erro ao verificar estado do pagamento:", err);
+    return json({ status: "erro", diagnostico: { mensagem: String(err && err.message || err) } }, 500);
   }
+}
+
+function json(obj, status) {
+  return new Response(JSON.stringify(obj), {
+    status,
+    headers: { "Content-Type": "application/json" },
+  });
 }
