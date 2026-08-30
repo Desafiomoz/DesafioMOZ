@@ -28,7 +28,7 @@ export async function onRequestPost({ request, env }) {
     const estado = (cobranca.status || "").toLowerCase();
 
     if (tipo.includes("paid") || estado === "paid" || estado === "succeeded") {
-      await processarCobrancaPaga(cobranca.id, cobranca.reference);
+      await processarCobrancaPaga(cobranca.id);
     }
     // "charge.failed" não precisa de ação aqui — o ecrã de pagamento do jogo já trata do aviso ao jogador
 

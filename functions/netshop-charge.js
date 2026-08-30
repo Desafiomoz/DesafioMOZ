@@ -5,7 +5,7 @@
 //
 // URL desta função depois de publicada: https://SEUDOMINIO/netshop-charge
 
-import { ITENS_LOJA, FIRESTORE_BASE } from "./_netshop-lib.js";
+import { ITENS_LOJA, guardarPedido } from "./_netshop-lib.js";
 
 export async function onRequestPost({ request, env }) {
   try {
@@ -23,23 +23,7 @@ export async function onRequestPost({ request, env }) {
     }
 
     const amountMT = ITENS_LOJA[item].mt; // a API espera o valor direto em Meticais, não em cêntimos
-
-    // guarda o pedido no Firebase ANTES de pedir o pagamento — a referência enviada à NetShop
-    // fica só com um código curto, sem depender de nada ser devolvido pela API (email, item, etc. ficam guardados aqui)
-    const pedidoId = crypto.randomUUID().replace(/-/g, "").slice(0, 16);
-    await fetch(`${FIRESTORE_BASE}/pedidosLoja?documentId=${pedidoId}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        fields: {
-          item: { stringValue: item },
-          email: { stringValue: email },
-          criadoEm: { timestampValue: new Date().toISOString() },
-        },
-      }),
-    });
-
-    const referencia = `HJ${pedidoId}`;
+    const referencia = `HJ${Date.now()}`; // só para referência humana na NetShop — a ligação real usa o id da cobrança
 
     const resp = await fetch("https://www.netshop.co.mz/api/v1/charges", {
       method: "POST",
@@ -67,6 +51,10 @@ export async function onRequestPost({ request, env }) {
       console.error("Falha ao criar cobrança:", resp.status, textoResposta);
       return json({ erro: "Não foi possível processar o pagamento agora. Verifica o número de telefone e tenta novamente." }, 502);
     }
+
+    // só agora guardamos o pedido, já com o ID real que a NetShop devolveu — é essa ligação
+    // (id da cobrança → item + email) que garante a entrega, sem depender de mais nada
+    await guardarPedido(data.id, item, email);
 
     return json({ id: data.id, status: data.status || "pending" }, 200);
   } catch (err) {

@@ -73,21 +73,31 @@ export async function creditarCompra(item, email) {
   }
 }
 
-// pedido guardado no Firebase no momento em que a cobrança é criada — é a nossa fonte de verdade
-// sobre "quem comprou o quê", já que não dependemos de nada que a NetShop tenha de devolver depois.
-export async function buscarPedido(pedidoId) {
-  const resp = await fetch(`${FIRESTORE_BASE}/pedidosLoja/${encodeURIComponent(pedidoId)}`);
+// pedido guardado no Firebase logo a seguir a criar a cobrança — guardado com o PRÓPRIO ID da
+// cobrança (não uma referência à parte), para nunca depender de a NetShop devolver mais nada
+// além do id, que sabemos sempre com certeza.
+export async function guardarPedido(chargeId, item, email) {
+  await fetch(`${FIRESTORE_BASE}/pedidosLoja/${encodeURIComponent(chargeId)}?documentId=${encodeURIComponent(chargeId)}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      fields: {
+        item: { stringValue: item },
+        email: { stringValue: email },
+        criadoEm: { timestampValue: new Date().toISOString() },
+      },
+    }),
+  });
+}
+
+export async function buscarPedido(chargeId) {
+  const resp = await fetch(`${FIRESTORE_BASE}/pedidosLoja/${encodeURIComponent(chargeId)}`);
   if (resp.status !== 200) return null;
   const doc = await resp.json();
   return {
     item: doc.fields?.item?.stringValue,
     email: doc.fields?.email?.stringValue,
   };
-}
-
-export function pedidoIdDaReferencia(reference) {
-  const ref = reference || "";
-  return ref.startsWith("HJ") ? ref.slice(2) : ref;
 }
 
 export async function jaProcessado(chargeId) {
@@ -111,13 +121,12 @@ export async function marcarProcessado(chargeId, item, email) {
 
 // processa uma cobrança confirmada como paga — usado tanto pelo webhook como pelo polling,
 // para nunca haver duas versões diferentes da mesma lógica de crédito.
-export async function processarCobrancaPaga(chargeId, reference) {
+export async function processarCobrancaPaga(chargeId) {
   if (await jaProcessado(chargeId)) return { credited: true }; // já tinha sido processada — nada a fazer
 
-  const pedidoId = pedidoIdDaReferencia(reference);
-  const pedido = await buscarPedido(pedidoId);
+  const pedido = await buscarPedido(chargeId);
   if (!pedido || !pedido.item || !pedido.email) {
-    console.error("Pedido original não encontrado para a cobrança", chargeId, reference);
+    console.error("Pedido original não encontrado para a cobrança", chargeId);
     return { credited: false };
   }
 

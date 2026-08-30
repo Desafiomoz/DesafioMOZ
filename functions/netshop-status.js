@@ -31,7 +31,7 @@ export async function onRequestGet({ request, env }) {
       return json({ status: "pending" }, 200); // ainda a aguardar confirmação do jogador no telemóvel
     }
 
-    const resultado = await processarCobrancaPaga(chargeId, cobranca.reference);
+    const resultado = await processarCobrancaPaga(chargeId);
     return json({ status: "paid", credited: resultado.credited }, 200);
   } catch (err) {
     console.error("Erro ao verificar estado do pagamento:", err);
