@@ -2017,7 +2017,8 @@ async function verificarPagamentoCheckout(){
     if(dados.status==='paid'){
       pararPolling();
       if(dados.credited===false){
-        document.getElementById('checkout-erro-txt').textContent = 'O pagamento foi recebido, mas houve um problema a entregar a compra. Guarda este código e contacta o suporte: ' + pollingCheckoutId;
+        const diag = dados.diagnostico ? JSON.stringify(dados.diagnostico) : 'sem diagnóstico';
+        document.getElementById('checkout-erro-txt').textContent = 'Problema a entregar a compra. DIAGNÓSTICO: ' + diag;
         mostrarPassoCheckout('erro');
         document.getElementById('btn-checkout-tentar-de-novo').style.display = 'none';
         return;
