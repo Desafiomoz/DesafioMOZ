@@ -77,7 +77,7 @@ export async function creditarCompra(item, email) {
 // cobrança (não uma referência à parte), para nunca depender de a NetShop devolver mais nada
 // além do id, que sabemos sempre com certeza.
 export async function guardarPedido(chargeId, item, email) {
-  await fetch(`${FIRESTORE_BASE}/pedidosLoja/${encodeURIComponent(chargeId)}?documentId=${encodeURIComponent(chargeId)}`, {
+  const resp = await fetch(`${FIRESTORE_BASE}/pedidosLoja/${encodeURIComponent(chargeId)}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -88,6 +88,10 @@ export async function guardarPedido(chargeId, item, email) {
       },
     }),
   });
+  if (!resp.ok) {
+    const erro = await resp.text();
+    console.error("Falha ao guardar pedidosLoja:", resp.status, erro);
+  }
 }
 
 export async function buscarPedido(chargeId) {
@@ -106,7 +110,7 @@ export async function jaProcessado(chargeId) {
 }
 
 export async function marcarProcessado(chargeId, item, email) {
-  await fetch(`${FIRESTORE_BASE}/lojaCargas/${encodeURIComponent(chargeId)}?documentId=${encodeURIComponent(chargeId)}`, {
+  const resp = await fetch(`${FIRESTORE_BASE}/lojaCargas/${encodeURIComponent(chargeId)}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -117,6 +121,10 @@ export async function marcarProcessado(chargeId, item, email) {
       },
     }),
   });
+  if (!resp.ok) {
+    const erro = await resp.text();
+    console.error("Falha ao guardar lojaCargas:", resp.status, erro);
+  }
 }
 
 // processa uma cobrança confirmada como paga — usado tanto pelo webhook como pelo polling,
