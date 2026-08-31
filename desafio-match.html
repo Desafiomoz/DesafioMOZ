@@ -855,9 +855,9 @@ canvas{ touch-action:none; display:block; }
         window.db = firebase.firestore();
     }
     var db = window.db;
-    var emailJogador = localStorage.getItem('emailUtilizador') || null;
+    var emailJogador = (localStorage.getItem('emailUtilizador') || '').trim().toLowerCase() || null;
     var EMAIL_CRIADOR = 'rochajosepaulo7@gmail.com';
-    var ehCriador = !!(emailJogador && emailJogador.trim().toLowerCase() === EMAIL_CRIADOR);
+    var ehCriador = !!(emailJogador && emailJogador === EMAIL_CRIADOR);
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
