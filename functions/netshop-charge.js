@@ -28,15 +28,20 @@ function json(obj, status) {
 }
 
 function emailParaRef(email) {
-  // base64url — seguro na reference da NetShop
-  var b64 = btoa(unescape(encodeURIComponent(String(email).trim().toLowerCase())));
-  return b64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+  var s = String(email).trim().toLowerCase();
+  var out = "";
+  for (var i = 0; i < s.length; i++) {
+    var c = s.charAt(i);
+    if (c === "@") out += "AT";
+    else if (c === ".") out += "DOT";
+    else if (c === "-" || c === "_" || (c >= "a" && c <= "z") || (c >= "0" && c <= "9")) out += c;
+  }
+  return out;
 }
 
 async function guardarPedido(chargeId, item, email) {
   try {
-    var url = FS_API + "/pedidosLoja/" + encodeURIComponent(chargeId);
-    await fetch(url, {
+    await fetch(FS_API + "/pedidosLoja/" + encodeURIComponent(chargeId), {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -48,7 +53,7 @@ async function guardarPedido(chargeId, item, email) {
       })
     });
   } catch (e) {
-    console.error("guardarPedido falhou (ok, email vai na reference):", e);
+    console.error("guardarPedido:", e);
   }
 }
 
@@ -73,11 +78,11 @@ export async function onRequestPost({ request, env }) {
       }, 400);
     }
     if (!env.NETSHOP_API_KEY || !env.NETSHOP_WALLET_ID) {
-      return json({ erro: "Configuração do servidor em falta" }, 500);
+      return json({ erro: "Falta NETSHOP_API_KEY ou NETSHOP_WALLET_ID no Cloudflare" }, 500);
     }
 
     var amountMT = ITENS_LOJA[item].mt;
-    // Formato: HJ-{item}-{timestamp}-{emailEmBase64}
+    // HJ-item-timestamp-emailCodificado (sem base64)
     var referencia =
       "HJ-" + item + "-" + Date.now() + "-" + emailParaRef(email);
 
@@ -92,7 +97,7 @@ export async function onRequestPost({ request, env }) {
       body: JSON.stringify({
         amount: amountMT,
         currency: "MZN",
-        method: method,
+        method: "mpesa",
         msisdn: msisdn,
         reference: referencia
       })
@@ -105,9 +110,13 @@ export async function onRequestPost({ request, env }) {
     } catch (e) {}
 
     if (!resp.ok || !data.id) {
-      console.error("Falha cobrança:", resp.status, textoResposta);
+      console.error("NetShop charge fail:", resp.status, textoResposta);
+      // Mostra detalhe real para diagnosticar (podes tirar depois)
+      var detalhe =
+        (data && (data.message || data.error || data.erro)) ||
+        textoResposta.slice(0, 120);
       return json({
-        erro: "Não foi possível processar o pagamento agora. Verifica o número e tenta novamente."
+        erro: "NetShop recusou: " + resp.status + " " + detalhe
       }, 502);
     }
 
@@ -117,7 +126,7 @@ export async function onRequestPost({ request, env }) {
   } catch (err) {
     console.error("Erro interno:", err);
     return json({
-      erro: "Não foi possível processar o pagamento agora. Tenta novamente."
+      erro: "Erro servidor: " + String(err && err.message || err)
     }, 500);
   }
 }
