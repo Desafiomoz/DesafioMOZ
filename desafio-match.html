@@ -34,60 +34,80 @@ html,body{
 .topo{
   position:fixed; top:0; left:0; right:0;
   display:flex; align-items:center; justify-content:space-between;
-  padding:14px 18px;
+  padding:14px 14px;
   z-index:10;
+  overflow:visible;
   background:linear-gradient(180deg, rgba(6,8,14,0.9), rgba(6,8,14,0));
 }
-.marca{ display:flex; align-items:center; gap:10px; }
-.marca .logo-dot{
-  width:34px; height:34px; border-radius:10px;
-  background:linear-gradient(135deg, var(--azul), var(--laranja) 50%, var(--verde));
-  display:flex; align-items:center; justify-content:center;
-  font-family:'Sora',sans-serif; font-weight:800; font-size:15px; color:#06080e;
-  box-shadow:0 0 18px rgba(59,158,255,0.35);
-}
-.marca .nome{ font-family:'Sora',sans-serif; font-weight:700; font-size:15px; line-height:1.1; }
-.marca .nome span{ display:block; font-size:10.5px; font-weight:500; color:var(--suave); letter-spacing:.04em; }
 
-.hud{
-  display:flex; align-items:center; gap:6px;
-  padding:6px 7px;
-  border-radius:16px;
-  background:linear-gradient(160deg, rgba(46,230,160,0.14), rgba(18,22,31,0.88));
-  border:1px solid rgba(46,230,160,0.22);
-  box-shadow:0 0 0 1px rgba(255,207,77,0.1) inset, 0 0 20px rgba(46,230,160,0.18), 0 0 34px rgba(255,207,77,0.12);
-  animation:auraHud 3.8s ease-in-out infinite;
+.topo-direita{
+  display:flex;
+  flex-direction:row;
+  align-items:center;
+  gap:6px;
+  flex-shrink:0;
+  overflow:visible;
+  margin-right:6px;
+  padding-right:4px;
 }
-@keyframes auraHud{
-  0%,100%{ box-shadow:0 0 0 1px rgba(255,207,77,0.1) inset, 0 0 18px rgba(46,230,160,0.15), 0 0 30px rgba(255,207,77,0.1); }
-  50%{ box-shadow:0 0 0 1px rgba(255,207,77,0.16) inset, 0 0 26px rgba(46,230,160,0.24), 0 0 40px rgba(255,207,77,0.18); }
-}
-.pill{
-  background:transparent;
-  border:none;
-  padding:4px 7px;
-  text-align:center;
-  min-width:52px;
-}
-.pill .val{ font-family:'Sora',sans-serif; font-weight:800; font-size:16px; }
-.pill .lab{ font-size:9.5px; color:var(--suave); letter-spacing:.05em; text-transform:uppercase; margin-top:1px; }
-.pill.pontos .val{ color:var(--ouro); }
-.pill.jogadas .val{ color:var(--azul); }
+.topo-direita .btn-ajuda,
 .btn-ajuda{
   position:relative;
-  background:linear-gradient(135deg, #ffcf4d, #ff9a3c);
-  border:none; color:#2a1d00; font-size:16px;
-  width:34px; height:34px; border-radius:10px; flex-shrink:0;
-  display:flex; align-items:center; justify-content:center;
-  box-shadow:0 0 14px rgba(255,207,77,0.5);
+  z-index:12;
+  isolation:isolate;
+  background:linear-gradient(145deg, #fff3a0 0%, #ffcf4d 40%, #ff9a3c 100%);
+  border:2.5px solid #fff8d6;
+  color:#2a1d00;
+  width:44px;
+  height:44px;
+  min-width:44px;
+  min-height:44px;
+  border-radius:14px;
+  flex-shrink:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:visible;
+  padding:0;
+  margin:0;
+  line-height:1;
+  box-shadow:0 2px 0 rgba(0,0,0,0.25), 0 0 0 3px rgba(255,207,77,0.35), 0 0 20px rgba(255,180,0,0.95);
+  animation:auraAjuda 1.8s ease-in-out infinite;
+}
+.btn-ajuda .ajuda-icone{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:100%;
+  height:100%;
+  font-size:24px;
+  line-height:1;
+  filter:drop-shadow(0 1px 1px rgba(0,0,0,0.25));
+}
+@keyframes auraAjuda{
+  0%,100%{ transform:scale(1); box-shadow:0 2px 0 rgba(0,0,0,0.25), 0 0 0 3px rgba(255,207,77,0.35), 0 0 20px rgba(255,180,0,0.85); }
+  50%{ transform:scale(1.05); box-shadow:0 2px 0 rgba(0,0,0,0.25), 0 0 0 4px rgba(255,255,255,0.45), 0 0 30px rgba(255,200,40,1); }
 }
 .ajuda-contagem{
-  position:absolute; top:-5px; right:-5px;
-  background:var(--verde); color:#06120f;
-  font-family:'Sora',sans-serif; font-weight:800; font-size:9.5px;
-  min-width:15px; height:15px; border-radius:50%;
-  display:flex; align-items:center; justify-content:center;
-  padding:0 2px; line-height:1;
+  position:absolute;
+  top:-8px;
+  right:-8px;
+  background:var(--verde);
+  color:#06120f;
+  font-family:'Sora',sans-serif;
+  font-weight:800;
+  font-size:11px;
+  min-width:20px;
+  height:20px;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:0 4px;
+  line-height:1;
+  border:2px solid #06120f;
+  box-shadow:0 0 10px rgba(46,230,160,0.8);
+  z-index:13;
 }
 
 #tela-jogo{
@@ -99,6 +119,15 @@ html,body{
     radial-gradient(circle at 85% 84%, rgba(255,154,60,0.18), transparent 36%),
     var(--bg);
   overflow:hidden;
+}
+#tela-jogo .topo{
+  z-index:40;
+  padding:10px 10px 10px 8px;
+  display:flex;
+  flex-direction:row;
+  align-items:center;
+  justify-content:space-between;
+  gap:6px;
 }
 #tela-jogo::before, #tela-jogo::after{
   content:''; position:absolute; inset:-20%; z-index:0; pointer-events:none;
@@ -336,15 +365,101 @@ canvas{ touch-action:none; display:block; }
 
 .btn-voltar-mapa{
   background:var(--painel); border:1px solid var(--linha);
-  color:var(--texto); font-family:'Sora',sans-serif; font-weight:700; font-size:12.5px;
-  padding:8px 14px; border-radius:12px; display:flex; align-items:center; gap:6px;
+  color:var(--texto); font-family:'Sora',sans-serif; font-weight:700; font-size:12px;
+  padding:8px 10px; border-radius:12px; display:flex; align-items:center; gap:4px;
+  flex-shrink:0;
 }
 .btn-loja{
-  background:linear-gradient(135deg, rgba(168,85,247,0.9), rgba(59,158,255,0.9));
-  border:none; color:#fff; font-size:18px;
-  width:40px; height:40px; border-radius:12px;
-  display:flex; align-items:center; justify-content:center;
-  box-shadow:0 0 16px rgba(168,85,247,0.4);
+  background:linear-gradient(135deg, rgba(168,85,247,0.95), rgba(59,158,255,0.95));
+  border:none; color:#fff; font-size:13px; font-family:'Sora',sans-serif; font-weight:800;
+  min-width:52px; height:48px; border-radius:14px; padding:4px 8px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px;
+  box-shadow:0 0 0 2px rgba(255,255,255,0.25) inset, 0 0 22px rgba(168,85,247,0.75), 0 0 40px rgba(59,158,255,0.45);
+  animation:auraBtnMapa 2.2s ease-in-out infinite;
+}
+.btn-loja .btn-loja-ico{ font-size:16px; line-height:1; }
+.btn-loja .btn-loja-txt{ font-size:9px; letter-spacing:.04em; text-transform:uppercase; }
+.btn-loja.btn-regras-mapa{
+  background:linear-gradient(135deg, rgba(46,230,160,0.95), rgba(34,211,200,0.95));
+  color:#06120f;
+  box-shadow:0 0 0 2px rgba(255,255,255,0.3) inset, 0 0 22px rgba(46,230,160,0.8), 0 0 40px rgba(34,211,200,0.5);
+}
+@keyframes auraBtnMapa{
+  0%,100%{ filter:brightness(1); transform:scale(1); }
+  50%{ filter:brightness(1.12); transform:scale(1.04); }
+}
+.mapa-topo .pill{
+  border-radius:14px;
+  box-shadow:0 0 0 1px rgba(255,207,77,0.25) inset, 0 0 18px rgba(255,207,77,0.35), 0 0 28px rgba(46,230,160,0.2);
+  animation:auraHud 3.2s ease-in-out infinite;
+}
+.hud{
+  display:flex;
+  flex-direction:row;
+  flex-wrap:nowrap;
+  align-items:center;
+  gap:2px;
+  padding:5px 6px;
+  border-radius:16px;
+  overflow:visible;
+  background:linear-gradient(160deg, rgba(46,230,160,0.14), rgba(18,22,31,0.88));
+  border:1px solid rgba(46,230,160,0.22);
+  box-shadow:0 0 0 1px rgba(255,207,77,0.18) inset, 0 0 26px rgba(46,230,160,0.35), 0 0 44px rgba(255,207,77,0.22);
+  animation:auraHud 3.8s ease-in-out infinite;
+  max-width:calc(100vw - 120px);
+}
+.pill{
+  background:transparent;
+  border:none;
+  padding:3px 4px;
+  text-align:center;
+  min-width:36px;
+  flex-shrink:0;
+}
+.pill .val{ font-family:'Sora',sans-serif; font-weight:800; font-size:14px; line-height:1.1; }
+.pill .lab{ font-size:8px; color:var(--suave); letter-spacing:.03em; text-transform:uppercase; margin-top:1px; }
+.pill.pontos .val{ color:var(--ouro); }
+.pill.jogadas .val{ color:var(--azul); }
+.btn-regras-jogo{
+  flex-shrink:0;
+  white-space:nowrap;
+}
+.btn-regras-jogo{
+  background:linear-gradient(135deg, rgba(46,230,160,0.95), rgba(34,211,200,0.95));
+  border:none; color:#06120f; font-family:'Sora',sans-serif; font-weight:800;
+  font-size:9px; letter-spacing:.04em; text-transform:uppercase;
+  padding:7px 8px; border-radius:11px;
+  box-shadow:0 0 16px rgba(46,230,160,0.55);
+}
+.loja-aviso-forte{
+  margin:12px 0 18px; padding:12px 14px; border-radius:14px;
+  background:linear-gradient(160deg, rgba(255,154,60,0.18), rgba(18,22,31,0.9));
+  border:1px solid rgba(255,154,60,0.4);
+  color:#ffd7a8; font-size:12.5px; line-height:1.45; text-align:center;
+  box-shadow:0 0 18px rgba(255,154,60,0.2);
+}
+.loja-regras-box{
+  margin-bottom:22px; padding:14px 16px; border-radius:16px;
+  background:linear-gradient(160deg, rgba(59,158,255,0.14), rgba(18,22,31,0.9));
+  border:1px solid rgba(59,158,255,0.3);
+}
+.loja-regras-box h3{ margin-bottom:8px; }
+.loja-regras-box p{ font-size:12.5px; color:var(--suave); line-height:1.5; margin-bottom:8px; }
+.tutorial-overlay{
+  position:fixed; left:12px; right:12px; bottom:78px; z-index:25;
+  background:linear-gradient(160deg, rgba(18,22,31,0.96), rgba(12,16,24,0.96));
+  border:1px solid rgba(59,158,255,0.35);
+  border-radius:16px; padding:14px 16px;
+  box-shadow:0 0 24px rgba(59,158,255,0.25);
+  display:none;
+}
+.tutorial-overlay.ativo{ display:block; }
+.tutorial-overlay .tut-titulo{ font-family:'Sora',sans-serif; font-weight:800; font-size:13px; color:var(--ouro); margin-bottom:6px; }
+.tutorial-overlay .tut-txt{ font-size:12.5px; color:var(--texto); line-height:1.45; }
+.tutorial-overlay .tut-btn{
+  margin-top:10px; border:none; border-radius:20px; padding:8px 14px;
+  font-family:'Sora',sans-serif; font-weight:700; font-size:12px;
+  background:linear-gradient(90deg, var(--azul), var(--verde)); color:#06080e;
 }
 
 /* ---------- loja ---------- */
@@ -561,8 +676,8 @@ canvas{ touch-action:none; display:block; }
     <div style="display:flex; gap:8px; align-items:center;">
       <div class="pill pontos"><div class="val" id="mapa-moedas">0</div><div class="lab">🪙 Moedas</div></div>
       <div class="pill"><div class="vidas" id="mapa-vidas"></div><div class="lab" id="mapa-vidas-lab">Vidas</div></div>
-      <button class="btn-loja" id="btn-abrir-regras" style="background:linear-gradient(135deg, rgba(46,230,160,0.9), rgba(34,211,200,0.9)); box-shadow:0 0 16px rgba(46,230,160,0.4);">📖</button>
-      <button class="btn-loja" id="btn-abrir-loja">🛍️</button>
+      <button class="btn-loja btn-regras-mapa" id="btn-abrir-regras" title="Regras"><span class="btn-loja-ico">📖</span><span class="btn-loja-txt">Regras</span></button>
+      <button class="btn-loja" id="btn-abrir-loja" title="Loja"><span class="btn-loja-ico">🛍️</span><span class="btn-loja-txt">Loja</span></button>
     </div>
   </div>
   <div class="mapa-scroll" id="mapa-scroll"></div>
@@ -653,6 +768,16 @@ canvas{ touch-action:none; display:block; }
     <div class="pill pontos"><div class="val" id="loja-moedas">0</div><div class="lab">🪙 Moedas</div></div>
   </div>
   <div class="loja-corpo">
+    <div class="loja-aviso-forte">⏱️ Em compras com M-Pesa, espera cerca de <strong>1 minuto</strong> no ecrã até a compra entrar na conta. Não saias nem feches o jogo antes de veres a confirmação.</div>
+
+    <div class="loja-regras-box">
+      <h3>📋 Regras da loja</h3>
+      <p><strong>Desbloqueio +10 níveis:</strong> abre 10 níveis à frente do sítio onde estás. Exemplo: se estás no nível 20 e compras o desbloqueio, passas a poder jogar até ao nível 30.</p>
+      <p><strong>Jogadas extra (loja):</strong> ficam guardadas e entram no <em>próximo</em> nível que começares.</p>
+      <p><strong>Jogadas no meio do nível (2 MT):</strong> continuas o nível actual — não saias até a compra ser confirmada.</p>
+      <p><strong>Moedas / ajudas / bónus / infinitas:</strong> entram na tua conta depois do pagamento confirmado (pode demorar até ~1 minuto).</p>
+    </div>
+
     <div class="loja-secao">
       <h3>❤️ Comprar vidas</h3>
       <div class="loja-item">
@@ -660,7 +785,7 @@ canvas{ touch-action:none; display:block; }
           <div class="loja-item-titulo">5 vidas completas</div>
           <div class="loja-item-sub">Enche a barra de vidas na hora</div>
         </div>
-        <button class="loja-btn" id="btn-comprar-vidas">20 🪙</button>
+        <button class="loja-btn" id="btn-comprar-vidas">30 🪙</button>
       </div>
     </div>
 
@@ -687,7 +812,7 @@ canvas{ touch-action:none; display:block; }
         </div>
         <div class="loja-item-opcoes">
           <button class="loja-btn" id="btn-mt-jogadas10" data-item="jogadas10">2 MT</button>
-          <button class="loja-btn" id="btn-comprar-jogadas">15 🪙</button>
+          <button class="loja-btn" id="btn-comprar-jogadas">20 🪙</button>
         </div>
       </div>
     </div>
@@ -740,7 +865,7 @@ canvas{ touch-action:none; display:block; }
           <button class="loja-btn" id="btn-mt-moedas70" data-item="moedas70">4 MT</button>
         </div>
       </div>
-      <div class="loja-aviso">Pagamento seguro por M-Pesa.</div>
+      <div class="loja-aviso">Pagamento seguro por M-Pesa. Após pagar, espera até 1 minuto no ecrã para receberes a compra.</div>
     </div>
   </div>
   <div class="loja-rodape">
@@ -752,12 +877,21 @@ canvas{ touch-action:none; display:block; }
 <div id="tela-jogo" style="display:none;">
   <div class="topo">
     <button class="btn-voltar-mapa" id="btn-voltar-mapa">← Mapa</button>
-    <div class="hud">
-      <div class="pill jogadas"><div class="val" id="hud-nivel">1</div><div class="lab">Nível</div></div>
-      <div class="pill pontos"><div class="val" id="hud-pontos">0</div><div class="lab">🪙 Se terminar</div></div>
-      <div class="pill jogadas"><div class="val" id="hud-jogadas">20</div><div class="lab">Jogadas</div></div>
-      <button class="btn-ajuda" id="btn-ajuda">💡<span class="ajuda-contagem" id="ajuda-contagem" style="display:none;">0</span></button>
+    <div class="topo-direita">
+      <div class="hud">
+        <div class="pill jogadas"><div class="val" id="hud-nivel">1</div><div class="lab">Nível</div></div>
+        <div class="pill pontos"><div class="val" id="hud-pontos">0</div><div class="lab">🪙 Se terminar</div></div>
+        <div class="pill jogadas"><div class="val" id="hud-jogadas">20</div><div class="lab">Jogadas</div></div>
+        <button class="btn-regras-jogo" id="btn-regras-jogo" type="button">Regras</button>
+      </div>
+      <button class="btn-ajuda" id="btn-ajuda" type="button" title="Ajuda"><span class="ajuda-icone" aria-hidden="true">💡</span><span class="ajuda-contagem" id="ajuda-contagem" style="display:none;">0</span></button>
     </div>
+  </div>
+
+  <div class="tutorial-overlay" id="tutorial-nivel">
+    <div class="tut-titulo" id="tutorial-titulo">Como jogar</div>
+    <div class="tut-txt" id="tutorial-txt"></div>
+    <button class="tut-btn" id="tutorial-ok" type="button">Entendi</button>
   </div>
 
   <div class="objetivos-caixa">
@@ -774,7 +908,8 @@ canvas{ touch-action:none; display:block; }
   <div class="overlay" id="overlay-oferta-jogadas">
     <h2>Sem jogadas! 😮</h2>
     <div class="resumo">Compra mais jogadas para continuar este nível — ou perdes 1 vida.</div>
-    <button class="loja-btn" id="btn-oferta-comprar-moedas" style="margin-top:6px;">10 jogadas — 10 🪙</button>
+    <div class="loja-aviso-forte" style="margin:10px 0 0;">⏱️ Se pagares com M-Pesa (2 MT), <strong>não saias deste ecrã</strong> até a compra ser confirmada — pode demorar cerca de 1 minuto.</div>
+    <button class="loja-btn" id="btn-oferta-comprar-moedas" style="margin-top:10px;">10 jogadas — 20 🪙</button>
     <button class="loja-btn" id="btn-mt-oferta-jogadas" data-item="jogadasOferta20">20 jogadas — 2 MT</button>
     <button class="btn-voltar-mapa" id="btn-oferta-recusar" style="margin-top:6px;">Não, obrigado</button>
   </div>
@@ -1672,7 +1807,7 @@ function vitoria(){
   document.getElementById('overlay-vitoria').classList.add('ativo');
 }
 
-const PRECO_OFERTA_JOGADAS_MOEDAS = 10;
+const PRECO_OFERTA_JOGADAS_MOEDAS = 20;
 
 function mostrarOfertaJogadas(){
   document.getElementById('overlay-oferta-jogadas').classList.add('ativo');
@@ -1892,7 +2027,7 @@ function entrarNoMapa(){
   scrollEl.scrollTop = alvo;
 }
 
-const PRECO_VIDAS_MOEDAS = 20;
+const PRECO_VIDAS_MOEDAS = 30;
 
 function abrirLoja(){
   verificarRecargaVidas();
@@ -1901,9 +2036,76 @@ function abrirLoja(){
   document.getElementById('loja-moedas').textContent = (ehCriador||moedasInfinitas) ? '∞' : moedasTotais;
 }
 
-function abrirRegras(){
+let regrasVoltarAoJogo = false;
+
+function abrirRegras(deJogo){
+  // Só volta ao jogo se for explicitamente true (botão Regras dentro do nível)
+  regrasVoltarAoJogo = (deJogo === true);
   document.getElementById('tela-mapa').classList.remove('ativo');
+  document.getElementById('tela-loja').classList.remove('ativo');
+  if(regrasVoltarAoJogo){
+    document.getElementById('tela-jogo').style.display = 'none';
+  }
   document.getElementById('tela-regras').classList.add('ativo');
+  var btn = document.getElementById('btn-regras-voltar');
+  if(btn){
+    btn.textContent = regrasVoltarAoJogo ? '← Voltar ao jogo' : '← Voltar ao mapa';
+  }
+}
+
+function fecharRegras(){
+  document.getElementById('tela-regras').classList.remove('ativo');
+  if(regrasVoltarAoJogo){
+    regrasVoltarAoJogo = false;
+    document.getElementById('tela-jogo').style.display = 'block';
+    var btn = document.getElementById('btn-regras-voltar');
+    if(btn) btn.textContent = '← Voltar ao mapa';
+    return;
+  }
+  entrarNoMapa();
+}
+
+const TUTORIAIS_NIVEL = {
+  1: [
+    { titulo: 'Nível 1 — Como jogar', txt: 'Toca numa peça e depois numa peça vizinha para as trocar de lugar.' },
+    { titulo: 'Fazer combinações', txt: 'Junta 3 ou mais peças iguais na horizontal ou vertical para elas desaparecerem.' },
+    { titulo: 'Objetivos', txt: 'Em cima vês o que precisas de recolher. Cumpre tudo antes das jogadas acabarem.' },
+    { titulo: 'Ajuda 💡', txt: 'Se ficares preso, toca no botão 💡 — ele mostra uma boa jogada (usa moedas ou ajudas).' }
+  ],
+  2: [
+    { titulo: 'Nível 2', txt: 'Mesma ideia do nível 1: troca peças vizinhas e faz linhas de 3 ou mais.' },
+    { titulo: 'Planeia as jogadas', txt: 'Cada troca conta como 1 jogada, mesmo sem combinação. Pensa antes de tocar.' },
+    { titulo: 'Objetivos do nível', txt: 'Olha sempre a caixa de objetivos em cima — é isso que precisas de completar para vencer.' }
+  ]
+};
+let tutorialPasso = 0;
+let tutorialNivelActual = 0;
+
+function mostrarTutorialNivel(n){
+  var passos = TUTORIAIS_NIVEL[n];
+  if(!passos || !passos.length){
+    document.getElementById('tutorial-nivel').classList.remove('ativo');
+    return;
+  }
+  tutorialNivelActual = n;
+  tutorialPasso = 0;
+  var box = document.getElementById('tutorial-nivel');
+  document.getElementById('tutorial-titulo').textContent = passos[0].titulo;
+  document.getElementById('tutorial-txt').textContent = passos[0].txt;
+  document.getElementById('tutorial-ok').textContent = passos.length > 1 ? 'Seguinte' : 'Entendi';
+  box.classList.add('ativo');
+}
+
+function avancarTutorial(){
+  var passos = TUTORIAIS_NIVEL[tutorialNivelActual] || [];
+  tutorialPasso++;
+  if(tutorialPasso >= passos.length){
+    document.getElementById('tutorial-nivel').classList.remove('ativo');
+    return;
+  }
+  document.getElementById('tutorial-titulo').textContent = passos[tutorialPasso].titulo;
+  document.getElementById('tutorial-txt').textContent = passos[tutorialPasso].txt;
+  document.getElementById('tutorial-ok').textContent = (tutorialPasso >= passos.length - 1) ? 'Entendi' : 'Seguinte';
 }
 
 /* ---------- checkout de pagamento real (NetShop) ---------- */
@@ -2015,7 +2217,7 @@ document.getElementById('btn-checkout-confirmar').addEventListener('click', asyn
         });
       } catch (e) { console.error('pedidosLoja', e); }
     }
-    document.getElementById('checkout-status-txt').textContent = 'Confirma o pagamento no teu telemóvel...';
+    document.getElementById('checkout-status-txt').textContent = 'Confirma no telemóvel e espera aqui (~1 min) até receberes a compra...';
     pollingIntervaloId = setInterval(verificarPagamentoCheckout, 4000);
   }catch(e){
     document.getElementById('checkout-erro-txt').textContent = 'Falha de ligação — tenta novamente.';
@@ -2095,8 +2297,10 @@ document.querySelectorAll('[data-item]').forEach(btn=>{
 });
 
 document.getElementById('btn-abrir-loja').addEventListener('click', abrirLoja);
-document.getElementById('btn-abrir-regras').addEventListener('click', abrirRegras);
-document.getElementById('btn-regras-voltar').addEventListener('click', entrarNoMapa);
+document.getElementById('btn-abrir-regras').addEventListener('click', function(){ abrirRegras(false); });
+document.getElementById('btn-regras-voltar').addEventListener('click', fecharRegras);
+document.getElementById('btn-regras-jogo').addEventListener('click', function(){ abrirRegras(true); });
+document.getElementById('tutorial-ok').addEventListener('click', avancarTutorial);
 document.getElementById('btn-loja-voltar').addEventListener('click', entrarNoMapa);
 document.getElementById('btn-semvidas-loja').addEventListener('click', ()=>{
   document.getElementById('overlay-sem-vidas').classList.remove('ativo');
@@ -2139,7 +2343,7 @@ document.getElementById('btn-comprar-ajudas').addEventListener('click', ()=>{
   mostrarToast('10 ajudas compradas! 💡');
 });
 
-const PRECO_JOGADAS_MOEDAS = 15;
+const PRECO_JOGADAS_MOEDAS = 20;
 document.getElementById('btn-comprar-jogadas').addEventListener('click', ()=>{
   if(!ehCriador && !moedasInfinitas){
     if(moedasTotais<PRECO_JOGADAS_MOEDAS){
@@ -2163,6 +2367,13 @@ function iniciarNivel(n){
   redimensionar();
   reiniciar();
   if(!loopIniciado){ loopIniciado = true; animar(); }
+  // Tutorial só nos níveis 1 e 2
+  if(n === 1 || n === 2){
+    setTimeout(function(){ mostrarTutorialNivel(n); }, 500);
+  } else {
+    var tut = document.getElementById('tutorial-nivel');
+    if(tut) tut.classList.remove('ativo');
+  }
 }
 
 document.getElementById('btn-voltar-mapa').addEventListener('click', ()=>{
