@@ -1,6 +1,3 @@
-// Cloudflare Pages Function — cria cobrança M-Pesa na NetShop
-// URL: https://SEUDOMINIO/netshop-charge
-
 const PROJECT = "desafio-moz-61b70";
 const DOC_ROOT = "projects/" + PROJECT + "/databases/(default)/documents";
 const FS_API = "https://firestore.googleapis.com/v1/" + DOC_ROOT;
@@ -30,26 +27,36 @@ function json(obj, status) {
   });
 }
 
-async function guardarPedido(chargeId, item, email) {
-  if (!chargeId) return;
+async function gravarDoc(colecao, id, item, email) {
+  if (!id) return;
   try {
-    await fetch(FS_API + "/pedidosLoja/" + encodeURIComponent(String(chargeId)), {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        fields: {
-          email: { stringValue: String(email).trim().toLowerCase() },
-          item: { stringValue: String(item) },
-          createdAt: { timestampValue: new Date().toISOString() }
-        }
-      })
-    });
+    var r = await fetch(
+      FS_API + "/" + colecao + "/" + encodeURIComponent(String(id)),
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fields: {
+            email: { stringValue: String(email).trim().toLowerCase() },
+            item: { stringValue: String(item) },
+            createdAt: { timestampValue: new Date().toISOString() }
+          }
+        })
+      }
+    );
+    if (!r.ok) {
+      console.error("gravar", colecao, id, r.status, await r.text());
+    }
   } catch (e) {
-    console.error("guardarPedido", chargeId, e);
+    console.error("gravar", colecao, id, e);
   }
 }
 
-async function guardarPedidoMulti(data, item, email) {
+async function guardarTudo(data, item, email, reference) {
+  // 1) Pela reference — a Pipedream usa isto SEMPRE (mesmo id no webhook)
+  await gravarDoc("pedidosPorRef", reference, item, email);
+
+  // 2) Por todos os ids que a NetShop devolver
   var ids = {};
   function add(x) {
     if (typeof x === "string" && x.length >= 8) ids[x] = true;
@@ -69,9 +76,8 @@ async function guardarPedidoMulti(data, item, email) {
   }
   var list = Object.keys(ids);
   for (var j = 0; j < list.length; j++) {
-    await guardarPedido(list[j], item, email);
+    await gravarDoc("pedidosLoja", list[j], item, email);
   }
-  return list;
 }
 
 export async function onRequestOptions() {
@@ -91,11 +97,11 @@ export async function onRequestPost({ request, env }) {
     }
     if (!/^\+258\d{9}$/.test(msisdn)) {
       return json({
-        erro: "Número de telefone inválido — usa o formato +258XXXXXXXXX"
+        erro: "Número inválido — usa +258XXXXXXXXX"
       }, 400);
     }
     if (!env.NETSHOP_API_KEY || !env.NETSHOP_WALLET_ID) {
-      return json({ erro: "Falta NETSHOP_API_KEY ou NETSHOP_WALLET_ID" }, 500);
+      return json({ erro: "Falta NETSHOP_API_KEY ou WALLET_ID" }, 500);
     }
 
     var amountMT = ITENS_LOJA[item].mt;
@@ -131,7 +137,8 @@ export async function onRequestPost({ request, env }) {
       }, 502);
     }
 
-    await guardarPedidoMulti(data, item, email);
+    // AUTOMÁTICO: email + item ligados à reference e aos ids
+    await guardarTudo(data, item, email, referencia);
 
     return json({
       id: data.id,
