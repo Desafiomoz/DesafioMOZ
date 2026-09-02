@@ -1995,6 +1995,26 @@ document.getElementById('btn-checkout-confirmar').addEventListener('click', asyn
     }
     pollingCheckoutId = dados.id;
     pollingTentativas = 0;
+    // Liga reference → email para a Pipedream (não depende dos ids ch_/UUID da NetShop)
+    if (dados.reference && emailJogador && window.db) {
+      try {
+        await db.collection('pedidosPorRef').doc(String(dados.reference)).set({
+          email: emailJogador,
+          item: itemEmCompra,
+          chargeId: dados.id,
+          createdAt: new Date()
+        });
+      } catch (e) { console.error('pedidosPorRef', e); }
+    }
+    if (emailJogador && window.db) {
+      try {
+        await db.collection('pedidosLoja').doc(String(dados.id)).set({
+          email: emailJogador,
+          item: itemEmCompra,
+          createdAt: new Date()
+        });
+      } catch (e) { console.error('pedidosLoja', e); }
+    }
     document.getElementById('checkout-status-txt').textContent = 'Confirma o pagamento no teu telemóvel...';
     pollingIntervaloId = setInterval(verificarPagamentoCheckout, 4000);
   }catch(e){

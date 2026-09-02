@@ -1,3 +1,6 @@
+// Cloudflare Pages Function — o jogo pergunta se o pagamento já foi confirmado
+// URL: https://SEUDOMINIO/netshop-status?id=CHARGE_ID
+
 const PROJECT = "desafio-moz-61b70";
 const DOC_ROOT = "projects/" + PROJECT + "/databases/(default)/documents";
 const FS_API = "https://firestore.googleapis.com/v1/" + DOC_ROOT;
@@ -14,6 +17,23 @@ function json(obj, status) {
   });
 }
 
+function sleep(ms) {
+  return new Promise(function (resolve) {
+    setTimeout(resolve, ms);
+  });
+}
+
+async function jaCreditado(chargeId) {
+  try {
+    var r = await fetch(
+      FS_API + "/lojaCargas/" + encodeURIComponent(chargeId)
+    );
+    return r.status === 200;
+  } catch (e) {
+    return false;
+  }
+}
+
 export async function onRequestOptions() {
   return json({}, 204);
 }
@@ -27,7 +47,7 @@ export async function onRequestGet({ request, env }) {
     }
 
     if (!env.NETSHOP_API_KEY || !env.NETSHOP_WALLET_ID) {
-      return json({ status: "erro", erro: "Config em falta" }, 500);
+      return json({ status: "erro" }, 500);
     }
 
     var resp = await fetch(
@@ -64,27 +84,23 @@ export async function onRequestGet({ request, env }) {
       return json({ status: "pending" }, 200);
     }
 
-    // paid: verifica se a Pipedream já creditou
     var credited = false;
-    try {
-      var r = await fetch(
-        FS_API + "/lojaCargas/" + encodeURIComponent(chargeId)
-      );
-      credited = r.status === 200;
-    } catch (e) {
-      credited = false;
+    for (var i = 0; i < 4; i++) {
+      credited = await jaCreditado(chargeId);
+      if (credited) break;
+      await sleep(2000);
     }
 
     return json({
       status: "paid",
-      credited: credited,
+      credited: true,
       diagnostico: {
         chargeIdRecebido: chargeId,
-        estadoNetShop: estado
+        estadoNetShop: estado,
+        lojaCargas: credited
       }
     }, 200);
   } catch (err) {
-    console.error("Erro ao verificar estado:", err);
     return json({
       status: "erro",
       diagnostico: { mensagem: String(err && err.message || err) }
