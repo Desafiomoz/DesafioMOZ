@@ -27,21 +27,10 @@ function json(obj, status) {
   });
 }
 
-function emailParaRef(email) {
-  var s = String(email).trim().toLowerCase();
-  var out = "";
-  for (var i = 0; i < s.length; i++) {
-    var c = s.charAt(i);
-    if (c === "@") out += "AT";
-    else if (c === ".") out += "DOT";
-    else if (c === "-" || c === "_" || (c >= "a" && c <= "z") || (c >= "0" && c <= "9")) out += c;
-  }
-  return out;
-}
-
 async function guardarPedido(chargeId, item, email) {
-  try {
-    await fetch(FS_API + "/pedidosLoja/" + encodeURIComponent(chargeId), {
+  var r = await fetch(
+    FS_API + "/pedidosLoja/" + encodeURIComponent(chargeId),
+    {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -51,9 +40,11 @@ async function guardarPedido(chargeId, item, email) {
           createdAt: { timestampValue: new Date().toISOString() }
         }
       })
-    });
-  } catch (e) {
-    console.error("guardarPedido:", e);
+    }
+  );
+  if (!r.ok) {
+    var t = await r.text();
+    console.error("guardarPedido falhou:", r.status, t);
   }
 }
 
@@ -78,13 +69,12 @@ export async function onRequestPost({ request, env }) {
       }, 400);
     }
     if (!env.NETSHOP_API_KEY || !env.NETSHOP_WALLET_ID) {
-      return json({ erro: "Falta NETSHOP_API_KEY ou NETSHOP_WALLET_ID no Cloudflare" }, 500);
+      return json({ erro: "Falta NETSHOP_API_KEY ou NETSHOP_WALLET_ID" }, 500);
     }
 
     var amountMT = ITENS_LOJA[item].mt;
-    // HJ-item-timestamp-emailCodificado (sem base64)
-    var referencia =
-      "HJ-" + item + "-" + Date.now() + "-" + emailParaRef(email);
+    // IGUAL ao teu antigo (curto) — a NetShop aceita isto
+    var referencia = "HJ" + Date.now();
 
     var resp = await fetch("https://www.netshop.co.mz/api/v1/charges", {
       method: "POST",
@@ -97,7 +87,7 @@ export async function onRequestPost({ request, env }) {
       body: JSON.stringify({
         amount: amountMT,
         currency: "MZN",
-        method: "mpesa",
+        method: method,
         msisdn: msisdn,
         reference: referencia
       })
@@ -110,23 +100,20 @@ export async function onRequestPost({ request, env }) {
     } catch (e) {}
 
     if (!resp.ok || !data.id) {
-      console.error("NetShop charge fail:", resp.status, textoResposta);
-      // Mostra detalhe real para diagnosticar (podes tirar depois)
-      var detalhe =
-        (data && (data.message || data.error || data.erro)) ||
-        textoResposta.slice(0, 120);
+      console.error("NetShop:", resp.status, textoResposta);
       return json({
-        erro: "NetShop recusou: " + resp.status + " " + detalhe
+        erro: "NetShop " + resp.status + ": " + textoResposta.slice(0, 150)
       }, 502);
     }
 
+    // Grava email + item para a Pipedream
     await guardarPedido(data.id, item, email);
 
     return json({ id: data.id, status: data.status || "pending" }, 200);
   } catch (err) {
-    console.error("Erro interno:", err);
+    console.error(err);
     return json({
-      erro: "Erro servidor: " + String(err && err.message || err)
+      erro: "Erro: " + String(err && err.message || err)
     }, 500);
   }
 }
