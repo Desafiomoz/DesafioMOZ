@@ -28,8 +28,9 @@ function json(obj, status) {
 }
 
 async function guardarPedido(chargeId, item, email) {
+  if (!chargeId) return;
   var r = await fetch(
-    FS_API + "/pedidosLoja/" + encodeURIComponent(chargeId),
+    FS_API + "/pedidosLoja/" + encodeURIComponent(String(chargeId)),
     {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -43,9 +44,33 @@ async function guardarPedido(chargeId, item, email) {
     }
   );
   if (!r.ok) {
-    var t = await r.text();
-    console.error("guardarPedido falhou:", r.status, t);
+    console.error("guardarPedido", chargeId, r.status, await r.text());
   }
+}
+
+async function guardarPedidoMulti(data, item, email) {
+  var ids = {};
+  function add(x) {
+    if (typeof x === "string" && x.length >= 8) ids[x] = true;
+  }
+  add(data.id);
+  add(data.uuid);
+  add(data.charge_id);
+  add(data.chargeId);
+  var keys = Object.keys(data || {});
+  for (var i = 0; i < keys.length; i++) {
+    var v = data[keys[i]];
+    if (typeof v !== "string") continue;
+    if (v.indexOf("ch_") === 0) add(v);
+    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v)) {
+      add(v);
+    }
+  }
+  var list = Object.keys(ids);
+  for (var j = 0; j < list.length; j++) {
+    await guardarPedido(list[j], item, email);
+  }
+  return list;
 }
 
 export async function onRequestOptions() {
@@ -65,16 +90,16 @@ export async function onRequestPost({ request, env }) {
     }
     if (!/^\+258\d{9}$/.test(msisdn)) {
       return json({
-        erro: "Número de telefone inválido — usa o formato +258XXXXXXXXX"
+        erro: "Número inválido — usa +258XXXXXXXXX"
       }, 400);
     }
     if (!env.NETSHOP_API_KEY || !env.NETSHOP_WALLET_ID) {
-      return json({ erro: "Falta NETSHOP_API_KEY ou NETSHOP_WALLET_ID" }, 500);
+      return json({ erro: "Falta NETSHOP_API_KEY ou WALLET_ID" }, 500);
     }
 
     var amountMT = ITENS_LOJA[item].mt;
-    // IGUAL ao teu antigo (curto) — a NetShop aceita isto
-    var referencia = "HJ" + Date.now();
+    // Item na reference (a Pipedream extrai se pedidosLoja falhar)
+    var referencia = "HJ-" + item + "-" + Date.now();
 
     var resp = await fetch("https://www.netshop.co.mz/api/v1/charges", {
       method: "POST",
@@ -106,10 +131,13 @@ export async function onRequestPost({ request, env }) {
       }, 502);
     }
 
-    // Grava email + item para a Pipedream
-    await guardarPedido(data.id, item, email);
+    var idsGravados = await guardarPedidoMulti(data, item, email);
 
-    return json({ id: data.id, status: data.status || "pending" }, 200);
+    return json({
+      id: data.id,
+      status: data.status || "pending",
+      idsGravados: idsGravados
+    }, 200);
   } catch (err) {
     console.error(err);
     return json({
