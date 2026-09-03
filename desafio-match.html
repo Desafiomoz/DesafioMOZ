@@ -362,6 +362,27 @@ canvas{ touch-action:none; display:block; }
   z-index:60; pointer-events:none;
 }
 .toast.mostrar{ opacity:1; transform:translateX(-50%) translateY(0); }
+.toast.marco-mt{
+  bottom:auto; top:28%;
+  z-index:95;
+  font-family:'Sora',sans-serif;
+  font-weight:800;
+  font-size:17px;
+  line-height:1.35;
+  text-align:center;
+  padding:22px 26px;
+  max-width:88%;
+  border-radius:20px;
+  color:#2a1d00;
+  background:linear-gradient(145deg, #fff6c8 0%, #ffcf4d 40%, #ff9a3c 100%);
+  border:3px solid #fff8d6;
+  box-shadow:0 0 0 4px rgba(255,207,77,0.35), 0 0 28px rgba(255,180,0,0.95), 0 0 56px rgba(255,154,60,0.55), 0 12px 40px rgba(0,0,0,0.45);
+  animation:auraMarcoMt 1.6s ease-in-out infinite;
+}
+@keyframes auraMarcoMt{
+  0%,100%{ transform:translateX(-50%) scale(1); box-shadow:0 0 0 4px rgba(255,207,77,0.35), 0 0 24px rgba(255,180,0,0.9), 0 0 48px rgba(255,154,60,0.5); }
+  50%{ transform:translateX(-50%) scale(1.04); box-shadow:0 0 0 6px rgba(255,255,255,0.45), 0 0 40px rgba(255,207,77,1), 0 0 70px rgba(255,154,60,0.7); }
+}
 
 .btn-voltar-mapa{
   background:var(--painel); border:1px solid var(--linha);
@@ -790,7 +811,7 @@ canvas{ touch-action:none; display:block; }
 
     <div class="loja-regras-box">
       <h3>📋 Regras da loja</h3>
-      <p><strong>Desbloqueio +10 níveis:</strong> abre 10 níveis à frente do sítio onde estás. Exemplo: se estás no nível 20 e compras o desbloqueio, todos os de 20 a 30 serão abertos automaticamente.</p>
+      <p><strong>Desbloqueio +10 níveis:</strong> abre 10 níveis à frente do sítio onde estás. Exemplo: se estás no nível 20 e compras o desbloqueio, passas a poder jogar até ao nível 30.</p>
       <p><strong>Jogadas extra (loja):</strong> ficam guardadas e entram no <em>próximo</em> nível que começares.</p>
       <p><strong>Jogadas no meio do nível (2 MT):</strong> continuas o nível actual — não saias até a compra ser confirmada.</p>
       <p><strong>Moedas / ajudas / bónus / infinitas:</strong> entram na tua conta depois do pagamento confirmado (pode demorar até ~1 minuto).</p>
@@ -1228,7 +1249,7 @@ function verificarMarcoDeNivel(nivel){
     marcosPagos.push(nivel);
     creditarMarcoNaContaReal(mt);
     salvarEstado();
-    mostrarToast('🎉 +' + mt + ' MT creditados na tua conta Desafio MOZ!');
+    mostrarAvisoMarcoMt(mt, nivel);
   }
 }
 
@@ -1707,13 +1728,16 @@ async function tentarTroca(a,b){
   if(!jogoTerminado && jogadasRestantes<=0){
     if(objetivosCumpridos()){
       jogoTerminado = true;
+      cancelarAjudaTutorial();
       vitoria();
     } else {
+      cancelarAjudaTutorial();
       mostrarOfertaJogadas(); // pergunta se quer comprar jogadas antes de perder a vida
       return; // bloqueado continua true até o jogador decidir
     }
   }
   bloqueado = false;
+  agendarAjudaTutorialAposJogada();
 }
 
 function trocarNaGrelha(a,b){
@@ -1858,6 +1882,7 @@ async function resolverCascata(marcados, multiplicador){
 
   if(!jogoTerminado && objetivosCumpridos()){
     jogoTerminado = true;
+    cancelarAjudaTutorial();
     vitoria();
   }
 }
@@ -2125,11 +2150,26 @@ function aoTocarNivel(n){
 
 let toastTimeout;
 function mostrarToast(msg){
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('mostrar');
+  const el = document.getElementById('toast');
+  if(!el) return;
+  el.classList.remove('marco-mt');
+  el.textContent = msg;
+  el.classList.add('mostrar');
   clearTimeout(toastTimeout);
-  toastTimeout = setTimeout(()=>t.classList.remove('mostrar'), 2200);
+  toastTimeout = setTimeout(function(){ el.classList.remove('mostrar'); el.classList.remove('marco-mt'); }, 2200);
+}
+
+function mostrarAvisoMarcoMt(mt, nivel){
+  const el = document.getElementById('toast');
+  if(!el) return;
+  el.classList.add('marco-mt');
+  el.textContent = '🎉 +' + mt + ' MT creditados na tua conta Desafio MOZ!\nNível ' + nivel + ' concluído — o prémio já foi entregue.';
+  el.classList.add('mostrar');
+  clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(function(){
+    el.classList.remove('mostrar');
+    el.classList.remove('marco-mt');
+  }, 30000); // 30 segundos + aura forte
 }
 
 function entrarNoMapa(){
@@ -2224,18 +2264,42 @@ function mostrarTutorialNivel(n){
   box.classList.add('ativo');
 }
 
+let tutorialAjudaActiva = false; // níveis 1 e 2: indica peças até o nível acabar
+let tutorialAjudaTimeout = null;
+let tutorialAjudaPrimeira = false;
+
+function cancelarAjudaTutorial(){
+  tutorialAjudaActiva = false;
+  tutorialAjudaPrimeira = false;
+  if(tutorialAjudaTimeout){ clearTimeout(tutorialAjudaTimeout); tutorialAjudaTimeout = null; }
+  try { limparIndicadorDica(); } catch(e) {}
+}
+
 function mostrarAjudaTutorialGratis(){
-  // Mesmo sistema da ajuda (anéis nas peças), sem gastar moedas/ajudas — só nos níveis 1 e 2 após as dicas
+  // Mesmo sistema da ajuda, grátis — níveis 1 e 2 durante todo o nível
   try {
-    if(bloqueado || jogoTerminado) return;
+    if(!tutorialAjudaActiva || bloqueado || jogoTerminado) return;
+    if(nivelAtual !== 1 && nivelAtual !== 2) return;
     var dica = encontrarDicaValida();
     if(!dica){
-      mostrarToast('Toca em duas peças vizinhas iguais para combinar');
+      tutorialAjudaTimeout = setTimeout(mostrarAjudaTutorialGratis, 1200);
       return;
     }
     mostrarIndicadorDica(dica.a, dica.b);
-    mostrarToast('💡 Estas peças brilham — toca nelas para trocar e combinar!');
+    if(tutorialAjudaPrimeira){
+      tutorialAjudaPrimeira = false;
+      mostrarToast('💡 Estas peças brilham — toca nelas para trocar e combinar!');
+    }
   } catch(e) {}
+}
+
+function agendarAjudaTutorialAposJogada(){
+  if(!tutorialAjudaActiva || jogoTerminado) return;
+  if(nivelAtual !== 1 && nivelAtual !== 2) return;
+  if(tutorialAjudaTimeout) clearTimeout(tutorialAjudaTimeout);
+  tutorialAjudaTimeout = setTimeout(function(){
+    if(!bloqueado && !jogoTerminado && tutorialAjudaActiva) mostrarAjudaTutorialGratis();
+  }, 700);
 }
 
 function avancarTutorial(){
@@ -2243,8 +2307,10 @@ function avancarTutorial(){
   tutorialPasso++;
   if(tutorialPasso >= passos.length){
     document.getElementById('tutorial-nivel').classList.remove('ativo');
-    // Depois das dicas: mostra a indicação visual da ajuda (níveis 1 e 2)
+    // Depois das dicas: ajuda activa até concluir o nível 1 ou 2
     if(tutorialNivelActual === 1 || tutorialNivelActual === 2){
+      tutorialAjudaActiva = true;
+      tutorialAjudaPrimeira = true;
       setTimeout(function(){ mostrarAjudaTutorialGratis(); }, 450);
     }
     return;
@@ -2521,6 +2587,7 @@ document.getElementById('btn-comprar-jogadas').addEventListener('click', ()=>{
 
 function iniciarNivel(n){
   nivelAtual = n;
+  cancelarAjudaTutorial();
   document.getElementById('tela-mapa').classList.remove('ativo');
   document.getElementById('tela-jogo').style.display = 'block';
   document.getElementById('hud-nivel').textContent = n;
@@ -2541,6 +2608,7 @@ function iniciarNivel(n){
 document.getElementById('btn-voltar-mapa').addEventListener('click', ()=>{
   if(!jogoTerminado){
     jogoTerminado = true;
+    cancelarAjudaTutorial();
     vidas = Math.max(0, vidas-1);
     if(vidas<=0 && !proximaRecarga){
       proximaRecarga = Date.now() + TEMPO_RECARGA;
@@ -2549,6 +2617,7 @@ document.getElementById('btn-voltar-mapa').addEventListener('click', ()=>{
     atualizarVidasUI();
     mostrarToast('Saíste a meio do nível — perdeste 1 vida ❤️');
   }
+  cancelarAjudaTutorial();
   entrarNoMapa();
 });
 document.getElementById('btn-fim-mapa').addEventListener('click', ()=>{
