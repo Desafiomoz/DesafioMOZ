@@ -645,11 +645,29 @@ canvas{ touch-action:none; display:block; }
 .icone.forma-diamante{ background:none !important; clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%); }
 
 .overlay .coracoes-grandes{ font-size:26px; letter-spacing:2px; }
+
+.btn-mute{
+  position:fixed; bottom:18px; right:16px; z-index:80;
+  width:44px; height:44px; border-radius:14px; border:none;
+  background:linear-gradient(145deg, rgba(18,22,31,0.95), rgba(30,36,48,0.95));
+  color:#fff; font-size:20px; line-height:1;
+  box-shadow:0 0 16px rgba(59,158,255,0.35);
+  display:flex; align-items:center; justify-content:center;
+}
+.btn-mute.muted{ opacity:0.65; }
 </style>
 </head>
 <body>
 
 <!-- ===== CAPA / ECRÃ DE ABERTURA ===== -->
+
+<audio id="audio-mapa" loop preload="auto" src="sons/mapa.mp3"></audio>
+<audio id="audio-loja" loop preload="auto" src="sons/loja.mp3"></audio>
+<audio id="audio-jogo" loop preload="auto" src="sons/jogo.mp3"></audio>
+<audio id="sfx-match" preload="auto" src="sons/match.mp3"></audio>
+<audio id="sfx-derrota" preload="auto" src="sons/derrota.mp3"></audio>
+<button type="button" class="btn-mute" id="btn-mute" title="Som">🔊</button>
+
 <div id="tela-abertura">
   <div class="capa-emblema">
     <svg viewBox="0 0 24 24" fill="none">
@@ -996,6 +1014,107 @@ canvas{ touch-action:none; display:block; }
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
+
+/* ---------- sistema de áudio (seguro) ---------- */
+var audioDesbloqueado = false;
+var audioMutado = false;
+try { audioMutado = (localStorage.getItem('homejub_mute') === '1'); } catch(e) {}
+var areaMusicaActual = null;
+var VOL_MAPA = 0.42;
+var VOL_LOJA = 0.40;
+var VOL_JOGO = 0.32;
+var VOL_SFX = 0.55;
+
+function elAudio(id){ return document.getElementById(id); }
+
+function atualizarBotaoMute(){
+  var b = elAudio('btn-mute');
+  if(!b) return;
+  b.textContent = audioMutado ? '🔇' : '🔊';
+  if(audioMutado) b.classList.add('muted'); else b.classList.remove('muted');
+}
+
+function aplicarMuteGeral(){
+  ['audio-mapa','audio-loja','audio-jogo','sfx-match','sfx-derrota'].forEach(function(id){
+    var a = elAudio(id);
+    if(a) a.muted = !!audioMutado;
+  });
+  atualizarBotaoMute();
+}
+
+function pararMusicasFundo(){
+  ['audio-mapa','audio-loja','audio-jogo'].forEach(function(id){
+    var a = elAudio(id);
+    if(!a) return;
+    try { a.pause(); } catch(e) {}
+  });
+}
+
+function tocarArea(area){
+  try {
+    areaMusicaActual = area;
+    pararMusicasFundo();
+    if(!area || !audioDesbloqueado || audioMutado) return;
+    var id = area === 'mapa' ? 'audio-mapa' : (area === 'loja' ? 'audio-loja' : (area === 'jogo' ? 'audio-jogo' : null));
+    var vol = area === 'mapa' ? VOL_MAPA : (area === 'loja' ? VOL_LOJA : VOL_JOGO);
+    var a = id ? elAudio(id) : null;
+    if(!a) return;
+    a.volume = vol;
+    a.muted = false;
+    var p = a.play();
+    if(p && p.catch) p.catch(function(){});
+  } catch(e) {}
+}
+
+function desbloquearAudio(){
+  try {
+    if(audioDesbloqueado) return;
+    audioDesbloqueado = true;
+    aplicarMuteGeral();
+  } catch(e) { audioDesbloqueado = true; }
+}
+
+function tocarSfx(id){
+  try {
+    if(audioMutado || !audioDesbloqueado) return;
+    var a = elAudio(id);
+    if(!a) return;
+    // clona para permitir vários sons em simultâneo (combo x2, x3...)
+    var s = a.cloneNode(true);
+    s.volume = VOL_SFX;
+    s.muted = false;
+    var pr = s.play();
+    if(pr && pr.catch) pr.catch(function(){});
+    s.addEventListener('ended', function(){ try { s.remove(); } catch(e) {} });
+  } catch(e) {}
+}
+
+function tocarSfxVezes(id, vezes){
+  try {
+    vezes = Math.max(1, Math.min(Number(vezes) || 1, 8));
+    for(var i = 0; i < vezes; i++){
+      (function(delay){
+        setTimeout(function(){ tocarSfx(id); }, delay);
+      })(i * 140);
+    }
+  } catch(e) {}
+}
+
+(function initMuteBtn(){
+  var b = elAudio('btn-mute');
+  if(!b) return;
+  b.addEventListener('click', function(){
+    audioMutado = !audioMutado;
+    try { localStorage.setItem('homejub_mute', audioMutado ? '1' : '0'); } catch(e) {}
+    aplicarMuteGeral();
+    if(audioMutado) pararMusicasFundo();
+    else if(audioDesbloqueado) tocarArea(areaMusicaActual);
+  });
+  atualizarBotaoMute();
+  aplicarMuteGeral();
+})();
+
+
 /* ======================================================
    COMBO MOZ — protótipo de jogo de combinar peças em 3D
    Grelha lógica (sem física), renderizada com Three.js
@@ -1688,6 +1807,8 @@ async function resolverCascata(marcados, multiplicador){
   }
   if(n===0) return;
 
+  if(n >= 3){ try { tocarSfxVezes('sfx-match', multiplicador); } catch(e) {} }
+
   objetivoAtual.forEach(o=>{
     if(contagemTipos[o.tipo]){
       o.atual = Math.min(o.alvo, o.atual + contagemTipos[o.tipo]);
@@ -1838,6 +1959,7 @@ document.getElementById('btn-oferta-recusar').addEventListener('click', ()=>{
 });
 
 function derrota(){
+  try { tocarSfx('sfx-derrota'); } catch(e) {}
   vidas = Math.max(0, vidas-1);
   if(vidas<=0 && !proximaRecarga){
     proximaRecarga = Date.now() + TEMPO_RECARGA;
@@ -1950,6 +2072,7 @@ document.getElementById('btn-capa-jogar').addEventListener('click', async ()=>{
     btnJogar.disabled = false;
     btnJogar.textContent = 'Jogar';
   }
+  try { desbloquearAudio(); } catch(e) {}
   document.getElementById('tela-abertura').style.display = 'none';
   entrarNoMapa();
 });
@@ -2018,6 +2141,7 @@ function entrarNoMapa(){
   document.getElementById('mapa-moedas').textContent = (ehCriador||moedasInfinitas) ? '∞' : moedasTotais;
   atualizarVidasUI();
   gerarMapa();
+  try { tocarArea('mapa'); } catch(e) {}
   if(!emailJogador && !window.__avisoContaMostrado){
     window.__avisoContaMostrado = true;
     setTimeout(()=>mostrarToast('Inicia sessão no site para guardares o teu progresso na conta'), 600);
@@ -2035,6 +2159,7 @@ function abrirLoja(){
   document.getElementById('tela-mapa').classList.remove('ativo');
   document.getElementById('tela-loja').classList.add('ativo');
   document.getElementById('loja-moedas').textContent = (ehCriador||moedasInfinitas) ? '∞' : moedasTotais;
+  try { tocarArea('loja'); } catch(e) {}
 }
 
 let regrasVoltarAoJogo = false;
@@ -2052,6 +2177,7 @@ function abrirRegras(deJogo){
   if(btn){
     btn.textContent = regrasVoltarAoJogo ? '← Voltar ao jogo' : '← Voltar ao mapa';
   }
+  try { tocarArea('mapa'); } catch(e) {}
 }
 
 function fecharRegras(){
@@ -2061,6 +2187,7 @@ function fecharRegras(){
     document.getElementById('tela-jogo').style.display = 'block';
     var btn = document.getElementById('btn-regras-voltar');
     if(btn) btn.textContent = '← Voltar ao mapa';
+    try { tocarArea('jogo'); } catch(e) {}
     return;
   }
   entrarNoMapa();
@@ -2383,6 +2510,7 @@ function iniciarNivel(n){
   redimensionar();
   reiniciar();
   if(!loopIniciado){ loopIniciado = true; animar(); }
+  try { tocarArea('jogo'); } catch(e) {}
   // Tutorial só nos níveis 1 e 2
   if(n === 1 || n === 2){
     setTimeout(function(){ mostrarTutorialNivel(n); }, 500);
