@@ -772,7 +772,7 @@ canvas{ touch-action:none; display:block; }
 
     <div class="loja-regras-box">
       <h3>📋 Regras da loja</h3>
-      <p><strong>Desbloqueio +10 níveis:</strong> abre 10 níveis à frente do sítio onde estás. Exemplo: se estás no nível 20 e compras o desbloqueio, todos os níveis até 30 serão abertos.</p>
+      <p><strong>Desbloqueio +10 níveis:</strong> abre 10 níveis à frente do sítio onde estás. Exemplo: se estás no nível 20 e compras o desbloqueio, passas a poder jogar até ao nível 30.</p>
       <p><strong>Jogadas extra (loja):</strong> ficam guardadas e entram no <em>próximo</em> nível que começares.</p>
       <p><strong>Jogadas no meio do nível (2 MT):</strong> continuas o nível actual — não saias até a compra ser confirmada.</p>
       <p><strong>Moedas / ajudas / bónus / infinitas:</strong> entram na tua conta depois do pagamento confirmado (pode demorar até ~1 minuto).</p>
@@ -1810,6 +1810,7 @@ function vitoria(){
 const PRECO_OFERTA_JOGADAS_MOEDAS = 20;
 
 function mostrarOfertaJogadas(){
+  ofertaJogadasJaAplicada = false;
   document.getElementById('overlay-oferta-jogadas').classList.add('ativo');
 }
 
@@ -2127,6 +2128,8 @@ let metodoEscolhido = 'mpesa';
 let pollingCheckoutId = null;
 let pollingIntervaloId = null;
 let pollingTentativas = 0;
+let ofertaJogadasJaAplicada = false; // evita +20 duas vezes (polling duplo)
+let checkoutAProcessar = false;
 
 function mostrarPassoCheckout(passo){
   ['form','aguardar','sucesso','erro'].forEach(p=>{
@@ -2182,6 +2185,7 @@ document.getElementById('btn-checkout-confirmar').addEventListener('click', asyn
   }
   mostrarPassoCheckout('aguardar');
   document.getElementById('checkout-status-txt').textContent = 'A criar o pedido de pagamento...';
+  checkoutAProcessar = false;
 
   try{
     const resp = await fetch('/netshop-charge', {
@@ -2226,6 +2230,7 @@ document.getElementById('btn-checkout-confirmar').addEventListener('click', asyn
 });
 
 async function verificarPagamentoCheckout(){
+  if(checkoutAProcessar) return;
   pollingTentativas++;
   if(pollingTentativas>30){ // ~2 minutos
     pararPolling();
@@ -2237,15 +2242,19 @@ async function verificarPagamentoCheckout(){
     const resp = await fetch('/netshop-status?id='+encodeURIComponent(pollingCheckoutId));
     const dados = await resp.json();
     if(dados.status==='paid'){
+      if(checkoutAProcessar) return;
+      checkoutAProcessar = true;
       pararPolling();
       if(dados.credited===false){
         const diag = dados.diagnostico ? JSON.stringify(dados.diagnostico) : 'sem diagnóstico';
         document.getElementById('checkout-erro-txt').textContent = 'Problema a entregar a compra. DIAGNÓSTICO: ' + diag;
         mostrarPassoCheckout('erro');
         document.getElementById('btn-checkout-tentar-de-novo').style.display = 'none';
+        checkoutAProcessar = false;
         return;
       }
       await aplicarCompraConfirmada(itemEmCompra);
+      checkoutAProcessar = false;
     } else if(dados.status==='failed'){
       pararPolling();
       document.getElementById('checkout-erro-txt').textContent = 'O pagamento não foi confirmado. Verifica o número e o saldo, e tenta novamente.';
@@ -2274,8 +2283,15 @@ function mensagemSucessoCompra(item){
 async function aplicarCompraConfirmada(item){
   // a compra já foi creditada na conta (Firestore) pelo servidor — aqui só refletimos no ecrã atual
   if(item==='jogadasOferta20'){
-    // esta é aplicada de imediato à partida em curso, não fica guardada para o próximo nível
-    jogadasRestantes += 20;
+    // Só para o nível actual — exactamente +20, uma vez (não acumula com extra da loja)
+    if(ofertaJogadasJaAplicada){
+      fecharCheckout();
+      document.getElementById('overlay-oferta-jogadas').classList.remove('ativo');
+      bloqueado = false;
+      return;
+    }
+    ofertaJogadasJaAplicada = true;
+    jogadasRestantes = Math.max(0, jogadasRestantes) + 20;
     atualizarHud();
     document.getElementById('overlay-oferta-jogadas').classList.remove('ativo');
     bloqueado = false;
