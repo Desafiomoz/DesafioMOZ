@@ -344,44 +344,17 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
             <p>Quanto mais tarefas fizer, mais pontos acumula para sacar.</p>
         </div>
 
-        <!-- JOGOS E APLICATIVOS-->
-        <div class="sec-titulo"><i class="fas fa-gamepad"></i> Jogos e Aplicativos</div>
-
-        <div class="jogos-grid">
-            <div class="jogo-card" onclick="alert('Jogo em breve!')">
-                <div class="emoji">🎮</div>
-                <h4>Puzzle Rápido</h4>
-                <div class="pts">+8 Pontos</div>
-            </div>
-            <div class="jogo-card" onclick="alert('Jogo em breve!')">
-                <div class="emoji">🧠</div>
-                <h4>Memória MOZ</h4>
-                <div class="pts">+12 Pontos</div>
-            </div>
-            <div class="jogo-card" onclick="alert('Jogo em breve!')">
-                <div class="emoji">🎯</div>
-                <h4>Alvo Certo</h4>
-                <div class="pts">+10 Pontos</div>
-            </div>
-            <div class="jogo-card" onclick="alert('Jogo em breve!')">
-                <div class="emoji">⚡</div>
-                <h4>Velocidade</h4>
-                <div class="pts">+15 Pontos</div>
-            </div>
-        </div>
-
         <!-- ANÚNCIOS (permanentes — código vem do Admin) -->
         <div class="sec-titulo"><i class="fas fa-ad"></i> Anúncios</div>
 
         <div class="tarefa-card" id="card-ad-interativo">
             <div class="tarefa-icon icon-anuncios">📱</div>
             <div class="tarefa-info">
-                <h3 id="ad-int-titulo">Anúncio interativo</h3>
-                <p id="ad-int-desc">Clique e interaja com o anúncio</p>
+                <h3 id="ad-int-titulo">Anúncio</h3>
+                <p id="ad-int-desc">Assiste ao anúncio</p>
                 <div class="ad-indisponivel" id="ad-int-msg">Sem anúncio disponível de momento</div>
             </div>
             <div class="tarefa-ganho">
-                <div class="pontos" id="ad-int-pts">+8 Pts</div>
                 <button class="btn-fazer" id="ad-int-btn" onclick="abrirAnuncioTarefa('interativo')">Ver</button>
             </div>
         </div>
@@ -389,12 +362,11 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
         <div class="tarefa-card" id="card-ad-rewarded">
             <div class="tarefa-icon icon-anuncios">🎬</div>
             <div class="tarefa-info">
-                <h3 id="ad-rew-titulo">Rewarded vídeo</h3>
-                <p id="ad-rew-desc">Assista o vídeo e ganhe pontos</p>
+                <h3 id="ad-rew-titulo">Anúncio</h3>
+                <p id="ad-rew-desc">Assiste ao anúncio</p>
                 <div class="ad-indisponivel" id="ad-rew-msg">Sem anúncio disponível de momento</div>
             </div>
             <div class="tarefa-ganho">
-                <div class="pontos" id="ad-rew-pts">+12 Pts</div>
                 <button class="btn-fazer" id="ad-rew-btn" onclick="abrirAnuncioTarefa('rewarded')">Ver</button>
             </div>
         </div>
@@ -497,7 +469,7 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
                 <p>Entre todos os dias e ganhe</p>
             </div>
             <div class="tarefa-ganho">
-                <div class="pontos">+5 Pts</div>
+                <div class="pontos">+3 Pts</div>
                 <button class="btn-fazer" onclick="window.location.href='checkin.html'">Fazer</button>
             </div>
         </div>
@@ -934,20 +906,18 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
             // Interativo
             var int = anunciosTarefasCfg.interativo;
             var temInt = int && int.ativo !== false && (int.codigo || '').trim();
-            document.getElementById('ad-int-titulo').textContent = (int && int.titulo) ? int.titulo : 'Anúncio interativo';
-            document.getElementById('ad-int-desc').textContent = (int && int.descricao) ? int.descricao : 'Clique e interaja com o anúncio';
-            document.getElementById('ad-int-pts').textContent = '+' + ((int && int.pontos) ? int.pontos : 8) + ' Pts';
-            document.getElementById('ad-int-msg').style.display = temInt ? 'none' : 'block';
+            document.getElementById('ad-int-titulo').textContent = 'Anúncio';
+            document.getElementById('ad-int-desc').textContent = (int && int.descricao) ? int.descricao : 'Assiste ao anúncio';
+                        document.getElementById('ad-int-msg').style.display = temInt ? 'none' : 'block';
             document.getElementById('ad-int-btn').disabled = !temInt;
             document.getElementById('ad-int-btn').style.opacity = temInt ? '1' : '0.5';
 
             // Rewarded
             var rew = anunciosTarefasCfg.rewarded;
             var temRew = rew && rew.ativo !== false && (rew.codigo || '').trim();
-            document.getElementById('ad-rew-titulo').textContent = (rew && rew.titulo) ? rew.titulo : 'Rewarded vídeo';
-            document.getElementById('ad-rew-desc').textContent = (rew && rew.descricao) ? rew.descricao : 'Assista o vídeo e ganhe pontos';
-            document.getElementById('ad-rew-pts').textContent = '+' + ((rew && rew.pontos) ? rew.pontos : 12) + ' Pts';
-            document.getElementById('ad-rew-msg').style.display = temRew ? 'none' : 'block';
+            document.getElementById('ad-rew-titulo').textContent = 'Anúncio';
+            document.getElementById('ad-rew-desc').textContent = (rew && rew.descricao) ? rew.descricao : 'Assiste ao anúncio';
+                        document.getElementById('ad-rew-msg').style.display = temRew ? 'none' : 'block';
             document.getElementById('ad-rew-btn').disabled = !temRew;
             document.getElementById('ad-rew-btn').style.opacity = temRew ? '1' : '0.5';
         }
@@ -974,7 +944,7 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
             slot.innerHTML = '';
 
             document.getElementById('ad-ov-titulo').textContent =
-                (cfg.titulo || (tipo === 'rewarded' ? 'Rewarded vídeo' : 'Anúncio interativo'));
+                (cfg.titulo || 'Anúncio');
             document.getElementById('ad-ov-timer').textContent = '—';
             document.getElementById('ad-ov-txt').textContent = 'A carregar o anúncio, aguarde…';
             document.getElementById('ad-ov-btn').classList.remove('ativo');

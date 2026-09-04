@@ -208,7 +208,7 @@
     <a href="tarefas.html" class="btn-voltar"><i class="fas fa-arrow-left"></i></a>
     <div>
       <h1>Check-in Diário</h1>
-      <p>Entre todos os dias e ganhe +5 pontos</p>
+      <p>Entre todos os dias e ganhe +3 pontos</p>
     </div>
   </div>
 
@@ -320,7 +320,7 @@
       (lista || []).forEach(function (x) {
         if (x.indexOf(prefix) === 0) n++;
       });
-      return n * 5;
+      return n * 3;
     }
 
     function renderCalendario() {
@@ -375,10 +375,10 @@
         btn.disabled = true;
         btn.textContent = '✅ Check-in de hoje já feito';
         msg.className = 'msg ok';
-        msg.textContent = 'Volte amanhã para ganhar mais +5 pontos!';
+        msg.textContent = 'Volte amanhã para ganhar mais +3 pontos!';
       } else {
         btn.disabled = false;
-        btn.textContent = '🎁 Fazer Check-in e Ganhar +5 Pontos';
+        btn.textContent = '🎁 Fazer Check-in e Ganhar +3 Pontos';
         msg.className = 'msg';
         msg.textContent = 'Só pode fazer 1 check-in por dia.';
       }
@@ -459,7 +459,7 @@
 
         lista.push(hojeStr);
         var pontosAtuais = data.pontos || 0;
-        var novosPontos = pontosAtuais + 5;
+        var novosPontos = pontosAtuais + 3;
 
         await docRef.update({
           checkins: lista,
@@ -472,17 +472,17 @@
 
         checkins = lista;
         localStorage.setItem('pontosUtilizador', String(novosPontos));
-        localStorage.setItem('ultimoGanho', '5');
+        localStorage.setItem('ultimoGanho', '3');
 
         renderCalendario();
 
         var msg = document.getElementById('msg');
         msg.className = 'msg ok';
-        msg.textContent = '🎉 +5 pontos adicionados! Volte amanhã.';
+        msg.textContent = '🎉 +3 pontos adicionados! Volte amanhã.';
       } catch (erro) {
         console.error(erro);
         btn.disabled = false;
-        btn.textContent = '🎁 Fazer Check-in e Ganhar +5 Pontos';
+        btn.textContent = '🎁 Fazer Check-in e Ganhar +3 Pontos';
         document.getElementById('msg').className = 'msg err';
         document.getElementById('msg').textContent = 'Erro: ' + (erro.message || erro);
       }

@@ -559,8 +559,8 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
 
             <div class="form-group">
                 <label>Pontos a sacar</label>
-                <input type="number" id="pontos-saque" placeholder="Ex: 800" min="500" step="10" oninput="atualizarResumoEscolha()">
-                <p class="form-hint">Mínimo <strong>500 pts</strong> (50 MZN) · máximo = o seu saldo</p>
+                <input type="number" id="pontos-saque" placeholder="Ex: 1600" min="1600" step="8" oninput="atualizarResumoEscolha()">
+                <p class="form-hint">Mínimo <strong>1600 pts</strong> (200 MZN) · máximo = o seu saldo</p>
             </div>
         </div>
 
@@ -626,8 +626,8 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
         }
         var db = window.db;
 
-        var MINIMO_PONTOS = 500;   // 50 MZN
-        var MINIMO_MZN = 50;
+        var MINIMO_PONTOS = 1600;  // 200 MZN (8 pts = 1 MZN)
+        var MINIMO_MZN = 200;
         var metodoPagamento = 'M-Pesa';
         var pontosAtuais = 0;
         var mznAtuais = 0;
@@ -668,7 +668,7 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
 
         function atualizarResumoEscolha() {
             var ptsEscolha = getPontosEscolhidos();
-            var mznEscolha = ptsEscolha / 10;
+            var mznEscolha = ptsEscolha / 8;
             var taxa = mznEscolha * 0.10;
             var liquido = mznEscolha - taxa;
             var restantes = Math.max(0, pontosAtuais - ptsEscolha);
@@ -687,7 +687,7 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
             var warningTexto = document.getElementById('warning-texto');
             var btn = document.getElementById('btn-saque');
             var ptsEscolha = getPontosEscolhidos();
-            var mznEscolha = ptsEscolha / 10;
+            var mznEscolha = ptsEscolha / 8;
             var liquido = mznEscolha - (mznEscolha * 0.10);
 
             if (pedidoPendente) {
@@ -703,11 +703,11 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
             if (pontosAtuais < MINIMO_PONTOS) {
                 warningBox.className = 'warning-box';
                 var falta = MINIMO_PONTOS - pontosAtuais;
-                warningTexto.textContent = 'Faltam ' + falta + ' pontos para atingir o saque mínimo (500 pts / 50 MZN)!';
+                warningTexto.textContent = 'Faltam ' + falta + ' pontos para atingir o saque mínimo (1600 pts / 200 MZN)!';
                 btn.className = 'btn-saque desativado';
                 btn.disabled = true;
                 btn.onclick = null;
-                btn.innerHTML = '<span class="btn-icon">🔒</span><span class="btn-text"><strong>Ainda não atinge o mínimo</strong><small>Mínimo: 500 pontos</small></span>';
+                btn.innerHTML = '<span class="btn-icon">🔒</span><span class="btn-text"><strong>Ainda não atinge o mínimo</strong><small>Mínimo: 1600 pontos</small></span>';
                 return;
             }
 
@@ -719,7 +719,7 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
                 btn.className = 'btn-saque desativado';
                 btn.disabled = true;
                 btn.onclick = null;
-                btn.innerHTML = '<span class="btn-icon">🔒</span><span class="btn-text"><strong>Mínimo 500 pontos</strong><small>Escolha pelo menos 500 pts</small></span>';
+                btn.innerHTML = '<span class="btn-icon">🔒</span><span class="btn-text"><strong>Mínimo 1600 pontos</strong><small>Escolha pelo menos 1600 pts</small></span>';
                 return;
             }
             if (ptsEscolha > pontosAtuais) {
@@ -852,7 +852,7 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
                 return;
             }
             if (ptsEscolha < MINIMO_PONTOS) {
-                alert('O mínimo para saque é 500 pontos (50 MZN).');
+                alert('O mínimo para saque é 1600 pontos (200 MZN).');
                 return;
             }
             if (ptsEscolha > pontosAtuais) {
@@ -874,7 +874,7 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
             btn.disabled = true;
             btn.innerHTML = '<span class="btn-icon"><i class="fas fa-spinner fa-spin"></i></span><span class="btn-text"><strong>A enviar pedido...</strong></span>';
 
-            var mznEscolha = ptsEscolha / 10;
+            var mznEscolha = ptsEscolha / 8;
             var taxa = mznEscolha * 0.10;
             var liquido = mznEscolha - taxa;
             var pontosRestantes = pontosAtuais - ptsEscolha;
@@ -912,7 +912,7 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
 
                 // Atualiza saldo local
                 pontosAtuais = pontosRestantes;
-                mznAtuais = pontosAtuais / 10;
+                mznAtuais = pontosAtuais / 8;
                 localStorage.setItem('pontosUtilizador', String(pontosAtuais));
                 document.getElementById('pontos-saque').value = '';
                 document.getElementById('pontos-saque').max = pontosAtuais;
@@ -957,13 +957,13 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
 
             // Pontos: prioriza Firebase, fallback localStorage
             pontosAtuais = parseInt(localStorage.getItem('pontosUtilizador') || '0', 10);
-            mznAtuais = pontosAtuais / 10;
+            mznAtuais = pontosAtuais / 8;
 
             if (emailUtilizador && emailUtilizador !== '—') {
                 var fb = await carregarPontosFirebase(emailUtilizador);
                 if (fb) {
                     pontosAtuais = fb.pontos;
-                    mznAtuais = pontosAtuais / 10;
+                    mznAtuais = pontosAtuais / 8;
                     localStorage.setItem('pontosUtilizador', String(pontosAtuais));
                     if (fb.nome && !document.getElementById('nome-saque').value) {
                         document.getElementById('nome-saque').value = fb.nome;

@@ -234,7 +234,7 @@
     <div class="resumo">
       <div class="resumo-card"><div class="num" id="total-users">0</div><div class="lbl">Utilizadores</div></div>
       <div class="resumo-card"><div class="num" id="total-pts">0</div><div class="lbl">Pontos totais</div></div>
-      <div class="resumo-card"><div class="num" id="prontos-saque">0</div><div class="lbl">Prontos a sacar (≥500)</div></div>
+      <div class="resumo-card"><div class="num" id="prontos-saque">0</div><div class="lbl">Prontos a sacar (≥1600)</div></div>
       <div class="resumo-card"><div class="num" id="saques-pendentes">0</div><div class="lbl">Saques pendentes</div></div>
       <div class="resumo-card"><div class="num" id="total-pesquisas">0</div><div class="lbl">Pesquisas programadas</div></div>
     </div>
@@ -315,7 +315,7 @@
         <p style="font-size:12px;color:#888;margin-bottom:12px;">
           Quando bloqueado, o utilizador <strong>não consegue</strong> fazer o check-in diário.
           Na página de check-in aparece a mensagem: <em>«O check-in de hoje ainda não está disponível. Aguarde.»</em>
-          Desbloqueie quando quiser voltar a permitir. O check-in dá <strong>+5 pontos</strong> por dia.
+          Desbloqueie quando quiser voltar a permitir. O check-in dá <strong>+3 pontos</strong> por dia.
         </p>
         <div class="form-row">
           <label>E-mail do utilizador</label>
@@ -778,7 +778,7 @@
   </div>
 
   <script>
-    var MINIMO_PONTOS_SAQUE = 500;
+    var MINIMO_PONTOS_SAQUE = 1600; // 200 MT (8 pts = 1 MT)
     var todosUsers = [];
     var todosSaques = [];
     var todasPesquisas = [];
@@ -1342,7 +1342,7 @@ function mostrarAviso(txt) {
       var html = '';
       lista.forEach(function (u, i) {
         var pts = u.pontos || 0;
-        var mzn = (pts / 10).toFixed(1);
+        var mzn = (pts / 8).toFixed(1); // 8 pts = 1 MT
         var cls = pts >= MINIMO_PONTOS_SAQUE ? 'pts-alto' : (pts > 0 ? 'pts-ok' : 'pts-baixo');
         var sid = 'senha-' + i;
         var docId = u._id || '';
