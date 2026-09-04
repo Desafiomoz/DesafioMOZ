@@ -321,7 +321,7 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
                 lista.forEach(function (s) {
                     var valor = s.liquidoMZN != null
                         ? Number(s.liquidoMZN).toFixed(2)
-                        : (s.valorMZN != null ? Number(s.valorMZN).toFixed(2) : ((s.pontos || 0) / 10).toFixed(2));
+                        : (s.valorMZN != null ? Number(s.valorMZN).toFixed(2) : ((s.pontos || 0) / 8).toFixed(2));
                     var pts = s.pontos || 0;
                     var metodo = s.metodo || '';
                     var dataStr = formatarData(s.dataPedido);
@@ -387,7 +387,7 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
             document.getElementById('telefone').textContent = tel;
             document.getElementById('user-id').textContent = userId || '—';
             document.getElementById('pontos-txt').textContent = pontos;
-            document.getElementById('mzn-txt').textContent = (pontos / 10).toFixed(1) + ' MZN';
+            document.getElementById('mzn-txt').textContent = (pontos / 8).toFixed(1) + ' MZN';
             if (fotoPerfil) document.getElementById('avatar').src = fotoPerfil;
 
             if (email && email !== '—') {
@@ -399,7 +399,7 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
                         pontos = dados.pontos;
                         localStorage.setItem('pontosUtilizador', String(pontos));
                         document.getElementById('pontos-txt').textContent = pontos;
-                        document.getElementById('mzn-txt').textContent = (pontos / 10).toFixed(1) + ' MZN';
+                        document.getElementById('mzn-txt').textContent = (pontos / 8).toFixed(1) + ' MZN';
                     }
                     document.getElementById('stat-convidados').textContent = dados.totalConvidados || 0;
                     document.getElementById('stat-indicacao').textContent = dados.pontosIndicacao || 0;
