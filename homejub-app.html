@@ -1,0 +1,2985 @@
+<!DOCTYPE html>
+<html lang="pt-MZ">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Homejub – Desafio MOZ (App)</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;}
+
+:root{
+  --bg:#06080e;
+  --bg-alt:#0d1017;
+  --painel:#12161f;
+  --linha:rgba(255,255,255,0.08);
+  --azul:#3b9eff;
+  --laranja:#ff9a3c;
+  --verde:#2ee6a0;
+  --ouro:#ffcf4d;
+  --texto:#f4f6fb;
+  --suave:#8e9bb8;
+}
+
+html,body{
+  width:100%;height:100%;
+  background:radial-gradient(ellipse at 50% 0%, #10141f 0%, var(--bg) 60%);
+  font-family:'Inter',sans-serif;
+  color:var(--texto);
+  overflow:hidden;
+  overscroll-behavior:none;
+}
+
+.topo{
+  position:fixed; top:0; left:0; right:0;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 14px;
+  z-index:10;
+  overflow:visible;
+  background:linear-gradient(180deg, rgba(6,8,14,0.9), rgba(6,8,14,0));
+}
+
+.topo-direita{
+  display:flex;
+  flex-direction:row;
+  align-items:center;
+  gap:6px;
+  flex-shrink:0;
+  overflow:visible;
+  margin-right:6px;
+  padding-right:4px;
+}
+.topo-direita .btn-ajuda,
+.btn-ajuda{
+  position:relative;
+  z-index:12;
+  isolation:isolate;
+  background:linear-gradient(145deg, #fff3a0 0%, #ffcf4d 40%, #ff9a3c 100%);
+  border:2.5px solid #fff8d6;
+  color:#2a1d00;
+  width:44px;
+  height:44px;
+  min-width:44px;
+  min-height:44px;
+  border-radius:14px;
+  flex-shrink:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:visible;
+  padding:0;
+  margin:0;
+  line-height:1;
+  box-shadow:0 2px 0 rgba(0,0,0,0.25), 0 0 0 3px rgba(255,207,77,0.35), 0 0 20px rgba(255,180,0,0.95);
+  animation:auraAjuda 1.8s ease-in-out infinite;
+}
+.btn-ajuda .ajuda-icone{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:100%;
+  height:100%;
+  font-size:24px;
+  line-height:1;
+  filter:drop-shadow(0 1px 1px rgba(0,0,0,0.25));
+}
+@keyframes auraAjuda{
+  0%,100%{ transform:scale(1); box-shadow:0 2px 0 rgba(0,0,0,0.25), 0 0 0 3px rgba(255,207,77,0.35), 0 0 20px rgba(255,180,0,0.85); }
+  50%{ transform:scale(1.05); box-shadow:0 2px 0 rgba(0,0,0,0.25), 0 0 0 4px rgba(255,255,255,0.45), 0 0 30px rgba(255,200,40,1); }
+}
+.ajuda-contagem{
+  position:absolute;
+  top:-8px;
+  right:-8px;
+  background:var(--verde);
+  color:#06120f;
+  font-family:'Sora',sans-serif;
+  font-weight:800;
+  font-size:11px;
+  min-width:20px;
+  height:20px;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:0 4px;
+  line-height:1;
+  border:2px solid #06120f;
+  box-shadow:0 0 10px rgba(46,230,160,0.8);
+  z-index:13;
+}
+
+#tela-jogo{
+  position:fixed; inset:0;
+  background:
+    radial-gradient(circle at 18% 20%, rgba(59,158,255,0.24), transparent 36%),
+    radial-gradient(circle at 82% 22%, rgba(168,85,247,0.22), transparent 38%),
+    radial-gradient(circle at 30% 82%, rgba(46,230,160,0.20), transparent 38%),
+    radial-gradient(circle at 85% 84%, rgba(255,154,60,0.18), transparent 36%),
+    var(--bg);
+  overflow:hidden;
+}
+#tela-jogo .topo{
+  z-index:40;
+  padding:10px 10px 10px 8px;
+  display:flex;
+  flex-direction:row;
+  align-items:center;
+  justify-content:space-between;
+  gap:6px;
+}
+#tela-jogo::before, #tela-jogo::after{
+  content:''; position:absolute; inset:-20%; z-index:0; pointer-events:none;
+  filter:blur(50px);
+}
+#tela-jogo::before{
+  background:
+    radial-gradient(circle at 22% 25%, rgba(59,158,255,0.2), transparent 34%),
+    radial-gradient(circle at 78% 30%, rgba(168,85,247,0.18), transparent 36%);
+  animation:auraFlutuar 30s ease-in-out infinite alternate;
+}
+#tela-jogo::after{
+  background:
+    radial-gradient(circle at 65% 78%, rgba(34,211,200,0.18), transparent 32%),
+    radial-gradient(circle at 20% 70%, rgba(255,207,77,0.14), transparent 30%);
+  animation:auraFlutuar 38s ease-in-out infinite alternate-reverse;
+  opacity:0.8;
+}
+#canvas-wrap{
+  position:absolute; left:0; right:0; z-index:1;
+  display:flex; align-items:center; justify-content:center;
+}
+canvas{ touch-action:none; display:block; }
+
+.rodape{
+  position:fixed; bottom:0; left:0; right:0;
+  padding:16px 20px 22px;
+  display:flex; flex-direction:column; align-items:center; gap:10px;
+  z-index:10;
+  background:linear-gradient(0deg, rgba(6,8,14,0.92), rgba(6,8,14,0));
+}
+.dica{ font-size:12.5px; color:var(--suave); text-align:center; }
+
+.overlay{
+  position:fixed; inset:0; z-index:20;
+  background:rgba(6,8,14,0.86);
+  display:none; align-items:center; justify-content:center;
+  flex-direction:column; gap:14px;
+  text-align:center; padding:30px;
+}
+#overlay-checkout{ z-index:70; }
+.overlay.ativo{ display:flex; }
+.overlay h2{ font-family:'Sora',sans-serif; font-size:26px; font-weight:800; }
+.overlay .resumo{ font-size:15px; color:var(--suave); }
+.overlay .grande{ font-family:'Sora',sans-serif; font-size:44px; font-weight:800; color:var(--ouro); }
+.btn{
+  font-family:'Sora',sans-serif; font-weight:700; font-size:14.5px;
+  padding:13px 28px; border-radius:30px; border:none;
+  background:linear-gradient(90deg, var(--azul), var(--verde));
+  color:#06080e; cursor:pointer;
+}
+
+.flutuante{
+  position:absolute; pointer-events:none;
+  font-family:'Sora',sans-serif; font-weight:800; font-size:20px;
+  color:var(--ouro);
+  text-shadow:0 2px 10px rgba(0,0,0,0.6);
+  z-index:15;
+}
+
+/* ---------- ecrã de abertura (capa) ---------- */
+#tela-abertura{
+  position:fixed; inset:0; z-index:100;
+  display:none; flex-direction:column; align-items:center; justify-content:center;
+  gap:26px;
+  background:
+    radial-gradient(ellipse at 50% 20%, rgba(59,158,255,0.18), transparent 55%),
+    radial-gradient(ellipse at 20% 85%, rgba(46,230,160,0.14), transparent 50%),
+    radial-gradient(ellipse at 80% 80%, rgba(255,154,60,0.14), transparent 50%),
+    var(--bg);
+  padding:30px;
+  overflow:hidden;
+}
+#tela-abertura::before{
+  content:''; position:absolute; inset:0;
+  background-image:radial-gradient(rgba(255,255,255,0.5) 1px, transparent 1px);
+  background-size:34px 34px;
+  opacity:0.06;
+}
+.capa-emblema{
+  width:118px; height:118px; border-radius:30px;
+  background:linear-gradient(135deg, var(--azul), var(--laranja) 52%, var(--verde));
+  display:flex; align-items:center; justify-content:center;
+  box-shadow:0 0 60px rgba(59,158,255,0.35), 0 0 100px rgba(46,230,160,0.2);
+  animation:flutuarCapa 3.2s ease-in-out infinite;
+  position:relative; z-index:1;
+}
+.capa-emblema svg{ width:62px; height:62px; }
+@keyframes flutuarCapa{
+  0%,100%{ transform:translateY(0) rotate(-2deg); }
+  50%{ transform:translateY(-10px) rotate(2deg); }
+}
+.capa-titulo{
+  font-family:'Sora',sans-serif; font-weight:800; text-align:center;
+  line-height:1.1; position:relative; z-index:1;
+}
+.capa-titulo .l1{ display:block; color:var(--suave); font-size:13px; letter-spacing:.08em; text-transform:uppercase; font-weight:700; margin-bottom:4px; }
+.capa-titulo .l2{
+  display:block; font-size:50px;
+  background:linear-gradient(90deg, var(--azul), var(--verde) 45%, var(--laranja));
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+}
+.capa-sub{ font-size:13.5px; color:var(--suave); text-align:center; letter-spacing:.03em; position:relative; z-index:1; }
+.capa-barra-wrap{
+  width:78%; max-width:280px; height:10px; border-radius:20px;
+  background:var(--painel); border:1px solid var(--linha);
+  overflow:hidden; position:relative; z-index:1;
+}
+.capa-barra{
+  height:100%; width:0%; border-radius:20px;
+  background:linear-gradient(90deg, var(--azul), var(--verde), var(--ouro));
+  transition:width .18s linear;
+}
+.capa-status{ font-size:11.5px; color:var(--suave); position:relative; z-index:1; }
+.capa-btn-jogar{
+  position:relative; z-index:1;
+  padding:15px 46px; font-size:16px;
+  animation:pulsarBotaoJogar 1.8s ease-in-out infinite;
+}
+@keyframes pulsarBotaoJogar{
+  0%,100%{ box-shadow:0 0 0 0 rgba(46,230,160,0.4); }
+  50%{ box-shadow:0 0 0 10px rgba(46,230,160,0); }
+}
+
+/* ---------- ecrã de login Homejub ---------- */
+#tela-login{
+  position:fixed; inset:0; z-index:120;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:14px;
+  background:
+    radial-gradient(ellipse at 50% 15%, rgba(59,158,255,0.2), transparent 50%),
+    radial-gradient(ellipse at 80% 80%, rgba(46,230,160,0.12), transparent 45%),
+    var(--bg);
+  padding:24px 18px; overflow-y:auto;
+}
+#tela-login.oculto{ display:none; }
+.login-card{
+  width:100%; max-width:360px;
+  background:rgba(18,22,31,0.95);
+  border:1px solid var(--linha);
+  border-radius:20px; padding:22px 18px 18px;
+  box-shadow:0 12px 40px rgba(0,0,0,0.4);
+}
+.login-card h2{
+  font-family:'Sora',sans-serif; font-size:20px; font-weight:800;
+  text-align:center; margin-bottom:6px;
+}
+.login-card .login-sub{
+  font-size:12.5px; color:var(--suave); text-align:center; margin-bottom:16px; line-height:1.4;
+}
+.login-tabs{ display:flex; gap:8px; margin-bottom:14px; }
+.login-tabs button{
+  flex:1; padding:10px; border-radius:12px; border:1px solid var(--linha);
+  background:transparent; color:var(--suave); font-family:'Sora',sans-serif;
+  font-weight:700; font-size:13px; cursor:pointer;
+}
+.login-tabs button.ativo{
+  background:linear-gradient(90deg, var(--azul), var(--verde));
+  color:#06080e; border:none;
+}
+.login-campo{ margin-bottom:12px; }
+.login-campo label{ display:block; font-size:11px; color:var(--suave); margin-bottom:5px; font-weight:600; }
+.login-campo input{
+  width:100%; padding:12px 14px; border-radius:12px;
+  border:1px solid var(--linha); background:#0a0d14; color:#fff;
+  font-size:15px; outline:none;
+}
+.login-campo input:focus{ border-color:var(--verde); }
+.login-erro{
+  display:none; color:#ff6b6b; font-size:12.5px; text-align:center;
+  margin-bottom:10px; line-height:1.35;
+}
+.login-erro.mostrar{ display:block; }
+.login-ok{
+  display:none; color:var(--verde); font-size:12.5px; text-align:center; margin-bottom:10px;
+}
+.login-ok.mostrar{ display:block; }
+.btn-login-main{
+  width:100%; padding:14px; border:none; border-radius:14px;
+  font-family:'Sora',sans-serif; font-weight:800; font-size:15px;
+  background:linear-gradient(90deg, var(--azul), var(--verde));
+  color:#06080e; cursor:pointer; margin-top:4px;
+}
+.btn-login-main:disabled{ opacity:0.6; cursor:wait; }
+.login-aviso{
+  font-size:11px; color:var(--suave); text-align:center; margin-top:12px; line-height:1.4;
+}
+.login-jogador-bar{
+  display:none; align-items:center; gap:8px; justify-content:center;
+  font-size:12px; color:var(--suave); margin-top:8px;
+}
+.login-jogador-bar.mostrar{ display:flex; }
+.login-jogador-bar strong{ color:var(--verde); }
+.btn-sair-conta{
+  background:transparent; border:1px solid rgba(255,107,107,0.4);
+  color:#ff6b6b; font-size:11px; padding:4px 10px; border-radius:8px; cursor:pointer;
+}
+
+
+/* ---------- mapa de níveis ---------- */
+#tela-mapa{
+  position:fixed; inset:0; z-index:50;
+  display:none;
+  flex-direction:column;
+  background:
+    radial-gradient(circle at 22% 18%, rgba(59,158,255,0.30), transparent 36%),
+    radial-gradient(circle at 78% 28%, rgba(168,85,247,0.28), transparent 38%),
+    radial-gradient(circle at 32% 74%, rgba(46,230,160,0.26), transparent 38%),
+    radial-gradient(circle at 82% 86%, rgba(255,154,60,0.24), transparent 36%),
+    var(--bg);
+  overflow:hidden;
+}
+#tela-mapa.ativo{ display:flex; }
+#tela-mapa::before, #tela-mapa::after{
+  content:''; position:absolute; inset:-20%; z-index:0; pointer-events:none;
+  filter:blur(46px);
+}
+#tela-mapa::before{
+  background:
+    radial-gradient(circle at 25% 20%, rgba(59,158,255,0.26), transparent 34%),
+    radial-gradient(circle at 75% 32%, rgba(168,85,247,0.24), transparent 36%),
+    radial-gradient(circle at 35% 78%, rgba(46,230,160,0.22), transparent 36%);
+  animation:auraFlutuar 28s ease-in-out infinite alternate;
+}
+#tela-mapa::after{
+  background:
+    radial-gradient(circle at 62% 15%, rgba(34,211,200,0.22), transparent 32%),
+    radial-gradient(circle at 15% 58%, rgba(255,207,77,0.18), transparent 30%);
+  animation:auraFlutuar 36s ease-in-out infinite alternate-reverse;
+  opacity:0.8;
+}
+@keyframes auraFlutuar{
+  0%{ transform:translate(0,0) scale(1); }
+  100%{ transform:translate(4%,-3%) scale(1.09); }
+}
+.mapa-topo{
+  padding:16px 18px 14px;
+  display:flex; align-items:center; justify-content:space-between;
+  border-bottom:1px solid var(--linha);
+  background:linear-gradient(180deg, rgba(9,11,18,0.75), rgba(9,11,18,0.25));
+  position:relative; z-index:2;
+  backdrop-filter:blur(6px);
+}
+.mapa-topo h1{ font-family:'Sora',sans-serif; font-weight:800; font-size:18px; }
+.mapa-topo .mapa-sub{ font-size:11.5px; color:var(--suave); margin-top:1px; }
+.mapa-scroll{
+  flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch;
+  padding:34px 0 60px;
+  position:relative; z-index:1;
+}
+.mapa-scroll::before{
+  content:''; position:absolute; inset:0; z-index:0; pointer-events:none;
+  background-image:radial-gradient(rgba(255,255,255,0.6) 1px, transparent 1px);
+  background-size:44px 44px;
+  opacity:0.09;
+  animation:brilharEstrelas 4.5s ease-in-out infinite alternate;
+}
+@keyframes brilharEstrelas{
+  0%{ opacity:0.05; } 100%{ opacity:0.13; }
+}
+.no-nivel{
+  position:absolute; z-index:1;
+  width:58px; height:58px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Sora',sans-serif; font-weight:800; font-size:16px;
+  background:var(--painel);
+  border:1px solid var(--linha);
+  color:var(--suave);
+  transform:translateX(-50%);
+}
+.no-nivel.bloqueado::after{
+  content:'🔒'; position:absolute; font-size:13px; bottom:-6px;
+  background:var(--bg-alt); border-radius:50%; padding:2px 4px;
+}
+.no-nivel.concluido{
+  background:linear-gradient(135deg, rgba(34,211,200,0.92), rgba(168,85,247,0.88));
+  border:none; color:#06120f;
+  box-shadow:0 0 16px rgba(34,211,200,0.5), 0 0 26px rgba(168,85,247,0.32);
+}
+.no-nivel.concluido::after{
+  content:'✓'; position:absolute; font-size:11px; bottom:-6px;
+  background:var(--bg-alt); border-radius:50%; padding:2px 5px;
+  color:#2ee6a0; font-weight:800;
+}
+.no-nivel.ativo{
+  background:radial-gradient(circle at 35% 30%, #fff6d8, var(--ouro) 55%, #cf9f1f 100%);
+  color:#2a1d00;
+  border:none;
+  box-shadow:0 0 0 4px rgba(255,207,77,0.18), 0 0 28px rgba(255,207,77,0.55);
+  animation:pulsarNivel 1.7s ease-in-out infinite;
+}
+@keyframes pulsarNivel{
+  0%,100%{ box-shadow:0 0 0 4px rgba(255,207,77,0.18), 0 0 22px rgba(255,207,77,0.5); }
+  50%{ box-shadow:0 0 0 8px rgba(255,207,77,0.1), 0 0 38px rgba(255,207,77,0.75); }
+}
+.no-nivel .rotulo-jogar{
+  position:absolute; top:-24px; left:50%; transform:translateX(-50%);
+  font-size:9.5px; font-weight:800; letter-spacing:.06em;
+  color:var(--ouro); text-transform:uppercase; white-space:nowrap;
+}
+
+.toast{
+  position:fixed; left:50%; bottom:26px; transform:translateX(-50%) translateY(20px);
+  background:var(--painel); border:1px solid var(--linha);
+  padding:11px 18px; border-radius:24px; font-size:13px;
+  opacity:0; transition:opacity .25s, transform .25s;
+  z-index:60; pointer-events:none;
+}
+.toast.mostrar{ opacity:1; transform:translateX(-50%) translateY(0); }
+.toast.marco-mt{
+  bottom:auto; top:28%;
+  z-index:95;
+  font-family:'Sora',sans-serif;
+  font-weight:800;
+  font-size:17px;
+  line-height:1.35;
+  text-align:center;
+  padding:22px 26px;
+  max-width:88%;
+  border-radius:20px;
+  color:#2a1d00;
+  background:linear-gradient(145deg, #fff6c8 0%, #ffcf4d 40%, #ff9a3c 100%);
+  border:3px solid #fff8d6;
+  box-shadow:0 0 0 4px rgba(255,207,77,0.35), 0 0 28px rgba(255,180,0,0.95), 0 0 56px rgba(255,154,60,0.55), 0 12px 40px rgba(0,0,0,0.45);
+  animation:auraMarcoMt 1.6s ease-in-out infinite;
+}
+@keyframes auraMarcoMt{
+  0%,100%{ transform:translateX(-50%) scale(1); box-shadow:0 0 0 4px rgba(255,207,77,0.35), 0 0 24px rgba(255,180,0,0.9), 0 0 48px rgba(255,154,60,0.5); }
+  50%{ transform:translateX(-50%) scale(1.04); box-shadow:0 0 0 6px rgba(255,255,255,0.45), 0 0 40px rgba(255,207,77,1), 0 0 70px rgba(255,154,60,0.7); }
+}
+
+.btn-voltar-mapa{
+  background:var(--painel); border:1px solid var(--linha);
+  color:var(--texto); font-family:'Sora',sans-serif; font-weight:700; font-size:12px;
+  padding:8px 10px; border-radius:12px; display:flex; align-items:center; gap:4px;
+  flex-shrink:0;
+}
+.btn-loja{
+  background:linear-gradient(135deg, rgba(168,85,247,0.95), rgba(59,158,255,0.95));
+  border:none; color:#fff; font-size:13px; font-family:'Sora',sans-serif; font-weight:800;
+  min-width:52px; height:48px; border-radius:14px; padding:4px 8px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px;
+  box-shadow:0 0 0 2px rgba(255,255,255,0.25) inset, 0 0 22px rgba(168,85,247,0.75), 0 0 40px rgba(59,158,255,0.45);
+  animation:auraBtnMapa 2.2s ease-in-out infinite;
+}
+.btn-loja .btn-loja-ico{ font-size:16px; line-height:1; }
+.btn-loja .btn-loja-txt{ font-size:9px; letter-spacing:.04em; text-transform:uppercase; }
+.btn-loja.btn-regras-mapa{
+  background:linear-gradient(135deg, rgba(46,230,160,0.95), rgba(34,211,200,0.95));
+  color:#06120f;
+  box-shadow:0 0 0 2px rgba(255,255,255,0.3) inset, 0 0 22px rgba(46,230,160,0.8), 0 0 40px rgba(34,211,200,0.5);
+}
+@keyframes auraBtnMapa{
+  0%,100%{ filter:brightness(1); transform:scale(1); }
+  50%{ filter:brightness(1.12); transform:scale(1.04); }
+}
+.mapa-topo .pill{
+  border-radius:14px;
+  box-shadow:0 0 0 1px rgba(255,207,77,0.25) inset, 0 0 18px rgba(255,207,77,0.35), 0 0 28px rgba(46,230,160,0.2);
+  animation:auraHud 3.2s ease-in-out infinite;
+}
+.hud{
+  display:flex;
+  flex-direction:row;
+  flex-wrap:nowrap;
+  align-items:center;
+  gap:2px;
+  padding:5px 6px;
+  border-radius:16px;
+  overflow:visible;
+  background:linear-gradient(160deg, rgba(46,230,160,0.14), rgba(18,22,31,0.88));
+  border:1px solid rgba(46,230,160,0.22);
+  box-shadow:0 0 0 1px rgba(255,207,77,0.18) inset, 0 0 26px rgba(46,230,160,0.35), 0 0 44px rgba(255,207,77,0.22);
+  animation:auraHud 3.8s ease-in-out infinite;
+  max-width:calc(100vw - 120px);
+}
+.pill{
+  background:transparent;
+  border:none;
+  padding:3px 4px;
+  text-align:center;
+  min-width:36px;
+  flex-shrink:0;
+}
+.pill .val{ font-family:'Sora',sans-serif; font-weight:800; font-size:14px; line-height:1.1; }
+.pill .lab{ font-size:8px; color:var(--suave); letter-spacing:.03em; text-transform:uppercase; margin-top:1px; }
+.pill.pontos .val{ color:var(--ouro); }
+.pill.jogadas .val{ color:var(--azul); }
+.btn-regras-jogo{
+  flex-shrink:0;
+  white-space:nowrap;
+}
+.btn-regras-jogo{
+  background:linear-gradient(135deg, rgba(46,230,160,0.95), rgba(34,211,200,0.95));
+  border:none; color:#06120f; font-family:'Sora',sans-serif; font-weight:800;
+  font-size:9px; letter-spacing:.04em; text-transform:uppercase;
+  padding:7px 8px; border-radius:11px;
+  box-shadow:0 0 16px rgba(46,230,160,0.55);
+}
+.loja-aviso-forte{
+  margin:12px 0 18px; padding:12px 14px; border-radius:14px;
+  background:linear-gradient(160deg, rgba(255,154,60,0.18), rgba(18,22,31,0.9));
+  border:1px solid rgba(255,154,60,0.4);
+  color:#ffd7a8; font-size:12.5px; line-height:1.45; text-align:center;
+  box-shadow:0 0 18px rgba(255,154,60,0.2);
+}
+.loja-regras-box{
+  margin-bottom:22px; padding:14px 16px; border-radius:16px;
+  background:linear-gradient(160deg, rgba(59,158,255,0.14), rgba(18,22,31,0.9));
+  border:1px solid rgba(59,158,255,0.3);
+}
+.loja-regras-box h3{ margin-bottom:8px; }
+.loja-regras-box p{ font-size:12.5px; color:var(--suave); line-height:1.5; margin-bottom:8px; }
+.tutorial-overlay{
+  position:fixed; left:12px; right:12px; bottom:78px; z-index:25;
+  background:linear-gradient(160deg, rgba(18,22,31,0.96), rgba(12,16,24,0.96));
+  border:1px solid rgba(59,158,255,0.35);
+  border-radius:16px; padding:14px 16px;
+  box-shadow:0 0 24px rgba(59,158,255,0.25);
+  display:none;
+}
+.tutorial-overlay.ativo{ display:block; }
+.tutorial-overlay .tut-titulo{ font-family:'Sora',sans-serif; font-weight:800; font-size:13px; color:var(--ouro); margin-bottom:6px; }
+.tutorial-overlay .tut-txt{ font-size:12.5px; color:var(--texto); line-height:1.45; }
+.tutorial-overlay .tut-btn{
+  margin-top:10px; border:none; border-radius:20px; padding:8px 14px;
+  font-family:'Sora',sans-serif; font-weight:700; font-size:12px;
+  background:linear-gradient(90deg, var(--azul), var(--verde)); color:#06080e;
+}
+
+/* ---------- loja ---------- */
+#tela-loja{
+  position:fixed; inset:0; z-index:55;
+  display:none; flex-direction:column;
+  background:
+    radial-gradient(circle at 20% 15%, rgba(168,85,247,0.28), transparent 38%),
+    radial-gradient(circle at 85% 25%, rgba(59,158,255,0.26), transparent 40%),
+    radial-gradient(circle at 40% 85%, rgba(255,207,77,0.22), transparent 40%),
+    var(--bg);
+}
+#tela-loja.ativo{ display:flex; }
+.loja-corpo{ flex:1; overflow-y:auto; padding:20px 18px 30px; }
+.loja-secao{ margin-bottom:26px; }
+.loja-secao h3{ font-family:'Sora',sans-serif; font-size:15px; font-weight:800; margin-bottom:12px; }
+.loja-item{
+  display:flex; align-items:center; justify-content:space-between;
+  background:linear-gradient(160deg, rgba(255,207,77,0.14), rgba(18,22,31,0.85));
+  border:1px solid rgba(255,207,77,0.25);
+  border-radius:16px; padding:14px 16px;
+  box-shadow:0 0 20px rgba(255,207,77,0.1);
+}
+.loja-item-titulo{ font-family:'Sora',sans-serif; font-weight:700; font-size:14.5px; }
+.loja-item-sub{ font-size:11.5px; color:var(--suave); margin-top:2px; }
+.loja-btn{
+  font-family:'Sora',sans-serif; font-weight:800; font-size:13.5px;
+  background:linear-gradient(90deg, var(--ouro), #ffb44d);
+  color:#2a1d00; border:none; border-radius:12px; padding:10px 16px;
+  white-space:nowrap;
+}
+.loja-btn-brevemente{
+  background:var(--painel); color:var(--suave); border:1px solid var(--linha);
+  opacity:0.7;
+}
+.loja-tabela{ display:flex; flex-direction:column; gap:10px; }
+.loja-linha{
+  display:flex; align-items:center; justify-content:space-between;
+  background:var(--painel); border:1px solid var(--linha);
+  border-radius:14px; padding:12px 16px;
+}
+.loja-linha-info{ display:flex; flex-direction:column; gap:2px; }
+.loja-linha-moedas{ font-family:'Sora',sans-serif; font-weight:700; font-size:14px; }
+.loja-linha-preco{ font-size:12px; color:var(--verde); font-weight:700; }
+.loja-aviso{ font-size:11.5px; color:var(--suave); margin-top:10px; text-align:center; }
+.loja-rodape{ padding:14px 18px 20px; display:flex; justify-content:center; }
+
+/* ---------- checkout de pagamento real ---------- */
+.checkout-input{
+  width:100%; margin-top:14px;
+  background:var(--painel); border:1px solid var(--linha); border-radius:12px;
+  padding:13px 16px; color:var(--texto); font-size:15px; text-align:center;
+  font-family:'Sora',sans-serif; font-weight:700;
+}
+.checkout-metodos{ display:flex; gap:8px; margin-top:12px; width:100%; }
+.checkout-metodo{
+  flex:1; padding:11px 6px; border-radius:12px;
+  background:var(--painel); border:1px solid var(--linha); color:var(--suave);
+  font-family:'Sora',sans-serif; font-weight:700; font-size:12.5px;
+}
+.checkout-metodo.ativo{
+  background:linear-gradient(90deg, var(--verde), #22ffcc); color:#06120f; border:none;
+}
+.checkout-spinner{
+  width:38px; height:38px; margin:16px auto 0;
+  border:4px solid rgba(255,255,255,0.15); border-top-color:var(--verde);
+  border-radius:50%; animation:girarSpinner 0.9s linear infinite;
+}
+@keyframes girarSpinner{ to{ transform:rotate(360deg); } }
+
+#checkout-passo-form, #checkout-passo-aguardar, #checkout-passo-sucesso, #checkout-passo-erro{
+  display:flex; flex-direction:column; align-items:center; gap:12px; width:100%; max-width:320px;
+}
+
+/* ---------- regras do jogo ---------- */
+#tela-regras{
+  position:fixed; inset:0; z-index:56;
+  display:none; flex-direction:column;
+  background:
+    radial-gradient(circle at 25% 12%, rgba(46,230,160,0.26), transparent 38%),
+    radial-gradient(circle at 80% 20%, rgba(34,211,200,0.24), transparent 40%),
+    radial-gradient(circle at 30% 80%, rgba(168,85,247,0.22), transparent 40%),
+    radial-gradient(circle at 85% 88%, rgba(59,158,255,0.20), transparent 38%),
+    var(--bg);
+  overflow:hidden;
+}
+#tela-regras.ativo{ display:flex; }
+#tela-regras::before, #tela-regras::after{
+  content:''; position:absolute; inset:-20%; z-index:0; pointer-events:none; filter:blur(48px);
+}
+#tela-regras::before{
+  background:radial-gradient(circle at 25% 22%, rgba(46,230,160,0.22), transparent 34%), radial-gradient(circle at 75% 30%, rgba(34,211,200,0.2), transparent 36%);
+  animation:auraFlutuar 30s ease-in-out infinite alternate;
+}
+#tela-regras::after{
+  background:radial-gradient(circle at 65% 78%, rgba(168,85,247,0.18), transparent 32%);
+  animation:auraFlutuar 38s ease-in-out infinite alternate-reverse;
+  opacity:0.8;
+}
+.regras-corpo{ flex:1; overflow-y:auto; padding:8px 18px 30px; position:relative; z-index:1; }
+.regras-hero{
+  display:flex; flex-direction:column; align-items:center; gap:10px;
+  padding:22px 0 26px; text-align:center;
+}
+.regras-hero-emblema{
+  width:64px; height:64px; border-radius:20px;
+  background:linear-gradient(135deg, var(--azul), var(--verde) 50%, var(--ouro));
+  display:flex; align-items:center; justify-content:center; font-size:30px;
+  box-shadow:0 0 30px rgba(46,230,160,0.4), 0 0 50px rgba(59,158,255,0.25);
+  animation:pulsarNivel 2.4s ease-in-out infinite;
+}
+.regras-hero-titulo{
+  font-family:'Sora',sans-serif; font-weight:800; font-size:19px;
+  background:linear-gradient(90deg, var(--azul), var(--verde) 45%, var(--ouro));
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+}
+.regra-card{
+  display:flex; gap:14px; align-items:flex-start;
+  background:linear-gradient(160deg, rgba(255,255,255,0.06), rgba(13,16,23,0.82));
+  border:1px solid rgba(255,255,255,0.1);
+  border-radius:18px; padding:16px; margin-bottom:14px;
+  backdrop-filter:blur(8px);
+  box-shadow:0 0 22px rgba(46,230,160,0.08), 0 4px 18px rgba(0,0,0,0.25);
+}
+.regra-icone{
+  width:42px; height:42px; border-radius:13px; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center; font-size:20px;
+  box-shadow:0 0 16px rgba(255,255,255,0.15);
+}
+.regra-texto h4{ font-family:'Sora',sans-serif; font-weight:800; font-size:14.5px; margin-bottom:4px; }
+.regra-texto p{ font-size:12.5px; color:var(--suave); line-height:1.5; }
+
+/* ---------- vidas ---------- */
+.vidas{ display:flex; align-items:center; gap:3px; }
+.vidas .coracao{ font-size:15px; filter:grayscale(0); }
+.vidas .coracao.vazio{ filter:grayscale(1) opacity(0.35); opacity:0.35; }
+
+/* ---------- caixa de objetivos (com exibição/aura) ---------- */
+.objetivos-caixa{
+  position:fixed; top:64px; left:14px; right:14px; z-index:9;
+  padding:12px 14px 10px;
+  border-radius:20px;
+  background:linear-gradient(160deg, rgba(18,22,31,0.82), rgba(13,16,23,0.75));
+  border:1px solid rgba(255,255,255,0.09);
+  backdrop-filter:blur(10px);
+  box-shadow:
+    0 0 0 1px rgba(59,158,255,0.12) inset,
+    0 0 24px rgba(59,158,255,0.16),
+    0 0 40px rgba(168,85,247,0.12);
+  animation:auraCaixaObjetivos 3.6s ease-in-out infinite;
+}
+@keyframes auraCaixaObjetivos{
+  0%,100%{ box-shadow:0 0 0 1px rgba(59,158,255,0.12) inset, 0 0 22px rgba(59,158,255,0.14), 0 0 36px rgba(168,85,247,0.10); }
+  50%{ box-shadow:0 0 0 1px rgba(59,158,255,0.18) inset, 0 0 30px rgba(59,158,255,0.22), 0 0 48px rgba(168,85,247,0.18); }
+}
+.objetivos-titulo{
+  font-family:'Sora',sans-serif; font-weight:700; font-size:10.5px;
+  color:var(--suave); text-transform:uppercase; letter-spacing:.08em;
+  text-align:center; margin-bottom:8px;
+}
+.objetivos-bar{
+  display:flex; gap:10px; justify-content:center; flex-wrap:wrap;
+}
+.objetivo{
+  display:flex; align-items:center; gap:6px;
+  background:rgba(255,255,255,0.05); border:1px solid var(--linha);
+  border-radius:14px; padding:6px 11px;
+  font-family:'Sora',sans-serif; font-weight:700; font-size:13px;
+}
+.objetivo.cumprido{ opacity:0.45; }
+.objetivo .icone{
+  width:22px; height:22px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center; font-size:12px;
+  flex-shrink:0;
+}
+.objetivo .icone.cumprido-check{ background:var(--verde) !important; border:none !important; color:#06080e; }
+
+/* formas que espelham exatamente a peça 3D correspondente no tabuleiro */
+.icone.forma-raio{ border-radius:5px; transform:rotate(45deg); width:16px; height:16px; }
+.icone.forma-moeda{ border-radius:50%; box-shadow:inset 0 0 0 2px rgba(0,0,0,0.15); }
+.icone.forma-estrela{ background:none !important; clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%); }
+.icone.forma-anel{ background:transparent !important; border-radius:50%; border-width:5px; border-style:solid; }
+.icone.forma-diamante{ background:none !important; clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%); }
+
+.overlay .coracoes-grandes{ font-size:26px; letter-spacing:2px; }
+
+.btn-mute{
+  position:fixed; bottom:18px; right:16px; z-index:80;
+  width:44px; height:44px; border-radius:14px; border:none;
+  background:linear-gradient(145deg, rgba(18,22,31,0.95), rgba(30,36,48,0.95));
+  color:#fff; font-size:20px; line-height:1;
+  box-shadow:0 0 16px rgba(59,158,255,0.35);
+  display:flex; align-items:center; justify-content:center;
+}
+.btn-mute.muted{ opacity:0.65; }
+</style>
+</head>
+<body>
+
+<!-- ===== CAPA / ECRÃ DE ABERTURA ===== -->
+
+<audio id="audio-mapa" loop preload="auto" playsinline webkit-playsinline src="https://desafiomoz.pages.dev/sons/mapa.mp3"></audio>
+<audio id="audio-loja" loop preload="auto" playsinline webkit-playsinline src="https://desafiomoz.pages.dev/sons/loja.mp3"></audio>
+<audio id="audio-jogo" loop preload="auto" playsinline webkit-playsinline src="https://desafiomoz.pages.dev/sons/jogo.mp3"></audio>
+<audio id="sfx-match" preload="auto" playsinline webkit-playsinline src="https://desafiomoz.pages.dev/sons/match.mp3"></audio>
+<audio id="sfx-derrota" preload="auto" playsinline webkit-playsinline src="https://desafiomoz.pages.dev/sons/derrota.mp3"></audio>
+<button type="button" class="btn-mute" id="btn-mute" title="Som">🔊</button>
+
+
+<!-- ===== LOGIN OBRIGATÓRIO ===== -->
+<div id="tela-login">
+  <div class="capa-emblema" style="width:88px;height:88px;border-radius:22px;margin-bottom:4px;">
+    <svg viewBox="0 0 24 24" fill="none" style="width:46px;height:46px;">
+      <path d="M4 14l5-8 3 5 3-4 5 9" stroke="#06080e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </div>
+  <div class="capa-titulo" style="margin-bottom:4px;">
+    <span class="l1">DESAFIO MOZ</span>
+    <span class="l2" style="font-size:32px;">HOMEJUB</span>
+  </div>
+  <div class="login-card">
+    <h2 id="login-titulo">Entrar na conta</h2>
+    <p class="login-sub">O teu progresso (níveis, moedas, vidas e compras) fica guardado na tua conta Desafio MOZ.</p>
+    <div class="login-tabs">
+      <button type="button" class="ativo" id="tab-entrar" onclick="mostrarModoLogin('entrar')">Entrar</button>
+      <button type="button" id="tab-criar" onclick="mostrarModoLogin('criar')">Criar conta</button>
+    </div>
+    <div id="login-erro" class="login-erro"></div>
+    <div id="login-ok" class="login-ok"></div>
+    <div class="login-campo" id="campo-nome" style="display:none;">
+      <label>Nome completo</label>
+      <input type="text" id="login-nome" placeholder="O teu nome" autocomplete="name">
+    </div>
+    <div class="login-campo">
+      <label>E-mail</label>
+      <input type="email" id="login-email" placeholder="email@exemplo.com" autocomplete="username">
+    </div>
+    <div class="login-campo" id="campo-tel" style="display:none;">
+      <label>Telemóvel (M-Pesa / e-Mola)</label>
+      <input type="tel" id="login-tel" placeholder="+25884..." autocomplete="tel">
+    </div>
+    <div class="login-campo">
+      <label>Senha</label>
+      <input type="password" id="login-senha" placeholder="Mínimo 6 caracteres" autocomplete="current-password">
+    </div>
+    <button type="button" class="btn-login-main" id="btn-login-submit" onclick="submeterLogin()">Entrar e jogar</button>
+    <p class="login-aviso">Usa a mesma conta do site Desafio MOZ. Sem conta, o progresso não fica guardado na nuvem.</p>
+  </div>
+</div>
+
+<div id="tela-abertura">
+  <div class="capa-emblema">
+    <svg viewBox="0 0 24 24" fill="none">
+      <path d="M4 14l5-8 3 5 3-4 5 9" stroke="#06080e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </div>
+  <div class="capa-titulo">
+    <span class="l1">AVENTURAS DE COMBINAÇÕES</span>
+    <span class="l2">HOMEJUB</span>
+  </div>
+  <div class="capa-sub">Combina, ganha e saca — o teu jogo, as tuas recompensas</div>
+  <div class="capa-barra-wrap" id="capa-barra-wrap"><div class="capa-barra" id="capa-barra"></div></div>
+  <div class="capa-status" id="capa-status">A preparar o tabuleiro...</div>
+  <button class="btn capa-btn-jogar" id="btn-capa-jogar" style="display:none;">Jogar</button>
+</div>
+
+<!-- ===== MAPA DE NÍVEIS ===== -->
+<div id="tela-mapa">
+  <div class="mapa-topo">
+    <div>
+      <h1>Escolhe o teu nível</h1>
+      <div class="mapa-sub">300 níveis · começa no Nível 1</div>
+    </div>
+    <div style="display:flex; gap:8px; align-items:center;">
+      <div class="pill pontos"><div class="val" id="mapa-moedas">0</div><div class="lab">🪙 Moedas</div></div>
+      <div class="pill"><div class="vidas" id="mapa-vidas"></div><div class="lab" id="mapa-vidas-lab">Vidas</div></div>
+      <button class="btn-loja btn-regras-mapa" id="btn-abrir-regras" title="Regras"><span class="btn-loja-ico">📖</span><span class="btn-loja-txt">Regras</span></button>
+      <button class="btn-loja" id="btn-abrir-loja" title="Loja"><span class="btn-loja-ico">🛍️</span><span class="btn-loja-txt">Loja</span></button>
+    </div>
+  </div>
+  <div class="mapa-scroll" id="mapa-scroll"></div>
+</div>
+
+<!-- ===== REGRAS DO JOGO ===== -->
+<div id="tela-regras">
+  <div class="mapa-topo">
+    <div>
+      <h1>📖 Regras do Jogo</h1>
+      <div class="mapa-sub">Tudo o que precisas de saber para dominar o Homejub</div>
+    </div>
+  </div>
+  <div class="regras-corpo">
+    <div class="regras-hero">
+      <div class="regras-hero-emblema">🎮</div>
+      <div class="regras-hero-titulo">Combina. Conquista. Ganha.</div>
+    </div>
+
+    <div class="regra-card">
+      <div class="regra-icone" style="background:linear-gradient(135deg, var(--azul), var(--verde));">🧩</div>
+      <div class="regra-texto">
+        <h4>Como combinar</h4>
+        <p>Toca numa peça e depois numa vizinha para trocarem de lugar. 3 ou mais peças iguais em linha ou coluna desaparecem — e as de cima caem para preencher os espaços.</p>
+      </div>
+    </div>
+
+    <div class="regra-card">
+      <div class="regra-icone" style="background:linear-gradient(135deg, var(--ouro), var(--laranja));">🎯</div>
+      <div class="regra-texto">
+        <h4>Objetivos do nível</h4>
+        <p>Cada nível pede para recolheres uma quantidade certa de peças específicas — mostradas na caixa de objetivos, com a mesma forma e cor da peça no tabuleiro. A uma peça invisível nos objetivos aí o jogador tem que descobrir que peça é sozinho e fazer as combinações exigidas. Cumpre todos antes das jogadas acabarem para venceres.</p>
+      </div>
+    </div>
+
+    <div class="regra-card">
+      <div class="regra-icone" style="background:linear-gradient(135deg, #a855f7, var(--azul));">👣</div>
+      <div class="regra-texto">
+        <h4>Jogadas</h4>
+        <p>Cada troca que fazes — mesmo sem formar combinação — conta como 1 jogada. O número de jogadas de cada nível é calculado com base no que precisas de recolher, por isso usa-as com cuidado.</p>
+      </div>
+    </div>
+
+    <div class="regra-card">
+      <div class="regra-icone" style="background:linear-gradient(135deg, #ff5c8a, var(--laranja));">❤️</div>
+      <div class="regra-texto">
+        <h4>Vidas</h4>
+        <p>Começas com 5 vidas. Se as jogadas acabarem sem cumprires os objetivos, antes de perderes a vida podes comprar mais jogadas para continuar. Perdes uma vida só se recusares. Sem vidas, ficas 3 dias à espera — ou compras/recebes mais na loja. <strong>Atenção:</strong> sair de um nível a meio (botão "← Mapa") também desconta 1 vida, mesmo sem chegares ao fim das jogadas.</p>
+      </div>
+    </div>
+
+    <div class="regra-card">
+      <div class="regra-icone" style="background:linear-gradient(135deg, var(--verde), #22d3c8);">🪙</div>
+      <div class="regra-texto">
+        <h4>Moedas</h4>
+        <p>Ao vencer um nível, ganhas moedas com base nas jogadas que sobraram — quanto mais eficiente fores, mais ganhas. As moedas acumulam-se para sempre e servem para comprar vidas, ajudas e jogadas extra na loja.</p>
+      </div>
+    </div>
+
+    <div class="regra-card">
+      <div class="regra-icone" style="background:linear-gradient(135deg, #ffcf4d, #ff9a3c);">💡</div>
+      <div class="regra-texto">
+        <h4>Ajuda</h4>
+        <p>Sem saber o que jogar? Toca no botão de ajuda — ele mostra, com um anel a brilhar, a melhor jogada do momento. Custa poucas moedas por uso, ou usa ajudas pré-compradas na loja.</p>
+      </div>
+    </div>
+
+    <div class="regra-card">
+      <div class="regra-icone" style="background:linear-gradient(135deg, #22d3c8, #a855f7);">📈</div>
+      <div class="regra-texto">
+        <h4>Dificuldade crescente</h4>
+        <p>Quanto mais avanças, mais difícil fica: o tabuleiro cresce, entram peças novas, e os objetivos exigem mais precisão com menos jogadas. Os níveis mais avançados são para quem já domina o jogo.</p>
+      </div>
+    </div>
+  </div>
+  <div class="loja-rodape">
+    <button class="btn-voltar-mapa" id="btn-regras-voltar">← Voltar ao mapa</button>
+  </div>
+</div>
+
+<!-- ===== LOJA ===== -->
+<div id="tela-loja">
+  <div class="mapa-topo">
+    <div>
+      <h1>Loja</h1>
+      <div class="mapa-sub">Vidas e moedas para continuares a jogar</div>
+    </div>
+    <div class="pill pontos"><div class="val" id="loja-moedas">0</div><div class="lab">🪙 Moedas</div></div>
+  </div>
+  <div class="loja-corpo">
+    <div class="loja-aviso-forte">⏱️ Em compras com M-Pesa, espera cerca de <strong>1 minuto</strong> no ecrã até a compra entrar na conta. Não saias nem feches o jogo antes de veres a confirmação.</div>
+
+    <div class="loja-regras-box">
+      <h3>📋 Regras da loja</h3>
+      <p><strong>Desbloqueio +10 níveis:</strong> abre 10 níveis à frente do sítio onde estás. Exemplo: se estás no nível 20 e compras o desbloqueio, passas a poder jogar até ao nível 30.</p>
+      <p><strong>Jogadas extra (loja):</strong> ficam guardadas e entram no <em>próximo</em> nível que começares.</p>
+      <p><strong>Jogadas no meio do nível (2 MT):</strong> continuas o nível actual — não saias até a compra ser confirmada.</p>
+      <p><strong>Moedas / ajudas / bónus / infinitas:</strong> entram na tua conta depois do pagamento confirmado (pode demorar até ~1 minuto).</p>
+    </div>
+
+    <div class="loja-secao">
+      <h3>❤️ Comprar vidas</h3>
+      <div class="loja-item">
+        <div class="loja-item-info">
+          <div class="loja-item-titulo">5 vidas completas</div>
+          <div class="loja-item-sub">Enche a barra de vidas na hora</div>
+        </div>
+        <button class="loja-btn" id="btn-comprar-vidas">30 🪙</button>
+      </div>
+    </div>
+
+    <div class="loja-secao">
+      <h3>💡 Comprar ajudas</h3>
+      <div class="loja-tabela">
+        <div class="loja-linha">
+          <div class="loja-linha-info"><span class="loja-linha-moedas">20 ajudas</span><span class="loja-linha-preco">2 MT</span></div>
+          <button class="loja-btn" id="btn-mt-ajudas20" data-item="ajudas20">2 MT</button>
+        </div>
+        <div class="loja-linha">
+          <div class="loja-linha-info"><span class="loja-linha-moedas">10 ajudas</span><span class="loja-linha-preco">5 🪙</span></div>
+          <button class="loja-btn" id="btn-comprar-ajudas">5 🪙</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="loja-secao">
+      <h3>🎯 Comprar jogadas extra</h3>
+      <div class="loja-item">
+        <div class="loja-item-info">
+          <div class="loja-item-titulo">10 jogadas extra</div>
+          <div class="loja-item-sub">Aplicadas no próximo nível que jogares</div>
+        </div>
+        <div class="loja-item-opcoes">
+          <button class="loja-btn" id="btn-mt-jogadas10" data-item="jogadas10">2 MT</button>
+          <button class="loja-btn" id="btn-comprar-jogadas">20 🪙</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="loja-secao">
+      <h3>🎁 Bónus</h3>
+      <div class="loja-item loja-item-bonus">
+        <div class="loja-item-info">
+          <div class="loja-item-titulo">6 vidas + 70 🪙 + 6 ajudas + 10 jogadas</div>
+          <div class="loja-item-sub">O melhor pacote — tudo junto</div>
+        </div>
+        <button class="loja-btn" id="btn-mt-bonus" data-item="bonus">5 MT</button>
+      </div>
+      <div class="loja-item loja-item-bonus" style="margin-top:10px;">
+        <div class="loja-item-info">
+          <div class="loja-item-titulo">8 vidas + 100 🪙 + 20 ajudas + 20 jogadas</div>
+          <div class="loja-item-sub">Pacote grande — o maior de todos</div>
+        </div>
+        <button class="loja-btn" id="btn-mt-bonus2" data-item="bonus2">10 MT</button>
+      </div>
+    </div>
+
+    <div class="loja-secao">
+      <h3>♾️ Infinitos</h3>
+      <div class="loja-tabela">
+        <div class="loja-linha">
+          <div class="loja-linha-info"><span class="loja-linha-moedas">Moedas infinitas</span><span class="loja-linha-preco">para sempre</span></div>
+          <button class="loja-btn" id="btn-mt-moedasinfinitas" data-item="moedasInfinitas">100 MT</button>
+        </div>
+        <div class="loja-linha">
+          <div class="loja-linha-info"><span class="loja-linha-moedas">Ajudas infinitas</span><span class="loja-linha-preco">para sempre</span></div>
+          <button class="loja-btn" id="btn-mt-ajudasinfinitas" data-item="ajudasInfinitas">50 MT</button>
+        </div>
+        <div class="loja-linha">
+          <div class="loja-linha-info"><span class="loja-linha-moedas">+10 níveis</span><span class="loja-linha-preco">desbloqueio direto</span></div>
+          <button class="loja-btn" id="btn-mt-desbloqueio10" data-item="desbloqueio10">15 MT</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="loja-secao">
+      <h3>🪙 Comprar moedas</h3>
+      <div class="loja-tabela">
+        <div class="loja-linha">
+          <div class="loja-linha-info"><span class="loja-linha-moedas">30 🪙</span><span class="loja-linha-preco">2 MT</span></div>
+          <button class="loja-btn" id="btn-mt-moedas30" data-item="moedas30">2 MT</button>
+        </div>
+        <div class="loja-linha">
+          <div class="loja-linha-info"><span class="loja-linha-moedas">70 🪙</span><span class="loja-linha-preco">4 MT</span></div>
+          <button class="loja-btn" id="btn-mt-moedas70" data-item="moedas70">4 MT</button>
+        </div>
+      </div>
+      <div class="loja-aviso">Pagamento seguro por M-Pesa. Após pagar, espera até 1 minuto no ecrã para receberes a compra.</div>
+    </div>
+  </div>
+  <div class="loja-rodape">
+    <button class="btn-voltar-mapa" id="btn-loja-voltar">← Voltar ao mapa</button>
+  </div>
+</div>
+
+<!-- ===== ECRÃ DO JOGO ===== -->
+<div id="tela-jogo" style="display:none;">
+  <div class="topo">
+    <button class="btn-voltar-mapa" id="btn-voltar-mapa">← Mapa</button>
+    <div class="topo-direita">
+      <div class="hud">
+        <div class="pill jogadas"><div class="val" id="hud-nivel">1</div><div class="lab">Nível</div></div>
+        <div class="pill pontos"><div class="val" id="hud-pontos">0</div><div class="lab">🪙 Se terminar</div></div>
+        <div class="pill jogadas"><div class="val" id="hud-jogadas">20</div><div class="lab">Jogadas</div></div>
+        <button class="btn-regras-jogo" id="btn-regras-jogo" type="button">Regras</button>
+      </div>
+      <button class="btn-ajuda" id="btn-ajuda" type="button" title="Ajuda"><span class="ajuda-icone" aria-hidden="true">💡</span><span class="ajuda-contagem" id="ajuda-contagem" style="display:none;">0</span></button>
+    </div>
+  </div>
+
+  <div class="tutorial-overlay" id="tutorial-nivel">
+    <div class="tut-titulo" id="tutorial-titulo">Como jogar</div>
+    <div class="tut-txt" id="tutorial-txt"></div>
+    <button class="tut-btn" id="tutorial-ok" type="button">Entendi</button>
+  </div>
+
+  <div class="objetivos-caixa">
+    <div class="objetivos-titulo">🎯 Objetivos do nível</div>
+    <div class="objetivos-bar" id="objetivos-bar"></div>
+  </div>
+
+  <div id="canvas-wrap"></div>
+
+  <div class="rodape">
+    <div class="dica">Toca numa peça e depois numa vizinha para trocar</div>
+  </div>
+
+  <div class="overlay" id="overlay-oferta-jogadas">
+    <h2>Sem jogadas! 😮</h2>
+    <div class="resumo">Compra mais jogadas para continuar este nível — ou perdes 1 vida.</div>
+    <div class="loja-aviso-forte" style="margin:10px 0 0;">⏱️ Se pagares com M-Pesa (2 MT), <strong>não saias deste ecrã</strong> até a compra ser confirmada — pode demorar cerca de 1 minuto.</div>
+    <button class="loja-btn" id="btn-oferta-comprar-moedas" style="margin-top:10px;">10 jogadas — 20 🪙</button>
+    <button class="loja-btn" id="btn-mt-oferta-jogadas" data-item="jogadasOferta20">20 jogadas — 2 MT</button>
+    <button class="btn-voltar-mapa" id="btn-oferta-recusar" style="margin-top:6px;">Não, obrigado</button>
+  </div>
+
+  <div class="overlay" id="overlay-fim">
+    <h2>Sem jogadas 😕</h2>
+    <div class="resumo">Não completaste os objetivos a tempo. Perdeste 1 vida.</div>
+    <div class="coracoes-grandes" id="vidas-restantes-txt"></div>
+    <button class="btn" id="btn-jogar-novo">Tentar novamente</button>
+    <button class="btn-voltar-mapa" id="btn-fim-mapa">← Voltar ao mapa</button>
+  </div>
+
+  <div class="overlay" id="overlay-vitoria">
+    <h2>Nível concluído! 🎉</h2>
+    <div class="grande" id="pontos-vitoria">0</div>
+    <div class="resumo">🪙 moedas ganhas — próximo nível desbloqueado</div>
+    <button class="btn" id="btn-proximo-nivel">Próximo nível</button>
+    <button class="btn-voltar-mapa" id="btn-vitoria-mapa">← Voltar ao mapa</button>
+  </div>
+
+  <div class="overlay" id="overlay-sem-vidas">
+    <h2>Sem vidas 💔</h2>
+    <div class="resumo">As tuas 5 vidas voltam todas de uma vez em:</div>
+    <div class="grande" id="contagem-vidas" style="font-size:30px;">--</div>
+    <button class="btn" id="btn-semvidas-loja">🛍️ Comprar vidas na loja</button>
+    <button class="btn-voltar-mapa" id="btn-semvidas-mapa">← Voltar ao mapa</button>
+  </div>
+</div>
+
+<div class="overlay" id="overlay-checkout">
+  <div id="checkout-passo-form">
+    <h2>💳 Pagamento</h2>
+    <div class="resumo" id="checkout-descricao">Item</div>
+    <input type="tel" id="checkout-telefone" placeholder="+258 84 123 4567" class="checkout-input">
+    <div class="checkout-metodos">
+      <button class="checkout-metodo ativo" data-metodo="mpesa">M-Pesa</button>
+    </div>
+    <button class="btn" id="btn-checkout-confirmar" style="margin-top:14px;">Pagar agora</button>
+    <button class="btn-voltar-mapa" id="btn-checkout-cancelar" style="margin-top:8px;">Cancelar</button>
+  </div>
+  <div id="checkout-passo-aguardar" style="display:none;">
+    <h2>📲 Confirma no teu telemóvel</h2>
+    <div class="resumo">Vais receber um pedido de confirmação do pagamento. Aprova-o com o teu PIN.</div>
+    <div class="checkout-spinner"></div>
+    <div class="resumo" id="checkout-status-txt" style="font-size:12px; margin-top:6px;">A aguardar confirmação...</div>
+    <button class="btn-voltar-mapa" id="btn-checkout-desistir" style="margin-top:14px;">Cancelar</button>
+  </div>
+  <div id="checkout-passo-sucesso" style="display:none;">
+    <h2>✅ Pagamento confirmado!</h2>
+    <div class="resumo" id="checkout-sucesso-txt">A tua compra já está na tua conta.</div>
+    <button class="btn" id="btn-checkout-fechar">Fechar</button>
+  </div>
+  <div id="checkout-passo-erro" style="display:none;">
+    <h2>😕 Não foi possível</h2>
+    <div class="resumo" id="checkout-erro-txt">O pagamento não foi confirmado.</div>
+    <button class="btn" id="btn-checkout-tentar-de-novo">Tentar novamente</button>
+    <button class="btn-voltar-mapa" id="btn-checkout-erro-fechar" style="margin-top:8px;">Fechar</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+<script>
+    if (typeof window.__DESAFIO_MOZ_FIREBASE__ === 'undefined') {
+        window.__DESAFIO_MOZ_FIREBASE__ = true;
+        var firebaseConfig = {
+            apiKey: "AIzaSyDONfggnmf9OJX_AgfvcHTRf6tsuKD5nrA",
+            authDomain: "desafio-moz-61b70.firebaseapp.com",
+            projectId: "desafio-moz-61b70",
+            storageBucket: "desafio-moz-61b70.firebasestorage.app",
+            messagingSenderId: "945658936331",
+            appId: "1:945658936331:web:7ee4b0e7de1c1daf36db0e",
+            measurementId: "G-G1DZQ1B0DB"
+        };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        window.db = firebase.firestore();
+    }
+    var db = window.db;
+    var emailJogador = (localStorage.getItem('emailUtilizador') || '').trim().toLowerCase() || null;
+    var EMAIL_CRIADOR = 'rochajosepaulo7@gmail.com';
+    var ehCriador = !!(emailJogador && emailJogador === EMAIL_CRIADOR);
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+
+/* ---------- sistema de áudio (seguro) ---------- */
+var audioDesbloqueado = false;
+var audioMutado = false;
+try { audioMutado = (localStorage.getItem('homejub_mute') === '1'); } catch(e) {}
+var areaMusicaActual = null;
+var VOL_MAPA = 0.42;
+var VOL_LOJA = 0.40;
+var VOL_JOGO = 0.32;
+var VOL_SFX = 0.55;
+var estadoPronto = false;
+var promessaEstado = Promise.resolve();
+
+function elAudio(id){ return document.getElementById(id); }
+
+function atualizarBotaoMute(){
+  var b = elAudio('btn-mute');
+  if(!b) return;
+  b.textContent = audioMutado ? '🔇' : '🔊';
+  if(audioMutado) b.classList.add('muted'); else b.classList.remove('muted');
+}
+
+function aplicarMuteGeral(){
+  ['audio-mapa','audio-loja','audio-jogo','sfx-match','sfx-derrota'].forEach(function(id){
+    var a = elAudio(id);
+    if(a) a.muted = !!audioMutado;
+  });
+  atualizarBotaoMute();
+}
+
+function pararMusicasFundo(){
+  ['audio-mapa','audio-loja','audio-jogo'].forEach(function(id){
+    var a = elAudio(id);
+    if(!a) return;
+    try { a.pause(); } catch(e) {}
+  });
+}
+
+function tocarArea(area){
+  try {
+    areaMusicaActual = area;
+    pararMusicasFundo();
+    if(!area || !audioDesbloqueado || audioMutado) return;
+    var id = area === 'mapa' ? 'audio-mapa' : (area === 'loja' ? 'audio-loja' : (area === 'jogo' ? 'audio-jogo' : null));
+    var vol = area === 'mapa' ? VOL_MAPA : (area === 'loja' ? VOL_LOJA : VOL_JOGO);
+    var a = id ? elAudio(id) : null;
+    if(!a) return;
+    try {
+      // Caminho relativo funciona no site e no APK (pasta www/sons)
+      var rel = a.getAttribute('src');
+      if(rel && rel.indexOf('sons/') === 0){
+        // mantém relativo — Capacitor/WebView resolve a partir do index
+        if(!a.src || a.error || a.networkState === 3){
+          a.setAttribute('src', rel);
+          a.load();
+        }
+      }
+    } catch(eLoad) {}
+    a.volume = vol;
+    a.muted = false;
+    var p = a.play();
+    if(p && p.catch){
+      p.catch(function(err){
+        console.warn('Homejub áudio falhou:', id, err && err.message);
+        // Segunda tentativa no mesmo gesto (alguns browsers Android)
+        try {
+          a.load();
+          a.volume = vol;
+          a.play().catch(function(){});
+        } catch(e2) {}
+      });
+    }
+  } catch(e) {}
+}
+
+function desbloquearAudio(){
+  try {
+    // Só marca como permitido. O play real tem de ser no MESMO toque (tocarArea),
+    // senão o browser bloqueia e um pause() assíncrono corta a música.
+    audioDesbloqueado = true;
+    aplicarMuteGeral();
+  } catch(e) { audioDesbloqueado = true; }
+}
+
+function tocarSfx(id){
+  try {
+    if(audioMutado || !audioDesbloqueado) return;
+    var a = elAudio(id);
+    if(!a) return;
+    // clona para permitir vários sons em simultâneo (combo x2, x3...)
+    var s = a.cloneNode(true);
+    s.volume = VOL_SFX;
+    s.muted = false;
+    var pr = s.play();
+    if(pr && pr.catch) pr.catch(function(){});
+    s.addEventListener('ended', function(){ try { s.remove(); } catch(e) {} });
+  } catch(e) {}
+}
+
+function tocarSfxVezes(id, vezes){
+  try {
+    vezes = Math.max(1, Math.min(Number(vezes) || 1, 8));
+    for(var i = 0; i < vezes; i++){
+      (function(delay){
+        setTimeout(function(){ tocarSfx(id); }, delay);
+      })(i * 140);
+    }
+  } catch(e) {}
+}
+
+(function initMuteBtn(){
+  var b = elAudio('btn-mute');
+  if(!b) return;
+  b.addEventListener('click', function(){
+    audioMutado = !audioMutado;
+    try { localStorage.setItem('homejub_mute', audioMutado ? '1' : '0'); } catch(e) {}
+    aplicarMuteGeral();
+    if(audioMutado) pararMusicasFundo();
+    else if(audioDesbloqueado) tocarArea(areaMusicaActual);
+  });
+  atualizarBotaoMute();
+  aplicarMuteGeral();
+})();
+
+
+/* ======================================================
+   COMBO MOZ — protótipo de jogo de combinar peças em 3D
+   Grelha lógica (sem física), renderizada com Three.js
+   ====================================================== */
+
+let TAMANHO = 7;                // tamanho da grelha — cresce a cada 10 níveis
+let TIPOS_ATIVOS = 5;            // tipos de peça em jogo — cresce a cada 10 níveis
+const TIPOS_MAX = 7;
+const ESPACO = 1.08;             // espaçamento entre peças
+
+const CORES = [0x3b9eff, 0xff9a3c, 0x2ee6a0, 0xffcf4d, 0xff5c8a, 0x22d3c8, 0xa855f7];
+// azul, laranja, verde, moeda(ouro), estrela(rosa), anel(turquesa — nível 11+), diamante(roxo — nível 21+)
+
+let jogadasRestantes = 20;
+let bloqueado = false; // true durante animações/resolução
+let selecionada = null; // {r,c}
+
+let vidas = 5;
+const VIDAS_MAX = 5;
+let proximaRecarga = 0; // timestamp (ms) de quando as 5 vidas voltam de uma vez — 0 = sem recarga pendente
+const TEMPO_RECARGA = 3*24*60*60*1000; // 3 dias
+let objetivoAtual = [];      // [{tipo, alvo, atual}]
+let jogoTerminado = false;   // trava novas jogadas após vitória/derrota
+let moedasTotais = 0;        // moeda persistente do jogador, nunca reinicia entre níveis
+let ajudasDisponiveis = 0;   // "ajudas" pré-compradas na loja — usadas antes de cobrar moedas diretamente
+let jogadasExtraArmazenadas = 0; // jogadas extra compradas na loja — aplicadas no início do próximo nível jogado
+let marcosPagos = [];        // níveis-marco (10,20,30...) cujo prémio em MT já foi creditado na conta real
+let moedasInfinitas = false; // comprado na loja — nunca mais gasta moedas
+let ajudasInfinitas = false; // comprado na loja — Ajuda sempre grátis
+
+// chave do localStorage específica por jogador — evita que o progresso de uma conta "vaze" para outra no mesmo telemóvel
+function chaveLocal(){ return emailJogador ? ('homejub_estado_'+emailJogador) : 'homejub_estado_convidado'; }
+
+function estadoPadrao(){
+  return { vidas: VIDAS_MAX, proximaRecarga: 0, nivelDesbloqueado: 1, moedasTotais: 0, ajudasDisponiveis: 0, jogadasExtraArmazenadas: 0, marcosPagos: [], moedasInfinitas: false, ajudasInfinitas: false };
+}
+function aplicarEstado(d){
+  vidas = typeof d.vidas==='number' ? d.vidas : VIDAS_MAX;
+  proximaRecarga = d.proximaRecarga || 0;
+  nivelDesbloqueado = d.nivelDesbloqueado || 1;
+  moedasTotais = typeof d.moedasTotais==='number' ? d.moedasTotais : 0;
+  ajudasDisponiveis = d.ajudasDisponiveis || 0;
+  jogadasExtraArmazenadas = d.jogadasExtraArmazenadas || 0;
+  marcosPagos = Array.isArray(d.marcosPagos) ? d.marcosPagos : [];
+  moedasInfinitas = !!d.moedasInfinitas;
+  ajudasInfinitas = !!d.ajudasInfinitas;
+}
+
+function salvarEstado(){
+  const dados = { vidas, proximaRecarga, nivelDesbloqueado, moedasTotais, ajudasDisponiveis, jogadasExtraArmazenadas, marcosPagos, moedasInfinitas, ajudasInfinitas };
+  try{ localStorage.setItem(chaveLocal(), JSON.stringify(dados)); }catch(e){}
+  if(emailJogador && db){
+    db.collection('jogoEstado').doc(emailJogador).set(dados, { merge:true }).catch(function(e){
+      console.warn('Homejub: falha ao guardar na conta', e);
+      avisarFalhaDeConta();
+    });
+  }
+}
+let avisoFalhaMostrado = false;
+function avisarFalhaDeConta(){
+  if(avisoFalhaMostrado) return; // não repete o aviso várias vezes seguidas
+  avisoFalhaMostrado = true;
+  mostrarToast('⚠️ Não foi possível guardar na tua conta agora — o progresso pode não sincronizar');
+}
+async function carregarEstado(){
+  // primeiro tenta o localStorage desta conta específica (rápido, evita ecrã em branco enquanto a rede responde)
+  try{
+    const raw = localStorage.getItem(chaveLocal());
+    if(raw) aplicarEstado(JSON.parse(raw));
+    else aplicarEstado(estadoPadrao());
+  }catch(e){ aplicarEstado(estadoPadrao()); }
+
+  // se o jogador estiver logado no site, a conta dele (Firestore) manda — substitui o que veio do telemóvel
+  if(emailJogador && db){
+    try{
+      const doc = await db.collection('jogoEstado').doc(emailJogador).get();
+      if(doc.exists){
+        aplicarEstado(doc.data());
+      } else {
+        // conta nova neste jogo — começa mesmo do zero, nunca herda dados de outra conta usada no mesmo telemóvel
+        aplicarEstado(estadoPadrao());
+        salvarEstado();
+      }
+    }catch(e){
+      console.warn('Homejub: não foi possível ler a conta, a usar dados locais', e);
+      avisarFalhaDeConta();
+    }
+  }
+}
+
+/* ---------- marcos de progresso — dinheiro real creditado na conta Desafio MOZ ---------- */
+const MARCOS_NIVEL = [10, 20, 30, 50, 100, 150, 250, 300]; // cada nível vale 1 MT; estes níveis depositam o acumulado desde o marco anterior
+function incrementoDoMarco(nivel){
+  const idx = MARCOS_NIVEL.indexOf(nivel);
+  if(idx<0) return 0;
+  const anterior = idx>0 ? MARCOS_NIVEL[idx-1] : 0;
+  return nivel - anterior; // em MT
+}
+async function creditarMarcoNaContaReal(mt){
+  if(!emailJogador || !db || mt<=0) return;
+  try{
+    const snap = await db.collection('usuarios').where('email','==',emailJogador).limit(1).get();
+    if(!snap.empty){
+      await snap.docs[0].ref.update({ pontos: firebase.firestore.FieldValue.increment(mt*8) }); // 8 pontos = 1 MT
+    }
+  }catch(e){ console.warn('Homejub: falha ao creditar marco na conta real', e); }
+}
+function verificarMarcoDeNivel(nivel){
+  if(MARCOS_NIVEL.includes(nivel) && !marcosPagos.includes(nivel)){
+    const mt = incrementoDoMarco(nivel);
+    marcosPagos.push(nivel);
+    creditarMarcoNaContaReal(mt);
+    salvarEstado();
+    mostrarAvisoMarcoMt(mt, nivel);
+  }
+}
+
+function verificarRecargaVidas(){
+  if(vidas<=0 && proximaRecarga>0 && Date.now()>=proximaRecarga){
+    vidas = VIDAS_MAX;
+    proximaRecarga = 0;
+    salvarEstado();
+  }
+}
+function formatarContagem(ms){
+  if(ms<=0) return '0h 0m';
+  const totalMin = Math.ceil(ms/60000);
+  const dias = Math.floor(totalMin/1440);
+  const horas = Math.floor((totalMin%1440)/60);
+  const min = totalMin%60;
+  if(dias>0) return dias+'d '+horas+'h';
+  return horas+'h '+min+'m';
+}
+
+function tamanhoNoNivel(n){ return Math.min(7 + Math.floor((n-1)/10), 9); }   // 7x7 até nível 10, 8x8 até 20, 9x9 dali em diante
+function tiposDisponiveisNoNivel(n){ return Math.min(5 + Math.floor(n/5), TIPOS_MAX); } // +1 forma nova a partir do nível 5, depois a cada 5 níveis (capado nas 7 formas que temos)
+function divisorJogadasNoNivel(n){
+  // divisor MAIOR = MENOS jogadas por peça exigida = MAIS difícil (correção: estava ao contrário antes)
+  if(n<5) return 1.5;
+  if(n<11) return 1.65;
+  if(n<21) return 1.8;
+  // a partir do nível 21: aperta a sério, sem parar, até um limite ainda jogável
+  const extra = (n-20)*0.025;
+  return Math.min(3.0, 1.8 + extra); // chega ao máximo lá para o nível 68, e mantém-se muito difícil dali em diante
+}
+function totalObjetivoNoNivel(n){
+  const base = Math.round(18 + n*2.1);                 // cresce sempre, sem tecto artificial
+  let total = n>=5 ? Math.round(base*1.35) : base;      // salto de dificuldade no nível 5 (já aprovado)
+  if(n>=11){
+    const patamar = Math.floor((n-11)/5) + 1;           // 1 nos níveis 11-15, 2 nos 16-20, 3 nos 21-25...
+    total = Math.round(total * (1 + patamar*0.16));      // novo salto a cada 5 níveis a partir do 11
+  }
+  return Math.min(400, total); // tecto de segurança bem alto, só para nunca ficar absurdo lá para o nível 300
+}
+
+const NIVEIS = {
+  1: { jogadas: 18, objetivos: [ {tipo:3, alvo:10}, {tipo:4, alvo:6} ] } // nível fácil, à mão
+};
+function configDoNivel(n){
+  if(NIVEIS[n]) return NIVEIS[n];
+
+  const tiposDisp = tiposDisponiveisNoNivel(n);
+  const qtdObjetivos = n<3 ? 2 : (n<8 ? 2 : 3);
+  const total = totalObjetivoNoNivel(n);
+  const objetivos = [];
+  let restante = total;
+  for(let i=0;i<qtdObjetivos;i++){
+    const tipo = (n*2 + i*3) % tiposDisp; // roda os tipos usados — nunca fica preso só na moeda/estrela
+    const fatia = (i===qtdObjetivos-1) ? restante : Math.round(total/qtdObjetivos);
+    const alvo = Math.max(4, fatia);
+    objetivos.push({ tipo, alvo });
+    restante -= fatia;
+  }
+
+  // jogadas apertadas: total de peças a recolher ÷ divisor — divisor MAIOR = MENOS jogadas = MAIS difícil
+  const totalReal = objetivos.reduce((s,o)=>s+o.alvo, 0);
+  const divisor = divisorJogadasNoNivel(n);
+  const jogadas = Math.max(8, Math.ceil(totalReal/divisor));
+
+  return { jogadas, objetivos };
+}
+function corHexTipo(tipo){
+  return '#' + CORES[tipo].toString(16).padStart(6,'0');
+}
+function classeFormaTipo(tipo){
+  const mapa = { 0:'forma-raio', 1:'forma-raio', 2:'forma-raio', 3:'forma-moeda', 4:'forma-estrela', 5:'forma-anel', 6:'forma-diamante' };
+  return mapa[tipo] || 'forma-moeda';
+}
+
+const grelha = []; // grelha[r][c] = { tipo, mesh }
+
+/* ---------- Three.js setup ---------- */
+const wrap = document.getElementById('canvas-wrap');
+const scene = new THREE.Scene();
+
+const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
+const INCLINACAO = 0.42; // radianos — inclinação da câmara sobre o tabuleiro
+camera.lookAt(0, 0.15, 0);
+
+const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+wrap.appendChild(renderer.domElement);
+
+function redimensionar(){
+  // posiciona a caixa de objetivos logo abaixo da altura real do topo (evita sobreposição em ecrãs estreitos)
+  const topo = document.querySelector('#tela-jogo .topo');
+  const objBar = document.querySelector('.objetivos-caixa');
+  const rodape = document.querySelector('#tela-jogo .rodape');
+  const alturaTopoReal = topo ? topo.offsetHeight : 0;
+  if(objBar) objBar.style.top = (alturaTopoReal + 10) + 'px';
+
+  // mede o espaço ocupado pela HUD para o canvas nunca ficar escondido atrás dela
+  const alturaTopo = alturaTopoReal + (objBar ? objBar.offsetHeight : 0) + 18;
+  const alturaRodape = rodape ? rodape.offsetHeight : 0;
+
+  wrap.style.top = alturaTopo + 'px';
+  wrap.style.bottom = alturaRodape + 'px';
+
+  const w = wrap.clientWidth, h = wrap.clientHeight;
+  if(w<=0 || h<=0) return;
+  renderer.setSize(w, h);
+  camera.aspect = w/h;
+  camera.updateProjectionMatrix();
+
+  // calcula a distância mínima para o tabuleiro inteiro (com margem) caber no ecrã
+  const margem = 1.18;
+  const metade = (TAMANHO*ESPACO)/2 * margem;
+  const vFOV = camera.fov * Math.PI/180;
+  const distV = metade / Math.tan(vFOV/2);
+  const hFOV = 2*Math.atan(Math.tan(vFOV/2) * camera.aspect);
+  const distH = metade / Math.tan(hFOV/2);
+  const distancia = Math.max(distV, distH) / Math.cos(INCLINACAO);
+
+  camera.position.set(0, -distancia*Math.sin(INCLINACAO), distancia*Math.cos(INCLINACAO));
+  camera.lookAt(0, 0.15, 0);
+}
+window.addEventListener('resize', redimensionar);
+
+/* luzes */
+scene.add(new THREE.AmbientLight(0x8899ff, 0.55));
+const luzPrincipal = new THREE.DirectionalLight(0xffffff, 0.9);
+luzPrincipal.position.set(2, 3, 5);
+scene.add(luzPrincipal);
+const luzAmbiente2 = new THREE.PointLight(0x3b9eff, 0.6, 20);
+luzAmbiente2.position.set(-3, -2, 4);
+scene.add(luzAmbiente2);
+
+/* fundo do tabuleiro: células */
+const grupoTabuleiro = new THREE.Group();
+scene.add(grupoTabuleiro);
+
+const geoCelula = new THREE.PlaneGeometry(ESPACO*0.94, ESPACO*0.94);
+const matCelula = new THREE.MeshStandardMaterial({ color:0x12161f, roughness:0.9, metalness:0.05, transparent:true, opacity:0.7 });
+
+let offset = (TAMANHO-1)*ESPACO/2;
+function recalcularOffset(){ offset = (TAMANHO-1)*ESPACO/2; }
+function posX(c){ return c*ESPACO - offset; }
+function posY(r){ return offset - r*ESPACO; }
+
+function construirCelulas(){
+  while(grupoTabuleiro.children.length){
+    grupoTabuleiro.remove(grupoTabuleiro.children[0]);
+  }
+  for(let r=0;r<TAMANHO;r++){
+    for(let c=0;c<TAMANHO;c++){
+      const cel = new THREE.Mesh(geoCelula, matCelula);
+      cel.position.set(posX(c), posY(r), -0.05);
+      grupoTabuleiro.add(cel);
+    }
+  }
+}
+construirCelulas();
+
+/* geometrias por tipo de peça */
+function criarGeometria(tipo){
+  switch(tipo){
+    case 0: return new THREE.OctahedronGeometry(0.34, 0);         // raio azul
+    case 1: return new THREE.OctahedronGeometry(0.34, 0);         // raio laranja
+    case 2: return new THREE.OctahedronGeometry(0.34, 0);         // raio verde
+    case 3: return new THREE.CylinderGeometry(0.32, 0.32, 0.14, 24); // moeda
+    case 4: return criarEstrela();                                 // estrela
+    case 5: return new THREE.TorusGeometry(0.24, 0.1, 12, 22);      // anel (nível 11+)
+    case 6: return new THREE.DodecahedronGeometry(0.3, 0);          // diamante (nível 21+)
+  }
+}
+function criarEstrela(){
+  const forma = new THREE.Shape();
+  const pontas = 5, rExt = 0.34, rInt = 0.15;
+  for(let i=0;i<pontas*2;i++){
+    const ang = (i/(pontas*2))*Math.PI*2 - Math.PI/2;
+    const raio = i%2===0 ? rExt : rInt;
+    const x = Math.cos(ang)*raio, y = Math.sin(ang)*raio;
+    if(i===0) forma.moveTo(x,y); else forma.lineTo(x,y);
+  }
+  forma.closePath();
+  const geo = new THREE.ExtrudeGeometry(forma, { depth:0.14, bevelEnabled:true, bevelThickness:0.02, bevelSize:0.02, bevelSegments:2 });
+  geo.center();
+  return geo;
+}
+
+function criarMaterial(tipo){
+  return new THREE.MeshStandardMaterial({
+    color: CORES[tipo],
+    emissive: CORES[tipo],
+    emissiveIntensity: 0.35,
+    metalness: 0.35,
+    roughness: 0.3
+  });
+}
+
+const geometrias = [0,1,2,3,4,5,6].map(criarGeometria);
+
+/* ---------- lógica da grelha ---------- */
+function tipoAleatorio(){ return Math.floor(Math.random()*TIPOS_ATIVOS); }
+
+function criaGrelhaSemMatches(){
+  for(let r=0;r<TAMANHO;r++){
+    grelha[r] = [];
+    for(let c=0;c<TAMANHO;c++){
+      let tipo;
+      do { tipo = tipoAleatorio(); }
+      while(
+        (c>=2 && grelha[r][c-1]?.tipo===tipo && grelha[r][c-2]?.tipo===tipo) ||
+        (r>=2 && grelha[r-1][c]?.tipo===tipo && grelha[r-2][c]?.tipo===tipo)
+      );
+      grelha[r][c] = criarPeca(tipo, r, c);
+    }
+  }
+}
+
+function criarPeca(tipo, r, c){
+  const mesh = new THREE.Mesh(geometrias[tipo], criarMaterial(tipo));
+  mesh.position.set(posX(c), posY(r), 0.16);
+  mesh.userData = { r, c, tipo };
+  if(tipo===3 || tipo===5) mesh.rotation.x = Math.PI/2; // moeda e anel deitados de "cara"
+  scene.add(mesh);
+  return { tipo, mesh };
+}
+
+function removerPeca(peca){
+  scene.remove(peca.mesh);
+}
+
+/* ---------- interação (raycaster) ---------- */
+const raycaster = new THREE.Raycaster();
+const ponteiro = new THREE.Vector2();
+
+function coordDoEvento(ev){
+  const rect = renderer.domElement.getBoundingClientRect();
+  const cx = (ev.touches ? ev.touches[0].clientX : ev.clientX);
+  const cy = (ev.touches ? ev.touches[0].clientY : ev.clientY);
+  ponteiro.x = ((cx-rect.left)/rect.width)*2-1;
+  ponteiro.y = -((cy-rect.top)/rect.height)*2+1;
+}
+
+function celulaMaisProxima(x,y){
+  let melhorR=-1, melhorC=-1, melhorDist=Infinity;
+  for(let r=0;r<TAMANHO;r++){
+    for(let c=0;c<TAMANHO;c++){
+      const dx = posX(c)-x, dy = posY(r)-y;
+      const d = dx*dx+dy*dy;
+      if(d<melhorDist){ melhorDist=d; melhorR=r; melhorC=c; }
+    }
+  }
+  return {r:melhorR,c:melhorC};
+}
+
+function aoTocar(ev){
+  if(bloqueado || jogadasRestantes<=0) return;
+  coordDoEvento(ev);
+  raycaster.setFromCamera(ponteiro, camera);
+
+  // plano z=0 para converter em coordenadas do tabuleiro
+  const plano = new THREE.Plane(new THREE.Vector3(0,0,1), 0);
+  const pontoMundo = new THREE.Vector3();
+  raycaster.ray.intersectPlane(plano, pontoMundo);
+  if(!pontoMundo) return;
+
+  const alvo = celulaMaisProxima(pontoMundo.x, pontoMundo.y);
+  if(alvo.r<0) return;
+
+  destacar(null);
+
+  if(!selecionada){
+    selecionada = alvo;
+    destacar(alvo);
+    return;
+  }
+
+  const adjacente = Math.abs(selecionada.r-alvo.r)+Math.abs(selecionada.c-alvo.c)===1;
+  if(adjacente){
+    tentarTroca(selecionada, alvo);
+    selecionada = null;
+  } else {
+    selecionada = alvo;
+    destacar(alvo);
+  }
+}
+
+renderer.domElement.addEventListener('pointerdown', aoTocar);
+
+function destacar(cel){
+  for(let r=0;r<TAMANHO;r++) for(let c=0;c<TAMANHO;c++){
+    const p = grelha[r][c];
+    if(p) p.mesh.scale.setScalar(1);
+  }
+  if(cel){
+    const p = grelha[cel.r][cel.c];
+    if(p) p.mesh.scale.setScalar(1.22);
+  }
+}
+
+/* ---------- trocas e resolução ---------- */
+function tipoEm(r,c){
+  if(r<0||r>=TAMANHO||c<0||c>=TAMANHO) return -1;
+  return grelha[r][c] ? grelha[r][c].tipo : -1;
+}
+
+function encontrarMatches(){
+  const marcados = Array.from({length:TAMANHO},()=>Array(TAMANHO).fill(false));
+  // horizontais
+  for(let r=0;r<TAMANHO;r++){
+    let run=1;
+    for(let c=1;c<=TAMANHO;c++){
+      const igual = c<TAMANHO && tipoEm(r,c)===tipoEm(r,c-1) && tipoEm(r,c)!==-1;
+      if(igual) run++;
+      else {
+        if(run>=3) for(let k=c-run;k<c;k++) marcados[r][k]=true;
+        run=1;
+      }
+    }
+  }
+  // verticais
+  for(let c=0;c<TAMANHO;c++){
+    let run=1;
+    for(let r=1;r<=TAMANHO;r++){
+      const igual = r<TAMANHO && tipoEm(r,c)===tipoEm(r-1,c) && tipoEm(r,c)!==-1;
+      if(igual) run++;
+      else {
+        if(run>=3) for(let k=r-run;k<r;k++) marcados[k][c]=true;
+        run=1;
+      }
+    }
+  }
+  return marcados;
+}
+
+function contarMarcados(marcados){
+  let n=0;
+  for(let r=0;r<TAMANHO;r++) for(let c=0;c<TAMANHO;c++) if(marcados[r][c]) n++;
+  return n;
+}
+
+/* ---------- sistema de ajuda (dica) ---------- */
+function trocaFormaMatch(r1,c1,r2,c2){
+  // troca só a referência lógica (não mexe em mesh/posições) para testar se dá combinação
+  const tmp = grelha[r1][c1];
+  grelha[r1][c1] = grelha[r2][c2];
+  grelha[r2][c2] = tmp;
+  const houve = contarMarcados(encontrarMatches())>0;
+  const tmp2 = grelha[r1][c1];
+  grelha[r1][c1] = grelha[r2][c2];
+  grelha[r2][c2] = tmp2;
+  return houve;
+}
+
+function pontuarJogada(r1,c1,r2,c2){
+  // troca lógica temporária, mede quanto essa jogada ajudaria os objetivos ainda por cumprir
+  const tmp = grelha[r1][c1];
+  grelha[r1][c1] = grelha[r2][c2];
+  grelha[r2][c2] = tmp;
+
+  const marcados = encontrarMatches();
+  let pontuacao = 0, totalPecas = 0;
+  for(let r=0;r<TAMANHO;r++) for(let c=0;c<TAMANHO;c++){
+    if(marcados[r][c] && grelha[r][c]){
+      totalPecas++;
+      const tipo = grelha[r][c].tipo;
+      const obj = objetivoAtual.find(o=>o.tipo===tipo && o.atual<o.alvo);
+      if(obj) pontuacao += 10; // peça de um objetivo por cumprir vale muito mais
+    }
+  }
+  pontuacao += totalPecas; // desempate: combinações maiores ainda contam um pouco
+
+  const tmp2 = grelha[r1][c1];
+  grelha[r1][c1] = grelha[r2][c2];
+  grelha[r2][c2] = tmp2;
+
+  return pontuacao;
+}
+
+function encontrarDicaValida(){
+  let melhor = null, melhorPontuacao = 0;
+  for(let r=0;r<TAMANHO;r++){
+    for(let c=0;c<TAMANHO;c++){
+      if(c+1<TAMANHO){
+        const p = pontuarJogada(r,c,r,c+1);
+        if(p>melhorPontuacao){ melhorPontuacao = p; melhor = { a:{r,c}, b:{r,c:c+1} }; }
+      }
+      if(r+1<TAMANHO){
+        const p = pontuarJogada(r,c,r+1,c);
+        if(p>melhorPontuacao){ melhorPontuacao = p; melhor = { a:{r,c}, b:{r:r+1,c} }; }
+      }
+    }
+  }
+  return melhor;
+}
+
+/* ---------- indicador visual da ajuda (fica 40s no tabuleiro) ---------- */
+let dicaIndicadores = [];
+let dicaTimeoutId = null;
+
+function criarAnelIndicador(){
+  const geo = new THREE.RingGeometry(0.4, 0.5, 32);
+  const mat = new THREE.MeshBasicMaterial({ color:0x2ee6a0, side:THREE.DoubleSide, transparent:true, opacity:0.95, depthTest:false });
+  return new THREE.Mesh(geo, mat);
+}
+
+function mostrarIndicadorDica(a,b){
+  limparIndicadorDica();
+  [a,b].forEach(pos=>{
+    const anel = criarAnelIndicador();
+    anel.position.set(posX(pos.c), posY(pos.r), 0.32);
+    anel.renderOrder = 999;
+    scene.add(anel);
+    dicaIndicadores.push(anel);
+  });
+  dicaTimeoutId = setTimeout(limparIndicadorDica, 40000);
+}
+
+function limparIndicadorDica(){
+  dicaIndicadores.forEach(m=>scene.remove(m));
+  dicaIndicadores = [];
+  if(dicaTimeoutId){ clearTimeout(dicaTimeoutId); dicaTimeoutId = null; }
+}
+
+const CUSTO_AJUDA_MOEDAS = 2;
+
+function atualizarBotaoAjuda(){
+  const badge = document.getElementById('ajuda-contagem');
+  if(!badge) return;
+  if(ajudasDisponiveis>0){
+    badge.style.display = 'flex';
+    badge.textContent = ajudasDisponiveis;
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function usarAjuda(){
+  if(bloqueado || jogoTerminado) return;
+  const dica = encontrarDicaValida();
+  if(!dica){ mostrarToast('Sem jogadas óbvias agora — continua a explorar'); return; }
+
+  if(ajudasInfinitas || ehCriador){
+    mostrarToast('💡 Ajuda usada (ajudas infinitas)');
+  } else if(ajudasDisponiveis>0){
+    ajudasDisponiveis--;
+    salvarEstado();
+    atualizarBotaoAjuda();
+    mostrarToast('💡 Ajuda usada — restam ' + ajudasDisponiveis);
+  } else {
+    if(moedasTotais<CUSTO_AJUDA_MOEDAS && !moedasInfinitas){
+      mostrarToast('Precisas de ' + CUSTO_AJUDA_MOEDAS + ' 🪙 — ou compra Ajudas na loja');
+      return;
+    }
+    if(!moedasInfinitas) moedasTotais -= CUSTO_AJUDA_MOEDAS;
+    salvarEstado();
+    mostrarToast('💡 -' + CUSTO_AJUDA_MOEDAS + ' 🪙 pela ajuda');
+  }
+  mostrarIndicadorDica(dica.a, dica.b);
+}
+document.getElementById('btn-ajuda').addEventListener('click', usarAjuda);
+
+async function tentarTroca(a,b){
+  limparIndicadorDica(); // o jogador já jogou — a indicação da ajuda deixa de fazer sentido
+  bloqueado = true;
+  await animarTroca(a,b);
+  trocarNaGrelha(a,b);
+
+  // toda troca é uma jogada — mesmo sem combinação, a peça fica na nova posição
+  jogadasRestantes--;
+  atualizarHud();
+
+  const marcados = encontrarMatches();
+  if(contarMarcados(marcados)>0){
+    await resolverCascata(marcados, 1);
+  }
+
+  if(!jogoTerminado && jogadasRestantes<=0){
+    if(objetivosCumpridos()){
+      jogoTerminado = true;
+      cancelarAjudaTutorial();
+      vitoria();
+    } else {
+      cancelarAjudaTutorial();
+      mostrarOfertaJogadas(); // pergunta se quer comprar jogadas antes de perder a vida
+      return; // bloqueado continua true até o jogador decidir
+    }
+  }
+  bloqueado = false;
+  agendarAjudaTutorialAposJogada();
+}
+
+function trocarNaGrelha(a,b){
+  const tmp = grelha[a.r][a.c];
+  grelha[a.r][a.c] = grelha[b.r][b.c];
+  grelha[b.r][b.c] = tmp;
+  grelha[a.r][a.c].mesh.userData.r = a.r; grelha[a.r][a.c].mesh.userData.c = a.c;
+  grelha[b.r][b.c].mesh.userData.r = b.r; grelha[b.r][b.c].mesh.userData.c = b.c;
+}
+
+function animarTroca(a,b){
+  return new Promise(resolve=>{
+    const pa = grelha[a.r][a.c].mesh, pb = grelha[b.r][b.c].mesh;
+    const destA = { x:posX(b.c), y:posY(b.r) };
+    const destB = { x:posX(a.c), y:posY(a.r) };
+    const origA = { x:pa.position.x, y:pa.position.y };
+    const origB = { x:pb.position.x, y:pb.position.y };
+    const dur = 180; const t0 = performance.now();
+    function passo(t){
+      const k = Math.min(1,(t-t0)/dur);
+      const ease = 1-Math.pow(1-k,3);
+      pa.position.x = origA.x + (destA.x-origA.x)*ease;
+      pa.position.y = origA.y + (destA.y-origA.y)*ease;
+      pb.position.x = origB.x + (destB.x-origB.x)*ease;
+      pb.position.y = origB.y + (destB.y-origB.y)*ease;
+      if(k<1) requestAnimationFrame(passo); else resolve();
+    }
+    requestAnimationFrame(passo);
+  });
+}
+
+function animarRemocao(pecas){
+  return new Promise(resolve=>{
+    const dur = 220; const t0 = performance.now();
+    function passo(t){
+      const k = Math.min(1,(t-t0)/dur);
+      pecas.forEach(p=>{
+        const esc = 1-k;
+        p.mesh.scale.setScalar(Math.max(esc,0.001));
+        p.mesh.rotation.z += 0.25;
+        p.mesh.position.z = 0.16 + k*0.4;
+      });
+      if(k<1) requestAnimationFrame(passo); else resolve();
+    }
+    requestAnimationFrame(passo);
+  });
+}
+
+function animarQueda(movimentos){
+  return new Promise(resolve=>{
+    const dur = 260; const t0 = performance.now();
+    function passo(t){
+      const k = Math.min(1,(t-t0)/dur);
+      const ease = 1-Math.pow(1-k,2);
+      movimentos.forEach(m=>{
+        m.mesh.position.y = m.origY + (m.destY-m.origY)*ease;
+      });
+      if(k<1) requestAnimationFrame(passo); else resolve();
+    }
+    requestAnimationFrame(passo);
+  });
+}
+
+function mostrarFlutuante(texto, r, c){
+  const rect = renderer.domElement.getBoundingClientRect();
+  const v = new THREE.Vector3(posX(c), posY(r), 0.3);
+  v.project(camera);
+  const x = rect.left + (v.x*0.5+0.5)*rect.width;
+  const y = rect.top + (-v.y*0.5+0.5)*rect.height;
+  const el = document.createElement('div');
+  el.className = 'flutuante';
+  el.textContent = texto;
+  el.style.left = x+'px'; el.style.top = y+'px';
+  document.body.appendChild(el);
+  el.animate([
+    { transform:'translate(-50%,0)', opacity:1 },
+    { transform:'translate(-50%,-40px)', opacity:0 }
+  ], { duration:700, easing:'ease-out' }).onfinish = ()=>el.remove();
+}
+
+async function resolverCascata(marcados, multiplicador){
+  const pecasRemovidas = [];
+  let centroR=0, centroC=0, n=0;
+  const contagemTipos = {};
+  for(let r=0;r<TAMANHO;r++) for(let c=0;c<TAMANHO;c++){
+    if(marcados[r][c] && grelha[r][c]){
+      pecasRemovidas.push(grelha[r][c]);
+      contagemTipos[grelha[r][c].tipo] = (contagemTipos[grelha[r][c].tipo]||0) + 1;
+      centroR+=r; centroC+=c; n++;
+    }
+  }
+  if(n===0) return;
+
+  if(n >= 3){ try { tocarSfxVezes('sfx-match', multiplicador); } catch(e) {} }
+
+  objetivoAtual.forEach(o=>{
+    if(contagemTipos[o.tipo]){
+      o.atual = Math.min(o.alvo, o.atual + contagemTipos[o.tipo]);
+    }
+  });
+  atualizarObjetivosUI();
+  if(multiplicador>1) mostrarFlutuante('Combo x'+multiplicador+'!', Math.round(centroR/n), Math.round(centroC/n));
+
+  await animarRemocao(pecasRemovidas);
+  pecasRemovidas.forEach(removerPeca);
+
+  for(let r=0;r<TAMANHO;r++) for(let c=0;c<TAMANHO;c++){
+    if(marcados[r][c]) grelha[r][c] = null;
+  }
+
+  // gravidade: compacta cada coluna para baixo (aumenta r)
+  const movimentos = [];
+  for(let c=0;c<TAMANHO;c++){
+    let escrita = TAMANHO-1;
+    for(let r=TAMANHO-1;r>=0;r--){
+      if(grelha[r][c]){
+        if(escrita!==r){
+          grelha[escrita][c] = grelha[r][c];
+          grelha[r][c] = null;
+          const p = grelha[escrita][c];
+          p.mesh.userData.r = escrita;
+          movimentos.push({ mesh:p.mesh, origY:posY(r), destY:posY(escrita) });
+        }
+        escrita--;
+      }
+    }
+    for(let r=escrita;r>=0;r--){
+      const tipo = tipoAleatorio();
+      const nova = criarPeca(tipo, r, c);
+      nova.mesh.position.y = posY(r) - ESPACO*(escrita-r+1);
+      grelha[r][c] = nova;
+      movimentos.push({ mesh:nova.mesh, origY:nova.mesh.position.y, destY:posY(r) });
+    }
+  }
+
+  await animarQueda(movimentos);
+
+  const novosMarcados = encontrarMatches();
+  if(contarMarcados(novosMarcados)>0){
+    await resolverCascata(novosMarcados, multiplicador+1);
+  }
+
+  if(!jogoTerminado && objetivosCumpridos()){
+    jogoTerminado = true;
+    cancelarAjudaTutorial();
+    vitoria();
+  }
+}
+
+function objetivosCumpridos(){
+  return objetivoAtual.every(o=>o.atual>=o.alvo);
+}
+
+function atualizarObjetivosUI(){
+  const cont = document.getElementById('objetivos-bar');
+  cont.innerHTML = '';
+  objetivoAtual.forEach(o=>{
+    const div = document.createElement('div');
+    const cumprido = o.atual>=o.alvo;
+    div.className = 'objetivo' + (cumprido?' cumprido':'');
+    const cor = corHexTipo(o.tipo);
+    const forma = classeFormaTipo(o.tipo);
+    const estiloIcone = cumprido ? '' :
+      (forma==='forma-anel' ? ('border-color:'+cor+';') : ('background:'+cor+';'));
+    div.innerHTML = '<div class="icone ' + forma + (cumprido?' cumprido-check':'') + '" style="' + estiloIcone + '">' + (cumprido?'✓':'') + '</div>' +
+                     '<span>' + Math.min(o.atual,o.alvo) + '/' + o.alvo + '</span>';
+    cont.appendChild(div);
+  });
+}
+
+/* ---------- HUD e fim de jogo ---------- */
+function atualizarHud(){
+  // pré-visualização: metade das jogadas restantes = moedas que ganharia terminando agora
+  document.getElementById('hud-pontos').textContent = Math.floor(Math.max(jogadasRestantes,0)*0.8);
+  document.getElementById('hud-jogadas').textContent = Math.max(jogadasRestantes,0);
+}
+
+function atualizarVidasUI(){
+  const alvo = document.getElementById('mapa-vidas');
+  const lab = document.getElementById('mapa-vidas-lab');
+  if(!alvo) return;
+  alvo.innerHTML = '';
+  const totalCoracoes = Math.max(vidas, VIDAS_MAX); // mostra sempre todas as vidas reais, mesmo acima do normal (bónus)
+  for(let i=0;i<totalCoracoes;i++){
+    const s = document.createElement('span');
+    s.className = 'coracao' + (i<vidas ? '' : ' vazio');
+    s.textContent = '❤';
+    alvo.appendChild(s);
+  }
+  if(lab) lab.textContent = (vidas<=0 && proximaRecarga>0) ? formatarContagem(proximaRecarga-Date.now()) : 'Vidas';
+}
+
+function atualizarContagemOverlay(){
+  const el = document.getElementById('contagem-vidas');
+  if(el) el.textContent = formatarContagem(proximaRecarga-Date.now());
+}
+setInterval(()=>{
+  verificarRecargaVidas();
+  atualizarVidasUI();
+  if(document.getElementById('overlay-sem-vidas').classList.contains('ativo')){
+    if(vidas>0){ document.getElementById('overlay-sem-vidas').classList.remove('ativo'); }
+    else atualizarContagemOverlay();
+  }
+}, 30000);
+
+function vitoria(){
+  nivelDesbloqueado = Math.max(nivelDesbloqueado, nivelAtual+1);
+  const moedasGanhas = Math.floor(Math.max(jogadasRestantes,0)*0.8); // 80% das jogadas que sobraram — ex: 10 sobram → 8 moedas, 20 sobram → 16
+  moedasTotais += moedasGanhas;
+  salvarEstado();
+  verificarMarcoDeNivel(nivelAtual);
+  document.getElementById('pontos-vitoria').textContent = '+'+moedasGanhas;
+  document.getElementById('overlay-vitoria').classList.add('ativo');
+}
+
+const PRECO_OFERTA_JOGADAS_MOEDAS = 20;
+
+function mostrarOfertaJogadas(){
+  ofertaJogadasJaAplicada = false;
+  document.getElementById('overlay-oferta-jogadas').classList.add('ativo');
+}
+
+document.getElementById('btn-oferta-comprar-moedas').addEventListener('click', ()=>{
+  if(!ehCriador && !moedasInfinitas){
+    if(moedasTotais<PRECO_OFERTA_JOGADAS_MOEDAS){
+      mostrarToast('Moedas insuficientes — precisas de ' + PRECO_OFERTA_JOGADAS_MOEDAS + ' 🪙');
+      return;
+    }
+    moedasTotais -= PRECO_OFERTA_JOGADAS_MOEDAS;
+  }
+  jogadasRestantes += 10;
+  salvarEstado();
+  atualizarHud();
+  document.getElementById('overlay-oferta-jogadas').classList.remove('ativo');
+  bloqueado = false; // o jogo continua
+  mostrarToast('+10 jogadas! Continua a jogar 🎯');
+});
+
+document.getElementById('btn-oferta-recusar').addEventListener('click', ()=>{
+  document.getElementById('overlay-oferta-jogadas').classList.remove('ativo');
+  jogoTerminado = true;
+  derrota();
+  bloqueado = false;
+});
+
+function derrota(){
+  try { tocarSfx('sfx-derrota'); } catch(e) {}
+  vidas = Math.max(0, vidas-1);
+  if(vidas<=0 && !proximaRecarga){
+    proximaRecarga = Date.now() + TEMPO_RECARGA;
+  }
+  salvarEstado();
+  atualizarVidasUI();
+  document.getElementById('vidas-restantes-txt').textContent = '❤'.repeat(vidas) + '🖤'.repeat(VIDAS_MAX-vidas);
+  if(vidas<=0){
+    atualizarContagemOverlay();
+    document.getElementById('overlay-sem-vidas').classList.add('ativo');
+  } else {
+    document.getElementById('overlay-fim').classList.add('ativo');
+  }
+}
+
+document.getElementById('btn-jogar-novo').addEventListener('click', ()=>{
+  document.getElementById('overlay-fim').classList.remove('ativo');
+  reiniciar();
+});
+
+function reiniciar(){
+  limparIndicadorDica();
+  // remove peças antigas usando o tamanho anterior do array, antes de mudar o tabuleiro
+  for(let r=0;r<grelha.length;r++){
+    if(grelha[r]) for(let c=0;c<grelha[r].length;c++){
+      if(grelha[r][c]) removerPeca(grelha[r][c]);
+    }
+  }
+  grelha.length = 0;
+
+  TAMANHO = tamanhoNoNivel(nivelAtual);
+  TIPOS_ATIVOS = tiposDisponiveisNoNivel(nivelAtual);
+  recalcularOffset();
+  construirCelulas();
+
+  const cfg = configDoNivel(nivelAtual);
+  jogadasRestantes = cfg.jogadas + jogadasExtraArmazenadas;
+  if(jogadasExtraArmazenadas>0){
+    mostrarToast('+' + jogadasExtraArmazenadas + ' jogadas extra aplicadas! 🎯');
+    jogadasExtraArmazenadas = 0;
+    salvarEstado();
+  }
+  selecionada = null;
+  jogoTerminado = false;
+  objetivoAtual = cfg.objetivos.map(o=>({ tipo:o.tipo, alvo:o.alvo, atual:0 }));
+  atualizarHud();
+  atualizarObjetivosUI();
+  criaGrelhaSemMatches();
+  redimensionar(); // reajusta a câmara ao novo tamanho de tabuleiro
+}
+
+/* ---------- loop de render ---------- */
+function animar(){
+  requestAnimationFrame(animar);
+  const t = performance.now()*0.001;
+  for(let r=0;r<TAMANHO;r++) for(let c=0;c<TAMANHO;c++){
+    const p = grelha[r][c];
+    if(p && !bloqueado){
+      p.mesh.rotation.y = Math.sin(t*0.6 + r + c)*0.15;
+      p.mesh.position.z = 0.16 + Math.sin(t*1.2 + r*0.7 + c*0.4)*0.03;
+    }
+  }
+  dicaIndicadores.forEach(anel=>{
+    anel.rotation.z += 0.018;
+    const s = 1 + Math.sin(t*3)*0.14;
+    anel.scale.setScalar(s);
+  });
+  renderer.render(scene, camera);
+}
+
+/* ---------- capa / carregamento ---------- */
+const TOTAL_NIVEIS = 300;
+function nivelEfetivo(){ return ehCriador ? TOTAL_NIVEIS : nivelDesbloqueado; }
+let nivelAtual = 1;
+let nivelDesbloqueado = 1; // por agora só o nível 1 está desbloqueado
+let loopIniciado = false;
+
+const frasesCarregamento = [
+  'A preparar o tabuleiro...',
+  'A polir as peças...',
+  'A afinar as cores...',
+  'Quase pronto...'
+];
+
+
+/* ---------- LOGIN + sessão Desafio MOZ ---------- */
+var modoLogin = 'entrar'; // entrar | criar
+
+async function hashSenhaHomejub(texto){
+  var encoder = new TextEncoder();
+  var dados = encoder.encode(String(texto));
+  var hashBuffer = await crypto.subtle.digest('SHA-256', dados);
+  var hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(function(b){ return b.toString(16).padStart(2,'0'); }).join('');
+}
+
+function mostrarModoLogin(modo){
+  modoLogin = modo;
+  document.getElementById('tab-entrar').classList.toggle('ativo', modo==='entrar');
+  document.getElementById('tab-criar').classList.toggle('ativo', modo==='criar');
+  document.getElementById('campo-nome').style.display = modo==='criar' ? 'block' : 'none';
+  document.getElementById('campo-tel').style.display = modo==='criar' ? 'block' : 'none';
+  document.getElementById('login-titulo').textContent = modo==='criar' ? 'Criar conta' : 'Entrar na conta';
+  document.getElementById('btn-login-submit').textContent = modo==='criar' ? 'Criar e jogar' : 'Entrar e jogar';
+  document.getElementById('login-erro').classList.remove('mostrar');
+  document.getElementById('login-ok').classList.remove('mostrar');
+}
+
+function mostrarErroLogin(msg){
+  var el = document.getElementById('login-erro');
+  el.textContent = msg || 'Erro';
+  el.classList.add('mostrar');
+  document.getElementById('login-ok').classList.remove('mostrar');
+}
+function mostrarOkLogin(msg){
+  var el = document.getElementById('login-ok');
+  el.textContent = msg || 'OK';
+  el.classList.add('mostrar');
+  document.getElementById('login-erro').classList.remove('mostrar');
+}
+
+async function encontrarUserPorEmail(email){
+  if(!db || !email) return null;
+  var emailNorm = String(email).trim().toLowerCase();
+  var snap = await db.collection('usuarios').where('email','==', emailNorm).limit(1).get();
+  if(snap.empty && email !== emailNorm){
+    snap = await db.collection('usuarios').where('email','==', email).limit(1).get();
+  }
+  if(snap.empty){
+    try{
+      var todos = await db.collection('usuarios').limit(500).get();
+      var found = null;
+      todos.forEach(function(doc){
+        if(found) return;
+        var em = String((doc.data().email||'')).trim().toLowerCase();
+        if(em === emailNorm) found = doc;
+      });
+      if(found) return { ref: found.ref, data: found.data() };
+    }catch(e){}
+    return null;
+  }
+  return { ref: snap.docs[0].ref, data: snap.docs[0].data() };
+}
+
+async function aplicarSessaoJogador(email, dadosUser){
+  emailJogador = String(email).trim().toLowerCase();
+  ehCriador = !!(emailJogador && emailJogador === EMAIL_CRIADOR);
+  try{
+    localStorage.setItem('emailUtilizador', emailJogador);
+    if(dadosUser && dadosUser.nome) localStorage.setItem('nomeUtilizador', dadosUser.nome);
+    if(dadosUser && (dadosUser.telemovel||dadosUser.telefone)) localStorage.setItem('telUtilizador', dadosUser.telemovel||dadosUser.telefone);
+  }catch(e){}
+  await carregarEstado();
+  verificarRecargaVidas();
+  estadoPronto = true;
+}
+
+async function submeterLogin(){
+  var email = (document.getElementById('login-email').value||'').trim().toLowerCase();
+  var senha = document.getElementById('login-senha').value||'';
+  var btn = document.getElementById('btn-login-submit');
+  document.getElementById('login-erro').classList.remove('mostrar');
+
+  if(!email || email.indexOf('@')<1){
+    mostrarErroLogin('Escreve um e-mail válido.');
+    return;
+  }
+  if(!senha || senha.length < 6){
+    mostrarErroLogin('A senha deve ter pelo menos 6 caracteres.');
+    return;
+  }
+  if(!db){
+    mostrarErroLogin('Ligação ao Firebase indisponível. Verifica a internet.');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = modoLogin==='criar' ? 'A criar...' : 'A entrar...';
+
+  try{
+    if(modoLogin === 'criar'){
+      var nome = (document.getElementById('login-nome').value||'').trim();
+      var tel = (document.getElementById('login-tel').value||'').trim();
+      if(!nome || nome.length < 2){
+        mostrarErroLogin('Escreve o teu nome.');
+        btn.disabled = false;
+        btn.textContent = 'Criar e jogar';
+        return;
+      }
+      var existente = await encontrarUserPorEmail(email);
+      if(existente){
+        mostrarErroLogin('Este e-mail já tem conta. Usa «Entrar».');
+        btn.disabled = false;
+        btn.textContent = 'Criar e jogar';
+        return;
+      }
+      var senhaHash = await hashSenhaHomejub(senha);
+      var novo = {
+        email: email,
+        nome: nome,
+        telemovel: tel,
+        senha: senhaHash,
+        pontos: 0,
+        dataCadastro: new Date().toISOString(),
+        ultimaAtualizacao: new Date().toISOString()
+      };
+      await db.collection('usuarios').add(novo);
+      mostrarOkLogin('Conta criada! A carregar o jogo...');
+      await aplicarSessaoJogador(email, novo);
+    } else {
+      var user = await encontrarUserPorEmail(email);
+      if(!user){
+        mostrarErroLogin('Conta não encontrada. Cria uma conta ou verifica o e-mail.');
+        btn.disabled = false;
+        btn.textContent = 'Entrar e jogar';
+        return;
+      }
+      var senhaHash2 = await hashSenhaHomejub(senha);
+      var gravada = String(user.data.senha || '');
+      var ok = (gravada === senhaHash2) || (gravada === senha);
+      if(!ok){
+        mostrarErroLogin('E-mail ou senha incorrectos.');
+        btn.disabled = false;
+        btn.textContent = 'Entrar e jogar';
+        return;
+      }
+      mostrarOkLogin('Sessão iniciada! A carregar o teu progresso...');
+      await aplicarSessaoJogador(email, user.data);
+    }
+
+    document.getElementById('tela-login').classList.add('oculto');
+    document.getElementById('tela-abertura').style.display = 'flex';
+    try { desbloquearAudio(); } catch(e) {}
+    animarCapa();
+  }catch(e){
+    console.error(e);
+    mostrarErroLogin('Erro: ' + (e.message || e));
+    btn.disabled = false;
+    btn.textContent = modoLogin==='criar' ? 'Criar e jogar' : 'Entrar e jogar';
+  }
+}
+
+function sairContaHomejub(){
+  if(!confirm('Sair da conta? O progresso desta conta fica guardado no Firebase.')) return;
+  try{ localStorage.removeItem('emailUtilizador'); }catch(e){}
+  emailJogador = null;
+  ehCriador = false;
+  location.reload();
+}
+
+
+function animarCapa(){
+  const barra = document.getElementById('capa-barra');
+  const status = document.getElementById('capa-status');
+  const btnJogar = document.getElementById('btn-capa-jogar');
+  let p = 0;
+  const passo = setInterval(()=>{
+    p += Math.random()*14 + 6;
+    if(p>=100){
+      p = 100;
+      clearInterval(passo);
+      status.style.display = 'none';
+      document.getElementById('capa-barra-wrap').style.display = 'none';
+      btnJogar.style.display = 'inline-block';
+    }
+    barra.style.width = p+'%';
+    status.textContent = frasesCarregamento[Math.min(Math.floor(p/26), frasesCarregamento.length-1)];
+  }, 220);
+}
+
+['login-email','login-senha','login-nome','login-tel'].forEach(function(id){
+  var el = document.getElementById(id);
+  if(el) el.addEventListener('keydown', function(ev){ if(ev.key==='Enter') submeterLogin(); });
+});
+
+document.getElementById('btn-capa-jogar').addEventListener('click', async ()=>{
+  const btnJogar = document.getElementById('btn-capa-jogar');
+  if(!estadoPronto){
+    btnJogar.textContent = 'A carregar a tua conta...';
+    btnJogar.disabled = true;
+    await promessaEstado;
+    btnJogar.disabled = false;
+    btnJogar.textContent = 'Jogar';
+  }
+  try { desbloquearAudio(); } catch(e) {}
+  document.getElementById('tela-abertura').style.display = 'none';
+  entrarNoMapa();
+  // Reforça a música do mapa no mesmo toque do utilizador
+  try { tocarArea('mapa'); } catch(e) {}
+});
+
+/* ---------- mapa de níveis ---------- */
+function gerarMapa(){
+  const cont = document.getElementById('mapa-scroll');
+  cont.innerHTML = '';
+  const alturaPasso = 84;
+  const amplitude = 92; // deslocamento horizontal do zigzag
+  cont.style.height = (TOTAL_NIVEIS*alturaPasso + 60) + 'px';
+
+  for(let i=1; i<=TOTAL_NIVEIS; i++){
+    const y = (i-1)*alturaPasso + 20;
+    const x = 50 + Math.sin(i*0.62)*((amplitude/300)*100)/1; // percentagem
+    const no = document.createElement('div');
+    no.className = 'no-nivel' + (i<=nivelEfetivo() ? (i===nivelDesbloqueado?' ativo':' concluido') : ' bloqueado');
+    no.style.top = y+'px';
+    no.style.left = 'calc(' + x + '% )';
+    no.textContent = i;
+    if(i===nivelDesbloqueado){
+      const rot = document.createElement('div');
+      rot.className = 'rotulo-jogar';
+      rot.textContent = 'Jogar';
+      no.appendChild(rot);
+    }
+    no.addEventListener('click', ()=>aoTocarNivel(i));
+    cont.appendChild(no);
+  }
+}
+
+function aoTocarNivel(n){
+  verificarRecargaVidas();
+  if(ehCriador){ iniciarNivel(n); return; } // criador: acesso total, sem restrições
+  if(n>nivelDesbloqueado){
+    mostrarToast('Termina o nível ' + nivelDesbloqueado + ' para desbloquear este');
+    return;
+  }
+  if(n<=10 && nivelDesbloqueado>10 && n<nivelDesbloqueado){
+    mostrarToast('Já concluíste os níveis 1-10 — não podes voltar a jogá-los');
+    return;
+  }
+  if(vidas<=0){
+    atualizarContagemOverlay();
+    document.getElementById('overlay-sem-vidas').classList.add('ativo');
+    return;
+  }
+  iniciarNivel(n);
+}
+
+let toastTimeout;
+function mostrarToast(msg){
+  const el = document.getElementById('toast');
+  if(!el) return;
+  el.classList.remove('marco-mt');
+  el.textContent = msg;
+  el.classList.add('mostrar');
+  clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(function(){ el.classList.remove('mostrar'); el.classList.remove('marco-mt'); }, 2200);
+}
+
+function mostrarAvisoMarcoMt(mt, nivel){
+  const el = document.getElementById('toast');
+  if(!el) return;
+  el.classList.add('marco-mt');
+  el.textContent = '🎉 +' + mt + ' MT creditados na tua conta Desafio MOZ!\nNível ' + nivel + ' concluído — o prémio já foi entregue.';
+  el.classList.add('mostrar');
+  clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(function(){
+    el.classList.remove('mostrar');
+    el.classList.remove('marco-mt');
+  }, 30000); // 30 segundos + aura forte
+}
+
+function entrarNoMapa(){
+  verificarRecargaVidas();
+  document.getElementById('tela-jogo').style.display = 'none';
+  document.getElementById('tela-loja').classList.remove('ativo');
+  document.getElementById('tela-regras').classList.remove('ativo');
+  document.getElementById('tela-mapa').classList.add('ativo');
+  document.getElementById('mapa-moedas').textContent = (ehCriador||moedasInfinitas) ? '∞' : moedasTotais;
+  atualizarVidasUI();
+  gerarMapa();
+  try { tocarArea('mapa'); } catch(e) {}
+  if(!emailJogador && !window.__avisoContaMostrado){
+    window.__avisoContaMostrado = true;
+    setTimeout(()=>mostrarToast('Inicia sessão no site para guardares o teu progresso na conta'), 600);
+  }
+  // centra o scroll no nível desbloqueado
+  const scrollEl = document.getElementById('mapa-scroll');
+  const alvo = Math.max(0, (nivelDesbloqueado-1)*84 - 200);
+  scrollEl.scrollTop = alvo;
+}
+
+const PRECO_VIDAS_MOEDAS = 30;
+
+function abrirLoja(){
+  verificarRecargaVidas();
+  document.getElementById('tela-mapa').classList.remove('ativo');
+  document.getElementById('tela-loja').classList.add('ativo');
+  document.getElementById('loja-moedas').textContent = (ehCriador||moedasInfinitas) ? '∞' : moedasTotais;
+  try { tocarArea('loja'); } catch(e) {}
+}
+
+let regrasVoltarAoJogo = false;
+
+function abrirRegras(deJogo){
+  // Só volta ao jogo se for explicitamente true (botão Regras dentro do nível)
+  regrasVoltarAoJogo = (deJogo === true);
+  document.getElementById('tela-mapa').classList.remove('ativo');
+  document.getElementById('tela-loja').classList.remove('ativo');
+  if(regrasVoltarAoJogo){
+    document.getElementById('tela-jogo').style.display = 'none';
+  }
+  document.getElementById('tela-regras').classList.add('ativo');
+  var btn = document.getElementById('btn-regras-voltar');
+  if(btn){
+    btn.textContent = regrasVoltarAoJogo ? '← Voltar ao jogo' : '← Voltar ao mapa';
+  }
+  try { tocarArea('mapa'); } catch(e) {}
+}
+
+function fecharRegras(){
+  document.getElementById('tela-regras').classList.remove('ativo');
+  if(regrasVoltarAoJogo){
+    regrasVoltarAoJogo = false;
+    document.getElementById('tela-jogo').style.display = 'block';
+    var btn = document.getElementById('btn-regras-voltar');
+    if(btn) btn.textContent = '← Voltar ao mapa';
+    try { tocarArea('jogo'); } catch(e) {}
+    return;
+  }
+  entrarNoMapa();
+}
+
+const TUTORIAIS_NIVEL = {
+  1: [
+    { titulo: 'Nível 1 — Como jogar', txt: 'Toca numa peça e depois numa peça vizinha para as trocar de lugar.' },
+    { titulo: 'Fazer combinações', txt: 'Junta 3 ou mais peças iguais na horizontal ou vertical para elas desaparecerem.' },
+    { titulo: 'Objetivos', txt: 'Em cima vês o que precisas de recolher. Cumpre tudo antes das jogadas acabarem.' },
+    { titulo: 'Ajuda 💡', txt: 'Se ficares preso, toca no botão 💡 — ele mostra uma boa jogada (usa moedas ou ajudas).' }
+  ],
+  2: [
+    { titulo: 'Nível 2', txt: 'Mesma ideia do nível 1: troca peças vizinhas e faz linhas de 3 ou mais.' },
+    { titulo: 'Planeia as jogadas', txt: 'Cada troca conta como 1 jogada, mesmo sem combinação. Pensa antes de tocar.' },
+    { titulo: 'Objetivos do nível', txt: 'Olha sempre a caixa de objetivos em cima — é isso que precisas de completar para vencer.' }
+  ]
+};
+let tutorialPasso = 0;
+let tutorialNivelActual = 0;
+
+function mostrarTutorialNivel(n){
+  var passos = TUTORIAIS_NIVEL[n];
+  if(!passos || !passos.length){
+    document.getElementById('tutorial-nivel').classList.remove('ativo');
+    return;
+  }
+  tutorialNivelActual = n;
+  tutorialPasso = 0;
+  var box = document.getElementById('tutorial-nivel');
+  document.getElementById('tutorial-titulo').textContent = passos[0].titulo;
+  document.getElementById('tutorial-txt').textContent = passos[0].txt;
+  document.getElementById('tutorial-ok').textContent = passos.length > 1 ? 'Seguinte' : 'Entendi';
+  box.classList.add('ativo');
+}
+
+let tutorialAjudaActiva = false; // níveis 1 e 2: indica peças até o nível acabar
+let tutorialAjudaTimeout = null;
+let tutorialAjudaPrimeira = false;
+
+function cancelarAjudaTutorial(){
+  tutorialAjudaActiva = false;
+  tutorialAjudaPrimeira = false;
+  if(tutorialAjudaTimeout){ clearTimeout(tutorialAjudaTimeout); tutorialAjudaTimeout = null; }
+  try { limparIndicadorDica(); } catch(e) {}
+}
+
+function mostrarAjudaTutorialGratis(){
+  // Mesmo sistema da ajuda, grátis — níveis 1 e 2 durante todo o nível
+  try {
+    if(!tutorialAjudaActiva || bloqueado || jogoTerminado) return;
+    if(nivelAtual !== 1 && nivelAtual !== 2) return;
+    var dica = encontrarDicaValida();
+    if(!dica){
+      tutorialAjudaTimeout = setTimeout(mostrarAjudaTutorialGratis, 1200);
+      return;
+    }
+    mostrarIndicadorDica(dica.a, dica.b);
+    if(tutorialAjudaPrimeira){
+      tutorialAjudaPrimeira = false;
+      mostrarToast('💡 Estas peças brilham — toca nelas para trocar e combinar!');
+    }
+  } catch(e) {}
+}
+
+function agendarAjudaTutorialAposJogada(){
+  if(!tutorialAjudaActiva || jogoTerminado) return;
+  if(nivelAtual !== 1 && nivelAtual !== 2) return;
+  if(tutorialAjudaTimeout) clearTimeout(tutorialAjudaTimeout);
+  tutorialAjudaTimeout = setTimeout(function(){
+    if(!bloqueado && !jogoTerminado && tutorialAjudaActiva) mostrarAjudaTutorialGratis();
+  }, 700);
+}
+
+function avancarTutorial(){
+  var passos = TUTORIAIS_NIVEL[tutorialNivelActual] || [];
+  tutorialPasso++;
+  if(tutorialPasso >= passos.length){
+    document.getElementById('tutorial-nivel').classList.remove('ativo');
+    // Depois das dicas: ajuda activa até concluir o nível 1 ou 2
+    if(tutorialNivelActual === 1 || tutorialNivelActual === 2){
+      tutorialAjudaActiva = true;
+      tutorialAjudaPrimeira = true;
+      setTimeout(function(){ mostrarAjudaTutorialGratis(); }, 450);
+    }
+    return;
+  }
+  document.getElementById('tutorial-titulo').textContent = passos[tutorialPasso].titulo;
+  document.getElementById('tutorial-txt').textContent = passos[tutorialPasso].txt;
+  document.getElementById('tutorial-ok').textContent = (tutorialPasso >= passos.length - 1) ? 'Entendi' : 'Seguinte';
+}
+
+/* ---------- checkout de pagamento real (NetShop) ---------- */
+const DESCRICOES_ITEM = {
+  moedas30: '30 moedas — 2 MT',
+  moedas70: '70 moedas — 4 MT',
+  ajudas20: '20 ajudas — 2 MT',
+  jogadas10: '10 jogadas extra — 2 MT (aplicadas no próximo nível)',
+  jogadasOferta20: '20 jogadas — 2 MT (continuas já este nível)',
+  bonus: 'Bónus: 6 vidas + 70 🪙 + 6 ajudas + 10 jogadas — 5 MT',
+  bonus2: 'Bónus grande: 8 vidas + 100 🪙 + 20 ajudas + 20 jogadas — 10 MT',
+  moedasInfinitas: 'Moedas infinitas — 100 MT',
+  ajudasInfinitas: 'Ajudas infinitas — 50 MT',
+  desbloqueio10: '+10 níveis desbloqueados — 15 MT',
+};
+
+let itemEmCompra = null;
+let metodoEscolhido = 'mpesa';
+let pollingCheckoutId = null;
+let pollingIntervaloId = null;
+let pollingTentativas = 0;
+let ofertaJogadasJaAplicada = false; // evita +20 duas vezes (polling duplo)
+let checkoutAProcessar = false;
+
+function mostrarPassoCheckout(passo){
+  ['form','aguardar','sucesso','erro'].forEach(p=>{
+    document.getElementById('checkout-passo-'+p).style.display = (p===passo) ? 'flex' : 'none';
+  });
+}
+
+function abrirCheckout(item){
+  itemEmCompra = item;
+  document.getElementById('checkout-descricao').textContent = DESCRICOES_ITEM[item] || item;
+  document.getElementById('checkout-telefone').value = '';
+  metodoEscolhido = 'mpesa';
+  document.querySelectorAll('.checkout-metodo').forEach(b=>b.classList.toggle('ativo', b.dataset.metodo==='mpesa'));
+  document.getElementById('btn-checkout-tentar-de-novo').style.display = '';
+  mostrarPassoCheckout('form');
+  document.getElementById('overlay-checkout').classList.add('ativo');
+}
+function fecharCheckout(){
+  pararPolling();
+  document.getElementById('overlay-checkout').classList.remove('ativo');
+}
+function pararPolling(){
+  if(pollingIntervaloId){ clearInterval(pollingIntervaloId); pollingIntervaloId = null; }
+}
+
+document.querySelectorAll('.checkout-metodo').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    metodoEscolhido = btn.dataset.metodo;
+    document.querySelectorAll('.checkout-metodo').forEach(b=>b.classList.toggle('ativo', b===btn));
+  });
+});
+
+document.getElementById('btn-checkout-cancelar').addEventListener('click', fecharCheckout);
+document.getElementById('btn-checkout-desistir').addEventListener('click', fecharCheckout);
+document.getElementById('btn-checkout-fechar').addEventListener('click', ()=>{
+  fecharCheckout();
+  entrarNoMapa();
+});
+document.getElementById('btn-checkout-erro-fechar').addEventListener('click', fecharCheckout);
+document.getElementById('btn-checkout-tentar-de-novo').addEventListener('click', ()=>{
+  mostrarPassoCheckout('form');
+});
+
+document.getElementById('btn-checkout-confirmar').addEventListener('click', async ()=>{
+  const telefone = document.getElementById('checkout-telefone').value.trim();
+  if(!/^\+258\d{9}$/.test(telefone)){
+    mostrarToast('Número inválido — usa o formato +258841234567');
+    return;
+  }
+  if(!emailJogador){
+    mostrarToast('Precisas de iniciar sessão no site para comprar');
+    return;
+  }
+  mostrarPassoCheckout('aguardar');
+  document.getElementById('checkout-status-txt').textContent = 'A criar o pedido de pagamento...';
+  checkoutAProcessar = false;
+
+  try{
+    const resp = await fetch('/netshop-charge', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: emailJogador, msisdn: telefone, method: metodoEscolhido, item: itemEmCompra }),
+    });
+    const dados = await resp.json();
+    if(!resp.ok || !dados.id){
+      document.getElementById('checkout-erro-txt').textContent = dados.erro || 'Não foi possível iniciar o pagamento.';
+      mostrarPassoCheckout('erro');
+      return;
+    }
+    pollingCheckoutId = dados.id;
+    pollingTentativas = 0;
+    // Liga reference → email para a Pipedream (não depende dos ids ch_/UUID da NetShop)
+    if (dados.reference && emailJogador && window.db) {
+      try {
+        await db.collection('pedidosPorRef').doc(String(dados.reference)).set({
+          email: emailJogador,
+          item: itemEmCompra,
+          chargeId: dados.id,
+          createdAt: new Date()
+        });
+      } catch (e) { console.error('pedidosPorRef', e); }
+    }
+    if (emailJogador && window.db) {
+      try {
+        await db.collection('pedidosLoja').doc(String(dados.id)).set({
+          email: emailJogador,
+          item: itemEmCompra,
+          createdAt: new Date()
+        });
+      } catch (e) { console.error('pedidosLoja', e); }
+    }
+    document.getElementById('checkout-status-txt').textContent = 'Confirma no telemóvel e espera aqui (~1 min) até receberes a compra...';
+    pollingIntervaloId = setInterval(verificarPagamentoCheckout, 4000);
+  }catch(e){
+    document.getElementById('checkout-erro-txt').textContent = 'Falha de ligação — tenta novamente.';
+    mostrarPassoCheckout('erro');
+  }
+});
+
+async function verificarPagamentoCheckout(){
+  if(checkoutAProcessar) return;
+  pollingTentativas++;
+  if(pollingTentativas>30){ // ~2 minutos
+    pararPolling();
+    document.getElementById('checkout-erro-txt').textContent = 'O pagamento demorou demasiado tempo a confirmar.';
+    mostrarPassoCheckout('erro');
+    return;
+  }
+  try{
+    const resp = await fetch('/netshop-status?id='+encodeURIComponent(pollingCheckoutId));
+    const dados = await resp.json();
+    if(dados.status==='paid'){
+      if(checkoutAProcessar) return;
+      checkoutAProcessar = true;
+      pararPolling();
+      if(dados.credited===false){
+        const diag = dados.diagnostico ? JSON.stringify(dados.diagnostico) : 'sem diagnóstico';
+        document.getElementById('checkout-erro-txt').textContent = 'Problema a entregar a compra. DIAGNÓSTICO: ' + diag;
+        mostrarPassoCheckout('erro');
+        document.getElementById('btn-checkout-tentar-de-novo').style.display = 'none';
+        checkoutAProcessar = false;
+        return;
+      }
+      await aplicarCompraConfirmada(itemEmCompra);
+      checkoutAProcessar = false;
+    } else if(dados.status==='failed'){
+      pararPolling();
+      document.getElementById('checkout-erro-txt').textContent = 'O pagamento não foi confirmado. Verifica o número e o saldo, e tenta novamente.';
+      mostrarPassoCheckout('erro');
+    }
+    // se "pending", continua a tentar no próximo intervalo
+  }catch(e){ /* falha de rede momentânea — tenta de novo na próxima */ }
+}
+
+function mensagemSucessoCompra(item){
+  const moedasTxt = (ehCriador||moedasInfinitas) ? '∞' : moedasTotais;
+  switch(item){
+    case 'moedas30':
+    case 'moedas70': return 'Moedas creditadas! Tens agora ' + moedasTxt + ' 🪙 na tua conta.';
+    case 'ajudas20': return '20 ajudas creditadas! Tens agora ' + ajudasDisponiveis + ' ajudas disponíveis.';
+    case 'jogadas10': return '10 jogadas extra guardadas — entram no próximo nível que jogares.';
+    case 'bonus': return 'Bónus entregue: 6 vidas + 70 🪙 + 6 ajudas + 10 jogadas — tudo já na tua conta!';
+    case 'bonus2': return 'Bónus grande entregue: 8 vidas + 100 🪙 + 20 ajudas + 20 jogadas — tudo já na tua conta!';
+    case 'moedasInfinitas': return 'Moedas infinitas ativadas! Nunca mais vais precisar de comprar moedas.';
+    case 'ajudasInfinitas': return 'Ajudas infinitas ativadas! Podes usar a Ajuda sempre que quiseres, sem custo.';
+    case 'desbloqueio10': return '10 níveis desbloqueados! Já podes jogar até ao nível ' + nivelDesbloqueado + '.';
+    default: return 'A tua compra já está na tua conta.';
+  }
+}
+
+async function aplicarCompraConfirmada(item){
+  // a compra já foi creditada na conta (Firestore) pelo servidor — aqui só refletimos no ecrã atual
+  if(item==='jogadasOferta20'){
+    // Só para o nível actual — exactamente +20, uma vez (não acumula com extra da loja)
+    if(ofertaJogadasJaAplicada){
+      fecharCheckout();
+      document.getElementById('overlay-oferta-jogadas').classList.remove('ativo');
+      bloqueado = false;
+      return;
+    }
+    ofertaJogadasJaAplicada = true;
+    jogadasRestantes = Math.max(0, jogadasRestantes) + 20;
+    atualizarHud();
+    document.getElementById('overlay-oferta-jogadas').classList.remove('ativo');
+    bloqueado = false;
+    fecharCheckout();
+    mostrarToast('+20 jogadas! Continua a jogar 🎯');
+    return;
+  }
+  await carregarEstado(); // recarrega o saldo atualizado da conta
+  atualizarBotaoAjuda();
+  atualizarVidasUI();
+  document.getElementById('loja-moedas').textContent = (ehCriador||moedasInfinitas) ? '∞' : moedasTotais;
+  document.getElementById('mapa-moedas').textContent = (ehCriador||moedasInfinitas) ? '∞' : moedasTotais;
+  document.getElementById('checkout-sucesso-txt').textContent = mensagemSucessoCompra(item);
+  mostrarPassoCheckout('sucesso');
+}
+
+document.querySelectorAll('[data-item]').forEach(btn=>{
+  btn.addEventListener('click', ()=>abrirCheckout(btn.dataset.item));
+});
+
+document.getElementById('btn-abrir-loja').addEventListener('click', abrirLoja);
+document.getElementById('btn-abrir-regras').addEventListener('click', function(){ abrirRegras(false); });
+document.getElementById('btn-regras-voltar').addEventListener('click', fecharRegras);
+document.getElementById('btn-regras-jogo').addEventListener('click', function(){ abrirRegras(true); });
+document.getElementById('tutorial-ok').addEventListener('click', avancarTutorial);
+document.getElementById('btn-loja-voltar').addEventListener('click', entrarNoMapa);
+document.getElementById('btn-semvidas-loja').addEventListener('click', ()=>{
+  document.getElementById('overlay-sem-vidas').classList.remove('ativo');
+  abrirLoja();
+});
+
+document.getElementById('btn-comprar-vidas').addEventListener('click', ()=>{
+  if(vidas>=VIDAS_MAX){
+    mostrarToast('Já tens as 5 vidas completas');
+    return;
+  }
+  if(!ehCriador && !moedasInfinitas){
+    if(moedasTotais<PRECO_VIDAS_MOEDAS){
+      mostrarToast('Moedas insuficientes — precisas de ' + PRECO_VIDAS_MOEDAS + ' 🪙');
+      return;
+    }
+    moedasTotais -= PRECO_VIDAS_MOEDAS;
+  }
+  vidas = VIDAS_MAX;
+  proximaRecarga = 0;
+  salvarEstado();
+  atualizarVidasUI();
+  document.getElementById('loja-moedas').textContent = (ehCriador||moedasInfinitas) ? '∞' : moedasTotais;
+  mostrarToast('5 vidas compradas! 🎉');
+});
+
+const PRECO_AJUDAS_MOEDAS = 5;
+document.getElementById('btn-comprar-ajudas').addEventListener('click', ()=>{
+  if(!ehCriador && !moedasInfinitas){
+    if(moedasTotais<PRECO_AJUDAS_MOEDAS){
+      mostrarToast('Moedas insuficientes — precisas de ' + PRECO_AJUDAS_MOEDAS + ' 🪙');
+      return;
+    }
+    moedasTotais -= PRECO_AJUDAS_MOEDAS;
+  }
+  ajudasDisponiveis += 10;
+  salvarEstado();
+  document.getElementById('loja-moedas').textContent = (ehCriador||moedasInfinitas) ? '∞' : moedasTotais;
+  atualizarBotaoAjuda();
+  mostrarToast('10 ajudas compradas! 💡');
+});
+
+const PRECO_JOGADAS_MOEDAS = 20;
+document.getElementById('btn-comprar-jogadas').addEventListener('click', ()=>{
+  if(!ehCriador && !moedasInfinitas){
+    if(moedasTotais<PRECO_JOGADAS_MOEDAS){
+      mostrarToast('Moedas insuficientes — precisas de ' + PRECO_JOGADAS_MOEDAS + ' 🪙');
+      return;
+    }
+    moedasTotais -= PRECO_JOGADAS_MOEDAS;
+  }
+  jogadasExtraArmazenadas += 10;
+  salvarEstado();
+  document.getElementById('loja-moedas').textContent = (ehCriador||moedasInfinitas) ? '∞' : moedasTotais;
+  mostrarToast('10 jogadas extra guardadas — entram no próximo nível! 🎯');
+});
+
+function iniciarNivel(n){
+  nivelAtual = n;
+  cancelarAjudaTutorial();
+  document.getElementById('tela-mapa').classList.remove('ativo');
+  document.getElementById('tela-jogo').style.display = 'block';
+  document.getElementById('hud-nivel').textContent = n;
+  atualizarBotaoAjuda();
+  redimensionar();
+  reiniciar();
+  if(!loopIniciado){ loopIniciado = true; animar(); }
+  try { tocarArea('jogo'); } catch(e) {}
+  // Tutorial só nos níveis 1 e 2
+  if(n === 1 || n === 2){
+    setTimeout(function(){ mostrarTutorialNivel(n); }, 500);
+  } else {
+    var tut = document.getElementById('tutorial-nivel');
+    if(tut) tut.classList.remove('ativo');
+  }
+}
+
+document.getElementById('btn-voltar-mapa').addEventListener('click', ()=>{
+  if(!jogoTerminado){
+    jogoTerminado = true;
+    cancelarAjudaTutorial();
+    vidas = Math.max(0, vidas-1);
+    if(vidas<=0 && !proximaRecarga){
+      proximaRecarga = Date.now() + TEMPO_RECARGA;
+    }
+    salvarEstado();
+    atualizarVidasUI();
+    mostrarToast('Saíste a meio do nível — perdeste 1 vida ❤️');
+  }
+  cancelarAjudaTutorial();
+  entrarNoMapa();
+});
+document.getElementById('btn-fim-mapa').addEventListener('click', ()=>{
+  document.getElementById('overlay-fim').classList.remove('ativo');
+  entrarNoMapa();
+});
+document.getElementById('btn-proximo-nivel').addEventListener('click', ()=>{
+  document.getElementById('overlay-vitoria').classList.remove('ativo');
+  iniciarNivel(nivelAtual+1<=TOTAL_NIVEIS ? nivelAtual+1 : nivelAtual);
+});
+document.getElementById('btn-vitoria-mapa').addEventListener('click', ()=>{
+  document.getElementById('overlay-vitoria').classList.remove('ativo');
+  entrarNoMapa();
+});
+document.getElementById('btn-semvidas-mapa').addEventListener('click', ()=>{
+  document.getElementById('overlay-sem-vidas').classList.remove('ativo');
+  entrarNoMapa();
+});
+
+/* ---------- arranque ---------- */
+estadoPronto = false;
+promessaEstado = Promise.resolve();
+
+(async function arranqueHomejub(){
+  // Se já há sessão no localStorage, valida e carrega progresso
+  var emailSalvo = (localStorage.getItem('emailUtilizador') || '').trim().toLowerCase();
+  if(emailSalvo && db){
+    try{
+      var u = await encontrarUserPorEmail(emailSalvo);
+      if(u){
+        await aplicarSessaoJogador(emailSalvo, u.data);
+        document.getElementById('tela-login').classList.add('oculto');
+        document.getElementById('tela-abertura').style.display = 'flex';
+        animarCapa();
+        return;
+      }
+    }catch(e){ console.warn('sessão', e); }
+  }
+  // Sem sessão válida → ecrã de login (capa escondida)
+  document.getElementById('tela-abertura').style.display = 'none';
+  document.getElementById('tela-login').classList.remove('oculto');
+  // Pré-preenche e-mail se existir
+  if(emailSalvo){
+    var inp = document.getElementById('login-email');
+    if(inp) inp.value = emailSalvo;
+  }
+})();
+</script>
+</body>
+</html>
