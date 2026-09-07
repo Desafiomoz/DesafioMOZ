@@ -1146,9 +1146,9 @@ canvas{ touch-action:none; display:block; }
         window.db = firebase.firestore();
     }
     var db = window.db;
-    var emailJogador = (localStorage.getItem('emailUtilizador') || '').trim().toLowerCase() || null;
+    var emailJogador = null; // login obrigatório a cada abertura do app
     var EMAIL_CRIADOR = 'rochajosepaulo7@gmail.com';
-    var ehCriador = !!(emailJogador && emailJogador === EMAIL_CRIADOR);
+    var ehCriador = false;
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
@@ -2957,28 +2957,24 @@ estadoPronto = false;
 promessaEstado = Promise.resolve();
 
 (async function arranqueHomejub(){
-  // Se já há sessão no localStorage, valida e carrega progresso
-  var emailSalvo = (localStorage.getItem('emailUtilizador') || '').trim().toLowerCase();
-  if(emailSalvo && db){
-    try{
-      var u = await encontrarUserPorEmail(emailSalvo);
-      if(u){
-        await aplicarSessaoJogador(emailSalvo, u.data);
-        document.getElementById('tela-login').classList.add('oculto');
-        document.getElementById('tela-abertura').style.display = 'flex';
-        animarCapa();
-        return;
-      }
-    }catch(e){ console.warn('sessão', e); }
-  }
-  // Sem sessão válida → ecrã de login (capa escondida)
+  // SEMPRE pedir login ao abrir o app (não entra automático com sessão antiga)
+  try {
+    emailJogador = null;
+    ehCriador = false;
+    // Limpa sessão para obrigar login de novo
+    localStorage.removeItem('emailUtilizador');
+  } catch(e) {}
+
   document.getElementById('tela-abertura').style.display = 'none';
   document.getElementById('tela-login').classList.remove('oculto');
-  // Pré-preenche e-mail se existir
-  if(emailSalvo){
-    var inp = document.getElementById('login-email');
-    if(inp) inp.value = emailSalvo;
-  }
+
+  // Limpa campos de senha; e-mail fica vazio para cada pessoa escrever o seu
+  try {
+    var em = document.getElementById('login-email');
+    var se = document.getElementById('login-senha');
+    if(em) em.value = '';
+    if(se) se.value = '';
+  } catch(e) {}
 })();
 </script>
 </body>
