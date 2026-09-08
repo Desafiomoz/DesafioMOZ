@@ -1,13 +1,13 @@
 // Cloudflare Pages Function
-// Gera com segurança o link da offerwall da CPX Research para um usuário,
-// calculando o "secure_hash" no servidor (nunca no navegador do usuário).
+// Gera o link da CPX Research com secure_hash no servidor
+// Chamada: /get-offerwall-link?email=usuario@exemplo.com
 //
-// Chamada pelo site: /get-offerwall-link?email=usuario@exemplo.com
+// No Cloudflare Pages → Settings → Environment variables:
+// Nome: CPX_SECURE_HASH
+// Valor: (a chave secreta que a CPX te deu)
 
 const APP_ID = "35309";
 
-// Implementação MD5 em JavaScript puro (necessário pois o Cloudflare Worker
-// não tem MD5 nativo, só SHA). Fonte: domínio público (blueimp-md5, resumido).
 function md5(string) {
   function rotateLeft(n, s) { return (n << s) | (n >>> (32 - s)); }
   function toHex(num) {
@@ -79,23 +79,33 @@ function md5(string) {
 
 export async function onRequestGet({ request, env }) {
   const url = new URL(request.url);
-  const email = url.searchParams.get("email");
+  const email = (url.searchParams.get("email") || "").trim().toLowerCase();
 
   if (!email) {
-    return new Response(JSON.stringify({ error: "email em falta" }), { status: 400 });
+    return new Response(JSON.stringify({ error: "email em falta" }), {
+      status: 400,
+      headers: { "Content-Type": "application/json" }
+    });
   }
 
-  // A chave secreta fica guardada como variável de ambiente no Cloudflare Pages
-  // (Settings > Environment variables > CPX_SECURE_HASH), nunca aqui no código.
   const secureHashKey = env.CPX_SECURE_HASH;
   if (!secureHashKey) {
-    return new Response(JSON.stringify({ error: "chave não configurada no servidor" }), { status: 500 });
+    return new Response(JSON.stringify({ error: "chave não configurada no servidor" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" }
+    });
   }
 
   const hash = md5(`${email}-${secureHashKey}`);
-  const offerwallUrl = `https://offers.cpx-research.com/index.php?app_id=${APP_ID}&ext_user_id=${encodeURIComponent(email)}&secure_hash=${hash}`;
+  const offerwallUrl =
+    `https://offers.cpx-research.com/index.php?app_id=${APP_ID}` +
+    `&ext_user_id=${encodeURIComponent(email)}` +
+    `&secure_hash=${hash}`;
 
   return new Response(JSON.stringify({ url: offerwallUrl }), {
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*"
+    }
   });
 }
