@@ -56,7 +56,6 @@
             padding: 0 20px;
         }
 
-        /* CABEÇALHO COM LOGÓTIPO */
         .cabecalho {
             text-align: center;
             padding: 40px 0 30px;
@@ -88,7 +87,6 @@
             font-size: 16px;
         }
 
-        /* CAIXAS DE REGRAS */
         .bloco-regra {
             background: rgba(22,26,43,0.85);
             border: 1px solid rgba(0,200,83,0.25);
@@ -124,7 +122,16 @@
             margin-bottom: 8px;
         }
 
-        /* TABELAS BONITAS E ORGANIZADAS */
+        .destaque-box {
+            background: rgba(0,200,83,0.12);
+            border: 1px solid rgba(0,200,83,0.35);
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin-top: 12px;
+            color: var(--texto);
+            font-size: 14px;
+        }
+
         .titulo-tabela {
             text-align: center;
             color: var(--verde-claro);
@@ -160,7 +167,6 @@
         .tabela tr:last-child td { border-bottom: none; }
         .tabela tr:hover td { background: rgba(0,200,83,0.08); }
 
-        /* BOTÕES */
         .area-botoes {
             display: flex;
             justify-content: center;
@@ -208,20 +214,20 @@
         @media (max-width: 600px) {
             .area-botoes { flex-direction: column; align-items: center; }
             .btn { width: 100%; max-width: 300px; justify-content: center; }
+            .tabela { font-size: 13px; }
+            .tabela th, .tabela td { padding: 10px 12px; }
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <!-- CABEÇALHO COM LOGÓTIPO -->
     <header class="cabecalho">
         <img src="https://i.supaimg.com/b173afd9-4344-4026-a5d7-6a53e4b6efdc/8f054a24-2746-4a43-9f1c-354584289dc3.png" alt="Desafio MOZ" class="logo">
         <h1 class="titulo-principal">📜 Regras Oficiais</h1>
         <p class="subtitulo">Leia com atenção para aproveitar tudo sem problemas</p>
     </header>
 
-    <!-- REGRAS PRINCIPAIS -->
     <div class="bloco-regra">
         <h3 class="titulo-regra"><i class="fas fa-check-circle"></i> 1. Conta e Cadastro</h3>
         <ul>
@@ -229,31 +235,48 @@
             <li>Os dados devem ser <strong>reais e verdadeiros</strong> (nome, número M‑Pesa/e‑Mola).</li>
             <li>É proibido usar contas de outras pessoas, dados falsos ou documentos alheios.</li>
             <li>Menores de 18 anos só podem participar com autorização de um responsável.</li>
+            <li>No app <strong>Homejub</strong> também é obrigatório entrar com a tua conta Desafio MOZ antes de jogar.</li>
         </ul>
     </div>
 
     <div class="bloco-regra">
         <h3 class="titulo-regra"><i class="fas fa-coins"></i> 2. Pontos e Ganhos</h3>
         <ul>
-            <li><strong>10 Pontos = 1 Metical</strong> — valor fixo e garantido.</li>
+            <li><strong>8 Pontos = 1 Metical</strong> — valor fixo e garantido.</li>
             <li>Ganhas pontos ao fazer desafios, responder pesquisas, ver anúncios e indicar amigos.</li>
             <li>Pontos só são adicionados após confirmação real da tarefa.</li>
             <li>Tarefas incompletas, falsas ou feitas de forma errada não geram pontos e podem levar a redução de saldo pelos agentes do site.</li>
         </ul>
+        <div class="destaque-box">
+            <strong>Exemplo:</strong> 800 pontos = 100 MT · 1 600 pontos = 200 MT (mínimo de saque).
+        </div>
     </div>
 
     <div class="bloco-regra">
         <h3 class="titulo-regra"><i class="fas fa-money-check-alt"></i> 3. Saques e Pagamentos</h3>
         <ul>
-            <li>Valor mínimo para sacar: <strong>500 Pontos = 50 MT</strong>.</li>
+            <li>Valor mínimo para sacar: <strong>1 600 Pontos = 200 MT</strong>.</li>
             <li>Pagamentos feitos apenas por <strong>M‑Pesa e e‑Mola</strong>.</li>
             <li>Prazo de pagamento: até <strong>48 horas úteis</strong> após o pedido.</li>
-            <li>Verifique sempre o número antes de confirmar o saque.</li>
+            <li>Verifica sempre o número antes de confirmar o saque.</li>
+            <li>Pedidos abaixo do mínimo não são processados.</li>
         </ul>
     </div>
 
     <div class="bloco-regra">
-        <h3 class="titulo-regra"><i class="fas fa-ban"></i> 4. Proibições e Penalidades</h3>
+        <h3 class="titulo-regra"><i class="fas fa-gamepad"></i> 4. Homejub (jogo Online / APK)</h3>
+        <ul>
+            <li>O Homejub é o jogo oficial na área <strong>Online</strong>. Podes jogar no site ou descarregar o <strong>APK</strong> para o telemóvel.</li>
+            <li>É obrigatório estar com <strong>sessão iniciada</strong> (conta Desafio MOZ) para o progresso e os ganhos serem guardados.</li>
+            <li>Cada nível que passas vale <strong>1 metical</strong>. O valor só entra na tua carteira ao chegares aos <strong>níveis de marco</strong> (10, 20, 30, 50, 100, 150, 250, 300).</li>
+            <li>Ao chegar ao nível 300 podes ter ganho até <strong>300 MT</strong> no total pelo jogo (somando os marcos).</li>
+            <li>Compras na loja do jogo (vidas, jogadas, etc.) após o pagamento, espera cerca de <strong>1 minuto</strong> para receberes os itens.</li>
+            <li>É proibido usar programas externos, bots ou truques para passar níveis ou obter recompensas.</li>
+        </ul>
+    </div>
+
+    <div class="bloco-regra">
+        <h3 class="titulo-regra"><i class="fas fa-ban"></i> 5. Proibições e Penalidades</h3>
         <ul>
             <li>Proibido uso de <strong>robôs, automações ou truques</strong> para ganhar pontos.</li>
             <li>Não é permitido alterar dados depois de pedir um saque.</li>
@@ -263,7 +286,7 @@
     </div>
 
     <div class="bloco-regra">
-        <h3 class="titulo-regra"><i class="fas fa-handshake"></i> 5. Indicações e Convites</h3>
+        <h3 class="titulo-regra"><i class="fas fa-handshake"></i> 6. Indicações e Convites</h3>
         <ul>
             <li>Cada utilizador tem um <strong>link único</strong> para convidar amigos e no máximo <strong>5 convites</strong>.</li>
             <li>Quando o amigo se cadastra pelo teu link:
@@ -277,106 +300,109 @@
             <li>Só conta se o amigo se cadastrar pelo <strong>teu</strong> link. Cada pessoa só pode ser indicada uma vez.</li>
             <li>Proibido convidar a ti mesmo, criar contas falsas ou usar números já cadastrados.</li>
             <li>Quem convida amigos <strong>activos</strong> (que fazem missões, desafios e tarefas) tem mais hipótese de os convites voltarem a ficar disponíveis mais depressa.</li>
-            <li>Quem convida só para tentar enganar o sistema (contas que não fazem nada, só para acumular pontos) pode ter esses pontos <strong>retirados</strong> quando os <strong>agentes do site</strong> detectarem utilizadores falsos ou inactivos de má-fé.</li>
+            <li>Quem convida só para tentar enganar o sistema pode ter esses pontos <strong>retirados</strong> quando os agentes do site detectarem utilizadores falsos ou inactivos de má-fé.</li>
         </ul>
     </div>
 
     <div class="bloco-regra">
-        <h3 class="titulo-regra"><i class="fas fa-calendar-day"></i> 6. Desafios do Dia</h3>
+        <h3 class="titulo-regra"><i class="fas fa-calendar-day"></i> 7. Desafios do Dia</h3>
         <ul>
             <li>Os desafios do dia (YouTube, links, anúncios, etc.) aparecem conforme a programação dos <strong>agentes do site</strong>.</li>
             <li>Os pontos só são dados após cumprires a ação pedida de forma verdadeira.</li>
-            <li><strong>Se fingires inscrição</strong> (ex.: YouTube, WhatsApp, páginas) ou não vires os anúncios e mesmo assim pedires pontos, os <strong>agentes do site</strong> <strong>podem diminuir ou anular os teus pontos</strong>.</li>
-            <li>Desafios de anúncio (interativo / rewarded) ficam disponíveis para veres quando quiseres; só ganhas pontos se o anúncio carregar e fores até ao fim.</li>
+            <li><strong>Se fingires inscrição</strong> (ex.: YouTube, WhatsApp, páginas) ou não vires os anúncios e mesmo assim pedires pontos, os agentes do site <strong>podem diminuir ou anular os teus pontos</strong>.</li>
+            <li>Desafios de anúncio ficam disponíveis para veres quando quiseres; só ganhas pontos se o anúncio carregar e fores até ao fim.</li>
             <li>Desafios de link (seguir / abrir) em geral só podem ser concluídos <strong>uma vez</strong>.</li>
         </ul>
     </div>
 
     <div class="bloco-regra">
-        <h3 class="titulo-regra"><i class="fas fa-calendar-check"></i> 7. Check-in Diário</h3>
+        <h3 class="titulo-regra"><i class="fas fa-calendar-check"></i> 8. Check-in Diário</h3>
         <ul>
-            <li>Podes fazer <strong>1 check-in por dia</strong> e ganhar <strong>+5 pontos</strong>.</li>
+            <li>Podes fazer <strong>1 check-in por dia</strong> e ganhar <strong>+3 pontos</strong>.</li>
             <li>O check-in só conta uma vez em cada dia. No dia seguinte volta a ficar disponível.</li>
-            <li>Se o check-in aparecer como indisponível, aguarda — os <strong>agentes do site</strong> controlam o acesso quando necessário.</li>
+            <li>Se o check-in aparecer como indisponível, aguarda — os agentes do site controlam o acesso quando necessário.</li>
             <li>É proibido usar truques ou várias contas só para fazer vários check-ins no mesmo dia.</li>
         </ul>
     </div>
 
     <div class="bloco-regra">
-        <h3 class="titulo-regra"><i class="fas fa-trophy"></i> 8. Missão Semanal</h3>
+        <h3 class="titulo-regra"><i class="fas fa-trophy"></i> 9. Missão Semanal</h3>
         <ul>
             <li>A missão semanal aparece em <strong>horários aleatórios</strong> durante a semana.</li>
             <li><strong>Só o primeiro utilizador</strong> a encontrá-la em cada semana fica com a chance de a completar e ganhar <strong>+100 pontos</strong>.</li>
             <li>Quem está <strong>mais activo no site</strong> tem mais probabilidade de estar online no momento certo.</li>
-            <li>Completar a missão inclui perguntas e ver anúncios. Se não houver anúncio disponível na rede, a missão <strong>não termina</strong> até conseguires ver os anúncios — e continua disponível só para quem a encontrou primeiro.</li>
+            <li>Completar a missão inclui perguntas e ver anúncios. Se não houver anúncio disponível na rede, a missão <strong>não termina</strong> até conseguires ver os anúncios.</li>
             <li>Depois de concluída (ou se outro utilizador já a encontrou), só na <strong>próxima semana</strong> há nova oportunidade.</li>
         </ul>
     </div>
 
     <div class="bloco-regra">
-        <h3 class="titulo-regra"><i class="fas fa-ad"></i> 9. Anúncios e Pontos</h3>
+        <h3 class="titulo-regra"><i class="fas fa-ad"></i> 10. Anúncios e Pontos</h3>
         <ul>
-            <li>Anúncios com pontos (interativo / rewarded) só creditam pontos se o anúncio <strong>carregar de verdade</strong> e o tempo mínimo for cumprido.</li>
+            <li>Anúncios com pontos só creditam pontos se o anúncio <strong>carregar de verdade</strong> e o tempo mínimo for cumprido.</li>
             <li>Se a empresa de anúncios não tiver inventário no momento, <strong>não recebes pontos</strong> nessa tentativa.</li>
-            <li>Anúncios curtos (tipo banner / AdSense) em páginas informativas <strong>não dão pontos</strong> — servem apenas para publicidade do site.</li>
+            <li>Anúncios curtos (tipo banner) em páginas informativas <strong>não dão pontos</strong> — servem apenas para publicidade do site.</li>
         </ul>
     </div>
 
-    <!-- TABELA EXATA COM OS DADOS QUE QUERES -->
     <h3 class="titulo-tabela">📊 Tabela de Tarefas e Valores</h3>
     <table class="tabela">
         <thead>
             <tr>
                 <th>Tarefa / Descrição</th>
-                <th>Pontos Ganhos</th>
-                <th>Valor em Meticais</th>
+                <th>Pontos</th>
+                <th>Valor em MT</th>
             </tr>
         </thead>
         <tbody>
             <tr>
                 <td>Conversão base</td>
-                <td>10 Pontos</td>
+                <td>8 Pontos</td>
                 <td>1 MT</td>
             </tr>
             <tr>
                 <td>Amigo cadastrado pelo teu link (tu recebes)</td>
                 <td>+10 Pontos</td>
-                <td>1 MT</td>
+                <td>1,25 MT</td>
             </tr>
             <tr>
                 <td>Bónus do convidado no cadastro</td>
                 <td>+5 Pontos</td>
-                <td>0,5 MT</td>
+                <td>0,625 MT</td>
             </tr>
             <tr>
                 <td>Marco de 100 pts do convidado (tu recebes)</td>
                 <td>+10 Pontos</td>
-                <td>1 MT</td>
+                <td>1,25 MT</td>
             </tr>
             <tr>
                 <td>Check-in diário</td>
-                <td>+5 Pontos</td>
-                <td>0,5 MT</td>
+                <td>+3 Pontos</td>
+                <td>0,375 MT</td>
             </tr>
             <tr>
                 <td>Missão semanal (1.º a encontrar e concluir)</td>
                 <td>+100 Pontos</td>
-                <td>10 MT</td>
+                <td>12,5 MT</td>
+            </tr>
+            <tr>
+                <td>Homejub — marcos de nível (10, 20, 30…)</td>
+                <td>—</td>
+                <td>Até 300 MT no total</td>
             </tr>
             <tr>
                 <td>Desafios do dia / pesquisas / anúncios</td>
-                <td>Variável (definido em cada tarefa)</td>
+                <td>Variável</td>
                 <td>—</td>
             </tr>
             <tr>
                 <td><strong>Mínimo para saque</strong></td>
-                <td><strong>500 Pontos</strong></td>
-                <td><strong>50 MT</strong></td>
+                <td><strong>1 600 Pontos</strong></td>
+                <td><strong>200 MT</strong></td>
             </tr>
         </tbody>
     </table>
 
-    <!-- TABELA DE PAGAMENTOS ORGANIZADA -->
     <h3 class="titulo-tabela">💳 Métodos de Pagamento</h3>
     <table class="tabela">
         <thead>
@@ -400,7 +426,6 @@
         </tbody>
     </table>
 
-    <!-- BOTÕES FINAIS -->
     <div class="area-botoes">
         <a href="index.html" class="btn btn-voltar">
             <i class="fas fa-arrow-left"></i> Voltar ao Início
@@ -410,7 +435,6 @@
         </a>
     </div>
 </div>
-
 
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
