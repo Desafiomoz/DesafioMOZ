@@ -6,7 +6,7 @@
 // Nome: CPX_SECURE_HASH
 // Valor: (a chave secreta que a CPX te deu)
 
-const APP_ID = "35309";
+const APP_ID = "36025";
 
 function md5(string) {
   function rotateLeft(n, s) { return (n << s) | (n >>> (32 - s)); }
