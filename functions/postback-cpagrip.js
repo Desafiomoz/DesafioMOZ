@@ -1,121 +1,85 @@
-// Cloudflare Pages Function - Postback CPAGrip (versão completa)
-const FIREBASE_PROJECT_ID = "desafio-moz-61b70";
-const FIRESTORE_BASE = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents`;
-const PONTOS_POR_DOLLAR = 100;
+// Cloudflare Pages Function
+// https://desafiomoz.pages.dev/postback-cpagrip
+// CPAGrip envia POST (password, payout, offer_id, tracking_id)
 
-export async function onRequestGet({ request }) {
-  try {
-    const url = new URL(request.url);
+const PIPEDREAM = "https://eo3170ax1lhte5v.m.pipedream.net/";
 
-    const trackingId =
-      url.searchParams.get("tracking_id") ||
-      url.searchParams.get("subid") ||
-      url.searchParams.get("user_id") ||
-      "";
+async function lerParams(request) {
+  const url = new URL(request.url);
+  const out = {};
 
-    const transactionId =
-      url.searchParams.get("transaction_id") ||
-      url.searchParams.get("txid") ||
-      Date.now().toString();
+  url.searchParams.forEach((v, k) => {
+    out[k] = v;
+  });
 
-    const payout = parseFloat(
-      url.searchParams.get("payout") ||
-      url.searchParams.get("amount") ||
-      "0"
-    );
-
-    const status = (url.searchParams.get("status") || "1").toLowerCase();
-
-    if (!trackingId) {
-      return new Response("0", { status: 400 });
-    }
-
-    // Evitar duplicados
-    const idempKey = `cpagrip_${transactionId}`;
+  if (request.method === "POST") {
     try {
-      const checkRes = await fetch(
-        `\( {FIRESTORE_BASE}/postbacksProcessados/ \){encodeURIComponent(idempKey)}`
-      );
-      if (checkRes.status === 200) {
-        return new Response("1", { status: 200 });
-      }
-    } catch (e) {}
-
-    const aprovado = status === "1" || status === "approved" || status === "completed" || status === "ok";
-
-    if (aprovado && payout > 0) {
-      const pontos = Math.round(payout * PONTOS_POR_DOLLAR);
-      const email = decodeURIComponent(trackingId).toLowerCase().trim();
-
-      // Procurar utilizador pelo email
-      const queryBody = {
-        structuredQuery: {
-          from: [{ collectionId: "usuarios" }],
-          where: {
-            fieldFilter: {
-              field: { fieldPath: "email" },
-              op: "EQUAL",
-              value: { stringValue: email }
-            }
-          },
-          limit: 1
-        }
-      };
-
-      const queryRes = await fetch(`${FIRESTORE_BASE}:runQuery`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(queryBody)
-      });
-
-      const queryData = await queryRes.json();
-      const match = Array.isArray(queryData) ? queryData.find(r => r.document) : null;
-
-      if (match && match.document) {
-        const docPath = match.document.name;
-
-        const commitBody = {
-          writes: [{
-            transform: {
-              document: docPath,
-              fieldTransforms: [{
-                fieldPath: "pontos",
-                increment: { integerValue: String(pontos) }
-              }]
-            }
-          }]
-        };
-
-        await fetch(`${FIRESTORE_BASE}:commit`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(commitBody)
+      const ct = (request.headers.get("content-type") || "").toLowerCase();
+      if (ct.includes("application/json")) {
+        const j = await request.json();
+        Object.assign(out, j || {});
+      } else {
+        const text = await request.text();
+        const body = new URLSearchParams(text);
+        body.forEach((v, k) => {
+          out[k] = v;
         });
       }
-    }
+    } catch (_) {}
+  }
+  return out;
+}
 
-    // Marcar como processado
-    try {
-      await fetch(
-        `\( {FIRESTORE_BASE}/postbacksProcessados/ \){encodeURIComponent(idempKey)}?documentId=${encodeURIComponent(idempKey)}`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            fields: {
-              trackingId: { stringValue: trackingId },
-              payout: { stringValue: String(payout) },
-              status: { stringValue: status },
-              processedAt: { timestampValue: new Date().toISOString() }
-            }
-          })
-        }
-      );
-    } catch (e) {}
+export async function onRequest(context) {
+  const { request } = context;
 
-    return new Response("1", { status: 200 });
+  if (request.method === "OPTIONS") {
+    return new Response(null, {
+      status: 204,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
+      },
+    });
+  }
 
-  } catch (err) {
-    return new Response("0", { status: 500 });
+  try {
+    const p = await lerParams(request);
+    const target = new URL(PIPEDREAM);
+
+    // Normalizar nomes
+    const tracking_id = p.tracking_id || p.trackingId || p.subid || p.user_id || "";
+    const payout = p.payout || p.amount || "0";
+    const offer_id = p.offer_id || p.offerId || "";
+    const password = p.password || "";
+
+    target.searchParams.set("tracking_id", tracking_id);
+    target.searchParams.set("payout", payout);
+    target.searchParams.set("offer_id", offer_id);
+    if (password) target.searchParams.set("password", password);
+
+    // Repassar resto
+    Object.keys(p).forEach((k) => {
+      if (!target.searchParams.has(k)) target.searchParams.set(k, p[k]);
+    });
+
+    await fetch(target.toString(), {
+      method: "GET",
+      headers: { "User-Agent": "DesafioMoz-CPAGrip-Proxy/1.0" },
+    });
+
+    return new Response("OK", {
+      status: 200,
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Access-Control-Allow-Origin": "*",
+      },
+    });
+  } catch (e) {
+    return new Response("OK", {
+      status: 200,
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
+    });
   }
 }
