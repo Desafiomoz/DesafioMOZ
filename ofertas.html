@@ -228,8 +228,8 @@
 
     <div class="lista-ofertas">
 
-        <!-- 1. Offerwall.ad -->
-        <a href="#" class="card-oferta" id="cardOfferwallAd">
+        <!-- 1. Offerwall.ad → página intermédia -->
+        <a href="offerwall-ad.html" class="card-oferta" id="cardOfferwallAd">
             <div class="card-topo">
                 <div class="logo-box">
                     <img src="https://i.supaimg.com/9447b725-0914-4700-9681-fccbd9cb5399/d5f8f268-07f8-4797-aa9a-37b9d218b2d1.jpg" alt="Offerwall.ad" onerror="this.style.display='none'">
@@ -369,15 +369,7 @@
                 });
             }
 
-            // Offerwall.ad
-            var cardOfferwallAd = document.getElementById('cardOfferwallAd');
-            if (cardOfferwallAd) {
-                cardOfferwallAd.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    var link = 'https://offerwall.ad/wall/d6813264db869f8febf6b58f2023a6e4?uid=' + encodeURIComponent(email);
-                    window.open(link, '_blank');
-                });
-            }
+            // Offerwall.ad → usa href="offerwall-ad.html" (página intermédia)
         })();
     </script>
 
