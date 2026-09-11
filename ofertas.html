@@ -285,8 +285,8 @@
             </div>
         </a>
 
-        <!-- 4. MyLead -->
-        <a href="mylead.html" class="card-oferta" id="cardMylead">
+        <!-- 4. MyLead – em manutenção (wall 404) -->
+        <div class="card-oferta" id="cardMylead" style="opacity:0.72;pointer-events:none;">
             <div class="card-topo">
                 <div class="logo-box">
                     <img src="https://i.supaimg.com/9447b725-0914-4700-9681-fccbd9cb5399/f96292ac-9b0f-4e16-bd5c-7b260ed43da5.jpg" alt="MyLead" onerror="this.style.display='none'">
@@ -294,15 +294,16 @@
                 <div class="card-info">
                     <h2>Jogos &amp; Ofertas</h2>
                     <p>Instalar apps, jogos e ofertas especiais</p>
-                    <span class="badge"><i class="fas fa-bolt"></i> Disponível agora</span>
+                    <span class="badge" style="color:#FFB74D;background:rgba(255,183,77,0.12);border-color:rgba(255,183,77,0.35);">
+                        <i class="fas fa-tools"></i> Em manutenção
+                    </span>
                 </div>
             </div>
-            <div class="btn-oferta">
-                <i class="fas fa-gamepad"></i>
-                Ver ofertas
-                <i class="fas fa-arrow-right seta"></i>
+            <div class="btn-oferta" style="background:linear-gradient(135deg,#6b7388,#4a5160);color:#ddd;box-shadow:none;">
+                <i class="fas fa-pause-circle"></i>
+                Indisponível de momento
             </div>
-        </a>
+        </div>
 
         <!-- 5. CPAGrip -->
         <a href="#" class="card-oferta" id="cardCpagrip">
@@ -337,7 +338,7 @@
                         localStorage.getItem('userEmail') || '';
 
             if (!email) {
-                ['cardCpx', 'cardMylead', 'cardCpagrip', 'cardOfferwall', 'cardOfferwallAd'].forEach(function (id) {
+                ['cardCpx', 'cardCpagrip', 'cardOfferwall', 'cardOfferwallAd'].forEach(function (id) {
                     var card = document.getElementById(id);
                     if (card) {
                         card.addEventListener('click', function (e) {
