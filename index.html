@@ -791,6 +791,41 @@ document.querySelectorAll('a[href^="#"]').forEach(function(link){
   var db = window.db;
   var PAGINA = 'index';
 
+  // Contar visita (1x por sessão) → admin aba Visitantes
+  (function registarVisitaSite() {
+    try {
+      if (typeof sessionStorage !== 'undefined' && sessionStorage.getItem('dm_visita_ok') === '1') {
+        return;
+      }
+      var agora = new Date();
+      var y = agora.getFullYear();
+      var m = String(agora.getMonth() + 1).padStart(2, '0');
+      var d = String(agora.getDate()).padStart(2, '0');
+      var diaId = y + '-' + m + '-' + d;
+      var ref = db.collection('estatisticasDiarias').doc(diaId);
+      ref.get().then(function (snap) {
+        if (snap.exists) {
+          return ref.update({
+            visitas: (snap.data().visitas || 0) + 1,
+            ultimaVisita: new Date().toISOString()
+          });
+        }
+        return ref.set({
+          visitas: 1,
+          contasNovas: 0,
+          data: diaId,
+          ultimaVisita: new Date().toISOString()
+        });
+      }).then(function () {
+        try { sessionStorage.setItem('dm_visita_ok', '1'); } catch (e) {}
+      }).catch(function (e) {
+        console.warn('registar visita:', e);
+      });
+    } catch (e) {
+      console.warn('registar visita:', e);
+    }
+  })();
+
   function injetarHtml(container, html) {
     var tpl = document.createElement('template');
     tpl.innerHTML = html || '';

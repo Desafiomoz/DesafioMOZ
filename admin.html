@@ -227,6 +227,7 @@
     <button class="tab" data-tab="missoes" onclick="mudarTab('missoes')"><i class="fas fa-trophy"></i> Missões</button>
     <button class="tab" data-tab="ranking" onclick="mudarTab('ranking')"><i class="fas fa-medal"></i> Ranking</button>
     <button class="tab" data-tab="convites" onclick="mudarTab('convites')"><i class="fas fa-user-plus"></i> Convites</button>
+    <button class="tab" data-tab="visitantes" onclick="mudarTab('visitantes')"><i class="fas fa-chart-line"></i> Visitantes</button>
   </div>
 
   <div class="conteudo">
@@ -775,6 +776,38 @@
       </div>
     </div>
 
+    <!-- VISITANTES / ESTATÍSTICAS DIÁRIAS -->
+    <div class="painel" id="painel-visitantes">
+      <div class="form-box">
+        <h3><i class="fas fa-chart-line"></i> Visitas e contas por dia</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:10px;line-height:1.45;">
+          <strong>Visitas</strong> = quantas pessoas abriram a página inicial (1 vez por sessão no browser).<br>
+          <strong>Contas novas</strong> = quantas contas foram criadas nesse dia (com base na data de cadastro).
+        </p>
+        <div class="resumo" style="margin-bottom:0;">
+          <div class="resumo-card"><div class="num" id="vis-hoje">0</div><div class="lbl">Visitas hoje</div></div>
+          <div class="resumo-card"><div class="num" id="contas-hoje">0</div><div class="lbl">Contas hoje</div></div>
+          <div class="resumo-card"><div class="num" id="vis-7dias">0</div><div class="lbl">Visitas (7 dias)</div></div>
+          <div class="resumo-card"><div class="num" id="contas-7dias">0</div><div class="lbl">Contas (7 dias)</div></div>
+        </div>
+      </div>
+      <div class="tabela-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Visitas</th>
+              <th>Contas novas</th>
+              <th>Conversão</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-visitantes">
+            <tr><td colspan="4" class="vazio">A carregar...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
   </div>
 
   <script>
@@ -863,6 +896,7 @@ function mostrarAviso(txt) {
         if (painel) painel.classList.add('ativo');
         else console.warn('Painel não encontrado:', nome);
         if (nome === 'missoes') try { renderHorariosMissaoAdmin(); } catch (eH) {}
+        if (nome === 'visitantes') try { carregarVisitantes(); } catch (eV) {}
       } catch (e) {
         console.error('mudarTab:', e);
         alert('Erro ao abrir separador: ' + (e.message || e));
@@ -885,8 +919,92 @@ function mostrarAviso(txt) {
       try { await carregarAnunciosTarefasAdmin(); } catch (e) { console.error(e); }
       try { await carregarDesafios(); } catch (e) { console.error(e); }
       try { await carregarMissoes(); } catch (e) { console.error(e); }
+      try { await carregarVisitantes(); } catch (e) { console.error(e); }
       atualizarResumo();
       renderRanking();
+    }
+
+    function diaISO(d) {
+      d = d || new Date();
+      var y = d.getFullYear();
+      var m = String(d.getMonth() + 1).padStart(2, '0');
+      var day = String(d.getDate()).padStart(2, '0');
+      return y + '-' + m + '-' + day;
+    }
+
+    async function carregarVisitantes() {
+      var tbody = document.getElementById('tbody-visitantes');
+      if (!tbody) return;
+      try {
+        // Contas novas por dia a partir dos utilizadores
+        var contasPorDia = {};
+        (todosUsers || []).forEach(function (u) {
+          var raw = String(u.dataCadastro || u.criadoEm || u.createdAt || '');
+          if (!raw) return;
+          var dia = raw.substring(0, 10);
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(dia)) {
+            try {
+              var dt = new Date(raw);
+              if (!isNaN(dt.getTime())) dia = diaISO(dt);
+              else return;
+            } catch (e) { return; }
+          }
+          contasPorDia[dia] = (contasPorDia[dia] || 0) + 1;
+        });
+
+        // Visitas registadas na coleção estatisticasDiarias
+        var visitasPorDia = {};
+        try {
+          var snap = await db.collection('estatisticasDiarias').get();
+          snap.forEach(function (doc) {
+            var d = doc.data() || {};
+            visitasPorDia[doc.id] = Number(d.visitas || 0);
+          });
+        } catch (eEst) {
+          console.warn('estatisticasDiarias:', eEst);
+        }
+
+        // Últimos 30 dias
+        var linhas = [];
+        var hoje = new Date();
+        var totVis7 = 0, totContas7 = 0;
+        var hojeStr = diaISO(hoje);
+        for (var i = 0; i < 30; i++) {
+          var d = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() - i);
+          var key = diaISO(d);
+          var v = visitasPorDia[key] || 0;
+          var c = contasPorDia[key] || 0;
+          if (i < 7) {
+            totVis7 += v;
+            totContas7 += c;
+          }
+          var conv = v > 0 ? ((c / v) * 100).toFixed(1) + '%' : (c > 0 ? '—' : '0%');
+          linhas.push({ key: key, v: v, c: c, conv: conv });
+        }
+
+        var elH = document.getElementById('vis-hoje');
+        var elC = document.getElementById('contas-hoje');
+        var elV7 = document.getElementById('vis-7dias');
+        var elC7 = document.getElementById('contas-7dias');
+        if (elH) elH.textContent = visitasPorDia[hojeStr] || 0;
+        if (elC) elC.textContent = contasPorDia[hojeStr] || 0;
+        if (elV7) elV7.textContent = totVis7;
+        if (elC7) elC7.textContent = totContas7;
+
+        var html = '';
+        linhas.forEach(function (L) {
+          html += '<tr>' +
+            '<td><strong>' + L.key + '</strong></td>' +
+            '<td class="pts-ok">' + L.v + '</td>' +
+            '<td class="pts-alto">' + L.c + '</td>' +
+            '<td>' + L.conv + '</td>' +
+            '</tr>';
+        });
+        tbody.innerHTML = html || '<tr><td colspan="4" class="vazio">Sem dados ainda.</td></tr>';
+      } catch (e) {
+        console.error(e);
+        tbody.innerHTML = '<tr><td colspan="4" class="vazio">Erro ao carregar: ' + escHtml(e.message || e) + '</td></tr>';
+      }
     }
 
     async function carregarUsers() {
