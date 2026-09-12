@@ -792,6 +792,7 @@ document.querySelectorAll('a[href^="#"]').forEach(function(link){
   var PAGINA = 'index';
 
   // Contar visita (1x por sessão) → admin aba Visitantes
+  // increment sem ler o doc (visitantes sem login não podem fazer get)
   (function registarVisitaSite() {
     try {
       if (typeof sessionStorage !== 'undefined' && sessionStorage.getItem('dm_visita_ok') === '1') {
@@ -803,21 +804,13 @@ document.querySelectorAll('a[href^="#"]').forEach(function(link){
       var d = String(agora.getDate()).padStart(2, '0');
       var diaId = y + '-' + m + '-' + d;
       var ref = db.collection('estatisticasDiarias').doc(diaId);
-      ref.get().then(function (snap) {
-        if (snap.exists) {
-          return ref.update({
-            visitas: (snap.data().visitas || 0) + 1,
-            ultimaVisita: new Date().toISOString()
-          });
-        }
-        return ref.set({
-          visitas: 1,
-          contasNovas: 0,
-          data: diaId,
-          ultimaVisita: new Date().toISOString()
-        });
-      }).then(function () {
+      ref.set({
+        visitas: firebase.firestore.FieldValue.increment(1),
+        data: diaId,
+        ultimaVisita: new Date().toISOString()
+      }, { merge: true }).then(function () {
         try { sessionStorage.setItem('dm_visita_ok', '1'); } catch (e) {}
+        console.log('visita registada:', diaId);
       }).catch(function (e) {
         console.warn('registar visita:', e);
       });
