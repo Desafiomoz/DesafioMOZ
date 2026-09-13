@@ -360,28 +360,81 @@ canvas{ touch-action:none; display:block; }
   padding:11px 18px; border-radius:24px; font-size:13px;
   opacity:0; transition:opacity .25s, transform .25s;
   z-index:60; pointer-events:none;
+  max-width:90%;
+  text-align:center;
 }
 .toast.mostrar{ opacity:1; transform:translateX(-50%) translateY(0); }
-.toast.marco-mt{
-  bottom:auto; top:28%;
-  z-index:95;
+/* Toast especial (centro) — separado do toast antigo em baixo */
+/* Aviso especial: logo abaixo dos objetivos — não tapa o tabuleiro */
+.toast-especial{
+  position:fixed;
+  left:14px; right:14px;
+  top:150px;
+  transform:translateY(-6px);
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+  z-index:120;
   font-family:'Sora',sans-serif;
   font-weight:800;
-  font-size:17px;
+  font-size:13.5px;
   line-height:1.35;
   text-align:center;
-  padding:22px 26px;
-  max-width:88%;
-  border-radius:20px;
+  padding:11px 14px;
+  border-radius:14px;
+  white-space:pre-line;
+  transition:opacity .25s ease, transform .25s ease, visibility .25s;
+}
+.toast-especial.mostrar{
+  opacity:1;
+  visibility:visible;
+  transform:translateY(0);
+}
+.toast-especial.tipo-ajuda{
   color:#2a1d00;
+  background:linear-gradient(145deg, #fff8d0 0%, #ffcf4d 45%, #ffb020 100%);
+  border:2px solid #fffef0;
+  box-shadow:0 0 0 3px rgba(255,207,77,0.35), 0 0 22px rgba(255,180,0,0.85);
+  animation:auraToastAjuda 1.6s ease-in-out infinite;
+}
+.toast-especial.tipo-aviso{
+  color:#fff8f0;
+  background:linear-gradient(145deg, #ff7a45 0%, #e2572b 45%, #c62828 100%);
+  border:2px solid #ffccbc;
+  box-shadow:0 0 0 3px rgba(255,122,69,0.4), 0 0 22px rgba(226,87,43,0.85);
+  animation:auraToastAviso 1.6s ease-in-out infinite;
+}
+.toast-especial.tipo-sucesso{
+  color:#06120f;
+  background:linear-gradient(145deg, #b8ffe0 0%, #2ee6a0 50%, #1abc7a 100%);
+  border:2px solid #e8fff5;
+  box-shadow:0 0 0 3px rgba(46,230,160,0.35), 0 0 22px rgba(46,230,160,0.8);
+  animation:auraToastSucesso 1.6s ease-in-out infinite;
+}
+.toast-especial.tipo-marco{
+  color:#2a1d00;
+  font-size:15px;
+  padding:16px 18px;
   background:linear-gradient(145deg, #fff6c8 0%, #ffcf4d 40%, #ff9a3c 100%);
-  border:3px solid #fff8d6;
-  box-shadow:0 0 0 4px rgba(255,207,77,0.35), 0 0 28px rgba(255,180,0,0.95), 0 0 56px rgba(255,154,60,0.55), 0 12px 40px rgba(0,0,0,0.45);
+  border:2px solid #fff8d6;
+  box-shadow:0 0 0 3px rgba(255,207,77,0.35), 0 0 28px rgba(255,180,0,0.9);
   animation:auraMarcoMt 1.6s ease-in-out infinite;
 }
+@keyframes auraToastAjuda{
+  0%,100%{ box-shadow:0 0 0 3px rgba(255,207,77,0.35), 0 0 18px rgba(255,180,0,0.8); }
+  50%{ box-shadow:0 0 0 4px rgba(255,255,255,0.45), 0 0 28px rgba(255,207,77,1); }
+}
+@keyframes auraToastAviso{
+  0%,100%{ box-shadow:0 0 0 3px rgba(255,122,69,0.4), 0 0 18px rgba(226,87,43,0.8); }
+  50%{ box-shadow:0 0 0 4px rgba(255,255,255,0.35), 0 0 28px rgba(255,122,69,1); }
+}
+@keyframes auraToastSucesso{
+  0%,100%{ box-shadow:0 0 0 3px rgba(46,230,160,0.35), 0 0 18px rgba(46,230,160,0.75); }
+  50%{ box-shadow:0 0 0 4px rgba(255,255,255,0.4), 0 0 28px rgba(46,230,160,1); }
+}
 @keyframes auraMarcoMt{
-  0%,100%{ transform:translateX(-50%) scale(1); box-shadow:0 0 0 4px rgba(255,207,77,0.35), 0 0 24px rgba(255,180,0,0.9), 0 0 48px rgba(255,154,60,0.5); }
-  50%{ transform:translateX(-50%) scale(1.04); box-shadow:0 0 0 6px rgba(255,255,255,0.45), 0 0 40px rgba(255,207,77,1), 0 0 70px rgba(255,154,60,0.7); }
+  0%,100%{ box-shadow:0 0 0 3px rgba(255,207,77,0.35), 0 0 22px rgba(255,180,0,0.85); }
+  50%{ box-shadow:0 0 0 5px rgba(255,255,255,0.4), 0 0 32px rgba(255,207,77,1); }
 }
 
 .btn-voltar-mapa{
@@ -1010,6 +1063,7 @@ canvas{ touch-action:none; display:block; }
 </div>
 
 <div class="toast" id="toast"></div>
+<div class="toast-especial" id="toast-especial" aria-live="polite"></div>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
@@ -1691,20 +1745,20 @@ function usarAjuda(){
   if(!dica){ mostrarToast('Sem jogadas óbvias agora — continua a explorar'); return; }
 
   if(ajudasInfinitas || ehCriador){
-    mostrarToast('💡 Ajuda usada (ajudas infinitas)');
+    mostrarToastAjuda('💡 Ajuda usada!\nAjudas infinitas — as peças certas estão a brilhar');
   } else if(ajudasDisponiveis>0){
     ajudasDisponiveis--;
     salvarEstado();
     atualizarBotaoAjuda();
-    mostrarToast('💡 Ajuda usada — restam ' + ajudasDisponiveis);
+    mostrarToastAjuda('💡 Ajuda usada!\nRestam ' + ajudasDisponiveis + ' ajuda' + (ajudasDisponiveis===1?'':'s') + ' — olha as peças a brilhar');
   } else {
     if(moedasTotais<CUSTO_AJUDA_MOEDAS && !moedasInfinitas){
-      mostrarToast('Precisas de ' + CUSTO_AJUDA_MOEDAS + ' 🪙 — ou compra Ajudas na loja');
+      mostrarToastAviso('⚠️ Moedas insuficientes!\nPrecisas de ' + CUSTO_AJUDA_MOEDAS + ' 🪙 — ou compra Ajudas na loja');
       return;
     }
     if(!moedasInfinitas) moedasTotais -= CUSTO_AJUDA_MOEDAS;
     salvarEstado();
-    mostrarToast('💡 -' + CUSTO_AJUDA_MOEDAS + ' 🪙 pela ajuda');
+    mostrarToastAjuda('💡 Ajuda usada!\n−' + CUSTO_AJUDA_MOEDAS + ' 🪙 — as peças certas estão a brilhar no tabuleiro');
   }
   mostrarIndicadorDica(dica.a, dica.b);
 }
@@ -1963,7 +2017,7 @@ function mostrarOfertaJogadas(){
 document.getElementById('btn-oferta-comprar-moedas').addEventListener('click', ()=>{
   if(!ehCriador && !moedasInfinitas){
     if(moedasTotais<PRECO_OFERTA_JOGADAS_MOEDAS){
-      mostrarToast('Moedas insuficientes — precisas de ' + PRECO_OFERTA_JOGADAS_MOEDAS + ' 🪙');
+      mostrarToastAviso('⚠️ Moedas insuficientes!\nPrecisas de ' + PRECO_OFERTA_JOGADAS_MOEDAS + ' 🪙 para continuar');
       return;
     }
     moedasTotais -= PRECO_OFERTA_JOGADAS_MOEDAS;
@@ -1973,7 +2027,7 @@ document.getElementById('btn-oferta-comprar-moedas').addEventListener('click', (
   atualizarHud();
   document.getElementById('overlay-oferta-jogadas').classList.remove('ativo');
   bloqueado = false; // o jogo continua
-  mostrarToast('+10 jogadas! Continua a jogar 🎯');
+  mostrarToastSucesso('🎯 +10 jogadas!\nContinua a jogar');
 });
 
 document.getElementById('btn-oferta-recusar').addEventListener('click', ()=>{
@@ -2133,11 +2187,11 @@ function aoTocarNivel(n){
   verificarRecargaVidas();
   if(ehCriador){ iniciarNivel(n); return; } // criador: acesso total, sem restrições
   if(n>nivelDesbloqueado){
-    mostrarToast('Termina o nível ' + nivelDesbloqueado + ' para desbloquear este');
+    mostrarToastAviso('🔒 Nível bloqueado!\nTermina o nível ' + nivelDesbloqueado + ' para desbloquear este');
     return;
   }
   if(n<=10 && nivelDesbloqueado>10 && n<nivelDesbloqueado){
-    mostrarToast('Já concluíste os níveis 1-10 — não podes voltar a jogá-los');
+    mostrarToastAviso('🔒 Já concluíste os níveis 1-10\nNão podes voltar a jogá-los');
     return;
   }
   if(vidas<=0){
@@ -2149,27 +2203,94 @@ function aoTocarNivel(n){
 }
 
 let toastTimeout;
-function mostrarToast(msg){
-  const el = document.getElementById('toast');
-  if(!el) return;
-  el.classList.remove('marco-mt');
-  el.textContent = msg;
-  el.classList.add('mostrar');
-  clearTimeout(toastTimeout);
-  toastTimeout = setTimeout(function(){ el.classList.remove('mostrar'); el.classList.remove('marco-mt'); }, 2200);
+let toastEspecialTimeout;
+
+function esconderToastAntigo(){
+  var antigo = document.getElementById('toast');
+  if(!antigo) return;
+  antigo.classList.remove('mostrar');
+  antigo.classList.remove('marco-mt');
+  antigo.classList.remove('toast-ajuda');
+  antigo.classList.remove('toast-aviso');
+  antigo.classList.remove('toast-sucesso');
+  antigo.textContent = '';
 }
 
-function mostrarAvisoMarcoMt(mt, nivel){
+function mostrarToast(msg){
+  // Toast simples em baixo (mensagens leves)
+  esconderToastEspecial();
   const el = document.getElementById('toast');
   if(!el) return;
-  el.classList.add('marco-mt');
-  el.textContent = '🎉 +' + mt + ' MT creditados na tua conta Desafio MOZ!\nNível ' + nivel + ' concluído — o prémio já foi entregue.';
+  el.className = 'toast';
+  el.textContent = msg;
   el.classList.add('mostrar');
   clearTimeout(toastTimeout);
   toastTimeout = setTimeout(function(){
     el.classList.remove('mostrar');
-    el.classList.remove('marco-mt');
-  }, 30000); // 30 segundos + aura forte
+  }, 2200);
+}
+
+function posicionarToastEspecial(){
+  var el = document.getElementById('toast-especial');
+  if(!el) return;
+  var caixa = document.querySelector('.objetivos-caixa');
+  if(caixa && caixa.offsetParent !== null){
+    var r = caixa.getBoundingClientRect();
+    el.style.top = Math.round(r.bottom + 8) + 'px';
+  } else {
+    el.style.top = '150px';
+  }
+}
+
+function esconderToastEspecial(){
+  var el = document.getElementById('toast-especial');
+  if(!el) return;
+  clearTimeout(toastEspecialTimeout);
+  el.classList.remove('mostrar');
+  // espera o fade e só depois limpa o texto (evita letras a ficar visíveis)
+  setTimeout(function(){
+    if(!el.classList.contains('mostrar')){
+      el.className = 'toast-especial';
+      el.textContent = '';
+    }
+  }, 280);
+}
+
+function mostrarToastEspecial(msg, tipo, ms){
+  // Abaixo dos objetivos — não tapa as peças; esconde o toast antigo
+  esconderToastAntigo();
+  clearTimeout(toastTimeout);
+  clearTimeout(toastEspecialTimeout);
+  var el = document.getElementById('toast-especial');
+  if(!el) return;
+  posicionarToastEspecial();
+  el.className = 'toast-especial tipo-' + (tipo || 'ajuda');
+  el.textContent = msg;
+  void el.offsetWidth;
+  el.classList.add('mostrar');
+  toastEspecialTimeout = setTimeout(function(){
+    esconderToastEspecial();
+  }, ms || 4000);
+}
+
+function mostrarToastAjuda(msg){
+  mostrarToastEspecial(msg, 'ajuda', 4500);
+}
+
+function mostrarToastAviso(msg){
+  mostrarToastEspecial(msg, 'aviso', 4500);
+}
+
+function mostrarToastSucesso(msg){
+  mostrarToastEspecial(msg, 'sucesso', 4000);
+}
+
+function mostrarAvisoMarcoMt(mt, nivel){
+  mostrarToastEspecial(
+    '🎉 +' + mt + ' MT creditados na tua conta Desafio MOZ!\nNível ' + nivel + ' concluído — o prémio já foi entregue.',
+    'marco',
+    30000
+  );
 }
 
 function entrarNoMapa(){
@@ -2387,11 +2508,11 @@ document.getElementById('btn-checkout-tentar-de-novo').addEventListener('click',
 document.getElementById('btn-checkout-confirmar').addEventListener('click', async ()=>{
   const telefone = document.getElementById('checkout-telefone').value.trim();
   if(!/^\+258\d{9}$/.test(telefone)){
-    mostrarToast('Número inválido — usa o formato +258841234567');
+    mostrarToastAviso('⚠️ Número inválido!\nUsa o formato +258841234567');
     return;
   }
   if(!emailJogador){
-    mostrarToast('Precisas de iniciar sessão no site para comprar');
+    mostrarToastAviso('⚠️ Sessão necessária!\nInicia sessão no site para comprar');
     return;
   }
   mostrarPassoCheckout('aguardar');
@@ -2507,7 +2628,7 @@ async function aplicarCompraConfirmada(item){
     document.getElementById('overlay-oferta-jogadas').classList.remove('ativo');
     bloqueado = false;
     fecharCheckout();
-    mostrarToast('+20 jogadas! Continua a jogar 🎯');
+    mostrarToastSucesso('🎯 +20 jogadas!\nContinua a jogar este nível');
     return;
   }
   await carregarEstado(); // recarrega o saldo atualizado da conta
@@ -2536,12 +2657,12 @@ document.getElementById('btn-semvidas-loja').addEventListener('click', ()=>{
 
 document.getElementById('btn-comprar-vidas').addEventListener('click', ()=>{
   if(vidas>=VIDAS_MAX){
-    mostrarToast('Já tens as 5 vidas completas');
+    mostrarToastAviso('❤️ Já tens as 5 vidas completas');
     return;
   }
   if(!ehCriador && !moedasInfinitas){
     if(moedasTotais<PRECO_VIDAS_MOEDAS){
-      mostrarToast('Moedas insuficientes — precisas de ' + PRECO_VIDAS_MOEDAS + ' 🪙');
+      mostrarToastAviso('⚠️ Moedas insuficientes!\nPrecisas de ' + PRECO_VIDAS_MOEDAS + ' 🪙 para comprar vidas');
       return;
     }
     moedasTotais -= PRECO_VIDAS_MOEDAS;
@@ -2551,14 +2672,14 @@ document.getElementById('btn-comprar-vidas').addEventListener('click', ()=>{
   salvarEstado();
   atualizarVidasUI();
   document.getElementById('loja-moedas').textContent = (ehCriador||moedasInfinitas) ? '∞' : moedasTotais;
-  mostrarToast('5 vidas compradas! 🎉');
+  mostrarToastSucesso('🎉 5 vidas compradas!\nAs tuas vidas estão completas');
 });
 
 const PRECO_AJUDAS_MOEDAS = 5;
 document.getElementById('btn-comprar-ajudas').addEventListener('click', ()=>{
   if(!ehCriador && !moedasInfinitas){
     if(moedasTotais<PRECO_AJUDAS_MOEDAS){
-      mostrarToast('Moedas insuficientes — precisas de ' + PRECO_AJUDAS_MOEDAS + ' 🪙');
+      mostrarToastAviso('⚠️ Moedas insuficientes!\nPrecisas de ' + PRECO_AJUDAS_MOEDAS + ' 🪙 para comprar ajudas');
       return;
     }
     moedasTotais -= PRECO_AJUDAS_MOEDAS;
@@ -2567,14 +2688,14 @@ document.getElementById('btn-comprar-ajudas').addEventListener('click', ()=>{
   salvarEstado();
   document.getElementById('loja-moedas').textContent = (ehCriador||moedasInfinitas) ? '∞' : moedasTotais;
   atualizarBotaoAjuda();
-  mostrarToast('10 ajudas compradas! 💡');
+  mostrarToastSucesso('💡 10 ajudas compradas!\nJá podes usar no tabuleiro');
 });
 
 const PRECO_JOGADAS_MOEDAS = 20;
 document.getElementById('btn-comprar-jogadas').addEventListener('click', ()=>{
   if(!ehCriador && !moedasInfinitas){
     if(moedasTotais<PRECO_JOGADAS_MOEDAS){
-      mostrarToast('Moedas insuficientes — precisas de ' + PRECO_JOGADAS_MOEDAS + ' 🪙');
+      mostrarToastAviso('⚠️ Moedas insuficientes!\nPrecisas de ' + PRECO_JOGADAS_MOEDAS + ' 🪙 para comprar jogadas');
       return;
     }
     moedasTotais -= PRECO_JOGADAS_MOEDAS;
@@ -2582,7 +2703,7 @@ document.getElementById('btn-comprar-jogadas').addEventListener('click', ()=>{
   jogadasExtraArmazenadas += 10;
   salvarEstado();
   document.getElementById('loja-moedas').textContent = (ehCriador||moedasInfinitas) ? '∞' : moedasTotais;
-  mostrarToast('10 jogadas extra guardadas — entram no próximo nível! 🎯');
+  mostrarToastSucesso('🎯 10 jogadas extra guardadas!\nEntram no próximo nível');
 });
 
 function iniciarNivel(n){
