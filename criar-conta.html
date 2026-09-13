@@ -397,8 +397,47 @@
       var params = new URLSearchParams(window.location.search);
       var ref = params.get('ref');
       if (ref) localStorage.setItem('refPendente', ref.trim().toUpperCase());
+      // Link de influencer: ?inf=CODIGO
+      var inf = params.get('inf');
+      if (inf) localStorage.setItem('infPendente', inf.trim().toUpperCase());
     } catch (e) {}
   })();
+
+  // Credita o influencer: +1 convidado; a cada 1000 → +200 MT (1600 pts)
+  async function creditarInfluencer(emailNovo) {
+    try {
+      var infCodigo = (localStorage.getItem('infPendente') || '').trim().toUpperCase();
+      if (!infCodigo) return;
+      var snap = await db.collection('usuarios').where('codigoInfluencer', '==', infCodigo).limit(1).get();
+      if (snap.empty) {
+        localStorage.removeItem('infPendente');
+        return;
+      }
+      var ref = snap.docs[0].ref;
+      var d = snap.docs[0].data() || {};
+      // não contar se o próprio influencer se registar com o link
+      if ((d.email || '').toLowerCase() === (emailNovo || '').toLowerCase()) {
+        localStorage.removeItem('infPendente');
+        return;
+      }
+      var total = (d.influencerConvidados || 0) + 1;
+      var premios = d.influencerPremios || 0;
+      var pontos = d.pontos || 0;
+      var upd = {
+        influencerConvidados: total,
+        ultimaAtualizacao: new Date().toISOString()
+      };
+      // Meta de 1000 pessoas → 200 MT = 1600 pontos
+      if (total > 0 && total % 1000 === 0) {
+        upd.influencerPremios = premios + 1;
+        upd.pontos = pontos + 1600;
+      }
+      await ref.update(upd);
+      localStorage.removeItem('infPendente');
+    } catch (e) {
+      console.error('creditarInfluencer', e);
+    }
+  }
 
   function mostrarAviso(texto, tipo) {
     aviso.innerHTML = texto;
@@ -490,10 +529,14 @@
           pesquisaOpiniaoCompleta: false,
           pesquisaHabitosCompleta: false,
           codigoIndicacao: meuCodigo,
-          criadoEm: new Date().toISOString()
+          criadoEm: new Date().toISOString(),
+          dataCadastro: new Date().toISOString()
         };
+        var infG = (localStorage.getItem('infPendente') || '').trim().toUpperCase();
+        if (infG) dadosNovo.indicadoPorInfluencer = infG;
         var novoRef = await db.collection('usuarios').add(dadosNovo);
         usuario = dadosNovo;
+        await creditarInfluencer(email);
       } else {
         usuario = procura.docs[0].data();
       }
@@ -596,6 +639,7 @@
       }
       var params = new URLSearchParams(window.location.search);
       var refCodigo = (params.get('ref') || localStorage.getItem('refPendente') || '').trim().toUpperCase();
+      var infCodigo = (params.get('inf') || localStorage.getItem('infPendente') || '').trim().toUpperCase();
       var meuCodigo = 'MOZ' + hashCode(email).toString(36).toUpperCase().substring(0, 8);
       var senhaHash = await hashSenha(senha);
       var dadosNovo = {
@@ -609,6 +653,7 @@
         dataCadastro: new Date().toISOString()
       };
       if (refCodigo) dadosNovo.indicadoPor = refCodigo;
+      if (infCodigo) dadosNovo.indicadoPorInfluencer = infCodigo;
       await db.collection('usuarios').add(dadosNovo);
       if (refCodigo) {
         try {
@@ -635,6 +680,8 @@
         } catch (eInd) { console.error(eInd); }
         localStorage.removeItem('refPendente');
       }
+      // Programa Influencer: conta no link ?inf=
+      await creditarInfluencer(email);
       localStorage.setItem('nomeUtilizador', nome);
       localStorage.setItem('telUtilizador', telemovel);
       localStorage.setItem('emailUtilizador', email);
