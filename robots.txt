@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://desafiomoz.pages.dev/sitemap.xml
