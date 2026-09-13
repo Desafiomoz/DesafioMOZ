@@ -30,7 +30,7 @@
       background:var(--bg);
       color:var(--texto);
       font-family:'Inter',system-ui,sans-serif;
-      padding:18px 14px 110px;
+      padding:18px 14px 40px;
       overflow-x:hidden;
       position:relative;
     }
@@ -336,21 +336,7 @@
       box-shadow:0 6px 22px rgba(0,200,83,0.4);
     }
 
-    .menu-baixo{
-      position:fixed; bottom:0; left:0; right:0;
-      background:rgba(12,14,20,0.97);
-      border-top:1px solid #1e2430;
-      display:flex; justify-content:space-around; align-items:center;
-      padding:10px 0 12px; z-index:1000;
-      backdrop-filter:blur(10px);
-    }
-    .menu-baixo a{
-      display:flex; flex-direction:column; align-items:center; gap:4px;
-      text-decoration:none; color:#777; font-size:11px; font-weight:500; width:56px;
-    }
-    .menu-baixo a i{ font-size:18px; }
-    .menu-baixo a.ativo{ color:var(--verde-vivo); }
-
+    
     .toast-mini{
       position:fixed; left:50%; bottom:90px; transform:translateX(-50%) translateY(12px);
       background:linear-gradient(135deg,#22FF99,#00C853); color:#04140a;
@@ -371,6 +357,120 @@
       font-size:12px; color:var(--verde-vivo);
       margin-bottom:14px;
     }
+
+    /* Feed AO VIVO (roda comentários + respostas) */
+    .ticker-wrap{
+      position:relative;
+      margin:0 0 18px;
+      border-radius:14px;
+      overflow:hidden;
+      min-height:52px;
+      background:linear-gradient(90deg, rgba(168,85,247,0.2), rgba(0,200,83,0.15), rgba(255,201,77,0.15));
+      border:1px solid rgba(255,255,255,0.1);
+      box-shadow:0 0 24px rgba(168,85,247,0.2);
+      display:flex;
+      align-items:stretch;
+    }
+    .ticker-label{
+      display:flex; align-items:center; justify-content:center;
+      padding:0 12px;
+      background:linear-gradient(90deg, #a855f7, #3b9eff);
+      font-family:'Sora',sans-serif; font-weight:800; font-size:10px;
+      letter-spacing:0.06em; text-transform:uppercase;
+      color:#fff;
+      flex-shrink:0;
+      box-shadow:4px 0 12px rgba(0,0,0,0.3);
+    }
+    .ticker-live{
+      flex:1;
+      padding:10px 12px;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      gap:4px;
+      min-width:0;
+    }
+    .ticker-line{
+      font-size:12.5px;
+      line-height:1.35;
+      color:var(--texto);
+      opacity:0;
+      transform:translateY(6px);
+      transition:opacity .25s ease, transform .25s ease;
+    }
+    .ticker-line.visivel{
+      opacity:1;
+      transform:translateY(0);
+    }
+    .ticker-line b{ color:var(--verde-vivo); }
+    .ticker-line em{ color:var(--ouro); font-style:normal; font-weight:700; }
+    .ticker-line.resp{ color:#c8d0e0; font-size:12px; }
+    .ticker-line.resp::before{ content:'↳ '; color:var(--azul); font-weight:700; }
+
+
+    /* Abas painel / comunidade */
+    .tabs-inf{
+      display:grid; grid-template-columns:1fr 1fr; gap:8px;
+      margin-bottom:16px;
+      background:rgba(0,0,0,0.3);
+      border:1px solid rgba(255,255,255,0.08);
+      border-radius:14px; padding:5px;
+    }
+    .tab-inf{
+      text-align:center; padding:12px 8px; border-radius:10px;
+      font-family:'Sora',sans-serif; font-weight:800; font-size:13px;
+      color:var(--suave); cursor:pointer; border:none; background:transparent;
+    }
+    .tab-inf.ativa{
+      background:linear-gradient(90deg, var(--roxo), var(--azul));
+      color:#fff;
+      box-shadow:0 4px 16px rgba(168,85,247,0.35);
+    }
+    .painel-tab{ display:none; }
+    .painel-tab.ativo{ display:block; animation:sobeTab .3s ease; }
+    @keyframes sobeTab{
+      from{ opacity:0; transform:translateY(8px); }
+      to{ opacity:1; transform:translateY(0); }
+    }
+
+    /* Comentários */
+    .coment{
+      background:rgba(0,0,0,0.28);
+      border:1px solid rgba(255,255,255,0.07);
+      border-radius:16px;
+      padding:14px;
+      margin-bottom:12px;
+    }
+    .coment-topo{
+      display:flex; align-items:center; gap:10px; margin-bottom:8px;
+    }
+    .coment-avatar{
+      width:36px; height:36px; border-radius:12px;
+      display:flex; align-items:center; justify-content:center;
+      font-weight:800; font-size:14px; color:#04140a;
+      background:linear-gradient(135deg, var(--verde-vivo), var(--azul));
+      flex-shrink:0;
+    }
+    .coment-avatar.tiktok{ background:linear-gradient(135deg, #ff0050, #00f2ea); color:#fff; }
+    .coment-avatar.fb{ background:linear-gradient(135deg, #1877f2, #3b9eff); color:#fff; }
+    .coment-avatar.jogo{ background:linear-gradient(135deg, var(--ouro), #ff9a3c); }
+    .coment-avatar.cinza{ background:linear-gradient(135deg, #6b7280, #9ca3af); }
+    .coment-nome{ font-weight:700; font-size:13.5px; }
+    .coment-tag{ font-size:10.5px; color:var(--suave); }
+    .coment-txt{ font-size:13px; line-height:1.5; color:#d8deea; }
+    .coment-txt b{ color:var(--verde-vivo); }
+    .resposta{
+      margin:10px 0 0 18px;
+      padding:10px 12px;
+      border-left:3px solid rgba(34,255,153,0.45);
+      background:rgba(34,255,153,0.06);
+      border-radius:0 12px 12px 0;
+    }
+    .resposta .coment-topo{ margin-bottom:4px; }
+    .resposta .coment-avatar{ width:28px; height:28px; font-size:11px; border-radius:9px; }
+    .resposta .coment-txt{ font-size:12.5px; }
+    .resposta.apoio{ border-left-color:rgba(59,158,255,0.5); background:rgba(59,158,255,0.07); }
+    .resposta.jogo-r{ border-left-color:rgba(255,201,77,0.5); background:rgba(255,201,77,0.07); }
   </style>
 </head>
 <body>
@@ -382,6 +482,22 @@
       <p>Partilha o teu <b>link único</b>, traz amigos e seguidores para o Desafio MOZ e sobe no ranking dos top influencers.</p>
     </div>
 
+    <!-- Feed AO VIVO -->
+    <div class="ticker-wrap" aria-live="polite">
+      <div class="ticker-label">AO VIVO</div>
+      <div class="ticker-live" id="ticker-live">
+        <div class="ticker-line" id="ticker-q"></div>
+        <div class="ticker-line resp" id="ticker-a"></div>
+      </div>
+    </div>
+
+    <!-- Abas -->
+    <div class="tabs-inf">
+      <button type="button" class="tab-inf ativa" data-tab="painel">Meu painel</button>
+      <button type="button" class="tab-inf" data-tab="comunidade">Comunidade</button>
+    </div>
+
+    <div id="tab-painel" class="painel-tab ativo">
     <!-- Sem login -->
     <div id="bloco-login" class="card aviso-login" style="display:none;">
       <div style="font-size:42px;margin-bottom:8px;">🌟</div>
@@ -470,18 +586,160 @@
       </div>
 
     </div>
+    </div><!-- /tab-painel -->
+
+    <div id="tab-comunidade" class="painel-tab">
+      <div class="card">
+        <h2><i class="fas fa-comments"></i> O que a comunidade diz</h2>
+        <p style="font-size:12px;color:var(--suave);margin-bottom:14px;">Comentários reais de quem está a experimentar o programa e o Homejub.</p>
+
+        <div class="coment">
+          <div class="coment-topo">
+            <div class="coment-avatar fb">C</div>
+            <div>
+              <div class="coment-nome">Carla · Maputo</div>
+              <div class="coment-tag">Facebook · há 2 h</div>
+            </div>
+          </div>
+          <div class="coment-txt">Essa cena de influencer é divertida para mim. Eu tinha vários seguidores no Facebook e <b>não ganhava nada</b> lá. Com este site tenho a chance de ganhar um dinheiro extra — até agora já ganhei <b>1000 MT</b> com o Desafio MOZ.</div>
+        </div>
+
+        <div class="coment">
+          <div class="coment-topo">
+            <div class="coment-avatar tiktok">B</div>
+            <div>
+              <div class="coment-nome">Bruno · Beira</div>
+              <div class="coment-tag">TikTok · há 5 h</div>
+            </div>
+          </div>
+          <div class="coment-txt">Eu sou influencer no TikTok — então a cada semana posso trazer <b>1000 utilizadores</b>. É moleza se fores constante nas publicações.</div>
+        </div>
+
+        <div class="coment">
+          <div class="coment-topo">
+            <div class="coment-avatar jogo">S</div>
+            <div>
+              <div class="coment-nome">Sónia · Nampula</div>
+              <div class="coment-tag">Influencer + Homejub · ontem</div>
+            </div>
+          </div>
+          <div class="coment-txt">Eu ganho no influencer aqui no Desafio MOZ e com o jogo <b>Homejub</b> — gosto daquele jogo. Já fatuei <b>600 MT</b> só com ele.</div>
+        </div>
+
+        <div class="coment">
+          <div class="coment-topo">
+            <div class="coment-avatar cinza">J</div>
+            <div>
+              <div class="coment-nome">João · Matola</div>
+              <div class="coment-tag">Poucos seguidores · há 3 h</div>
+            </div>
+          </div>
+          <div class="coment-txt">Eu não sou famoso nas redes sociais. É difícil chegar aos 1000, mas <b>não vou desistir</b>.</div>
+
+          <div class="resposta apoio">
+            <div class="coment-topo">
+              <div class="coment-avatar" style="background:linear-gradient(135deg,#3b9eff,#a855f7);color:#fff;">M</div>
+              <div>
+                <div class="coment-nome">Mário</div>
+                <div class="coment-tag">respondeu a João</div>
+              </div>
+            </div>
+            <div class="coment-txt">Exactamente meu irmão — <b>não desistas</b>. Um a um a contagem sobe.</div>
+          </div>
+
+          <div class="resposta">
+            <div class="coment-topo">
+              <div class="coment-avatar" style="background:linear-gradient(135deg,#22FF99,#00C853);">A</div>
+              <div>
+                <div class="coment-nome">António</div>
+                <div class="coment-tag">respondeu a João</div>
+              </div>
+            </div>
+            <div class="coment-txt">Irmão, relaxa — um dia chegas. Experimenta também outras formas de ganhar no Desafio MOZ (tarefas, ofertas, Homejub).</div>
+          </div>
+        </div>
+
+        <div class="coment">
+          <div class="coment-topo">
+            <div class="coment-avatar jogo">Ca</div>
+            <div>
+              <div class="coment-nome">Carlos · Quelimane</div>
+              <div class="coment-tag">Homejub first · há 6 h</div>
+            </div>
+          </div>
+          <div class="coment-txt">Influencer do fora — prefiro o jogo <b>Homejub</b>. É mais fácil ganhar do que convidar pessoas.</div>
+
+          <div class="resposta jogo-r">
+            <div class="coment-topo">
+              <div class="coment-avatar jogo">Jo</div>
+              <div>
+                <div class="coment-nome">Joana</div>
+                <div class="coment-tag">respondeu a Carlos</div>
+              </div>
+            </div>
+            <div class="coment-txt">Aquele jogo é bom, gostei! Até agora estou no <b>nível 250</b>, quase a sacar — vou comprar desbloqueio de nível 😝🥰</div>
+          </div>
+
+          <div class="resposta jogo-r">
+            <div class="coment-topo">
+              <div class="coment-avatar" style="background:linear-gradient(135deg,#ff4d9e,#a855f7);color:#fff;">P</div>
+              <div>
+                <div class="coment-nome">Pedro</div>
+                <div class="coment-tag">respondeu a Joana</div>
+              </div>
+            </div>
+            <div class="coment-txt">Genial — eu fiz isso várias vezes e <b>já saquei</b>.</div>
+          </div>
+        </div>
+
+        <div class="coment">
+          <div class="coment-topo">
+            <div class="coment-avatar" style="background:linear-gradient(135deg,#ff9a3c,#ffc94d);">F</div>
+            <div>
+              <div class="coment-nome">Fátima · Tete</div>
+              <div class="coment-tag">WhatsApp · há 1 d</div>
+            </div>
+          </div>
+          <div class="coment-txt">Não tenho milhares de seguidores. Partilho o link no grupo da família e dos colegas — a contagem sobe devagar, mas sobe.</div>
+          <div class="resposta apoio">
+            <div class="coment-topo">
+              <div class="coment-avatar" style="background:linear-gradient(135deg,#22FF99,#3b9eff);">R</div>
+              <div>
+                <div class="coment-nome">Rui</div>
+                <div class="coment-tag">respondeu a Fátima</div>
+              </div>
+            </div>
+            <div class="coment-txt">Isso mesmo. Combina influencer + <b>Homejub</b> + tarefas — assim não dependes só de um caminho.</div>
+          </div>
+        </div>
+
+        <div class="coment">
+          <div class="coment-topo">
+            <div class="coment-avatar cinza">L</div>
+            <div>
+              <div class="coment-nome">Lucas · Xai-Xai</div>
+              <div class="coment-tag">Céptico · há 8 h</div>
+            </div>
+          </div>
+          <div class="coment-txt">Parece difícil chegar a 1000. Ainda estou a ver se vale a pena.</div>
+          <div class="resposta">
+            <div class="coment-topo">
+              <div class="coment-avatar fb">N</div>
+              <div>
+                <div class="coment-nome">Nádia</div>
+                <div class="coment-tag">respondeu a Lucas</div>
+              </div>
+            </div>
+            <div class="coment-txt">Vale a pena experimentar sem pressão. Enquanto convidas, joga o <b>Homejub</b> — muita gente saca por aí mais depressa.</div>
+          </div>
+        </div>
+
+      </div>
+    </div><!-- /tab-comunidade -->
   </div>
 
   <div class="toast-mini" id="toast-mini"></div>
 
-  <div class="menu-baixo">
-    <a href="desafios.html"><i class="fas fa-home"></i> Início</a>
-    <a href="tarefas.html"><i class="fas fa-tasks"></i> Tarefas</a>
-    <a href="saques.html"><i class="fas fa-wallet"></i> Sacar</a>
-    <a href="ofertas.html"><i class="fas fa-gift"></i> Ofertas</a>
-    <a href="online.html"><i class="fas fa-gamepad"></i> Online</a>
-    <a href="influencer.html" class="ativo"><i class="fas fa-star"></i> Influencer</a>
-  </div>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
@@ -667,6 +925,54 @@
     var texto = 'Olá! Entra no *Desafio MOZ* — ganha pontos e saca por M-Pesa / e-Mola 🇲🇿\nUsa o meu link:\n' + meuLink;
     window.open('https://wa.me/?text=' + encodeURIComponent(texto), '_blank');
   });
+
+
+  document.querySelectorAll('.tab-inf').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      document.querySelectorAll('.tab-inf').forEach(function(b){ b.classList.remove('ativa'); });
+      document.querySelectorAll('.painel-tab').forEach(function(p){ p.classList.remove('ativo'); });
+      btn.classList.add('ativa');
+      var id = btn.getAttribute('data-tab');
+      var painel = document.getElementById('tab-' + id);
+      if(painel) painel.classList.add('ativo');
+    });
+  });
+
+
+  // AO VIVO — pergunta + resposta a rodar depressa
+  (function rodarAoVivo(){
+    var pares = [
+      { q: '❓ <em>Ana</em>: alguém já recebeu os <b>200 meticais</b> da meta?', a: '<em>Paulo</em>: eu recebi ontem — bateu 1000 no painel e os pontos entraram' },
+      { q: '❓ <em>Rita</em>: no Facebook sozinho nunca ganhei nada… isto funciona?', a: '<em>Carla</em>: no Facebook sozinho nunca — unindo Facebook com o <b>Desafio MOZ</b> dá para faturar sem stress' },
+      { q: '❓ <em>Ivo</em>: e quem tem poucos seguidores?', a: '<em>Nela</em>: eu também tinha poucos — partilho no WhatsApp e a barra sobe aos poucos' },
+      { q: '❓ <em>Sara</em>: o link único aparece onde?', a: '<em>Tito</em>: na aba Influencer, depois de entrares na conta — copias e envias' },
+      { q: '❓ <em>Ben</em>: vale mais a pena influencer ou o Homejub?', a: '<em>Diana</em>: os dois — eu misturo e rende mais do que só um' },
+      { q: '❓ <em>Miguel</em>: alguém já sacou por causa do Homejub?', a: '<em>Cláudia</em>: eu já — jogo + tarefas e saquei sem drama' },
+      { q: '❓ <em>Yara</em>: o ranking demora a actualizar?', a: '<em>Dino</em>: actualiza quando se registam com o teu link — calma que sobes' },
+      { q: '❓ <em>Omar</em>: TikTok ajuda mesmo?', a: '<em>Bruno</em>: ajuda — um vídeo bom traz contas novas para o site' },
+      { q: '❓ <em>Lucas</em>: 1000 pessoas parece longe…', a: '<em>António</em>: parece, mas não desistas — e joga Homejub enquanto convidas' },
+      { q: '❓ <em>Elsa</em>: posso partilhar no grupo da família?', a: '<em>Fátima</em>: podes — eu fiz isso e já tenho dezenas no painel' }
+    ];
+    var i = 0;
+    var elQ = document.getElementById('ticker-q');
+    var elA = document.getElementById('ticker-a');
+    if(!elQ || !elA) return;
+
+    function mostrar(){
+      var p = pares[i % pares.length];
+      elQ.classList.remove('visivel');
+      elA.classList.remove('visivel');
+      setTimeout(function(){
+        elQ.innerHTML = p.q;
+        elA.innerHTML = p.a;
+        elQ.classList.add('visivel');
+        elA.classList.add('visivel');
+      }, 200);
+      i++;
+    }
+    mostrar();
+    setInterval(mostrar, 7000); // troca a cada 7 segundos
+  })();
 
   init();
 })();

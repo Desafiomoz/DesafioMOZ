@@ -31,6 +31,7 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             min-height: 100vh;
             padding: 18px 15px 100px;
+            overflow-x: hidden;
         }
         .menu-baixo {
             position: fixed;
@@ -210,6 +211,211 @@
             line-height: 1.5;
             padding: 0 8px;
         }
+
+        /* Carrossel horizontal: Ofertas | Influencer */
+        .swipe-hint {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 12px;
+            font-size: 12px;
+            color: #8e9bb8;
+        }
+        .swipe-hint i { color: #22FF99; animation: setaMove 1.2s ease-in-out infinite; }
+        @keyframes setaMove {
+            0%, 100% { transform: translateX(0); opacity: 0.7; }
+            50% { transform: translateX(6px); opacity: 1; }
+        }
+        .tabs-swipe {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 14px;
+            background: rgba(0,0,0,0.28);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 14px;
+            padding: 5px;
+        }
+        .tab-swipe {
+            flex: 1;
+            text-align: center;
+            padding: 11px 8px;
+            border-radius: 10px;
+            border: none;
+            background: transparent;
+            color: #8e9bb8;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .tab-swipe.ativa {
+            background: linear-gradient(90deg, #00C853, #22FF99);
+            color: #04140a;
+            box-shadow: 0 4px 14px rgba(0,200,83,0.3);
+        }
+        .tab-swipe.inf.ativa {
+            background: linear-gradient(90deg, #a855f7, #3b9eff);
+            color: #fff;
+            box-shadow: 0 4px 14px rgba(168,85,247,0.35);
+        }
+        .carrossel {
+            display: flex;
+            overflow-x: auto;
+            overflow-y: visible;
+            scroll-snap-type: x mandatory;
+            -webkit-overflow-scrolling: touch;
+            gap: 0;
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            max-width: 100%;
+            scrollbar-width: none;
+            /* evita ver o painel seguinte no canto */
+            overscroll-behavior-x: contain;
+        }
+        .carrossel::-webkit-scrollbar { display: none; }
+        .painel {
+            flex: 0 0 100%;
+            width: 100%;
+            max-width: 100%;
+            min-width: 100%;
+            scroll-snap-align: start;
+            scroll-snap-stop: always;
+            box-sizing: border-box;
+            padding: 0;
+            /* corta qualquer sombra/overflow do painel seguinte */
+            overflow: hidden;
+        }
+
+        /* Painel Influencer */
+        .inf-hero {
+            text-align: center;
+            padding: 8px 4px 18px;
+        }
+        .inf-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: #FFC94D;
+            background: rgba(255,201,77,0.12);
+            border: 1px solid rgba(255,201,77,0.35);
+            padding: 6px 12px;
+            border-radius: 99px;
+            box-shadow: 0 0 18px rgba(255,201,77,0.2);
+        }
+        .inf-badge .dot {
+            width: 7px; height: 7px; border-radius: 50%;
+            background: #22FF99;
+            box-shadow: 0 0 8px #22FF99;
+        }
+        .inf-hero h2 {
+            font-size: 22px;
+            font-weight: 800;
+            margin: 14px 0 8px;
+            line-height: 1.2;
+            background: linear-gradient(105deg, #fff 10%, #22FF99 45%, #FFC94D 75%, #ff4d9e 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        .inf-hero p {
+            color: #A8B0C8;
+            font-size: 13.5px;
+            line-height: 1.5;
+        }
+        .inf-hero p b { color: #22FF99; }
+        .inf-card {
+            background: linear-gradient(160deg, rgba(40,28,55,0.95), rgba(18,22,36,0.98));
+            border: 1px solid rgba(168,85,247,0.35);
+            border-radius: 20px;
+            padding: 18px 16px;
+            margin-bottom: 14px;
+            box-shadow: 0 10px 32px rgba(0,0,0,0.35), 0 0 28px rgba(168,85,247,0.12);
+        }
+        .inf-card h3 {
+            font-size: 15px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .inf-card h3 i { color: #a855f7; }
+        .inf-ponto {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+            align-items: flex-start;
+        }
+        .inf-ponto .num {
+            width: 28px; height: 28px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #a855f7, #3b9eff);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 13px; font-weight: 800;
+            flex-shrink: 0;
+        }
+        .inf-ponto p {
+            font-size: 13px;
+            color: #A8B0C8;
+            line-height: 1.45;
+        }
+        .inf-ponto p b { color: #fff; }
+        .inf-premio {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            background: linear-gradient(135deg, rgba(255,201,77,0.15), rgba(255,77,158,0.1));
+            border: 1px solid rgba(255,201,77,0.35);
+            border-radius: 16px;
+            padding: 14px;
+            margin-bottom: 16px;
+        }
+        .inf-premio-ico {
+            width: 52px; height: 52px;
+            border-radius: 16px;
+            background: linear-gradient(145deg, #FFC94D, #ff9a3c);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 0 22px rgba(255,201,77,0.45);
+            flex-shrink: 0;
+        }
+        .inf-premio h4 { font-size: 15px; margin-bottom: 4px; }
+        .inf-premio p { font-size: 12.5px; color: #A8B0C8; line-height: 1.4; }
+        .inf-premio p b { color: #FFC94D; }
+        .btn-participar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: 800;
+            color: #fff;
+            text-decoration: none;
+            background: linear-gradient(135deg, #a855f7, #3b9eff, #22FF99);
+            background-size: 200% 100%;
+            box-shadow: 0 8px 28px rgba(168,85,247,0.45);
+            animation: btnShine 3s ease infinite;
+        }
+        @keyframes btnShine {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        .inf-nota {
+            text-align: center;
+            font-size: 12px;
+            color: #6b7388;
+            margin-top: 14px;
+            line-height: 1.45;
+        }
     </style>
 </head>
 <body>
@@ -221,6 +427,17 @@
             <p>Escolha uma opção abaixo e ganhe pontos extra na sua conta</p>
         </div>
     </div>
+
+    <div class="tabs-swipe">
+        <button type="button" class="tab-swipe ativa" data-painel="0">Ofertas</button>
+        <button type="button" class="tab-swipe inf" data-painel="1">Influencer</button>
+    </div>
+    <div class="swipe-hint"><i class="fas fa-hand-point-right"></i> Desliza para a direita → Programa Influencer</div>
+
+    <div class="carrossel" id="carrossel-ofertas">
+
+        <!-- PAINEL 1: Ofertas (sem alterar conteúdo) -->
+        <div class="painel" id="painel-ofertas">
 
     <div class="aviso">
         Toque numa oferta para abrir. Complete até ao fim e os pontos entram <b>automaticamente</b> na sua conta (pode demorar alguns minutos após a confirmação).
@@ -331,6 +548,54 @@
         Evite fechar a página a meio da oferta.
     </p>
 
+        </div><!-- /painel-ofertas -->
+
+        <!-- PAINEL 2: Programa Influencer -->
+        <div class="painel" id="painel-influencer">
+            <div class="inf-hero">
+                <span class="inf-badge"><span class="dot"></span> Novo programa</span>
+                <h2>Programa Influencer</h2>
+                <p>Para <b>todos</b> os que têm conta nas redes sociais — Facebook, TikTok, Instagram, WhatsApp… Não precisas de ser famoso.</p>
+            </div>
+
+            <div class="inf-premio">
+                <div class="inf-premio-ico">💰</div>
+                <div>
+                    <h4>200 MT a cada 1000 pessoas</h4>
+                    <p>Cada vez que <b>1000 pessoas</b> criarem conta com o teu link único, recebes <b>200 meticais</b> na conta Desafio MOZ.</p>
+                </div>
+            </div>
+
+            <div class="inf-card">
+                <h3><i class="fas fa-star"></i> O que precisas de saber</h3>
+                <div class="inf-ponto">
+                    <div class="num">1</div>
+                    <p><b>Qualquer pessoa pode participar</b> — basta teres conta no site e uma rede social para partilhar o teu link.</p>
+                </div>
+                <div class="inf-ponto">
+                    <div class="num">2</div>
+                    <p><b>Recebes um link único</b> na página Influencer. Só contam registos feitos com esse link.</p>
+                </div>
+                <div class="inf-ponto">
+                    <div class="num">3</div>
+                    <p><b>Vês o progresso em tempo real</b>: quantas pessoas entraram, quantas faltam para os 200 MT e o ranking.</p>
+                </div>
+                <div class="inf-ponto">
+                    <div class="num">4</div>
+                    <p><b>Podes combinar</b> com o jogo Homejub e as ofertas — quantas mais formas usares, mais depressa sacas.</p>
+                </div>
+            </div>
+
+            <a class="btn-participar" href="influencer.html">
+                <i class="fas fa-rocket"></i>
+                Participar no programa
+                <i class="fas fa-arrow-right"></i>
+            </a>
+            <p class="inf-nota">Ao tocar em Participar vais para a página do programa,<br>onde geras o teu link e segues o ranking.</p>
+        </div><!-- /painel-influencer -->
+
+    </div><!-- /carrossel -->
+
     <script>
         (function () {
             var email = localStorage.getItem('emailUtilizador') ||
@@ -372,6 +637,46 @@
 
             // Offerwall.ad → usa href="offerwall-ad.html" (página intermédia)
         })();
+
+        // Abas + deslize horizontal Ofertas | Influencer
+        (function () {
+            var car = document.getElementById('carrossel-ofertas');
+            var tabs = document.querySelectorAll('.tab-swipe');
+            if (!car || !tabs.length) return;
+
+            function irPara(idx) {
+                var painel = car.children[idx];
+                if (painel) painel.scrollIntoView({ behavior: 'smooth', inline: 'start', block: 'nearest' });
+                tabs.forEach(function (t, i) {
+                    t.classList.toggle('ativa', i === idx);
+                });
+            }
+
+            tabs.forEach(function (tab) {
+                tab.addEventListener('click', function () {
+                    irPara(Number(tab.getAttribute('data-painel') || 0));
+                });
+            });
+
+            var scrollTimer = null;
+            car.addEventListener('scroll', function () {
+                var idx = Math.round(car.scrollLeft / Math.max(1, car.clientWidth));
+                tabs.forEach(function (t, i) {
+                    t.classList.toggle('ativa', i === idx);
+                });
+                // ao parar de deslizar, encaixa o painel completo (sem canto a vazar)
+                clearTimeout(scrollTimer);
+                scrollTimer = setTimeout(function () {
+                    var w = car.clientWidth;
+                    if (!w) return;
+                    var alvo = Math.round(car.scrollLeft / w) * w;
+                    if (Math.abs(car.scrollLeft - alvo) > 2) {
+                        car.scrollTo({ left: alvo, behavior: 'smooth' });
+                    }
+                }, 80);
+            }, { passive: true });
+        })();
+
     </script>
 
     <div class="menu-baixo">
