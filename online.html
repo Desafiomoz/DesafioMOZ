@@ -362,9 +362,9 @@
 
 
 <script>
-/* Desafio MOZ – após 20s na página mostra convite ao chat (10s no ecrã). Scroll livre. */
+/* Desafio MOZ – após 40s na página mostra convite ao chat (10s no ecrã). Scroll livre. */
 (function () {
-  var SEGS_ESPERA = 20;
+  var SEGS_ESPERA = 40;
   var SEGS_VISIVEL = 10;
   var MAX_DIA = 2;
   var KEY = 'dmIdleChatV2';
@@ -438,7 +438,7 @@
 
   function arrancar() {
     if (contagem() >= MAX_DIA) return;
-    // 20 segundos na página — scroll para cima/baixo NÃO cancela
+    // 40 segundos na página — scroll para cima/baixo NÃO cancela
     setTimeout(mostrar, SEGS_ESPERA * 1000);
   }
 
