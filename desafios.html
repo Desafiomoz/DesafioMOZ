@@ -820,77 +820,93 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
 </script>
 <script src="notificacoes-chat.js?v=5"></script>
 
-<script>
-/* Desafio MOZ – convite bate-papo após 20s (inline, fiável) */
-(function () {
-  try {
-    var MAX = 2;
-    var SEGS = 20;
-    function dia() {
-      var d = new Date();
-      return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
-    }
-    function contagem() {
-      try {
-        var o = JSON.parse(localStorage.getItem('dmIdleChat') || '{}');
-        if (o.dia !== dia()) return 0;
-        return Number(o.n) || 0;
-      } catch (e) { return 0; }
-    }
-    if (contagem() >= MAX) return;
 
-    function css() {
-      if (document.getElementById('dm-idle-inline-css')) return;
+<script>
+/* Desafio MOZ – após 20s na página mostra convite ao chat (10s no ecrã). Scroll livre. */
+(function () {
+  var SEGS_ESPERA = 20;
+  var SEGS_VISIVEL = 10;
+  var MAX_DIA = 2;
+  var KEY = 'dmIdleChatV2';
+
+  function dia() {
+    var d = new Date();
+    return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+  }
+  function contagem() {
+    try {
+      var o = JSON.parse(localStorage.getItem(KEY) || '{}');
+      if (o.dia !== dia()) return 0;
+      return Number(o.n) || 0;
+    } catch (e) { return 0; }
+  }
+  function somar() {
+    try {
+      localStorage.setItem(KEY, JSON.stringify({ dia: dia(), n: contagem() + 1 }));
+    } catch (e) {}
+  }
+
+  function mostrar() {
+    if (contagem() >= MAX_DIA) return;
+    if (document.getElementById('dm-idle-box')) return;
+    somar();
+
+    if (!document.getElementById('dm-idle-inline-css')) {
       var s = document.createElement('style');
       s.id = 'dm-idle-inline-css';
-      s.textContent = '#dm-idle-box{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%) scale(.94);z-index:999999;max-width:min(400px,92vw);width:100%;opacity:0;pointer-events:none;transition:.35s}' +
-        '#dm-idle-box.on{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1)}' +
-        '#dm-idle-bd{position:fixed;inset:0;z-index:999998;background:rgba(4,6,12,.5);opacity:0;pointer-events:none;transition:.3s}' +
+      s.textContent =
+        '#dm-idle-bd{position:fixed;inset:0;z-index:999998;background:rgba(4,6,12,.5);opacity:0;transition:opacity .3s;pointer-events:none}' +
         '#dm-idle-bd.on{opacity:1;pointer-events:auto}' +
-        '#dm-idle-box .card{border-radius:22px;padding:18px 16px;display:flex;gap:14px;align-items:flex-start;background:linear-gradient(145deg,rgba(48,22,80,.98),rgba(8,42,38,.98));border:2px solid rgba(34,255,153,.65);box-shadow:0 0 40px rgba(168,85,247,.55),0 0 70px rgba(34,255,153,.3),0 20px 50px rgba(0,0,0,.55);animation:dmI 1.8s ease-in-out infinite}' +
-        '@keyframes dmI{0%,100%{box-shadow:0 0 28px rgba(168,85,247,.5)}50%{box-shadow:0 0 48px rgba(34,255,153,.55)}}' +
+        '#dm-idle-box{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%) scale(.94);z-index:999999;max-width:min(400px,92vw);width:100%;opacity:0;pointer-events:none;transition:.35s}' +
+        '#dm-idle-box.on{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1)}' +
+        '#dm-idle-box .card{border-radius:22px;padding:18px 16px;display:flex;gap:14px;align-items:flex-start;background:linear-gradient(145deg,rgba(48,22,80,.98),rgba(8,42,38,.98));border:2px solid rgba(34,255,153,.65);box-shadow:0 0 40px rgba(168,85,247,.55),0 0 70px rgba(34,255,153,.3);animation:dmI2 1.8s ease-in-out infinite}' +
+        '@keyframes dmI2{0%,100%{box-shadow:0 0 28px rgba(168,85,247,.5)}50%{box-shadow:0 0 48px rgba(34,255,153,.55)}}' +
         '#dm-idle-box .ico{width:52px;height:52px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:26px;background:linear-gradient(135deg,#a855f7,#22FF99);flex-shrink:0}' +
         '#dm-idle-box h4{margin:0 0 6px;font-size:16px;font-weight:800;background:linear-gradient(90deg,#fff,#22FF99,#FFC94D);-webkit-background-clip:text;background-clip:text;color:transparent}' +
         '#dm-idle-box p{margin:0;font-size:13.5px;color:#d5dbe8;line-height:1.45}' +
         '#dm-idle-box b{color:#22FF99}' +
-        '#dm-idle-box a{margin-top:14px;display:inline-flex;padding:12px 18px;border-radius:14px;font-size:14px;font-weight:800;color:#04140a;text-decoration:none;background:linear-gradient(90deg,#22FF99,#a855f7)}' +
-        '#dm-idle-box .x{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#ddd;border-radius:10px;font-size:18px;padding:4px 10px;cursor:pointer}';
+        '#dm-idle-box a.btn{margin-top:14px;display:inline-flex;padding:12px 18px;border-radius:14px;font-size:14px;font-weight:800;color:#04140a;text-decoration:none;background:linear-gradient(90deg,#22FF99,#a855f7)}' +
+        '#dm-idle-box .x{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#ddd;border-radius:10px;font-size:18px;padding:4px 10px;cursor:pointer;flex-shrink:0}';
       document.head.appendChild(s);
     }
 
-    function mostrar() {
-      if (contagem() >= MAX) return;
-      try {
-        localStorage.setItem('dmIdleChat', JSON.stringify({ dia: dia(), n: contagem() + 1 }));
-      } catch (e) {}
-      css();
-      var bd = document.createElement('div');
-      bd.id = 'dm-idle-bd';
-      var box = document.createElement('div');
-      box.id = 'dm-idle-box';
-      box.innerHTML = '<div class="card"><div class="ico">✨</div><div style="flex:1"><h4>A comunidade está no bate-papo</h4><p>Entra agora, conversa e responde — a sala está <b>ao vivo</b>.</p><a href="chat.html">Ir ao bate-papo</a></div><button type="button" class="x">×</button></div>';
-      document.body.appendChild(bd);
-      document.body.appendChild(box);
-      requestAnimationFrame(function () {
-        bd.classList.add('on');
-        box.classList.add('on');
-      });
-      function fechar() {
-        bd.classList.remove('on');
-        box.classList.remove('on');
-        setTimeout(function () {
-          if (bd.parentNode) bd.parentNode.removeChild(bd);
-          if (box.parentNode) box.parentNode.removeChild(box);
-        }, 350);
-      }
-      box.querySelector('.x').onclick = fechar;
-      bd.onclick = fechar;
-      setTimeout(fechar, 12000);
-    }
+    var bd = document.createElement('div');
+    bd.id = 'dm-idle-bd';
+    var box = document.createElement('div');
+    box.id = 'dm-idle-box';
+    box.innerHTML = '<div class="card"><div class="ico">✨</div><div style="flex:1;min-width:0"><h4>A comunidade está no bate-papo</h4><p>Entra agora, conversa e responde — a sala está <b>ao vivo</b>.</p><a class="btn" href="chat.html">Ir ao bate-papo</a></div><button type="button" class="x" aria-label="Fechar">×</button></div>';
+    document.body.appendChild(bd);
+    document.body.appendChild(box);
 
-    // Exactamente 20 segundos após abrir a página — sem reiniciar
-    setTimeout(mostrar, SEGS * 1000);
-  } catch (err) { console.warn('idle inline', err); }
+    requestAnimationFrame(function () {
+      bd.className = 'on';
+      box.className = 'on';
+    });
+
+    function fechar() {
+      bd.className = '';
+      box.className = '';
+      setTimeout(function () {
+        if (bd.parentNode) bd.parentNode.removeChild(bd);
+        if (box.parentNode) box.parentNode.removeChild(box);
+      }, 300);
+    }
+    box.querySelector('.x').onclick = fechar;
+    bd.onclick = fechar;
+    setTimeout(fechar, SEGS_VISIVEL * 1000);
+  }
+
+  function arrancar() {
+    if (contagem() >= MAX_DIA) return;
+    // 20 segundos na página — scroll para cima/baixo NÃO cancela
+    setTimeout(mostrar, SEGS_ESPERA * 1000);
+  }
+
+  if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    arrancar();
+  } else {
+    document.addEventListener('DOMContentLoaded', arrancar);
+  }
 })();
 </script>
 
