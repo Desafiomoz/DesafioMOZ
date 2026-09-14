@@ -127,7 +127,7 @@
     backdrop.onclick = fechar;
 
     clearTimeout(el._t);
-    el._t = setTimeout(fechar, ms || 15000);
+    el._t = setTimeout(fechar, ms || 30000);
   }
 
   function toastMencao(titulo, texto) {
@@ -142,7 +142,7 @@
         '</div>' +
         '<button type="button" class="dm-toast-x" aria-label="Fechar">×</button>' +
       '</div>',
-      15000
+      30000
     );
   }
 
@@ -261,7 +261,7 @@
 
   function boot() {
     injetaCSS();
-    iniciarIdle();
+    /* idle tratado inline nas páginas */
     escutarMencoes();
   }
 
