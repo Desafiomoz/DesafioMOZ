@@ -229,6 +229,7 @@
     <button class="tab" data-tab="convites" onclick="mudarTab('convites')"><i class="fas fa-user-plus"></i> Convites</button>
     <button class="tab" data-tab="visitantes" onclick="mudarTab('visitantes')"><i class="fas fa-chart-line"></i> Visitantes</button>
     <button class="tab" data-tab="homejub" onclick="mudarTab('homejub')"><i class="fas fa-gamepad"></i> Homejub</button>
+    <button class="tab" data-tab="influencer" onclick="mudarTab('influencer')"><i class="fas fa-star"></i> Influencer</button>
   </div>
 
   <div class="conteudo">
@@ -850,6 +851,68 @@
       </div>
     </div>
 
+
+    <!-- INFLUENCER (ofertas / programa) -->
+    <div class="painel" id="painel-influencer">
+      <div class="form-box">
+        <h3><i class="fas fa-star"></i> Programa Influencer</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:12px;">
+          Quem tem código de influencer, quantos convidados trouxe, prémios de 200 MT (a cada 1000)
+          e quem se registrou com o link <code>?inf=</code> da página de ofertas / influencer.
+        </p>
+        <div class="resumo" style="margin-bottom:14px;">
+          <div class="resumo-card"><div class="num" id="inf-total-codigos">0</div><div class="lbl">Com código</div></div>
+          <div class="resumo-card"><div class="num" id="inf-total-convidados">0</div><div class="lbl">Registos via link</div></div>
+          <div class="resumo-card"><div class="num" id="inf-total-premios">0</div><div class="lbl">Prémios (×200 MT)</div></div>
+          <div class="resumo-card"><div class="num" id="inf-top">0</div><div class="lbl">Máx. convidados</div></div>
+        </div>
+        <div class="busca">
+          <input type="text" id="busca-influencer" placeholder="Pesquisar nome, e-mail ou código..." oninput="filtrarInfluencerAdmin()">
+        </div>
+        <h3 style="color:#00e676;font-size:14px;margin:8px 0 10px;"><i class="fas fa-trophy"></i> Ranking de influencers</h3>
+        <div class="tabela-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Nome</th>
+                <th>E-mail</th>
+                <th>Código</th>
+                <th>Convidados</th>
+                <th>Faltam p/ 1000</th>
+                <th>Prémios</th>
+                <th>MT ganhos*</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-influencer">
+              <tr><td colspan="8" class="vazio">A carregar...</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p style="font-size:11px;color:#666;margin-top:8px;">* Cada prémio = 200 MT (1600 pontos). Meta: 1000 convidados por prémio.</p>
+
+        <h3 style="color:#00e676;font-size:14px;margin:22px 0 10px;"><i class="fas fa-user-plus"></i> Quem entrou com link de influencer</h3>
+        <div class="tabela-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Novo utilizador</th>
+                <th>E-mail</th>
+                <th>Código usado</th>
+                <th>Influencer</th>
+                <th>Pontos</th>
+                <th>Data</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-influencer-rels">
+              <tr><td colspan="7" class="vazio">A carregar...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <script>
@@ -940,6 +1003,7 @@ function mostrarAviso(txt) {
         if (nome === 'missoes') try { renderHorariosMissaoAdmin(); } catch (eH) {}
         if (nome === 'visitantes') try { carregarVisitantes(); } catch (eV) {}
         if (nome === 'homejub') try { carregarHomejub(); } catch (eH) {}
+        if (nome === 'influencer') try { renderInfluencerAdmin(); } catch (eI) {}
       } catch (e) {
         console.error('mudarTab:', e);
         alert('Erro ao abrir separador: ' + (e.message || e));
@@ -956,6 +1020,7 @@ function mostrarAviso(txt) {
         renderConvidarBloqueados();
         renderCheckinBloqueados();
         renderConvitesAdmin();
+        renderInfluencerAdmin();
       } catch (e) { console.error(e); }
       try { await carregarSaques(); } catch (e) { console.error(e); }
       try { await carregarPesquisas(); } catch (e) { console.error(e); }
@@ -2631,6 +2696,116 @@ async function carregarAnunciosTarefasAdmin() {
       } catch (e) {
         alert('Erro: ' + (e.message || e));
       }
+    }
+
+
+    
+    function renderInfluencerAdmin() {
+      var tbody = document.getElementById('tbody-influencer');
+      var tbodyRel = document.getElementById('tbody-influencer-rels');
+      if (!tbody) return;
+      var users = (typeof todosUsers !== 'undefined' ? todosUsers : []).slice();
+
+      var porCodigo = {};
+      users.forEach(function (u) {
+        var c = String(u.codigoInfluencer || '').trim().toUpperCase();
+        if (c) porCodigo[c] = u;
+      });
+
+      // Influencers: têm código ou já têm convidados/prémios
+      var lista = users.filter(function (u) {
+        return !!u.codigoInfluencer || (u.influencerConvidados || 0) > 0 || (u.influencerPremios || 0) > 0;
+      });
+      lista.sort(function (a, b) {
+        return (b.influencerConvidados || 0) - (a.influencerConvidados || 0);
+      });
+
+      var totalCod = 0, totalConv = 0, totalPrem = 0, top = 0;
+      lista.forEach(function (u) {
+        if (u.codigoInfluencer) totalCod++;
+        totalConv += (u.influencerConvidados || 0);
+        totalPrem += (u.influencerPremios || 0);
+        if ((u.influencerConvidados || 0) > top) top = u.influencerConvidados || 0;
+      });
+      // totalConv from sum of influencerConvidados can double-count concept - ok as sum of counters
+      var el1 = document.getElementById('inf-total-codigos');
+      var el2 = document.getElementById('inf-total-convidados');
+      var el3 = document.getElementById('inf-total-premios');
+      var el4 = document.getElementById('inf-top');
+      if (el1) el1.textContent = totalCod || lista.length;
+      if (el2) el2.textContent = totalConv;
+      if (el3) el3.textContent = totalPrem;
+      if (el4) el4.textContent = top;
+
+      if (!lista.length) {
+        tbody.innerHTML = '<tr><td colspan="8" class="vazio">Ainda ninguém no programa influencer.</td></tr>';
+      } else {
+        var html = '';
+        lista.forEach(function (u, i) {
+          var n = u.influencerConvidados || 0;
+          var premios = u.influencerPremios || 0;
+          var ciclo = n % 1000;
+          var faltam = n >= 1000 && ciclo === 0 ? 1000 : (1000 - ciclo);
+          if (n === 0) faltam = 1000;
+          var cls = n >= 1000 ? 'pts-alto' : (n >= 100 ? 'pts-ok' : 'pts-baixo');
+          var rankCls = i === 0 ? 'rank-1' : (i === 1 ? 'rank-2' : (i === 2 ? 'rank-3' : ''));
+          html += '<tr class="' + rankCls + '" data-busca="' + escHtml((u.nome || '') + ' ' + (u.email || '') + ' ' + (u.codigoInfluencer || '')).toLowerCase() + '">' +
+            '<td>' + (i + 1) + '</td>' +
+            '<td>' + escHtml(u.nome || '—') + '</td>' +
+            '<td>' + escHtml(u.email || '—') + '</td>' +
+            '<td><code>' + escHtml(u.codigoInfluencer || '—') + '</code></td>' +
+            '<td class="' + cls + '">' + n + '</td>' +
+            '<td>' + faltam + '</td>' +
+            '<td class="pts-ok">' + premios + '</td>' +
+            '<td class="pts-alto">' + (premios * 200) + ' MT</td>' +
+            '</tr>';
+        });
+        tbody.innerHTML = html;
+      }
+
+      // Relações: indicadoPorInfluencer
+      if (tbodyRel) {
+        var rels = users.filter(function (u) {
+          return !!u.indicadoPorInfluencer;
+        });
+        rels.sort(function (a, b) {
+          return String(b.dataCadastro || b.criadoEm || '').localeCompare(String(a.dataCadastro || a.criadoEm || ''));
+        });
+        if (!rels.length) {
+          tbodyRel.innerHTML = '<tr><td colspan="7" class="vazio">Ninguém se registrou ainda com link de influencer.</td></tr>';
+        } else {
+          var hr = '';
+          rels.forEach(function (u, i) {
+            var cod = String(u.indicadoPorInfluencer || '').toUpperCase();
+            var inf = porCodigo[cod];
+            var nomeInf = inf ? (inf.nome || inf.email) : '—';
+            var dataCad = u.dataCadastro || u.criadoEm || '—';
+            if (dataCad !== '—' && String(dataCad).length > 10) dataCad = String(dataCad).substring(0, 10);
+            hr += '<tr data-busca="' + escHtml((u.nome || '') + ' ' + (u.email || '') + ' ' + cod + ' ' + nomeInf).toLowerCase() + '">' +
+              '<td>' + (i + 1) + '</td>' +
+              '<td>' + escHtml(u.nome || '—') + '</td>' +
+              '<td>' + escHtml(u.email || '—') + '</td>' +
+              '<td><code>' + escHtml(cod || '—') + '</code></td>' +
+              '<td>' + escHtml(nomeInf) + '</td>' +
+              '<td class="pts-ok">' + (u.pontos || 0) + '</td>' +
+              '<td>' + escHtml(dataCad) + '</td>' +
+              '</tr>';
+          });
+          tbodyRel.innerHTML = hr;
+        }
+      }
+    }
+
+    function filtrarInfluencerAdmin() {
+      var q = (document.getElementById('busca-influencer') && document.getElementById('busca-influencer').value || '').trim().toLowerCase();
+      ['tbody-influencer', 'tbody-influencer-rels'].forEach(function (id) {
+        var tb = document.getElementById(id);
+        if (!tb) return;
+        tb.querySelectorAll('tr[data-busca]').forEach(function (tr) {
+          var ok = !q || (tr.getAttribute('data-busca') || '').indexOf(q) !== -1;
+          tr.style.display = ok ? '' : 'none';
+        });
+      });
     }
 
 
