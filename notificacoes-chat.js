@@ -1,5 +1,5 @@
 /**
- * Desafio MOZ – notificações de menção no chat + convite idle
+ * Desafio MOZ – menção no chat + convite idle (centro do ecrã)
  * window.__DM_NOTIF__ = { mencao: true, idle: true, idleSegundos: 20, idleMaxDia: 2 }
  */
 (function () {
@@ -35,42 +35,104 @@
     var s = document.createElement('style');
     s.id = 'dm-notif-css';
     s.textContent = [
-      '#dm-toast-mencao,#dm-toast-idle{position:fixed;left:50%;z-index:99999;transform:translateX(-50%) translateY(-24px);',
-      'max-width:min(440px,94vw);width:100%;opacity:0;pointer-events:none;transition:opacity .4s,transform .4s;}',
-      '#dm-toast-mencao.mostrar,#dm-toast-idle.mostrar{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto;}',
-      '#dm-toast-mencao{top:16px;}',
-      '#dm-toast-idle{bottom:96px;}',
-      '.dm-toast-card{border-radius:20px;padding:16px 16px;display:flex;gap:12px;align-items:flex-start;',
-      'background:linear-gradient(135deg,rgba(48,24,78,.98),rgba(10,48,42,.98));',
-      'border:1.5px solid rgba(34,255,153,.55);',
-      'box-shadow:0 0 32px rgba(168,85,247,.55),0 0 56px rgba(34,255,153,.28),0 14px 44px rgba(0,0,0,.5);',
-      'animation:dmPulse 1.8s ease-in-out infinite;}',
-      '@keyframes dmPulse{0%,100%{box-shadow:0 0 24px rgba(168,85,247,.45),0 0 40px rgba(34,255,153,.2);}',
-      '50%{box-shadow:0 0 40px rgba(34,255,153,.5),0 0 60px rgba(168,85,247,.4);}}',
-      '.dm-toast-ico{width:48px;height:48px;border-radius:16px;flex-shrink:0;display:flex;align-items:center;justify-content:center;',
-      'font-size:24px;background:linear-gradient(135deg,#a855f7,#22FF99);box-shadow:0 0 20px rgba(34,255,153,.45);}',
+      '#dm-toast-mencao,#dm-toast-idle{',
+      'position:fixed;left:50%;top:50%;z-index:999999;',
+      'transform:translate(-50%,-50%) scale(0.92);',
+      'max-width:min(420px,92vw);width:100%;',
+      'opacity:0;pointer-events:none;',
+      'transition:opacity .35s ease,transform .35s ease;',
+      '}',
+      '#dm-toast-mencao.mostrar,#dm-toast-idle.mostrar{',
+      'opacity:1;pointer-events:auto;',
+      'transform:translate(-50%,-50%) scale(1);',
+      '}',
+      '.dm-toast-card{',
+      'border-radius:22px;padding:18px 16px;display:flex;gap:14px;align-items:flex-start;',
+      'background:linear-gradient(145deg,rgba(48,22,80,.98),rgba(8,42,38,.98));',
+      'border:2px solid rgba(34,255,153,.6);',
+      'box-shadow:0 0 40px rgba(168,85,247,.55),0 0 70px rgba(34,255,153,.3),0 20px 50px rgba(0,0,0,.55);',
+      'animation:dmPulse 1.8s ease-in-out infinite;',
+      '}',
+      '@keyframes dmPulse{',
+      '0%,100%{box-shadow:0 0 28px rgba(168,85,247,.5),0 0 50px rgba(34,255,153,.22);}',
+      '50%{box-shadow:0 0 48px rgba(34,255,153,.55),0 0 72px rgba(168,85,247,.45);}',
+      '}',
+      '.dm-toast-ico{',
+      'width:52px;height:52px;border-radius:16px;flex-shrink:0;',
+      'display:flex;align-items:center;justify-content:center;font-size:26px;',
+      'background:linear-gradient(135deg,#a855f7,#22FF99);',
+      'box-shadow:0 0 22px rgba(34,255,153,.5);',
+      '}',
       '.dm-toast-body{flex:1;min-width:0;}',
-      '.dm-toast-body h4{margin:0 0 5px;font-size:15px;font-weight:800;',
-      'background:linear-gradient(90deg,#fff,#22FF99,#FFC94D);-webkit-background-clip:text;background-clip:text;color:transparent;}',
-      '.dm-toast-body p{margin:0;font-size:13px;color:#d0d6e2;line-height:1.45;}',
+      '.dm-toast-body h4{',
+      'margin:0 0 6px;font-size:16px;font-weight:800;',
+      'background:linear-gradient(90deg,#fff,#22FF99,#FFC94D);',
+      '-webkit-background-clip:text;background-clip:text;color:transparent;',
+      '}',
+      '.dm-toast-body p{margin:0;font-size:13.5px;color:#d5dbe8;line-height:1.45;}',
       '.dm-toast-body b{color:#22FF99;}',
-      '.dm-toast-btn{margin-top:12px;display:inline-flex;align-items:center;gap:6px;padding:10px 16px;border-radius:12px;border:none;',
-      'font-size:13px;font-weight:800;cursor:pointer;color:#04140a;',
-      'background:linear-gradient(90deg,#22FF99,#a855f7);box-shadow:0 6px 20px rgba(34,255,153,.4);text-decoration:none;}',
-      '.dm-toast-x{background:transparent;border:none;color:#bbb;font-size:20px;cursor:pointer;padding:2px 8px;line-height:1;}'
+      '.dm-toast-btn{',
+      'margin-top:14px;display:inline-flex;align-items:center;gap:8px;',
+      'padding:12px 18px;border-radius:14px;border:none;',
+      'font-size:14px;font-weight:800;cursor:pointer;color:#04140a;',
+      'background:linear-gradient(90deg,#22FF99,#a855f7);',
+      'box-shadow:0 6px 22px rgba(34,255,153,.45);text-decoration:none;',
+      '}',
+      '.dm-toast-x{',
+      'background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);',
+      'color:#ddd;font-size:18px;cursor:pointer;padding:4px 10px;',
+      'line-height:1;border-radius:10px;flex-shrink:0;',
+      '}',
+      '.dm-toast-backdrop{',
+      'position:fixed;inset:0;z-index:999998;background:rgba(4,6,12,.45);',
+      'opacity:0;pointer-events:none;transition:opacity .3s;',
+      '}',
+      '.dm-toast-backdrop.mostrar{opacity:1;pointer-events:auto;}'
     ].join('');
     document.head.appendChild(s);
   }
 
-  function toastMencao(titulo, texto) {
+  function ensureBackdrop() {
+    var b = document.getElementById('dm-toast-backdrop');
+    if (!b) {
+      b = document.createElement('div');
+      b.id = 'dm-toast-backdrop';
+      b.className = 'dm-toast-backdrop';
+      document.body.appendChild(b);
+    }
+    return b;
+  }
+
+  function mostrarToast(idEl, html, ms) {
     injetaCSS();
-    var el = document.getElementById('dm-toast-mencao');
+    var backdrop = ensureBackdrop();
+    var el = document.getElementById(idEl);
     if (!el) {
       el = document.createElement('div');
-      el.id = 'dm-toast-mencao';
+      el.id = idEl;
       document.body.appendChild(el);
     }
-    el.innerHTML =
+    el.innerHTML = html;
+    backdrop.classList.add('mostrar');
+    el.classList.add('mostrar');
+
+    function fechar() {
+      el.classList.remove('mostrar');
+      backdrop.classList.remove('mostrar');
+      clearTimeout(el._t);
+    }
+
+    var x = el.querySelector('.dm-toast-x');
+    if (x) x.onclick = fechar;
+    backdrop.onclick = fechar;
+
+    clearTimeout(el._t);
+    el._t = setTimeout(fechar, ms || 15000);
+  }
+
+  function toastMencao(titulo, texto) {
+    mostrarToast(
+      'dm-toast-mencao',
       '<div class="dm-toast-card">' +
         '<div class="dm-toast-ico">💬</div>' +
         '<div class="dm-toast-body">' +
@@ -79,23 +141,14 @@
           '<a class="dm-toast-btn" href="chat.html">Abrir bate-papo</a>' +
         '</div>' +
         '<button type="button" class="dm-toast-x" aria-label="Fechar">×</button>' +
-      '</div>';
-    el.classList.add('mostrar');
-    var x = el.querySelector('.dm-toast-x');
-    if (x) x.onclick = function () { el.classList.remove('mostrar'); };
-    clearTimeout(el._t);
-    el._t = setTimeout(function () { el.classList.remove('mostrar'); }, 15000);
+      '</div>',
+      15000
+    );
   }
 
   function toastIdle() {
-    injetaCSS();
-    var el = document.getElementById('dm-toast-idle');
-    if (!el) {
-      el = document.createElement('div');
-      el.id = 'dm-toast-idle';
-      document.body.appendChild(el);
-    }
-    el.innerHTML =
+    mostrarToast(
+      'dm-toast-idle',
       '<div class="dm-toast-card">' +
         '<div class="dm-toast-ico">✨</div>' +
         '<div class="dm-toast-body">' +
@@ -104,12 +157,9 @@
           '<a class="dm-toast-btn" href="chat.html">Ir ao bate-papo</a>' +
         '</div>' +
         '<button type="button" class="dm-toast-x" aria-label="Fechar">×</button>' +
-      '</div>';
-    el.classList.add('mostrar');
-    var x = el.querySelector('.dm-toast-x');
-    if (x) x.onclick = function () { el.classList.remove('mostrar'); };
-    clearTimeout(el._t);
-    el._t = setTimeout(function () { el.classList.remove('mostrar'); }, 12000);
+      '</div>',
+      12000
+    );
   }
 
   function diaKey() {
@@ -131,43 +181,17 @@
     } catch (e) {}
   }
 
+  /* Idle: NÃO reinicia. 20s desde que a página abriu. Máx 2×/dia. */
   function iniciarIdle() {
     if (!cfg.idle) return;
-    if (idleCount() >= (cfg.idleMaxDia || 2)) return;
-
+    var max = cfg.idleMaxDia || 2;
+    if (idleCount() >= max) return;
     var segs = Number(cfg.idleSegundos) || 20;
-    var timer = null;
-    var shownThisVisit = false;
-
-    function disparar() {
-      if (shownThisVisit) return;
-      if (idleCount() >= (cfg.idleMaxDia || 2)) return;
-      shownThisVisit = true;
+    setTimeout(function () {
+      if (idleCount() >= max) return;
       bumpIdle();
       toastIdle();
-    }
-
-    function arm() {
-      if (timer) clearTimeout(timer);
-      if (shownThisVisit) return;
-      if (idleCount() >= (cfg.idleMaxDia || 2)) return;
-      timer = setTimeout(disparar, segs * 1000);
-    }
-
-    // Só interações claras reiniciam (scroll contínuo no telemóvel já não bloqueia)
-    function onAct() { arm(); }
-    document.addEventListener('click', onAct, true);
-    document.addEventListener('touchstart', onAct, { passive: true, capture: true });
-    document.addEventListener('keydown', onAct, true);
-
-    // Arranca assim que a página está pronta
-    arm();
-    // Reforço: se por algum motivo o timer falhou, tenta de novo aos segs+2
-    setTimeout(function () {
-      if (!shownThisVisit && idleCount() < (cfg.idleMaxDia || 2)) {
-        arm();
-      }
-    }, 1000);
+    }, segs * 1000);
   }
 
   function jaMostrou(id) {
@@ -180,7 +204,7 @@
     try {
       var arr = JSON.parse(localStorage.getItem('dmMencoesVistas') || '[]');
       if (arr.indexOf(id) === -1) arr.push(id);
-      if (arr.length > 80) arr = arr.slice(-80);
+      if (arr.length > 100) arr = arr.slice(-100);
       localStorage.setItem('dmMencoesVistas', JSON.stringify(arr));
     } catch (e) {}
   }
@@ -189,20 +213,29 @@
     if (!cfg.mencao) return;
     var email = emailSessao();
     if (!email) return;
-    if (typeof firebase === 'undefined' || !window.db) return;
+    if (typeof firebase === 'undefined' || !window.db) {
+      setTimeout(escutarMencoes, 800);
+      return;
+    }
     var db = window.db;
     var emailLow = email.toLowerCase();
 
-    function tratarDoc(ch) {
+    function tratar(ch) {
       if (ch.type !== 'added') return;
       var id = ch.doc.id;
       if (jaMostrou(id)) return;
       var d = ch.doc.data() || {};
-      var t = d.createdAt && d.createdAt.toDate ? d.createdAt.toDate().getTime() : 0;
-      if (t && Date.now() - t > 180000) { marcarVista(id); return; }
+      var t = 0;
+      try {
+        if (d.createdAt && d.createdAt.toDate) t = d.createdAt.toDate().getTime();
+      } catch (e) {}
+      if (t && Date.now() - t > 600000) {
+        marcarVista(id);
+        return;
+      }
       marcarVista(id);
       var quem = d.deNome || 'Alguém';
-      var trecho = (d.texto || '').slice(0, 80);
+      var trecho = (d.texto || '').slice(0, 90);
       toastMencao(
         'Foste mencionado no bate-papo',
         '<b>' + quem + '</b> ' + (d.tipo === 'resposta' ? 'respondeu-te' : 'mencionou-te') +
@@ -211,33 +244,30 @@
       try { ch.doc.ref.update({ lida: true }).catch(function () {}); } catch (e) {}
     }
 
-    try {
-      db.collection('notificacoesChat')
-        .where('email', '==', emailLow)
-        .orderBy('createdAt', 'desc')
-        .limit(15)
+    function ligar(q) {
+      return db.collection('notificacoesChat')
+        .where('email', '==', q)
+        .limit(20)
         .onSnapshot(function (snap) {
-          snap.docChanges().forEach(tratarDoc);
-        }, function () {
-          db.collection('notificacoesChat')
-            .where('email', '==', emailLow)
-            .limit(15)
-            .onSnapshot(function (snap2) {
-              snap2.docChanges().forEach(tratarDoc);
-            });
-        });
+          snap.docChanges().forEach(tratar);
+        }, function (err) { console.warn('notif', err); });
+    }
+
+    try {
+      ligar(emailLow);
+      if (email !== emailLow) ligar(email);
     } catch (e) { console.warn(e); }
   }
 
   function boot() {
     injetaCSS();
-    try { iniciarIdle(); } catch (e) { console.warn('idle', e); }
-    try { escutarMencoes(); } catch (e2) { console.warn('mencao', e2); }
+    iniciarIdle();
+    escutarMencoes();
   }
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', boot);
   } else {
-    setTimeout(boot, 50);
+    setTimeout(boot, 30);
   }
 })();
