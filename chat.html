@@ -740,6 +740,72 @@
       });
   }
 
+
+  async function criarNotificacoesChat(refId, dataFire, meuEmail, meuNome) {
+    if (!db) return;
+    var alvos = {};
+    // Resposta estilo WhatsApp
+    if (dataFire.replyEmail) {
+      var re = String(dataFire.replyEmail).trim().toLowerCase();
+      if (re && re !== String(meuEmail).toLowerCase()) {
+        alvos[re] = { tipo: 'resposta' };
+      }
+    }
+    // @nome no texto
+    var texto = String(dataFire.texto || '');
+    var mencoes = texto.match(/@([A-Za-zÀ-ÿ0-9_.\-]{2,40})/g) || [];
+    for (var i = 0; i < mencoes.length; i++) {
+      var tag = mencoes[i].slice(1);
+      try {
+        var snap = await db.collection('usuarios').where('nome', '==', tag).limit(3).get();
+        // também procura case-insensitive aproximado: se vazio, varre limitados é caro; tenta nome lowercase field se existir
+        if (snap.empty) {
+          // fallback: get users is too heavy - try exact common storage
+          continue;
+        }
+        snap.forEach(function (doc) {
+          var em = String((doc.data().email || '')).trim().toLowerCase();
+          if (em && em !== String(meuEmail).toLowerCase()) {
+            alvos[em] = { tipo: 'mencao' };
+          }
+        });
+      } catch (e) {}
+    }
+    // Também @parte do nome se o utilizador escreveu @PrimeiroNome matching start of nome
+    if (mencoes.length) {
+      try {
+        var todosSnap = await db.collection('usuarios').limit(200).get();
+        mencoes.forEach(function (m) {
+          var tag = m.slice(1).toLowerCase();
+          todosSnap.forEach(function (doc) {
+            var d = doc.data() || {};
+            var nm = String(d.nome || '').toLowerCase();
+            var em = String(d.email || '').trim().toLowerCase();
+            if (!em || em === String(meuEmail).toLowerCase()) return;
+            if (nm === tag || nm.indexOf(tag) === 0 || nm.split(/\s+/)[0] === tag) {
+              alvos[em] = alvos[em] || { tipo: 'mencao' };
+            }
+          });
+        });
+      } catch (e2) {}
+    }
+    var ids = Object.keys(alvos);
+    for (var j = 0; j < ids.length; j++) {
+      try {
+        await db.collection('notificacoesChat').add({
+          email: ids[j],
+          tipo: alvos[ids[j]].tipo,
+          deNome: meuNome || 'Alguém',
+          deEmail: String(meuEmail || '').toLowerCase(),
+          texto: String(dataFire.texto || '').slice(0, 120),
+          msgId: refId,
+          lida: false,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      } catch (e3) { console.warn('notif', e3); }
+    }
+  }
+
   async function enviar() {
     var ta = document.getElementById('input-msg');
     var btn = document.getElementById('btn-enviar');
@@ -810,6 +876,7 @@
       msgsCache[ref.id] = payload;
       limparDuplicadosLocais();
       renderLista();
+      try { await criarNotificacoesChat(ref.id, dataFire, email, nome); } catch (eN) { console.warn(eN); }
     } catch (e) {
       console.error(e);
       delete msgsCache[tempId];
