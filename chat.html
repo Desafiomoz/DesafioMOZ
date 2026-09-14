@@ -555,7 +555,44 @@
     return arr;
   }
 
+
+
+  function limparDuplicadosLocais() {
+    var locais = [];
+    var reais = [];
+    Object.keys(msgsCache).forEach(function (id) {
+      var d = msgsCache[id];
+      if (!d) return;
+      if (String(id).indexOf('local_') === 0) locais.push(id);
+      else reais.push(id);
+    });
+    locais.forEach(function (lid) {
+      var L = msgsCache[lid];
+      if (!L) return;
+      var textoL = String(L.texto || '').trim();
+      var emailL = String(L.email || '').toLowerCase();
+      for (var i = 0; i < reais.length; i++) {
+        var R = msgsCache[reais[i]];
+        if (!R) continue;
+        if (String(R.texto || '').trim() !== textoL) continue;
+        if (String(R.email || '').toLowerCase() !== emailL) continue;
+        delete msgsCache[lid];
+        break;
+      }
+    });
+    // dois local_ iguais → um só
+    var visto = {};
+    Object.keys(msgsCache).forEach(function (id) {
+      if (String(id).indexOf('local_') !== 0) return;
+      var d = msgsCache[id];
+      var k = String(d.email || '').toLowerCase() + '|' + String(d.texto || '').trim();
+      if (visto[k]) delete msgsCache[id];
+      else visto[k] = id;
+    });
+  }
+
   function renderLista() {
+    limparDuplicadosLocais();
     var lista = document.getElementById('lista-msgs');
     var items = listaOrdenada();
     if (!items.length) {
@@ -678,9 +715,10 @@
           if (!d.createdAt && msgsCache[doc.id] && msgsCache[doc.id].createdAt) {
             d.createdAt = msgsCache[doc.id].createdAt;
           }
-          d._local = doc.metadata && doc.metadata.hasPendingWrites;
+          d._local = !!(doc.metadata && doc.metadata.hasPendingWrites);
           msgsCache[doc.id] = d;
         });
+        limparDuplicadosLocais();
         renderLista();
       }, function (err) {
         console.error('chat listener', err);
@@ -757,9 +795,20 @@
         dataFire.replyEmail = replyGuardado.email || '';
       }
       var ref = await db.collection('chatMensagens').add(dataFire);
+      // Remove TODOS os temporários desta mensagem (evita 2 caixas)
+      Object.keys(msgsCache).forEach(function (id) {
+        if (String(id).indexOf('local_') === 0) {
+          var x = msgsCache[id];
+          if (x && String(x.texto || '').trim() === texto && String(x.email || '').toLowerCase() === String(email).toLowerCase()) {
+            delete msgsCache[id];
+          }
+        }
+      });
       delete msgsCache[tempId];
       payload._local = false;
+      payload.createdAt = agora;
       msgsCache[ref.id] = payload;
+      limparDuplicadosLocais();
       renderLista();
     } catch (e) {
       console.error(e);
