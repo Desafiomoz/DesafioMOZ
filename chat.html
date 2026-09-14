@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="pt-MZ">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Bate-papo – Desafio MOZ</title>
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-32.png">
+  <meta name="theme-color" content="#06080e">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+  <script>
+    if (typeof window.__DESAFIO_MOZ_FIREBASE__ === 'undefined') {
+      window.__DESAFIO_MOZ_FIREBASE__ = true;
+      var firebaseConfig = {
+        apiKey: "AIzaSyDONfggnmf9OJX_AgfvcHTRf6tsuKD5nrA",
+        authDomain: "desafio-moz-61b70.firebaseapp.com",
+        projectId: "desafio-moz-61b70",
+        storageBucket: "desafio-moz-61b70.firebasestorage.app",
+        messagingSenderId: "945658936331",
+        appId: "1:945658936331:web:7ee4b0e7de1c1daf36db0e",
+        measurementId: "G-G1DZQ1B0DB"
+      };
+      if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+      window.db = firebase.firestore();
+    }
+    var db = window.db;
+  </script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    :root {
+      --bg: #06080e;
+      --painel: rgba(18, 22, 34, 0.92);
+      --verde: #22FF99;
+      --azul: #3b9eff;
+      --roxo: #a855f7;
+      --ouro: #ffc94d;
+      --rosa: #ff4d9e;
+      --texto: #f4f6fb;
+      --suave: #8e9bb8;
+    }
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--texto);
+      font-family: 'Inter', system-ui, sans-serif;
+      overflow: hidden;
+    }
+    body {
+      background:
+        radial-gradient(ellipse at 10% 0%, rgba(168,85,247,0.28), transparent 42%),
+        radial-gradient(ellipse at 90% 10%, rgba(59,158,255,0.22), transparent 40%),
+        radial-gradient(ellipse at 50% 100%, rgba(34,255,153,0.12), transparent 45%),
+        var(--bg);
+    }
+    body::before {
+      content: '';
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background-image: radial-gradient(rgba(255,255,255,0.55) 1px, transparent 1px);
+      background-size: 28px 28px;
+      opacity: 0.05;
+      animation: estrelas 5s ease-in-out infinite alternate;
+    }
+    @keyframes estrelas { 0% { opacity: 0.04; } 100% { opacity: 0.09; } }
+
+    .shell {
+      position: relative; z-index: 1;
+      display: flex; flex-direction: column;
+      height: 100%;
+      max-width: 520px;
+      margin: 0 auto;
+    }
+
+    .topo-chat {
+      flex-shrink: 0;
+      padding: 14px 14px 10px;
+      background: linear-gradient(180deg, rgba(8,10,18,0.95), rgba(8,10,18,0.55));
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      backdrop-filter: blur(12px);
+    }
+    .topo-linha {
+      display: flex; align-items: center; gap: 12px;
+    }
+    .logo-chat {
+      width: 46px; height: 46px; border-radius: 14px;
+      background: linear-gradient(135deg, var(--roxo), var(--azul), var(--verde));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+      box-shadow: 0 0 24px rgba(168,85,247,0.55), 0 0 40px rgba(59,158,255,0.25);
+      animation: pulsarLogo 2.4s ease-in-out infinite;
+    }
+    @keyframes pulsarLogo {
+      0%,100% { box-shadow: 0 0 18px rgba(168,85,247,0.45); transform: scale(1); }
+      50% { box-shadow: 0 0 32px rgba(34,255,153,0.55); transform: scale(1.04); }
+    }
+    .topo-txt h1 {
+      font-family: 'Sora', sans-serif;
+      font-size: 17px; font-weight: 800;
+      background: linear-gradient(90deg, #fff, var(--verde), var(--ouro));
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    .topo-txt p { font-size: 11.5px; color: var(--suave); margin-top: 2px; }
+    .badge-vivo {
+      margin-left: auto;
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 10px; font-weight: 800; letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 6px 10px; border-radius: 99px;
+      background: rgba(34,255,153,0.12);
+      border: 1px solid rgba(34,255,153,0.35);
+      color: var(--verde);
+      box-shadow: 0 0 16px rgba(34,255,153,0.2);
+    }
+    .badge-vivo .dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--verde);
+      box-shadow: 0 0 8px var(--verde);
+      animation: pisca 1.2s ease-in-out infinite;
+    }
+    @keyframes pisca { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+    .aviso-mes {
+      margin-top: 10px;
+      font-size: 11.5px;
+      line-height: 1.4;
+      color: var(--suave);
+      padding: 8px 12px;
+      border-radius: 12px;
+      background: linear-gradient(90deg, rgba(168,85,247,0.12), rgba(255,201,77,0.08));
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .aviso-mes b { color: var(--ouro); }
+
+    .lista-msgs {
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 14px 12px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .lista-msgs::-webkit-scrollbar { width: 4px; }
+    .lista-msgs::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 4px; }
+
+    .msg {
+      max-width: 88%;
+      padding: 10px 12px 8px;
+      border-radius: 16px;
+      position: relative;
+      animation: entraMsg .28s ease;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+    }
+    @keyframes entraMsg {
+      from { opacity: 0; transform: translateY(8px) scale(0.97); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .msg.outra {
+      align-self: flex-start;
+      background: linear-gradient(145deg, rgba(40,36,70,0.95), rgba(24,28,48,0.98));
+      border: 1px solid rgba(168,85,247,0.35);
+      border-bottom-left-radius: 6px;
+    }
+    .msg.minha {
+      align-self: flex-end;
+      background: linear-gradient(145deg, rgba(20,60,50,0.98), rgba(18,40,55,0.98));
+      border: 1px solid rgba(34,255,153,0.4);
+      border-bottom-right-radius: 6px;
+      box-shadow: 0 0 20px rgba(34,255,153,0.12);
+    }
+    .msg-nome {
+      font-family: 'Sora', sans-serif;
+      font-size: 12px; font-weight: 800;
+      margin-bottom: 4px;
+      background: linear-gradient(90deg, var(--ouro), var(--rosa), var(--azul));
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    .msg.minha .msg-nome {
+      background: linear-gradient(90deg, var(--verde), var(--azul));
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+      text-align: right;
+    }
+    .msg-txt {
+      font-size: 14px;
+      line-height: 1.45;
+      color: #e8ecf8;
+      word-break: break-word;
+      white-space: pre-wrap;
+    }
+    .msg-hora {
+      font-size: 10px;
+      color: var(--suave);
+      margin-top: 6px;
+      text-align: right;
+    }
+
+    .vazio-chat {
+      margin: auto;
+      text-align: center;
+      padding: 30px 20px;
+      color: var(--suave);
+      font-size: 13.5px;
+      line-height: 1.5;
+    }
+    .vazio-chat i {
+      font-size: 36px;
+      display: block;
+      margin-bottom: 12px;
+      background: linear-gradient(135deg, var(--roxo), var(--verde));
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+
+    .composer {
+      flex-shrink: 0;
+      padding: 10px 12px 12px;
+      padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+      background: linear-gradient(0deg, rgba(8,10,18,0.98), rgba(8,10,18,0.85));
+      border-top: 1px solid rgba(255,255,255,0.08);
+      margin-bottom: 0;
+    }
+    .composer-row {
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+    }
+    .composer textarea {
+      flex: 1;
+      min-height: 44px;
+      max-height: 110px;
+      resize: none;
+      border-radius: 16px;
+      border: 1px solid rgba(168,85,247,0.35);
+      background: rgba(12,14,22,0.95);
+      color: #fff;
+      padding: 12px 14px;
+      font-size: 14.5px;
+      font-family: inherit;
+      outline: none;
+      box-shadow: 0 0 0 0 rgba(168,85,247,0.3);
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .composer textarea:focus {
+      border-color: var(--verde);
+      box-shadow: 0 0 18px rgba(34,255,153,0.2);
+    }
+    .btn-enviar {
+      width: 48px; height: 48px;
+      border: none; border-radius: 16px;
+      background: linear-gradient(135deg, var(--roxo), var(--azul), var(--verde));
+      background-size: 200% 200%;
+      color: #fff;
+      font-size: 18px;
+      cursor: pointer;
+      flex-shrink: 0;
+      box-shadow: 0 6px 22px rgba(168,85,247,0.45);
+      animation: gradMove 4s ease infinite;
+    }
+    @keyframes gradMove {
+      0%,100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+    .btn-enviar:disabled { opacity: 0.5; cursor: wait; }
+    .composer-meta {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-top: 6px; font-size: 11px; color: var(--suave);
+    }
+    .composer-meta .eu { color: var(--verde); font-weight: 700; }
+
+    .bloqueio-login {
+      position: absolute; inset: 0; z-index: 5;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 14px; text-align: center; padding: 24px;
+      background: rgba(6,8,14,0.92);
+      backdrop-filter: blur(8px);
+    }
+    .bloqueio-login.oculto { display: none; }
+    .bloqueio-login h2 {
+      font-family: 'Sora', sans-serif; font-size: 20px; font-weight: 800;
+      background: linear-gradient(90deg, var(--verde), var(--ouro));
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    .bloqueio-login p { color: var(--suave); font-size: 13.5px; line-height: 1.45; max-width: 280px; }
+    .btn-login {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 13px 22px; border-radius: 14px; border: none;
+      font-family: 'Sora', sans-serif; font-weight: 800; font-size: 14px;
+      color: #04140a;
+      background: linear-gradient(90deg, var(--verde), var(--azul));
+      text-decoration: none;
+      box-shadow: 0 8px 28px rgba(34,255,153,0.35);
+    }
+
+
+    .toast-chat {
+      position: fixed; left: 50%; bottom: 90px; transform: translateX(-50%) translateY(12px);
+      background: rgba(20,24,36,0.95); border: 1px solid rgba(255,255,255,0.1);
+      padding: 10px 16px; border-radius: 20px; font-size: 12.5px;
+      opacity: 0; transition: .25s; z-index: 200; pointer-events: none;
+      max-width: 90%; text-align: center;
+    }
+    .toast-chat.mostrar { opacity: 1; transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="topo-chat">
+      <div class="topo-linha">
+        <div class="logo-chat">💬</div>
+        <div class="topo-txt">
+          <h1>Bate-papo MOZ</h1>
+          <p>Sala geral · fala à vontade</p>
+        </div>
+        <div class="badge-vivo"><span class="dot"></span> Ao vivo</div>
+      </div>
+      <div class="aviso-mes" id="aviso-mes">
+        As mensagens deste <b>mês</b> ficam aqui para leres à vontade.
+        No início de cada mês o histórico é limpo e a sala recomeça a zero.
+      </div>
+    </div>
+
+    <div class="lista-msgs" id="lista-msgs">
+      <div class="vazio-chat" id="vazio-chat">
+        <i class="fas fa-comments"></i>
+        Ainda não há mensagens este mês.<br>Sê o primeiro a escrever!
+      </div>
+    </div>
+
+    <div class="composer">
+      <div class="composer-row">
+        <textarea id="input-msg" rows="1" maxlength="500" placeholder="Escreve a tua mensagem..."></textarea>
+        <button type="button" class="btn-enviar" id="btn-enviar" title="Enviar"><i class="fas fa-paper-plane"></i></button>
+      </div>
+      <div class="composer-meta">
+        <span>Como: <span class="eu" id="nome-eu">—</span></span>
+        <span id="contador-chars">0/500</span>
+      </div>
+    </div>
+
+    <div class="bloqueio-login" id="bloqueio-login">
+      <h2>Entra para falar</h2>
+      <p>O bate-papo é só para membros com conta no Desafio MOZ.</p>
+      <a class="btn-login" href="criar-conta.html"><i class="fas fa-user"></i> Criar conta / Login</a>
+    </div>
+  </div>
+
+  <div class="toast-chat" id="toast-chat"></div>
+
+
+  <script>
+(function () {
+  var email = (localStorage.getItem('emailUtilizador') || localStorage.getItem('email') || localStorage.getItem('userEmail') || '').trim();
+  var nomeUser = (localStorage.getItem('nomeUtilizador') || localStorage.getItem('nome') || '').trim();
+  var unsub = null;
+  var limpandoMes = false;
+  var msgsCache = {}; // id -> data para manter lista estável
+
+  function mesAtualId() {
+    var d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+  }
+
+  function inicioDoMes() {
+    var d = new Date();
+    return new Date(d.getFullYear(), d.getMonth(), 1, 0, 0, 0, 0);
+  }
+
+  function toast(txt) {
+    var el = document.getElementById('toast-chat');
+    el.textContent = txt;
+    el.classList.add('mostrar');
+    setTimeout(function () { el.classList.remove('mostrar'); }, 2800);
+  }
+
+  function esc(s) {
+    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function formatHora(ts) {
+    try {
+      var d;
+      if (ts && typeof ts.toDate === 'function') d = ts.toDate();
+      else if (ts instanceof Date) d = ts;
+      else if (typeof ts === 'number') d = new Date(ts);
+      else d = new Date(ts);
+      if (isNaN(d.getTime())) return '';
+      var hh = String(d.getHours()).padStart(2, '0');
+      var mm = String(d.getMinutes()).padStart(2, '0');
+      var dia = String(d.getDate()).padStart(2, '0');
+      var mes = String(d.getMonth() + 1).padStart(2, '0');
+      return dia + '/' + mes + ' · ' + hh + ':' + mm;
+    } catch (e) { return ''; }
+  }
+
+  function getTimeMs(ts) {
+    try {
+      if (ts && typeof ts.toDate === 'function') return ts.toDate().getTime();
+      if (ts instanceof Date) return ts.getTime();
+      if (typeof ts === 'number') return ts;
+      var d = new Date(ts);
+      return isNaN(d.getTime()) ? 0 : d.getTime();
+    } catch (e) { return 0; }
+  }
+
+  function coresNome(str) {
+    var cores = ['#ffc94d', '#ff4d9e', '#3b9eff', '#22FF99', '#a855f7', '#ff9a3c'];
+    var h = 0;
+    for (var i = 0; i < str.length; i++) h = (h + str.charCodeAt(i) * (i + 1)) % cores.length;
+    return cores[h];
+  }
+
+  async function garantirNome() {
+    if (nomeUser) return nomeUser;
+    if (!email || !db) return (email.split('@')[0] || 'Membro');
+    try {
+      var snap = await db.collection('usuarios').where('email', '==', email).limit(1).get();
+      if (snap.empty) {
+        snap = await db.collection('usuarios').where('email', '==', email.toLowerCase()).limit(1).get();
+      }
+      if (!snap.empty) {
+        var d = snap.docs[0].data();
+        nomeUser = (d.nome || '').trim() || email.split('@')[0];
+        try { localStorage.setItem('nomeUtilizador', nomeUser); } catch (e) {}
+      }
+    } catch (e) {}
+    if (!nomeUser) nomeUser = email.split('@')[0] || 'Membro';
+    return nomeUser;
+  }
+
+  async function limparMesesAnteriores() {
+    if (!db || limpandoMes) return;
+    limpandoMes = true;
+    try {
+      var mesId = mesAtualId();
+      // Preferência: apagar por campo mes (sem índice composto)
+      var snap = await db.collection('chatMensagens').limit(400).get();
+      if (snap.empty) return;
+      var batch = db.batch();
+      var n = 0;
+      var inicioMs = inicioDoMes().getTime();
+      snap.forEach(function (doc) {
+        var d = doc.data() || {};
+        var antigo = false;
+        if (d.mes && String(d.mes) !== mesId) antigo = true;
+        else {
+          var tms = getTimeMs(d.createdAt);
+          if (tms && tms < inicioMs) antigo = true;
+        }
+        if (antigo) {
+          batch.delete(doc.ref);
+          n++;
+        }
+      });
+      if (n) await batch.commit();
+    } catch (e) {
+      console.warn('limpeza mensal chat', e);
+    } finally {
+      limpandoMes = false;
+    }
+  }
+
+  function listaOrdenada() {
+    var inicioMs = inicioDoMes().getTime();
+    var mesId = mesAtualId();
+    var arr = [];
+    Object.keys(msgsCache).forEach(function (id) {
+      var d = msgsCache[id];
+      if (!d) return;
+      if (d.mes && String(d.mes) !== mesId) return;
+      var tms = getTimeMs(d.createdAt);
+      if (tms && tms < inicioMs && !d._local) return;
+      arr.push({ id: id, data: d, tms: tms || Date.now() });
+    });
+    arr.sort(function (a, b) { return a.tms - b.tms; });
+    return arr;
+  }
+
+  function renderLista() {
+    var lista = document.getElementById('lista-msgs');
+    var items = listaOrdenada();
+    if (!items.length) {
+      lista.innerHTML = '<div class="vazio-chat" id="vazio-chat"><i class="fas fa-comments"></i>Ainda não há mensagens este mês.<br>Sê o primeiro a escrever!</div>';
+      return;
+    }
+    var emailLow = email.toLowerCase();
+    var html = '';
+    var nearBottom = (lista.scrollHeight - lista.scrollTop - lista.clientHeight) < 80;
+    items.forEach(function (item) {
+      var d = item.data;
+      var minha = String(d.email || '').toLowerCase() === emailLow;
+      var nome = d.nome || 'Membro';
+      var cor = coresNome(nome + (d.email || ''));
+      html += '<div class="msg ' + (minha ? 'minha' : 'outra') + '" data-id="' + esc(item.id) + '">' +
+        '<div class="msg-nome" style="' + (minha ? '' : 'background:none;-webkit-text-fill-color:' + cor + ';color:' + cor + ';') + '">' + esc(nome) + '</div>' +
+        '<div class="msg-txt">' + esc(d.texto) + '</div>' +
+        '<div class="msg-hora">' + esc(formatHora(d.createdAt)) + (d._local ? ' · a enviar…' : '') + '</div>' +
+        '</div>';
+    });
+    lista.innerHTML = html;
+    if (nearBottom || items.length) {
+      lista.scrollTop = lista.scrollHeight;
+    }
+  }
+
+  function ouvirMensagens() {
+    if (!db) return;
+    if (unsub) { try { unsub(); } catch (e) {} unsub = null; }
+
+    // Query simples (só orderBy createdAt) — não precisa de índice composto
+    // Filtra o mês no cliente
+    unsub = db.collection('chatMensagens')
+      .orderBy('createdAt', 'asc')
+      .limitToLast(300)
+      .onSnapshot({ includeMetadataChanges: true }, function (snap) {
+        snap.docChanges().forEach(function (change) {
+          var id = change.doc.id;
+          if (change.type === 'removed') {
+            delete msgsCache[id];
+            return;
+          }
+          var d = change.doc.data() || {};
+          // Se ainda não tem timestamp do servidor, mantém o que temos
+          if (!d.createdAt && msgsCache[id] && msgsCache[id].createdAt) {
+            d.createdAt = msgsCache[id].createdAt;
+          }
+          d._local = change.doc.metadata && change.doc.metadata.hasPendingWrites;
+          msgsCache[id] = d;
+        });
+        // Também sincroniza estado completo do snapshot
+        snap.forEach(function (doc) {
+          var d = doc.data() || {};
+          if (!d.createdAt && msgsCache[doc.id] && msgsCache[doc.id].createdAt) {
+            d.createdAt = msgsCache[doc.id].createdAt;
+          }
+          d._local = doc.metadata && doc.metadata.hasPendingWrites;
+          msgsCache[doc.id] = d;
+        });
+        renderLista();
+      }, function (err) {
+        console.error('chat listener', err);
+        // Fallback sem limitToLast (alguns browsers / versões)
+        if (unsub) try { unsub(); } catch (e) {}
+        unsub = db.collection('chatMensagens')
+          .orderBy('createdAt', 'desc')
+          .limit(300)
+          .onSnapshot(function (snap) {
+            msgsCache = {};
+            snap.forEach(function (doc) {
+              msgsCache[doc.id] = doc.data() || {};
+            });
+            renderLista();
+          }, function (err2) {
+            console.error(err2);
+            toast('Erro ao carregar mensagens. Confirma as regras e o índice createdAt.');
+          });
+      });
+  }
+
+  async function enviar() {
+    var ta = document.getElementById('input-msg');
+    var btn = document.getElementById('btn-enviar');
+    var texto = (ta.value || '').trim();
+    if (!texto) return;
+    if (!email) {
+      toast('Entra na tua conta para enviar mensagens.');
+      return;
+    }
+    if (texto.length > 500) {
+      toast('Máximo 500 caracteres.');
+      return;
+    }
+    btn.disabled = true;
+    var nome = await garantirNome();
+    var agora = new Date();
+    var tempId = 'local_' + Date.now();
+
+    // Mostra já no ecrã (optimista)
+    msgsCache[tempId] = {
+      texto: texto,
+      nome: nome,
+      email: email,
+      mes: mesAtualId(),
+      createdAt: agora,
+      _local: true
+    };
+    renderLista();
+    ta.value = '';
+    document.getElementById('contador-chars').textContent = '0/500';
+    ta.style.height = 'auto';
+
+    try {
+      var ref = await db.collection('chatMensagens').add({
+        texto: texto,
+        nome: nome,
+        email: email,
+        mes: mesAtualId(),
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      // Troca o temporário pelo real
+      delete msgsCache[tempId];
+      msgsCache[ref.id] = {
+        texto: texto,
+        nome: nome,
+        email: email,
+        mes: mesAtualId(),
+        createdAt: agora,
+        _local: false
+      };
+      renderLista();
+    } catch (e) {
+      console.error(e);
+      delete msgsCache[tempId];
+      renderLista();
+      toast('Falha ao enviar. Verifica as regras do Firebase.');
+    } finally {
+      btn.disabled = false;
+      ta.focus();
+    }
+  }
+
+  var ta = document.getElementById('input-msg');
+  ta.addEventListener('input', function () {
+    document.getElementById('contador-chars').textContent = ta.value.length + '/500';
+    ta.style.height = 'auto';
+    ta.style.height = Math.min(110, ta.scrollHeight) + 'px';
+  });
+  ta.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      enviar();
+    }
+  });
+  document.getElementById('btn-enviar').addEventListener('click', enviar);
+
+  if (!email) {
+    document.getElementById('bloqueio-login').classList.remove('oculto');
+  } else {
+    document.getElementById('bloqueio-login').classList.add('oculto');
+    garantirNome().then(function (n) {
+      document.getElementById('nome-eu').textContent = n;
+    });
+    limparMesesAnteriores().then(function () {
+      ouvirMensagens();
+    });
+  }
+
+  var mesNomes = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  var agora = new Date();
+  document.getElementById('aviso-mes').innerHTML =
+    'Mensagens de <b>' + mesNomes[agora.getMonth()] + ' ' + agora.getFullYear() + '</b> — podes reler à vontade. ' +
+    'No próximo mês o histórico é apagado e a sala recomeça a zero.';
+})();
+  </script>
+</body>
+</html>

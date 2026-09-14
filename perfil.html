@@ -112,6 +112,33 @@
         .link-card i { font-size: 18px; color: #00e676; }
         .link-card span { font-size: 12px; font-weight: 600; color: #ccc; }
 
+
+        .card-chat {
+            background: linear-gradient(145deg, rgba(168,85,247,0.18), rgba(21,21,31,0.95) 45%, rgba(0,200,83,0.12));
+            border: 1px solid rgba(168,85,247,0.4);
+            border-radius: 16px; padding: 16px; margin-bottom: 14px;
+            box-shadow: 0 0 24px rgba(168,85,247,0.15);
+            text-decoration: none; color: #fff; display: block;
+            transition: transform .15s, box-shadow .15s;
+        }
+        .card-chat:active { transform: scale(0.98); }
+        .card-chat h3 {
+            font-size: 14px; color: #c4a1ff; margin-bottom: 10px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .card-chat h3 i { color: #22FF99; }
+        .card-chat p {
+            font-size: 13px; color: #b0b8c8; line-height: 1.45; margin-bottom: 12px;
+        }
+        .card-chat .btn-chat {
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            width: 100%; padding: 12px; border-radius: 12px; border: none;
+            font-size: 14px; font-weight: 700; cursor: pointer;
+            background: linear-gradient(90deg, #a855f7, #00c853);
+            color: #04140a;
+            box-shadow: 0 4px 18px rgba(168,85,247,0.35);
+        }
+
         .btn-sair {
             width: 100%; background: rgba(239,83,80,0.12); color: #ef5350;
             border: 1px solid rgba(239,83,80,0.35); border-radius: 14px;
@@ -205,6 +232,16 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
                 <div class="vazio">A carregar...</div>
             </div>
         </div>
+
+        <a class="card-chat" href="chat.html">
+            <h3><i class="fas fa-comments"></i> Bate-papo MOZ</h3>
+            <p>
+                Sala geral da comunidade Desafio MOZ. Conversa com outros membros,
+                partilha dicas e lê as mensagens do mês à vontade.
+                No início de cada mês o histórico recomeça a zero.
+            </p>
+            <div class="btn-chat"><i class="fas fa-paper-plane"></i> Entrar no bate-papo</div>
+        </a>
 
         <div class="links-uteis">
             <a class="link-card" href="saques.html">

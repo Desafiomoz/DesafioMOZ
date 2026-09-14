@@ -230,6 +230,7 @@
     <button class="tab" data-tab="visitantes" onclick="mudarTab('visitantes')"><i class="fas fa-chart-line"></i> Visitantes</button>
     <button class="tab" data-tab="homejub" onclick="mudarTab('homejub')"><i class="fas fa-gamepad"></i> Homejub</button>
     <button class="tab" data-tab="influencer" onclick="mudarTab('influencer')"><i class="fas fa-star"></i> Influencer</button>
+    <button class="tab" data-tab="chat" onclick="mudarTab('chat')"><i class="fas fa-comments"></i> Chat</button>
   </div>
 
   <div class="conteudo">
@@ -818,6 +819,7 @@
         <p style="font-size:12px;color:#888;margin-bottom:12px;">
           Nível desbloqueado, moedas, vidas, ajudas e total gasto em compras (MT) na loja do jogo.
           Dados da coleção <code>jogoEstado</code> e <code>pedidosLoja</code>.
+          <br><strong>Apagar progresso</strong> remove só o Homejub dessa conta — o utilizador recomeça do nível 1, sem moedas/vidas guardadas. A conta Desafio MOZ e as compras registadas não são apagadas.
         </p>
         <div class="busca">
           <input type="text" id="busca-homejub" placeholder="Pesquisar por e-mail ou nome..." oninput="filtrarHomejub()">
@@ -841,10 +843,11 @@
                 <th>Ajudas</th>
                 <th>Compras (MT)</th>
                 <th>Nº compras</th>
+                <th>Ações</th>
               </tr>
             </thead>
             <tbody id="tbody-homejub">
-              <tr><td colspan="9" class="vazio">Abre este separador ou clica em Atualizar.</td></tr>
+              <tr><td colspan="10" class="vazio">Abre este separador ou clica em Atualizar.</td></tr>
             </tbody>
           </table>
         </div>
@@ -907,6 +910,46 @@
             </thead>
             <tbody id="tbody-influencer-rels">
               <tr><td colspan="7" class="vazio">A carregar...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- CHAT / BATE-PAPO -->
+    <div class="painel" id="painel-chat">
+      <div class="form-box">
+        <h3><i class="fas fa-comments"></i> Bate-papo geral</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:12px;">
+          Mensagens da sala geral (<code>chatMensagens</code>). Podes apagar uma a uma.
+          No início de cada mês as mensagens antigas são apagadas automaticamente (também podes limpar o mês actual aqui).
+        </p>
+        <div class="resumo" style="margin-bottom:14px;">
+          <div class="resumo-card"><div class="num" id="chat-total-msgs">0</div><div class="lbl">Msgs este mês</div></div>
+          <div class="resumo-card"><div class="num" id="chat-total-users">0</div><div class="lbl">Autores únicos</div></div>
+        </div>
+        <div class="form-grid" style="margin-bottom:12px;">
+          <button type="button" class="btn-verde" onclick="carregarChatAdmin()">🔄 Actualizar chat</button>
+          <button type="button" class="btn-vermelho" style="width:100%;padding:12px;border-radius:10px;font-size:14px;" onclick="apagarTodoChatMes()">🗑️ Apagar TODAS deste mês</button>
+        </div>
+        <div class="busca">
+          <input type="text" id="busca-chat" placeholder="Filtrar por nome, e-mail ou texto..." oninput="filtrarChatAdmin()">
+        </div>
+        <div class="tabela-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Quando</th>
+                <th>Nome</th>
+                <th>E-mail</th>
+                <th>Mensagem</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-chat">
+              <tr><td colspan="6" class="vazio">Clica em Actualizar chat ou abre este separador.</td></tr>
             </tbody>
           </table>
         </div>
@@ -1004,6 +1047,7 @@ function mostrarAviso(txt) {
         if (nome === 'visitantes') try { carregarVisitantes(); } catch (eV) {}
         if (nome === 'homejub') try { carregarHomejub(); } catch (eH) {}
         if (nome === 'influencer') try { renderInfluencerAdmin(); } catch (eI) {}
+        if (nome === 'chat') try { carregarChatAdmin(); } catch (eC) {}
       } catch (e) {
         console.error('mudarTab:', e);
         alert('Erro ao abrir separador: ' + (e.message || e));
@@ -1059,7 +1103,7 @@ function mostrarAviso(txt) {
     async function carregarHomejub() {
       var tbody = document.getElementById('tbody-homejub');
       if (!tbody) return;
-      tbody.innerHTML = '<tr><td colspan="9" class="vazio">A carregar progresso do jogo...</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="10" class="vazio">A carregar progresso do jogo...</td></tr>';
       try {
         // Mapa email -> nome a partir dos utilizadores já carregados
         var nomePorEmail = {};
@@ -1140,7 +1184,7 @@ function mostrarAviso(txt) {
         renderHomejub(listaHomejub);
       } catch (e) {
         console.error(e);
-        tbody.innerHTML = '<tr><td colspan="9" class="vazio">Erro ao carregar: ' + escHtml(e.message || e) + '</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="10" class="vazio">Erro ao carregar: ' + escHtml(e.message || e) + '</td></tr>';
       }
     }
 
@@ -1163,7 +1207,7 @@ function mostrarAviso(txt) {
       if (elS) elS.textContent = semVidas;
 
       if (!lista.length) {
-        tbody.innerHTML = '<tr><td colspan="9" class="vazio">Ainda não há progresso de jogo guardado.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="10" class="vazio">Ainda não há progresso de jogo guardado.</td></tr>';
         return;
       }
       var html = '';
@@ -1179,6 +1223,7 @@ function mostrarAviso(txt) {
         var moedasTxt = r.moedasInf ? '∞' : String(r.moedas || 0);
         var ajudasTxt = r.ajudasInf ? '∞' : String(r.ajudas || 0);
         var clsNivel = r.nivel >= 50 ? 'pts-alto' : (r.nivel >= 10 ? 'pts-ok' : 'pts-baixo');
+        var emailEsc = String(r.email || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
         html += '<tr data-busca="' + escHtml((r.nome + ' ' + r.email).toLowerCase()) + '">' +
           '<td>' + (i + 1) + '</td>' +
           '<td>' + escHtml(r.nome) + '</td>' +
@@ -1189,9 +1234,35 @@ function mostrarAviso(txt) {
           '<td>' + ajudasTxt + '</td>' +
           '<td class="pts-ok">' + (r.mt || 0) + ' MT</td>' +
           '<td>' + (r.nCompras || 0) + '</td>' +
+          '<td><button type="button" class="btn-vermelho" onclick="apagarProgressoHomejub(\'' + emailEsc + '\')">🗑️ Apagar progresso</button></td>' +
           '</tr>';
       });
       tbody.innerHTML = html;
+    }
+
+
+    async function apagarProgressoHomejub(email) {
+      email = String(email || '').trim();
+      if (!email) return;
+      if (!confirm('Apagar o progresso Homejub de:\n' + email + '\n\nA conta volta ao nível 1, 0 moedas e 5 vidas.\nA conta Desafio MOZ (pontos, saques) NÃO é apagada.')) return;
+      try {
+        // Apaga documento exacto e variações de case
+        await db.collection('jogoEstado').doc(email).delete();
+        var low = email.toLowerCase();
+        if (low !== email) {
+          try { await db.collection('jogoEstado').doc(low).delete(); } catch (e2) {}
+        }
+        // Alguns docs podem ter sido gravados com email original diferente
+        try {
+          var snap = await db.collection('jogoEstado').where(firebase.firestore.FieldPath.documentId(), '==', email).get();
+          // already deleted by doc id
+        } catch (e3) {}
+        mostrarAviso('Progresso Homejub apagado para ' + email + '. Ao entrar no jogo, começa do zero.');
+        await carregarHomejub();
+      } catch (e) {
+        alert('Erro ao apagar: ' + (e.message || e) +
+          '\n\nConfirma a regra Firebase: allow delete em jogoEstado para o admin autenticado.');
+      }
     }
 
     function filtrarHomejub() {
@@ -2700,6 +2771,139 @@ async function carregarAnunciosTarefasAdmin() {
 
 
     
+    
+    var listaChatAdmin = [];
+
+    function formatChatTs(ts) {
+      try {
+        var d = ts && ts.toDate ? ts.toDate() : new Date(ts);
+        if (isNaN(d.getTime())) return '—';
+        return d.toLocaleString('pt-MZ');
+      } catch (e) { return '—'; }
+    }
+
+    function inicioMesAdmin() {
+      var d = new Date();
+      return new Date(d.getFullYear(), d.getMonth(), 1, 0, 0, 0, 0);
+    }
+
+    async function carregarChatAdmin() {
+      var tbody = document.getElementById('tbody-chat');
+      if (!tbody) return;
+      tbody.innerHTML = '<tr><td colspan="6" class="vazio">A carregar mensagens...</td></tr>';
+      try {
+        // Limpa meses anteriores
+        try {
+          var antigas = await db.collection('chatMensagens').where('createdAt', '<', inicioMesAdmin()).limit(300).get();
+          if (!antigas.empty) {
+            var batch = db.batch();
+            antigas.forEach(function (d) { batch.delete(d.ref); });
+            await batch.commit();
+          }
+        } catch (eL) { console.warn('limpeza chat admin', eL); }
+
+        var snap = await db.collection('chatMensagens')
+          .where('createdAt', '>=', inicioMesAdmin())
+          .orderBy('createdAt', 'desc')
+          .limit(400)
+          .get();
+
+        listaChatAdmin = [];
+        var autores = {};
+        snap.forEach(function (doc) {
+          var d = doc.data() || {};
+          listaChatAdmin.push({
+            id: doc.id,
+            nome: d.nome || '—',
+            email: d.email || '—',
+            texto: d.texto || '',
+            createdAt: d.createdAt
+          });
+          if (d.email) autores[String(d.email).toLowerCase()] = true;
+        });
+
+        var elT = document.getElementById('chat-total-msgs');
+        var elU = document.getElementById('chat-total-users');
+        if (elT) elT.textContent = listaChatAdmin.length;
+        if (elU) elU.textContent = Object.keys(autores).length;
+
+        renderChatAdmin(listaChatAdmin);
+      } catch (e) {
+        console.error(e);
+        tbody.innerHTML = '<tr><td colspan="6" class="vazio">Erro: ' + escHtml(e.message || e) +
+          '<br>Pode faltar índice Firestore (createdAt) ou regras de leitura.</td></tr>';
+      }
+    }
+
+    function renderChatAdmin(lista) {
+      var tbody = document.getElementById('tbody-chat');
+      if (!tbody) return;
+      if (!lista.length) {
+        tbody.innerHTML = '<tr><td colspan="6" class="vazio">Nenhuma mensagem este mês.</td></tr>';
+        return;
+      }
+      var html = '';
+      lista.forEach(function (m, i) {
+        var idEsc = String(m.id).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        var txt = String(m.texto || '');
+        if (txt.length > 120) txt = txt.slice(0, 120) + '…';
+        html += '<tr data-busca="' + escHtml((m.nome + ' ' + m.email + ' ' + m.texto).toLowerCase()) + '">' +
+          '<td>' + (i + 1) + '</td>' +
+          '<td style="white-space:nowrap;font-size:11px;">' + escHtml(formatChatTs(m.createdAt)) + '</td>' +
+          '<td>' + escHtml(m.nome) + '</td>' +
+          '<td>' + escHtml(m.email) + '</td>' +
+          '<td style="max-width:280px;line-height:1.35;">' + escHtml(txt) + '</td>' +
+          '<td><button type="button" class="btn-vermelho" onclick="apagarMsgChat(\'' + idEsc + '\')">Apagar</button></td>' +
+          '</tr>';
+      });
+      tbody.innerHTML = html;
+    }
+
+    function filtrarChatAdmin() {
+      var q = (document.getElementById('busca-chat') && document.getElementById('busca-chat').value || '').trim().toLowerCase();
+      var tb = document.getElementById('tbody-chat');
+      if (!tb) return;
+      tb.querySelectorAll('tr[data-busca]').forEach(function (tr) {
+        tr.style.display = (!q || (tr.getAttribute('data-busca') || '').indexOf(q) !== -1) ? '' : 'none';
+      });
+    }
+
+    async function apagarMsgChat(id) {
+      if (!id) return;
+      if (!confirm('Apagar esta mensagem?')) return;
+      try {
+        await db.collection('chatMensagens').doc(id).delete();
+        mostrarAviso('Mensagem apagada.');
+        await carregarChatAdmin();
+      } catch (e) {
+        alert('Erro: ' + (e.message || e));
+      }
+    }
+
+    async function apagarTodoChatMes() {
+      if (!confirm('Apagar TODAS as mensagens deste mês?\nIsto não se pode desfazer.')) return;
+      try {
+        var snap = await db.collection('chatMensagens')
+          .where('createdAt', '>=', inicioMesAdmin())
+          .limit(400)
+          .get();
+        while (!snap.empty) {
+          var batch = db.batch();
+          snap.forEach(function (d) { batch.delete(d.ref); });
+          await batch.commit();
+          snap = await db.collection('chatMensagens')
+            .where('createdAt', '>=', inicioMesAdmin())
+            .limit(400)
+            .get();
+        }
+        mostrarAviso('Todas as mensagens deste mês foram apagadas.');
+        await carregarChatAdmin();
+      } catch (e) {
+        alert('Erro: ' + (e.message || e));
+      }
+    }
+
+
     function renderInfluencerAdmin() {
       var tbody = document.getElementById('tbody-influencer');
       var tbodyRel = document.getElementById('tbody-influencer-rels');
