@@ -228,6 +228,7 @@
     <button class="tab" data-tab="ranking" onclick="mudarTab('ranking')"><i class="fas fa-medal"></i> Ranking</button>
     <button class="tab" data-tab="convites" onclick="mudarTab('convites')"><i class="fas fa-user-plus"></i> Convites</button>
     <button class="tab" data-tab="visitantes" onclick="mudarTab('visitantes')"><i class="fas fa-chart-line"></i> Visitantes</button>
+    <button class="tab" data-tab="homejub" onclick="mudarTab('homejub')"><i class="fas fa-gamepad"></i> Homejub</button>
   </div>
 
   <div class="conteudo">
@@ -808,6 +809,47 @@
       </div>
     </div>
 
+
+    <!-- HOMEJUB / JOGO -->
+    <div class="painel" id="painel-homejub">
+      <div class="form-box">
+        <h3><i class="fas fa-gamepad"></i> Progresso no Homejub</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:12px;">
+          Nível desbloqueado, moedas, vidas, ajudas e total gasto em compras (MT) na loja do jogo.
+          Dados da coleção <code>jogoEstado</code> e <code>pedidosLoja</code>.
+        </p>
+        <div class="busca">
+          <input type="text" id="busca-homejub" placeholder="Pesquisar por e-mail ou nome..." oninput="filtrarHomejub()">
+        </div>
+        <div class="resumo" style="margin-bottom:14px;">
+          <div class="resumo-card"><div class="num" id="hj-total-jogadores">0</div><div class="lbl">Com progresso</div></div>
+          <div class="resumo-card"><div class="num" id="hj-nivel-max">0</div><div class="lbl">Nível mais alto</div></div>
+          <div class="resumo-card"><div class="num" id="hj-total-mt">0</div><div class="lbl">MT em compras</div></div>
+          <div class="resumo-card"><div class="num" id="hj-sem-vidas">0</div><div class="lbl">Sem vidas</div></div>
+        </div>
+        <div class="tabela-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Nome</th>
+                <th>E-mail</th>
+                <th>Nível</th>
+                <th>Moedas</th>
+                <th>Vidas</th>
+                <th>Ajudas</th>
+                <th>Compras (MT)</th>
+                <th>Nº compras</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-homejub">
+              <tr><td colspan="9" class="vazio">Abre este separador ou clica em Atualizar.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <script>
@@ -897,6 +939,7 @@ function mostrarAviso(txt) {
         else console.warn('Painel não encontrado:', nome);
         if (nome === 'missoes') try { renderHorariosMissaoAdmin(); } catch (eH) {}
         if (nome === 'visitantes') try { carregarVisitantes(); } catch (eV) {}
+        if (nome === 'homejub') try { carregarHomejub(); } catch (eH) {}
       } catch (e) {
         console.error('mudarTab:', e);
         alert('Erro ao abrir separador: ' + (e.message || e));
@@ -920,6 +963,7 @@ function mostrarAviso(txt) {
       try { await carregarDesafios(); } catch (e) { console.error(e); }
       try { await carregarMissoes(); } catch (e) { console.error(e); }
       try { await carregarVisitantes(); } catch (e) { console.error(e); }
+      try { await carregarHomejub(); } catch (e) { console.error(e); }
       atualizarResumo();
       renderRanking();
     }
@@ -931,6 +975,170 @@ function mostrarAviso(txt) {
       var day = String(d.getDate()).padStart(2, '0');
       return y + '-' + m + '-' + day;
     }
+
+    
+    var PRECO_ITEM_HOMEJUB = {
+      moedas30: 2,
+      moedas70: 4,
+      ajudas20: 2,
+      jogadas10: 2,
+      jogadasOferta20: 2,
+      bonus: 5,
+      bonus2: 10,
+      moedasInfinitas: 100,
+      ajudasInfinitas: 50,
+      desbloqueio10: 15
+    };
+    var listaHomejub = [];
+
+    async function carregarHomejub() {
+      var tbody = document.getElementById('tbody-homejub');
+      if (!tbody) return;
+      tbody.innerHTML = '<tr><td colspan="9" class="vazio">A carregar progresso do jogo...</td></tr>';
+      try {
+        // Mapa email -> nome a partir dos utilizadores já carregados
+        var nomePorEmail = {};
+        (todosUsers || []).forEach(function (u) {
+          var em = String(u.email || '').trim().toLowerCase();
+          if (em) nomePorEmail[em] = u.nome || u.email || '—';
+        });
+
+        // Progresso do jogo
+        var snap = await db.collection('jogoEstado').get();
+        var porEmail = {};
+        snap.forEach(function (doc) {
+          var email = String(doc.id || '').trim();
+          var d = doc.data() || {};
+          porEmail[email.toLowerCase()] = {
+            email: email,
+            nome: nomePorEmail[email.toLowerCase()] || email,
+            nivel: d.nivelDesbloqueado || 1,
+            moedas: typeof d.moedasTotais === 'number' ? d.moedasTotais : 0,
+            vidas: typeof d.vidas === 'number' ? d.vidas : 5,
+            ajudas: d.ajudasDisponiveis || 0,
+            moedasInf: !!d.moedasInfinitas,
+            ajudasInf: !!d.ajudasInfinitas,
+            proximaRecarga: d.proximaRecarga || 0,
+            mt: 0,
+            nCompras: 0
+          };
+        });
+
+        // Compras em metical (pedidos da loja)
+        try {
+          var snapPed = await db.collection('pedidosLoja').get();
+          snapPed.forEach(function (doc) {
+            var d = doc.data() || {};
+            var em = String(d.email || '').trim().toLowerCase();
+            if (!em) return;
+            if (!porEmail[em]) {
+              porEmail[em] = {
+                email: d.email,
+                nome: nomePorEmail[em] || d.email,
+                nivel: 1,
+                moedas: 0,
+                vidas: 5,
+                ajudas: 0,
+                moedasInf: false,
+                ajudasInf: false,
+                proximaRecarga: 0,
+                mt: 0,
+                nCompras: 0
+              };
+            }
+            var item = String(d.item || '');
+            var preco = PRECO_ITEM_HOMEJUB[item];
+            if (typeof preco === 'number') {
+              porEmail[em].mt += preco;
+              porEmail[em].nCompras += 1;
+            } else if (typeof d.amount === 'number') {
+              porEmail[em].mt += d.amount;
+              porEmail[em].nCompras += 1;
+            } else if (typeof d.valor === 'number') {
+              porEmail[em].mt += d.valor;
+              porEmail[em].nCompras += 1;
+            } else {
+              // pedido registado sem preço conhecido — conta como 1 compra
+              porEmail[em].nCompras += 1;
+            }
+          });
+        } catch (ePed) {
+          console.warn('pedidosLoja:', ePed);
+        }
+
+        listaHomejub = Object.keys(porEmail).map(function (k) { return porEmail[k]; });
+        listaHomejub.sort(function (a, b) {
+          if (b.nivel !== a.nivel) return b.nivel - a.nivel;
+          return (b.mt || 0) - (a.mt || 0);
+        });
+
+        renderHomejub(listaHomejub);
+      } catch (e) {
+        console.error(e);
+        tbody.innerHTML = '<tr><td colspan="9" class="vazio">Erro ao carregar: ' + escHtml(e.message || e) + '</td></tr>';
+      }
+    }
+
+    function renderHomejub(lista) {
+      var tbody = document.getElementById('tbody-homejub');
+      if (!tbody) return;
+      var nivelMax = 0, totalMt = 0, semVidas = 0;
+      lista.forEach(function (r) {
+        if (r.nivel > nivelMax) nivelMax = r.nivel;
+        totalMt += r.mt || 0;
+        if ((r.vidas || 0) <= 0) semVidas++;
+      });
+      var elJ = document.getElementById('hj-total-jogadores');
+      var elN = document.getElementById('hj-nivel-max');
+      var elM = document.getElementById('hj-total-mt');
+      var elS = document.getElementById('hj-sem-vidas');
+      if (elJ) elJ.textContent = lista.length;
+      if (elN) elN.textContent = nivelMax;
+      if (elM) elM.textContent = totalMt;
+      if (elS) elS.textContent = semVidas;
+
+      if (!lista.length) {
+        tbody.innerHTML = '<tr><td colspan="9" class="vazio">Ainda não há progresso de jogo guardado.</td></tr>';
+        return;
+      }
+      var html = '';
+      lista.forEach(function (r, i) {
+        var vidasTxt;
+        if ((r.vidas || 0) <= 0) {
+          vidasTxt = '<span class="status-tag status-recusado">0 — esgotadas</span>';
+        } else if (r.vidas >= 5) {
+          vidasTxt = '<span class="status-tag status-ativo">' + r.vidas + ' / 5</span>';
+        } else {
+          vidasTxt = '<span class="status-tag status-pendente">' + r.vidas + ' / 5</span>';
+        }
+        var moedasTxt = r.moedasInf ? '∞' : String(r.moedas || 0);
+        var ajudasTxt = r.ajudasInf ? '∞' : String(r.ajudas || 0);
+        var clsNivel = r.nivel >= 50 ? 'pts-alto' : (r.nivel >= 10 ? 'pts-ok' : 'pts-baixo');
+        html += '<tr data-busca="' + escHtml((r.nome + ' ' + r.email).toLowerCase()) + '">' +
+          '<td>' + (i + 1) + '</td>' +
+          '<td>' + escHtml(r.nome) + '</td>' +
+          '<td>' + escHtml(r.email) + '</td>' +
+          '<td class="' + clsNivel + '">' + r.nivel + '</td>' +
+          '<td>' + moedasTxt + ' 🪙</td>' +
+          '<td>' + vidasTxt + '</td>' +
+          '<td>' + ajudasTxt + '</td>' +
+          '<td class="pts-ok">' + (r.mt || 0) + ' MT</td>' +
+          '<td>' + (r.nCompras || 0) + '</td>' +
+          '</tr>';
+      });
+      tbody.innerHTML = html;
+    }
+
+    function filtrarHomejub() {
+      var q = (document.getElementById('busca-homejub') && document.getElementById('busca-homejub').value || '').trim().toLowerCase();
+      var tb = document.getElementById('tbody-homejub');
+      if (!tb) return;
+      tb.querySelectorAll('tr[data-busca]').forEach(function (tr) {
+        var ok = !q || (tr.getAttribute('data-busca') || '').indexOf(q) !== -1;
+        tr.style.display = ok ? '' : 'none';
+      });
+    }
+
 
     async function carregarVisitantes() {
       var tbody = document.getElementById('tbody-visitantes');
