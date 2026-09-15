@@ -878,5 +878,31 @@ document.querySelectorAll('a[href^="#"]').forEach(function(link){
 })();
 </script>
 
+
+<script>
+/* Guarda link de influencer / indicação ao chegar pelo index */
+(function () {
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var inf = params.get('inf');
+    if (inf) localStorage.setItem('infPendente', String(inf).trim().toUpperCase());
+    var ref = params.get('ref');
+    if (ref) localStorage.setItem('refPendente', String(ref).trim().toUpperCase());
+
+    // Se veio de influencer, os botões "Criar conta" levam o código no URL
+    var infSave = (localStorage.getItem('infPendente') || '').trim();
+    var refSave = (localStorage.getItem('refPendente') || '').trim();
+    if (infSave || refSave) {
+      document.querySelectorAll('a[href="criar-conta.html"], a[href="/criar-conta.html"]').forEach(function (a) {
+        var q = [];
+        if (infSave) q.push('inf=' + encodeURIComponent(infSave));
+        if (refSave) q.push('ref=' + encodeURIComponent(refSave));
+        a.setAttribute('href', 'criar-conta.html?' + q.join('&'));
+      });
+    }
+  } catch (e) {}
+})();
+</script>
+
 </body>
 </html>
