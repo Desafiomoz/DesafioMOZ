@@ -217,32 +217,94 @@
   .btn-confirmar:disabled{background:#2a2e37; color:#6b7280;}
 
   /* ---------- histórico (tela cheia) ---------- */
+  .hist-vazio{margin:40px 16px; text-align:center; color:var(--texto-fraco); font-size:13.5px;}
+  .hist-grade{
+    display:grid; grid-template-columns:repeat(2,1fr); gap:12px;
+    padding:16px 16px 28px;
+  }
+  .hist-caixa{
+    position:relative; overflow:hidden;
+    background:linear-gradient(160deg, rgba(255,201,77,0.14), rgba(17,21,29,0.96) 55%);
+    border:1px solid rgba(255,201,77,0.35);
+    border-radius:18px; padding:16px 12px 14px; text-align:center;
+    box-shadow:0 0 28px rgba(255,201,77,0.18), inset 0 1px 0 rgba(255,255,255,0.06);
+  }
+  .hist-caixa.ganhou{
+    background:linear-gradient(160deg, rgba(34,255,153,0.18), rgba(17,21,29,0.96) 55%);
+    border-color:rgba(34,255,153,0.4);
+    box-shadow:0 0 32px rgba(34,255,153,0.22);
+  }
+  .hist-caixa.perdeu{
+    background:linear-gradient(160deg, rgba(90,100,120,0.2), rgba(17,21,29,0.96) 55%);
+    border-color:rgba(255,255,255,0.1);
+    box-shadow:0 0 18px rgba(0,0,0,0.25);
+  }
+  .hist-caixa .hx-emoji{font-size:28px; filter:drop-shadow(0 0 10px rgba(255,201,77,0.5));}
+  .hist-caixa.ganhou .hx-emoji{filter:drop-shadow(0 0 12px rgba(34,255,153,0.55));}
+  .hist-caixa .hx-nome{
+    font-size:12px; font-weight:800; margin:8px 0 4px; color:#fff;
+    letter-spacing:0.2px;
+  }
+  .hist-caixa .hx-num{
+    font-size:26px; font-weight:900; line-height:1.1;
+    background:linear-gradient(90deg,var(--ouro),#fff6df);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .hist-caixa.ganhou .hx-num{
+    background:linear-gradient(90deg,var(--verde),#b8ffd9);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .hist-caixa .hx-sub{font-size:10.5px; color:var(--texto-fraco); margin-top:4px; font-weight:700;}
+  .hist-titulo-sec{
+    margin:8px 16px 0; font-size:12px; font-weight:800; color:var(--ouro);
+    text-transform:uppercase; letter-spacing:0.08em;
+  }
+  .hist-recentes{padding:8px 16px 24px;}
   .hist-item{
     display:flex; align-items:center; justify-content:space-between;
-    background:var(--painel); border-radius:12px; padding:12px 14px; margin:0 16px 8px;
-    font-size:13px; border-left:3px solid transparent;
+    background:var(--painel); border-radius:12px; padding:11px 14px; margin-bottom:8px;
+    font-size:13px; border:1px solid rgba(255,201,77,0.15);
+    box-shadow:0 0 14px rgba(255,201,77,0.08);
   }
-  .hist-item:first-child{margin-top:16px;}
   .hist-item .premio{font-weight:800; display:flex; align-items:center; gap:8px;}
-  .hist-item.ganhou{border-left-color:var(--verde); box-shadow:0 0 16px -4px rgba(34,255,153,0.35);}
+  .hist-item.ganhou{border-color:rgba(34,255,153,0.35); box-shadow:0 0 16px rgba(34,255,153,0.15);}
   .hist-item.ganhou .premio{color:var(--verde);}
-  .hist-item.perdeu{border-left-color:#555c6b;}
   .hist-item.perdeu .premio{color:var(--texto-fraco);}
   .hist-item .quando{color:var(--texto-fraco); font-size:11.5px;}
-  .hist-vazio{margin:40px 16px; text-align:center; color:var(--texto-fraco); font-size:13.5px;}
 
   /* ---------- regras (tela cheia) ---------- */
-  .regras-lista{padding:16px;}
+  .regras-lista{padding:16px 16px 36px;}
   .regra-cartao{
-    background:linear-gradient(160deg, rgba(34,255,153,0.06), var(--painel) 55%);
-    border:1px solid rgba(34,255,153,0.18);
-    border-radius:14px; padding:14px 16px; margin-bottom:10px;
-    display:flex; gap:12px; align-items:flex-start;
-    box-shadow:0 0 20px -10px rgba(34,255,153,0.3);
+    background:linear-gradient(160deg, rgba(255,201,77,0.12), rgba(17,21,29,0.95) 50%);
+    border:1px solid rgba(255,201,77,0.32);
+    border-radius:18px; padding:18px 16px; margin-bottom:14px;
+    display:flex; gap:14px; align-items:flex-start;
+    box-shadow:0 0 28px rgba(255,201,77,0.16), inset 0 1px 0 rgba(255,255,255,0.05);
   }
-  .regra-cartao .ic{font-size:20px; flex-shrink:0; text-shadow:0 0 10px rgba(34,255,153,0.6);}
-  .regra-cartao p{margin:0; font-size:13.5px; color:var(--texto-fraco); line-height:1.5;}
+  .regra-cartao.verde{
+    background:linear-gradient(160deg, rgba(34,255,153,0.14), rgba(17,21,29,0.95) 50%);
+    border-color:rgba(34,255,153,0.35);
+    box-shadow:0 0 28px rgba(34,255,153,0.18);
+  }
+  .regra-cartao .ic{
+    font-size:26px; flex-shrink:0; width:44px; height:44px;
+    display:flex; align-items:center; justify-content:center;
+    border-radius:14px; background:rgba(255,201,77,0.12);
+    text-shadow:0 0 14px rgba(255,201,77,0.7);
+  }
+  .regra-cartao.verde .ic{
+    background:rgba(34,255,153,0.12);
+    text-shadow:0 0 14px rgba(34,255,153,0.7);
+  }
+  .regra-cartao .txt{flex:1; min-width:0;}
+  .regra-cartao h3{
+    margin:0 0 8px; font-size:15px; font-weight:900; color:#fff;
+    letter-spacing:0.2px;
+  }
+  .regra-cartao p{margin:0; font-size:14px; color:#c5cdd8; line-height:1.55;}
   .regra-cartao b{color:#fff;}
+  .regra-cartao .destaque{color:var(--ouro); font-weight:800;}
+  .regra-cartao.verde .destaque{color:var(--verde);}
 
   /* ---------- overlay resultado do giro ---------- */
   #overlay{
@@ -359,7 +421,7 @@
       <div class="personalizado">
         <label>Ou indica quantos meticais queres usar</label>
         <div class="campo-custom">
-          <input type="number" id="custom-mt" placeholder="Mín. 2 MT" min="2">
+          <input type="number" id="custom-mt" placeholder="Mín. 2 MT" min="2" step="1">
         </div>
         <div class="resultado-custom"><span>Vais receber</span><b id="custom-mt-resultado">0 giros</b></div>
         <button class="btn-confirmar" id="btn-comprar-mt">Pagar com M-Pesa</button>
@@ -384,14 +446,70 @@
     <h2>Regras do jogo</h2>
   </div>
   <div class="regras-lista">
-    <div class="regra-cartao"><div class="ic">🎡</div><p>Cada giro na roleta gasta <b>1 giro</b> da tua conta. Podes usar os teus giros à vontade, eles só diminuem quando giras.</p></div>
-    <div class="regra-cartao"><div class="ic">🎁</div><p>Todos os dias tens direito a <b>1 giro grátis</b>, entregue automaticamente na primeira vez que abrires a roleta no dia.</p></div>
-    <div class="regra-cartao"><div class="ic">⭐</div><p>Podes comprar giros com os teus <b>pontos</b> do Desafio MOZ, sem gastar dinheiro.</p></div>
-    <div class="regra-cartao"><div class="ic">💵</div><p>Também podes comprar giros com <b>M-Pesa</b>, para quem quer jogar mais rápido.</p></div>
-    <div class="regra-cartao"><div class="ic">🎯</div><p>O prémio é sempre aquele que fica alinhado com o <b>ponteiro no topo</b> da roleta quando ela para. Não há influência manual — o resultado é sorteado antes de a roleta começar a girar.</p></div>
-    <div class="regra-cartao"><div class="ic">💰</div><p>Prémios em <b>pontos</b> e em <b>MT</b> são creditados automaticamente na tua conta do Desafio MOZ.</p></div>
-    <div class="regra-cartao"><div class="ic">🔁</div><p>Prémios de <b>+giros</b> somam-se logo ao teu saldo de giros, podendo ser usados de imediato.</p></div>
-    <div class="regra-cartao"><div class="ic">🚫</div><p>Usar mais que uma conta para conseguir giros grátis extra é considerado fraude e pode levar ao bloqueio da conta.</p></div>
+    <div class="regra-cartao">
+      <div class="ic">🎡</div>
+      <div class="txt">
+        <h3>Como funciona o giro</h3>
+        <p>Cada vez que tocas em <span class="destaque">GIRAR AGORA</span> gastas <b>1 giro</b>. A roleta gira cerca de <b>8 segundos</b> (acelera e depois abranda) e pára no prémio sorteado. O resultado é definido <b>antes</b> de começar a girar — o ponteiro vermelho no topo marca a fatia vencedora.</p>
+      </div>
+    </div>
+    <div class="regra-cartao verde">
+      <div class="ic">🎁</div>
+      <div class="txt">
+        <h3>Giro grátis diário</h3>
+        <p>Todos os dias recebes <span class="destaque">1 giro grátis</span> na primeira vez que abrires a roleta. Não acumula para o dia seguinte: usa-o no próprio dia.</p>
+      </div>
+    </div>
+    <div class="regra-cartao">
+      <div class="ic">⭐</div>
+      <div class="txt">
+        <h3>Comprar giros com pontos</h3>
+        <p>Podes trocar pontos da tua conta Desafio MOZ por giros. Quanto mais pontos usares, mais giros recebes. Os pontos saem da conta na hora da compra.</p>
+      </div>
+    </div>
+    <div class="regra-cartao">
+      <div class="ic">💵</div>
+      <div class="txt">
+        <h3>Comprar giros com metical</h3>
+        <p>Mínimo <span class="destaque">2 MT</span>. Em compras com metical, <b>1 giro</b> tem tendência a cair em <b>20 pontos</b>; a partir de <b>5 MT</b>, outro giro tende a cair em <b>1 MT</b>. Os restantes seguem a sorte normal.</p>
+      </div>
+    </div>
+    <div class="regra-cartao verde">
+      <div class="ic">💰</div>
+      <div class="txt">
+        <h3>O que podes ganhar</h3>
+        <p>
+          <b>Pontos baixos</b> (ex.: 20 pts) — mais acessíveis.<br>
+          <b>Pontos altos</b> (100, 500, 1000) — <span class="destaque">muito </span>.<br>
+          <b>1 MT e 5 MT</b> — possíveis.<br>
+          <b>10 MT e 50 MT</b> — <span class="destaque"></span>.<br>
+          <b>+2 giros</b> — aparece .<br>
+          <b>+6 giros</b> — <span class="destaque"></span>.<br>
+          <b>Boa sorte / Quase</b> — as fatias mais comuns (não dão prémio).
+        </p>
+      </div>
+    </div>
+    <div class="regra-cartao verde">
+      <div class="ic">📥</div>
+      <div class="txt">
+        <h3>Onde entra o prémio</h3>
+        <p>Pontos e meticais (convertidos em pontos: <b>8 pts = 1 MT</b>) vão para a tua conta Desafio MOZ. Os <b>+giros</b> somam-se logo e podes usar de imediato.</p>
+      </div>
+    </div>
+    <div class="regra-cartao">
+      <div class="ic">📊</div>
+      <div class="txt">
+        <h3>Histórico</h3>
+        <p>No histórico vês <b>quantas vezes</b> caíste em cada opção da roleta (caixas com contagem) e os giros mais recentes.</p>
+      </div>
+    </div>
+    <div class="regra-cartao">
+      <div class="ic">🚫</div>
+      <div class="txt">
+        <h3>Regras de conta</h3>
+        <p>Usar várias contas só para apanhar giros grátis é fraude e pode levar ao <b>bloqueio</b> da conta no Desafio MOZ.</p>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -435,23 +553,33 @@ const PTS_POR_MT = 8; // 8 pontos = 1 metical
 let userRef = null;
 
 /* ---------- Prémios da roleta (12 fatias) ---------- */
+/* Boa sorte + Quase muito frequentes.
+   MT ≥10 e pontos ≥100 e +6 giros = extremamente raros */
 const PREMIOS = [
-  {label:"1000 PTS", tipo:"pontos", valor:1000, peso:1,  cor:0xFFD24D, emoji:"👑"},
-  {label:"500 PTS",  tipo:"pontos", valor:500,  peso:3,  cor:0x22FF99, emoji:"🌟"},
-  {label:"10 MT",     tipo:"mt",     valor:10,   peso:2,  cor:0xFF7A45, emoji:"💵"},
-  {label:"1 MT",      tipo:"mt",     valor:1,    peso:15, cor:0x4FC3F7, emoji:"💸"},
-  {label:"5 MT",      tipo:"mt",     valor:5,    peso:5,  cor:0xFFD24D, emoji:"💰"},
-  {label:"100 PTS",  tipo:"pontos", valor:100,  peso:10, cor:0x22FF99, emoji:"✨"},
-  {label:"+2 GIROS",  tipo:"giros",  valor:2,    peso:20, cor:0xB388FF, emoji:"🎡"},
-  {label:"BOA SORTE", tipo:"nada", valor:0, peso:25, cor:0x3A4250, emoji:"🍀"},
-  {label:"+6 GIROS",  tipo:"giros",  valor:6,    peso:8,  cor:0xB388FF, emoji:"🎡"},
-  {label:"QUASE!",    tipo:"nada",   valor:0,    peso:20, cor:0x3A4250, emoji:"😅"},
-  {label:"20 PTS",   tipo:"pontos", valor:20,   peso:15, cor:0x22FF99, emoji:"✨"},
-  {label:"50 MT",     tipo:"mt",     valor:50,   peso:1,  cor:0xFFD24D, emoji:"🏆"}
+  {label:"1000 PTS", tipo:"pontos", valor:1000, peso:1,   cor:0xFFD24D, emoji:"👑"}, // ~0,05%
+  {label:"500 PTS",  tipo:"pontos", valor:500,  peso:1,   cor:0x22FF99, emoji:"🌟"}, // ~0,05%
+  {label:"10 MT",     tipo:"mt",     valor:10,   peso:2,   cor:0xFF7A45, emoji:"💵"}, // ~0,1%
+  {label:"1 MT",      tipo:"mt",     valor:1,    peso:100, cor:0x4FC3F7, emoji:"💸"}, // ~5%
+  {label:"5 MT",      tipo:"mt",     valor:5,    peso:12,  cor:0xFFD24D, emoji:"💰"}, // ~0,6%
+  {label:"100 PTS",  tipo:"pontos", valor:100,  peso:3,   cor:0x22FF99, emoji:"✨"}, // ~0,15%
+  {label:"+2 GIROS",  tipo:"giros",  valor:2,    peso:90,  cor:0xB388FF, emoji:"🎡"}, // ~4,5%
+  {label:"BOA SORTE", tipo:"nada",   valor:0,    peso:800, cor:0x3A4250, emoji:"🍀"}, // ~40%
+  {label:"+6 GIROS",  tipo:"giros",  valor:6,    peso:2,   cor:0xB388FF, emoji:"🎡"}, // ~0,1% muito difícil
+  {label:"QUASE!",    tipo:"nada",   valor:0,    peso:800, cor:0x3A4250, emoji:"😅"}, // ~40%
+  {label:"20 PTS",   tipo:"pontos", valor:20,   peso:70,  cor:0x22FF99, emoji:"✨"}, // ~3,5%
+  {label:"50 MT",     tipo:"mt",     valor:50,   peso:1,   cor:0xFFD24D, emoji:"🏆"}  // ~0,05%
 ];
 const N = PREMIOS.length;
 const ANGULO_FATIA = (Math.PI*2)/N;
 const PESO_TOTAL = PREMIOS.reduce((s,p)=>s+p.peso,0);
+function indicePremio(tipo, valor){
+  for(let i=0;i<N;i++){
+    if(PREMIOS[i].tipo===tipo && PREMIOS[i].valor===valor) return i;
+  }
+  return -1;
+}
+const IDX_20_PTS = indicePremio('pontos', 20);
+const IDX_1_MT = indicePremio('mt', 1);
 
 /* ---------- Fórmulas de conversão (interpolação pelos valores fornecidos) ---------- */
 function interpolarGiros(valor, ancoras){
@@ -483,6 +611,7 @@ function carregarEstadoLocal(){
       if(Array.isArray(o.historico)) estado.historico = o.historico;
       if(o.giros != null) estado.giros = Number(o.giros) || 0;
       if(o.ultimoGiroGratis) estado.ultimoGiroGratis = o.ultimoGiroGratis;
+      if(Array.isArray(o.garantias)) estado.garantias = o.garantias;
     }
   } catch(e){}
 }
@@ -497,7 +626,8 @@ function guardarEstadoLocal(){
     localStorage.setItem(CHAVE_ESTADO, JSON.stringify({
       giros: estado.giros,
       historico: estado.historico,
-      ultimoGiroGratis: estado.ultimoGiroGratis
+      ultimoGiroGratis: estado.ultimoGiroGratis,
+      garantias: estado.garantias || []
     }));
   } catch(e){}
 }
@@ -575,13 +705,37 @@ function atualizarUI(){
 }
 function renderHistorico(){
   const lista = document.getElementById('lista-historico');
-  if(estado.historico.length===0){
-    lista.innerHTML = '<div class="hist-vazio">Ainda não giraste a roleta.<br>O teu histórico de ganhos e perdas vai aparecer aqui.</div>';
+  if(!lista) return;
+  if(!estado.historico || estado.historico.length===0){
+    lista.innerHTML = '<div class="hist-vazio">Ainda não giraste a roleta.<br>As caixas de cada prémio aparecem aqui com a contagem.</div>';
     return;
   }
-  lista.innerHTML = estado.historico.map(h=>{
-    return `<div class="hist-item ${h.ganhou?'ganhou':'perdeu'}"><span class="premio">${h.emoji} ${h.texto}</span><span class="quando">${h.quando}</span></div>`;
+  // Contagem por cada opção da roleta
+  const cont = {};
+  PREMIOS.forEach(function(pr){ cont[pr.label] = 0; });
+  estado.historico.forEach(function(h){
+    const k = h.texto;
+    if(cont[k] == null) cont[k] = 0;
+    cont[k]++;
+  });
+  let grade = '<div class="hist-titulo-sec">Contagem por prémio</div><div class="hist-grade">';
+  PREMIOS.forEach(function(pr){
+    const n = cont[pr.label] || 0;
+    const cls = pr.tipo === 'nada' ? 'perdeu' : 'ganhou';
+    grade += '<div class="hist-caixa '+cls+'">'+
+      '<div class="hx-emoji">'+pr.emoji+'</div>'+
+      '<div class="hx-nome">'+pr.label+'</div>'+
+      '<div class="hx-num">'+n+'</div>'+
+      '<div class="hx-sub">'+(n===1?'vez':'vezes')+'</div>'+
+    '</div>';
+  });
+  grade += '</div>';
+  grade += '<div class="hist-titulo-sec">Giros recentes</div><div class="hist-recentes">';
+  grade += estado.historico.slice(0,20).map(function(h){
+    return '<div class="hist-item '+(h.ganhou?'ganhou':'perdeu')+'"><span class="premio">'+h.emoji+' '+h.texto+'</span><span class="quando">'+h.quando+'</span></div>';
   }).join('');
+  grade += '</div>';
+  lista.innerHTML = grade;
 }
 function mostrarToast(msg){
   const t=document.getElementById('toast');
@@ -654,7 +808,8 @@ document.getElementById('btn-comprar-pontos').addEventListener('click', ()=>{
 document.getElementById('btn-comprar-mt').addEventListener('click', ()=>{
   const vm = Number(inputMt.value)||0;
   const gm = interpolarGiros(vm, ANCORAS_MT);
-  if(vm<=0 || gm<=0){ mostrarToast('Indica um valor válido em MT.'); return; }
+  if(vm < 2){ mostrarToast('Mínimo de compra: 2 meticais.'); return; }
+  if(gm<=0){ mostrarToast('Indica um valor válido em MT.'); return; }
   iniciarPagamentoMetical(vm, gm);
 });
 
@@ -679,10 +834,12 @@ function itemRoletaParaMT(valorMT){
 
 function pedirNumeroMpesa(){
   var guardado = '';
-  try { guardado = localStorage.getItem('telUtilizador') || localStorage.getItem('msisdnRoleta') || ''; } catch(e){}
+  try {
+    guardado = localStorage.getItem('telUtilizador') || localStorage.getItem('msisdnRoleta') || '';
+  } catch(e){}
   var n = prompt('Número M-Pesa (+258XXXXXXXXX):', guardado || '+258');
   if(!n) return null;
-  n = String(n).trim().replace(/\s/g,'');
+  n = String(n).trim().replace(/\s/g, '');
   if(/^8\d{8}$/.test(n)) n = '+258' + n;
   if(/^258\d{9}$/.test(n)) n = '+' + n;
   if(!/^\+258\d{9}$/.test(n)){
@@ -691,28 +848,6 @@ function pedirNumeroMpesa(){
   }
   try { localStorage.setItem('msisdnRoleta', n); } catch(e){}
   return n;
-}
-
-function registarGarantiasMetical(valorMT, girosComprados){
-  if(!estado.garantias) estado.garantias = [];
-  // índices: procurar 20 PTS e 1 MT nos PREMIOS
-  var idx20 = -1, idx1 = -1;
-  for(var i=0;i<PREMIOS.length;i++){
-    if(PREMIOS[i].tipo==='pontos' && PREMIOS[i].valor===20) idx20 = i;
-    if(PREMIOS[i].tipo==='mt' && PREMIOS[i].valor===1) idx1 = i;
-  }
-  if(idx20 >= 0) estado.garantias.push(idx20);
-  if(valorMT >= 5 && idx1 >= 0) estado.garantias.push(idx1);
-  while(estado.garantias.length > girosComprados) estado.garantias.pop();
-}
-
-async function creditarGirosAposPagamento(valorMT, giros){
-  estado.giros = (Number(estado.giros)||0) + giros;
-  registarGarantiasMetical(valorMT, giros);
-  if(typeof guardarEstado === 'function') await guardarEstado();
-  else if(typeof guardarEstadoLocal === 'function') guardarEstadoLocal();
-  atualizarUI();
-  mostrarToast('Pagamento ok! +' + giros + ' giros creditados.');
 }
 
 async function iniciarPagamentoMetical(valorMT, giros){
@@ -765,7 +900,7 @@ async function iniciarPagamentoMetical(valorMT, giros){
 
 async function esperarPagamentoRoleta(chargeId, valorMT, giros){
   var tentativas = 0;
-  var maxTentativas = 45; // ~90s
+  var maxTentativas = 45; // ~90 segundos
   while(tentativas < maxTentativas){
     tentativas++;
     await new Promise(function(r){ setTimeout(r, 2000); });
@@ -777,17 +912,17 @@ async function esperarPagamentoRoleta(chargeId, valorMT, giros){
         return;
       }
       if(st.status === 'paid' && st.credited){
-        await creditarGirosAposPagamento(valorMT, giros);
+        await creditarGirosMetical(valorMT, giros);
         return;
       }
+      // pago mas webhook ainda a processar — após várias tentativas credita na app
       if(st.status === 'paid' && tentativas > 8){
-        // pago mas webhook ainda não escreveu lojaCargas — credita na mesma após espera
-        await creditarGirosAposPagamento(valorMT, giros);
+        await creditarGirosMetical(valorMT, giros);
         return;
       }
     } catch(e){}
   }
-  mostrarToast('Demorou muito. Se pagaste, os giros entram pelo webhook em breve.');
+  mostrarToast('Demorou muito. Se pagaste, os giros entram pelo webhook em breve. Atualiza a página.');
 }
 
 /* =========================================================
@@ -995,6 +1130,7 @@ requestAnimationFrame(loop);
 
 /* ---------- sorteio / giro ---------- */
 function sortearPremio(){
+  // Giros comprados em MT: consumir garantias primeiro (20 pts / 1 MT)
   if(estado.garantias && estado.garantias.length){
     return estado.garantias.shift();
   }
@@ -1002,27 +1138,55 @@ function sortearPremio(){
   for(let i=0;i<N;i++){ if(r < PREMIOS[i].peso) return i; r -= PREMIOS[i].peso; }
   return N-1;
 }
-function easeOutQuint(t){ return 1 - Math.pow(1-t, 5); }
+
+/* Acelera no início e abranda no fim — total 8 segundos */
+function easeAceleraTrava(t){
+  if(t <= 0) return 0;
+  if(t >= 1) return 1;
+  // 0–35%: acelera (ease-in); 35–100%: abranda forte (ease-out)
+  if(t < 0.35){
+    const u = t / 0.35;
+    return 0.42 * u * u;
+  }
+  const u = (t - 0.35) / 0.65;
+  return 0.42 + 0.58 * (1 - Math.pow(1 - u, 3));
+}
 
 function girarRoleta(indiceAlvo){
   return new Promise(resolve=>{
     const anguloAtual = wheelMesh.rotation.z;
-    // ângulo real do centro da fatia i, no mesmo referencial usado ao desenhá-la
-    // (tem de bater certo com "angCentro" usado para posicionar o texto de cada fatia)
     const centroAlvo = indiceAlvo*ANGULO_FATIA - Math.PI/2;
     let necessario = (Math.PI/2 - centroAlvo) - (anguloAtual % (Math.PI*2));
     necessario = ((necessario % (Math.PI*2)) + Math.PI*2) % (Math.PI*2);
-    const alvoFinal = anguloAtual + 7*Math.PI*2 + necessario;
-    const duracao = 4400;
+    // várias voltas completas + paragem exacta
+    const alvoFinal = anguloAtual + 10*Math.PI*2 + necessario;
+    const duracao = 8000; // 8 segundos
     const inicioAnim = performance.now();
     const partida = anguloAtual;
     function passo(agora){
       const t = Math.min((agora-inicioAnim)/duracao, 1);
-      wheelMesh.rotation.z = partida + (alvoFinal-partida)*easeOutQuint(t);
+      wheelMesh.rotation.z = partida + (alvoFinal-partida)*easeAceleraTrava(t);
       if(t<1){ requestAnimationFrame(passo); } else { wheelMesh.rotation.z = alvoFinal; resolve(); }
     }
     requestAnimationFrame(passo);
   });
+}
+
+/* Compra em metical: 1 giro garantido em 20 pts; se >=5 MT, +1 giro garantido em 1 MT */
+function registarGarantiasMetical(valorMT, girosComprados){
+  if(!estado.garantias) estado.garantias = [];
+  if(IDX_20_PTS >= 0) estado.garantias.push(IDX_20_PTS);
+  if(valorMT >= 5 && IDX_1_MT >= 0) estado.garantias.push(IDX_1_MT);
+  // não criar mais garantias do que giros comprados
+  while(estado.garantias.length > girosComprados) estado.garantias.pop();
+}
+
+async function creditarGirosMetical(valorMT, giros){
+  estado.giros = (Number(estado.giros) || 0) + giros;
+  registarGarantiasMetical(valorMT, giros);
+  await guardarEstado();
+  atualizarUI();
+  mostrarToast('Pagamento ok! +'+giros+' giros. Um tende a 20 pts'+(valorMT>=5?' e outro a 1 MT.':'.'));
 }
 
 document.getElementById('btn-girar').addEventListener('click', async ()=>{
