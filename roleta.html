@@ -778,11 +778,15 @@ async function carregarContaFirebase(){
     var d = snap.docs[0].data() || {};
     estado.pontos = Number(d.pontos) || 0;
     sincronizarMt();
-    if(d.roletaGiros != null) estado.giros = Number(d.roletaGiros) || 0;
     if(d.roletaUltimoGiroGratis) estado.ultimoGiroGratis = d.roletaUltimoGiroGratis;
-    // histórico local complementa
+    // histórico local complementa (NÃO sobrescrever giros do servidor com local antigo)
+    var girosServidor = (d.roletaGiros != null) ? (Number(d.roletaGiros) || 0) : null;
     carregarEstadoLocal();
-    if(d.roletaGiros != null) estado.giros = Number(d.roletaGiros) || estado.giros;
+    if(girosServidor != null){
+      // servidor manda: usa o maior entre local e servidor só se local for por garantia pendente
+      // regra segura: confiar no Firebase para evitar giros a subir sem parar
+      estado.giros = girosServidor;
+    }
     if(d.roletaUltimoGiroGratis) estado.ultimoGiroGratis = d.roletaUltimoGiroGratis;
     atualizarUI();
   } catch(e){
@@ -1078,10 +1082,19 @@ document.getElementById('ck-confirmar').addEventListener('click', async function
   }
 });
 
+function ckJaCreditadoLocal(chargeId){
+  try {
+    return localStorage.getItem('roletaPago_' + chargeId) === '1';
+  } catch(e){ return false; }
+}
+function ckMarcarCreditadoLocal(chargeId){
+  try { localStorage.setItem('roletaPago_' + chargeId, '1'); } catch(e){}
+}
+
 async function ckVerificarPagamento(){
   if(ckAProcessar || !ckChargeId || !ckPendente) return;
   ckTentativas++;
-  if(ckTentativas > 40){ // ~100s
+  if(ckTentativas > 40){
     if(ckPollingId){ clearInterval(ckPollingId); ckPollingId = null; }
     document.getElementById('ck-erro-txt').textContent =
       'O pagamento demorou demasiado. Se pagaste, atualiza a página — os giros podem entrar pelo webhook.';
@@ -1102,13 +1115,46 @@ async function ckVerificarPagamento(){
       if(ckAProcessar) return;
       ckAProcessar = true;
       if(ckPollingId){ clearInterval(ckPollingId); ckPollingId = null; }
-      await creditarGirosMetical(ckPendente.valorMT, ckPendente.giros);
+
+      // NUNCA creditar duas vezes o mesmo chargeId
+      if(ckJaCreditadoLocal(ckChargeId)){
+        await carregarContaFirebase();
+        atualizarUI();
+        document.getElementById('ck-sucesso-txt').textContent =
+          'Pagamento já estava confirmado. Tens ' + estado.giros + ' giros.';
+        ckMostrarPasso('sucesso');
+        return;
+      }
+
+      var girosAntes = Number(estado.giros) || 0;
+      var esperados = Number(ckPendente.giros) || 0;
+
+      // 1) Esperar o webhook (fonte principal) e só atualizar o ecrã
+      await carregarContaFirebase();
+      var girosDepois = Number(estado.giros) || 0;
+
+      // 2) Se o webhook ainda não somou, creditar UMA vez no cliente
+      if(girosDepois < girosAntes + esperados){
+        // evita corrida: marca logo antes de somar
+        ckMarcarCreditadoLocal(ckChargeId);
+        estado.giros = girosAntes + esperados;
+        registarGarantiasMetical(ckPendente.valorMT, esperados);
+        await guardarEstado();
+      } else {
+        ckMarcarCreditadoLocal(ckChargeId);
+        registarGarantiasMetical(ckPendente.valorMT, esperados);
+        guardarEstadoLocal();
+      }
+
+      atualizarUI();
       document.getElementById('ck-sucesso-txt').textContent =
-        'Pagamento ok! +' + ckPendente.giros + ' giros na tua conta.';
+        'Pagamento ok! +' + esperados + ' giros. Total: ' + estado.giros + '.';
       ckMostrarPasso('sucesso');
-      ckAProcessar = false;
     }
-  } catch(e){}
+  } catch(e){
+    console.error(e);
+    ckAProcessar = false;
+  }
 }
 
 /* =========================================================
