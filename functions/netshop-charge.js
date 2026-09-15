@@ -1,8 +1,13 @@
+// Cloudflare Pages Function — cria cobrança NetShop (Homejub + Roleta, mesma carteira)
+// URL: https://SEUDOMINIO/netshop-charge  (POST JSON)
+
 const PROJECT = "desafio-moz-61b70";
 const DOC_ROOT = "projects/" + PROJECT + "/databases/(default)/documents";
 const FS_API = "https://firestore.googleapis.com/v1/" + DOC_ROOT;
 
+// Homejub (loja) + Roleta (tiers fixos)
 const ITENS_LOJA = {
+  // —— Homejub ——
   moedas30: { mt: 2 },
   moedas70: { mt: 4 },
   ajudas20: { mt: 2 },
@@ -12,7 +17,11 @@ const ITENS_LOJA = {
   bonus2: { mt: 10 },
   moedasInfinitas: { mt: 100 },
   ajudasInfinitas: { mt: 50 },
-  desbloqueio10: { mt: 15 }
+  desbloqueio10: { mt: 15 },
+  // —— Roleta (tiers) ——
+  roleta_2: { mt: 2 },
+  roleta_5: { mt: 5 },
+  roleta_10: { mt: 10 }
 };
 
 function json(obj, status) {
@@ -27,21 +36,52 @@ function json(obj, status) {
   });
 }
 
-async function gravarDoc(colecao, id, item, email) {
+/** Resolve item Homejub ou Roleta (inclui roleta_giros_N para valor custom ≥ 2 MT) */
+function resolverPedido(item, body) {
+  item = String(item || "").trim();
+  if (ITENS_LOJA[item]) {
+    return { item: item, mt: ITENS_LOJA[item].mt, jogo: item.indexOf("roleta") === 0 ? "roleta" : "homejub" };
+  }
+  // Roleta valor livre: roleta_giros_3 → 3 MT (mínimo 2)
+  var m = /^roleta_giros_(\d+)$/.exec(item);
+  if (m) {
+    var mt = parseInt(m[1], 10);
+    if (mt >= 2 && mt <= 500) {
+      return { item: item, mt: mt, jogo: "roleta" };
+    }
+  }
+  if (item === "roleta_custom") {
+    var am = parseInt(body.amountMT || body.amount || "0", 10);
+    if (am >= 2 && am <= 500) {
+      return { item: "roleta_giros_" + am, mt: am, jogo: "roleta" };
+    }
+  }
+  return null;
+}
+
+async function gravarDoc(colecao, id, item, email, extra) {
   if (!id) return;
   try {
+    var fields = {
+      email: { stringValue: String(email).trim().toLowerCase() },
+      item: { stringValue: String(item) },
+      createdAt: { timestampValue: new Date().toISOString() }
+    };
+    if (extra && extra.jogo) {
+      fields.jogo = { stringValue: String(extra.jogo) };
+    }
+    if (extra && extra.mt != null) {
+      fields.mt = { integerValue: String(extra.mt) };
+    }
+    if (extra && extra.giros != null) {
+      fields.giros = { integerValue: String(extra.giros) };
+    }
     var r = await fetch(
       FS_API + "/" + colecao + "/" + encodeURIComponent(String(id)),
       {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          fields: {
-            email: { stringValue: String(email).trim().toLowerCase() },
-            item: { stringValue: String(item) },
-            createdAt: { timestampValue: new Date().toISOString() }
-          }
-        })
+        body: JSON.stringify({ fields: fields })
       }
     );
     if (!r.ok) {
@@ -52,11 +92,9 @@ async function gravarDoc(colecao, id, item, email) {
   }
 }
 
-async function guardarTudo(data, item, email, reference) {
-  // 1) Pela reference — a Pipedream usa isto SEMPRE (mesmo id no webhook)
-  await gravarDoc("pedidosPorRef", reference, item, email);
+async function guardarTudo(data, item, email, reference, extra) {
+  await gravarDoc("pedidosPorRef", reference, item, email, extra);
 
-  // 2) Por todos os ids que a NetShop devolver
   var ids = {};
   function add(x) {
     if (typeof x === "string" && x.length >= 8) ids[x] = true;
@@ -76,7 +114,7 @@ async function guardarTudo(data, item, email, reference) {
   }
   var list = Object.keys(ids);
   for (var j = 0; j < list.length; j++) {
-    await gravarDoc("pedidosLoja", list[j], item, email);
+    await gravarDoc("pedidosLoja", list[j], item, email, extra);
   }
 }
 
@@ -90,9 +128,11 @@ export async function onRequestPost({ request, env }) {
     var email = (body.email || "").trim().toLowerCase();
     var msisdn = (body.msisdn || "").trim();
     var method = (body.method || "").trim().toLowerCase();
-    var item = (body.item || "").trim();
+    var itemRaw = (body.item || "").trim();
+    var girosPedido = parseInt(body.giros || "0", 10) || 0;
 
-    if (!email || !msisdn || !ITENS_LOJA[item] || method !== "mpesa") {
+    var pedido = resolverPedido(itemRaw, body);
+    if (!email || !msisdn || !pedido || method !== "mpesa") {
       return json({ erro: "Pedido inválido" }, 400);
     }
     if (!/^\+258\d{9}$/.test(msisdn)) {
@@ -104,8 +144,10 @@ export async function onRequestPost({ request, env }) {
       return json({ erro: "Falta NETSHOP_API_KEY ou WALLET_ID" }, 500);
     }
 
-    var amountMT = ITENS_LOJA[item].mt;
-    var referencia = "HJ-" + item + "-" + Date.now();
+    var amountMT = pedido.mt;
+    var item = pedido.item;
+    var prefixo = pedido.jogo === "roleta" ? "RL" : "HJ";
+    var referencia = prefixo + "-" + item + "-" + Date.now();
 
     var resp = await fetch("https://www.netshop.co.mz/api/v1/charges", {
       method: "POST",
@@ -137,13 +179,18 @@ export async function onRequestPost({ request, env }) {
       }, 502);
     }
 
-    // AUTOMÁTICO: email + item ligados à reference e aos ids
-    await guardarTudo(data, item, email, referencia);
+    await guardarTudo(data, item, email, referencia, {
+      jogo: pedido.jogo,
+      mt: amountMT,
+      giros: girosPedido || null
+    });
 
     return json({
       id: data.id,
       status: data.status || "pending",
-      reference: referencia
+      reference: referencia,
+      jogo: pedido.jogo,
+      mt: amountMT
     }, 200);
   } catch (err) {
     console.error(err);

@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Roleta da Sorte — Desafio MOZ</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+  :root{
+    --ouro:#FFC94D;
+    --ouro-forte:#FFAA00;
+    --verde:#22FF99;
+    --verde-forte:#00C853;
+    --fundo:#070a10;
+    --painel:#11151d;
+    --painel-2:#161c26;
+    --texto:#e8ecf4;
+    --texto-fraco:#8a93a6;
+    --roxo:#B388FF;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{
+    margin:0; padding:0; height:100%; overflow-x:hidden;
+    background:radial-gradient(ellipse at 50% -10%, #1a1030 0%, var(--fundo) 55%);
+    color:var(--texto);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+  }
+
+  /* ---------- topo ---------- */
+  .topo{
+    display:flex; align-items:center; gap:10px;
+    padding:14px 16px 6px;
+    position:relative; z-index:5;
+  }
+  .voltar{
+    width:38px; height:38px; border-radius:50%;
+    background:var(--painel); border:1px solid rgba(255,255,255,0.08);
+    display:flex; align-items:center; justify-content:center;
+    color:var(--texto); font-size:18px; text-decoration:none;
+    flex-shrink:0;
+  }
+  .titulo-topo{flex:1;}
+  .titulo-topo h1{
+    margin:0; font-size:17px; font-weight:800; letter-spacing:0.2px;
+    background:linear-gradient(90deg,var(--ouro),#fff6df);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .titulo-topo span{font-size:11.5px; color:var(--texto-fraco);}
+
+  /* ---------- bolas de saldo (estilo página de saque) ---------- */
+  .saldos{
+    display:flex; gap:8px; padding:2px 16px 10px;
+  }
+  .bola-saldo{
+    flex:1; display:flex; align-items:center; gap:8px;
+    background:var(--painel); border:1px solid rgba(255,255,255,0.07);
+    border-radius:14px; padding:9px 12px;
+  }
+  .bola-saldo .icone{
+    width:32px; height:32px; border-radius:50%; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; font-size:16px;
+  }
+  .bola-saldo.mt .icone{background:rgba(255,201,77,0.18); box-shadow:0 0 14px rgba(255,201,77,0.4);}
+  .bola-saldo.pt .icone{background:rgba(34,255,153,0.18); box-shadow:0 0 14px rgba(34,255,153,0.4);}
+  .bola-saldo.mt{box-shadow:0 0 16px -6px rgba(255,201,77,0.4);}
+  .bola-saldo.pt{box-shadow:0 0 16px -6px rgba(34,255,153,0.4);}
+  .bola-saldo .txt{display:flex; flex-direction:column; line-height:1.2;}
+  .bola-saldo .txt b{font-size:15px; font-weight:900;}
+  .bola-saldo .txt small{font-size:10.5px; color:var(--texto-fraco);}
+
+  /* ---------- cena 3D ---------- */
+  #cena-wrap{
+    position:relative;
+    width:100%;
+    height:min(70vw, 400px);
+    max-height:400px;
+  }
+  #cena-wrap::before{
+    content:'';
+    position:absolute; inset:-10%;
+    background:radial-gradient(circle at 50% 48%, rgba(255,201,77,0.28) 0%, rgba(34,255,153,0.14) 32%, rgba(179,136,255,0.10) 52%, transparent 72%);
+    filter:blur(6px);
+    pointer-events:none;
+    z-index:0;
+  }
+  #cena{width:100%; height:100%; display:block; position:relative; z-index:1;}
+
+  .acao-central{
+    display:flex; flex-direction:column; align-items:center; gap:8px;
+    margin:0 0 6px;
+  }
+  .badge-giros{
+    background:var(--painel); border:1px solid rgba(255,201,77,0.4);
+    padding:7px 18px; border-radius:99px; font-size:13.5px; font-weight:800;
+    box-shadow:0 0 18px rgba(255,201,77,0.22);
+  }
+  .badge-giros b{color:var(--ouro); font-size:16px;}
+  #btn-girar{
+    position:relative; overflow:hidden;
+    width:200px; padding:16px 0; border:none; border-radius:16px;
+    background:linear-gradient(135deg,var(--ouro),var(--ouro-forte));
+    color:#221200; font-weight:900; font-size:17px; letter-spacing:0.3px;
+    box-shadow:0 10px 26px rgba(255,170,0,0.35), inset 0 1px 0 rgba(255,255,255,0.5);
+  }
+  #btn-girar:disabled{
+    background:linear-gradient(135deg,#3a3f4a,#2a2e37); color:#6b7280;
+    box-shadow:none; cursor:not-allowed;
+  }
+  #btn-girar:active:not(:disabled){transform:scale(0.97);}
+  .nota-gratis{font-size:12px; color:var(--texto-fraco); text-align:center;}
+  .nota-gratis b{color:var(--verde);}
+
+  .btn-comprar-mais{
+    display:block; width:calc(100% - 32px); margin:14px 16px 0;
+    padding:15px 0; border:none; border-radius:14px; text-align:center;
+    background:linear-gradient(135deg,#2a3140,#1c212c);
+    border:1px solid rgba(255,201,77,0.3);
+    color:var(--ouro); font-weight:900; font-size:15px; letter-spacing:0.3px;
+  }
+
+  /* ---------- 3 acessos inferiores (estilo dos cartões da Conta) ---------- */
+  .fila-acessos{
+    display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin:16px 16px 30px;
+  }
+  .acesso{
+    position:relative; display:flex; flex-direction:column; align-items:center; gap:8px;
+    background:linear-gradient(160deg, rgba(255,201,77,0.10), rgba(21,21,31,0.95) 60%);
+    border:1px solid rgba(255,201,77,0.28);
+    border-radius:16px; padding:16px 6px 14px; color:var(--texto);
+    text-decoration:none; box-shadow:0 0 20px rgba(255,201,77,0.10);
+  }
+  .acesso i{font-size:20px; color:var(--ouro); text-shadow:0 0 12px rgba(255,201,77,0.65);}
+  .acesso span{font-size:12px; font-weight:700; text-align:center; color:#fff;}
+  .acesso small{font-size:9px; color:var(--texto-fraco); font-weight:700; letter-spacing:0.3px;}
+  .acesso.brevemente{opacity:0.85;}
+  .acesso.brevemente small{
+    color:#221200; background:var(--ouro); padding:2px 8px; border-radius:99px; margin-top:1px;
+  }
+
+  /* ---------- tela cheia (comprar giros) ---------- */
+  .tela-cheia{
+    position:fixed; inset:0; background:var(--fundo); z-index:40;
+    display:none; flex-direction:column; overflow-y:auto;
+  }
+  .tela-cheia.aberta{display:flex;}
+  .tela-cheia-topo{
+    display:flex; align-items:center; gap:10px; padding:14px 16px;
+    position:sticky; top:0; background:var(--fundo); z-index:2;
+    border-bottom:1px solid rgba(255,201,77,0.18);
+    box-shadow:0 8px 24px -12px rgba(255,201,77,0.35);
+  }
+  .tela-cheia-topo h2{
+    margin:0; font-size:17px; font-weight:800;
+    background:linear-gradient(90deg,var(--ouro),#fff6df);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+
+  .abas{
+    display:flex; margin:16px 16px 0; background:var(--painel);
+    border-radius:12px; padding:4px; gap:4px;
+  }
+  .aba{
+    flex:1; text-align:center; padding:10px 0; border-radius:9px;
+    font-size:13.5px; font-weight:700; color:var(--texto-fraco);
+    transition:background .2s, color .2s;
+  }
+  .aba.ativa{background:var(--painel-2); color:var(--verde);}
+
+  .paineis-loja{
+    display:flex; width:200%;
+    transition:transform .35s cubic-bezier(.4,0,.2,1);
+  }
+  .painel-loja{width:50%; padding:16px;}
+
+  .grade-tiers{
+    display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:16px;
+  }
+  .tier{
+    background:var(--painel-2); border:1px solid rgba(255,255,255,0.06);
+    border-radius:12px; padding:12px 6px; text-align:center;
+  }
+  .tier .custo{font-size:13px; font-weight:800; color:#fff;}
+  .tier .seta{font-size:11px; color:var(--texto-fraco); margin:4px 0;}
+  .tier .giros-ganhos{font-size:15px; font-weight:900;}
+  .painel-loja.pontos .tier .giros-ganhos{color:var(--verde);}
+  .painel-loja.metical .tier .giros-ganhos{color:var(--ouro);}
+  .tier button{
+    margin-top:8px; width:100%; padding:7px 0; border:none; border-radius:8px;
+    font-size:12px; font-weight:800; background:rgba(255,255,255,0.08); color:#fff;
+  }
+  .painel-loja.pontos .tier button.ok{background:linear-gradient(135deg,var(--verde),var(--verde-forte)); color:#04140a;}
+  .painel-loja.metical .tier button.ok{background:linear-gradient(135deg,var(--ouro),var(--ouro-forte)); color:#221200;}
+
+  .personalizado{
+    background:var(--painel); border-radius:14px; padding:14px;
+  }
+  .personalizado label{font-size:12.5px; color:var(--texto-fraco); display:block; margin-bottom:8px;}
+  .campo-custom{display:flex; gap:8px; margin-bottom:10px;}
+  .campo-custom input{
+    flex:1; padding:12px 14px; border-radius:10px; border:1px solid rgba(255,255,255,0.1);
+    background:var(--painel-2); color:#fff; font-size:15px; font-weight:700;
+  }
+  .campo-custom input:focus{outline:none; border-color:var(--verde);}
+  .resultado-custom{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:10px 4px; font-size:13.5px; color:var(--texto-fraco);
+  }
+  .resultado-custom b{font-size:17px; color:var(--verde); font-weight:900;}
+  .painel-loja.metical .resultado-custom b{color:var(--ouro);}
+  .btn-confirmar{
+    width:100%; padding:13px 0; border:none; border-radius:11px; font-weight:900;
+    font-size:14.5px; margin-top:4px;
+  }
+  .painel-loja.pontos .btn-confirmar{background:linear-gradient(135deg,var(--verde),var(--verde-forte)); color:#04140a;}
+  .painel-loja.metical .btn-confirmar{background:linear-gradient(135deg,var(--ouro),var(--ouro-forte)); color:#221200;}
+  .btn-confirmar:disabled{background:#2a2e37; color:#6b7280;}
+
+  /* ---------- histórico (tela cheia) ---------- */
+  .hist-item{
+    display:flex; align-items:center; justify-content:space-between;
+    background:var(--painel); border-radius:12px; padding:12px 14px; margin:0 16px 8px;
+    font-size:13px; border-left:3px solid transparent;
+  }
+  .hist-item:first-child{margin-top:16px;}
+  .hist-item .premio{font-weight:800; display:flex; align-items:center; gap:8px;}
+  .hist-item.ganhou{border-left-color:var(--verde); box-shadow:0 0 16px -4px rgba(34,255,153,0.35);}
+  .hist-item.ganhou .premio{color:var(--verde);}
+  .hist-item.perdeu{border-left-color:#555c6b;}
+  .hist-item.perdeu .premio{color:var(--texto-fraco);}
+  .hist-item .quando{color:var(--texto-fraco); font-size:11.5px;}
+  .hist-vazio{margin:40px 16px; text-align:center; color:var(--texto-fraco); font-size:13.5px;}
+
+  /* ---------- regras (tela cheia) ---------- */
+  .regras-lista{padding:16px;}
+  .regra-cartao{
+    background:linear-gradient(160deg, rgba(34,255,153,0.06), var(--painel) 55%);
+    border:1px solid rgba(34,255,153,0.18);
+    border-radius:14px; padding:14px 16px; margin-bottom:10px;
+    display:flex; gap:12px; align-items:flex-start;
+    box-shadow:0 0 20px -10px rgba(34,255,153,0.3);
+  }
+  .regra-cartao .ic{font-size:20px; flex-shrink:0; text-shadow:0 0 10px rgba(34,255,153,0.6);}
+  .regra-cartao p{margin:0; font-size:13.5px; color:var(--texto-fraco); line-height:1.5;}
+  .regra-cartao b{color:#fff;}
+
+  /* ---------- overlay resultado do giro ---------- */
+  #overlay{
+    position:fixed; inset:0; background:rgba(4,5,9,0.86);
+    display:none; align-items:center; justify-content:center; z-index:50;
+    backdrop-filter:blur(4px);
+  }
+  .cartao-premio{
+    width:min(320px, 84vw); background:linear-gradient(160deg,#151b24,#0e1118);
+    border:1px solid rgba(255,201,77,0.4); border-radius:22px; padding:30px 24px 24px;
+    text-align:center; box-shadow:0 0 50px rgba(255,201,77,0.25);
+    animation:pop .35s cubic-bezier(.34,1.56,.64,1);
+  }
+  @keyframes pop{from{transform:scale(0.7); opacity:0;} to{transform:scale(1); opacity:1;}}
+  .cartao-premio .emoji{font-size:52px; margin-bottom:6px;}
+  .cartao-premio h3{margin:0 0 6px; font-size:14px; color:var(--texto-fraco); font-weight:700; text-transform:uppercase; letter-spacing:1px;}
+  .cartao-premio .valor-premio{
+    font-size:26px; font-weight:900; margin-bottom:18px;
+    background:linear-gradient(90deg,var(--ouro),#fff6df);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .cartao-premio.perdeu .valor-premio{background:none; -webkit-text-fill-color:var(--texto-fraco); color:var(--texto-fraco); font-size:19px;}
+  .cartao-premio button{
+    width:100%; padding:13px 0; border:none; border-radius:12px; font-weight:900; font-size:15px;
+    background:linear-gradient(135deg,var(--verde),var(--verde-forte)); color:#04140a;
+  }
+
+  #toast{
+    position:fixed; bottom:20px; left:50%; transform:translateX(-50%) translateY(120%);
+    background:var(--painel-2); border:1px solid rgba(34,255,153,0.35);
+    padding:12px 20px; border-radius:99px; font-size:13.5px; font-weight:700;
+    transition:transform .35s ease; z-index:60; white-space:nowrap; max-width:88vw;
+    text-align:center;
+  }
+  #toast.mostrar{transform:translateX(-50%) translateY(0);}
+
+  canvas{touch-action:none;}
+</style>
+</head>
+<body>
+
+<div class="topo">
+  <a href="online.html" class="voltar">←</a>
+  <div class="titulo-topo">
+    <h1>Roleta da Sorte</h1>
+    <span>Gira e ganha pontos, meticais e mais giros</span>
+  </div>
+</div>
+
+<div class="saldos">
+  <div class="bola-saldo mt">
+    <div class="icone">💵</div>
+    <div class="txt"><b id="saldo-mt">0 MT</b><small>saldo em meticais</small></div>
+  </div>
+  <div class="bola-saldo pt">
+    <div class="icone">⭐</div>
+    <div class="txt"><b id="saldo-pontos">0</b><small>pontos disponíveis</small></div>
+  </div>
+</div>
+
+<div id="cena-wrap">
+  <canvas id="cena"></canvas>
+</div>
+
+<div class="acao-central">
+  <div class="badge-giros">🎡 Giros disponíveis: <b id="saldo-giros">0</b></div>
+  <button id="btn-girar" disabled>GIRAR AGORA</button>
+  <div class="nota-gratis">Giro grátis diário: <b id="estado-gratis">disponível</b></div>
+</div>
+
+<button class="btn-comprar-mais" id="btn-abrir-loja">🎡 Comprar mais giros</button>
+
+<div class="fila-acessos">
+  <div class="acesso" id="abrir-regras"><i class="fas fa-scroll"></i><span>Regras</span></div>
+  <div class="acesso" id="abrir-historico"><i class="fas fa-clock-rotate-left"></i><span>Histórico</span></div>
+  <div class="acesso brevemente" id="btn-baixar-apk"><i class="fas fa-download"></i><span>Baixar App</span><small>Brevemente</small></div>
+</div>
+
+<!-- ===== TELA: Comprar giros ===== -->
+<div class="tela-cheia" id="tela-loja">
+  <div class="tela-cheia-topo">
+    <div class="voltar" id="fechar-loja">←</div>
+    <h2>Comprar giros</h2>
+  </div>
+
+  <div class="abas">
+    <div class="aba ativa" data-aba="pontos">Com pontos</div>
+    <div class="aba" data-aba="metical">Com metical</div>
+  </div>
+
+  <div class="paineis-loja" id="paineis-loja">
+    <div class="painel-loja pontos">
+      <div class="grade-tiers">
+        <div class="tier"><div class="custo">5 pts</div><div class="seta">rende</div><div class="giros-ganhos">3 🎡</div><button class="ok" data-tipo="pontos" data-custo="5" data-giros="3">Comprar</button></div>
+        <div class="tier"><div class="custo">10 pts</div><div class="seta">rende</div><div class="giros-ganhos">8 🎡</div><button class="ok" data-tipo="pontos" data-custo="10" data-giros="8">Comprar</button></div>
+        <div class="tier"><div class="custo">24 pts</div><div class="seta">rende</div><div class="giros-ganhos">18 🎡</div><button class="ok" data-tipo="pontos" data-custo="24" data-giros="18">Comprar</button></div>
+      </div>
+      <div class="personalizado">
+        <label>Ou indica quantos pontos queres usar</label>
+        <div class="campo-custom">
+          <input type="number" id="custom-pontos" placeholder="Ex: 15" min="1">
+        </div>
+        <div class="resultado-custom"><span>Vais receber</span><b id="custom-pontos-resultado">0 giros</b></div>
+        <button class="btn-confirmar" id="btn-comprar-pontos" disabled>Confirmar compra</button>
+      </div>
+    </div>
+
+    <div class="painel-loja metical">
+      <div class="grade-tiers">
+        <div class="tier"><div class="custo">2 MT</div><div class="seta">rende</div><div class="giros-ganhos">15 🎡</div><button class="ok" data-tipo="mt" data-custo="2" data-giros="15">Comprar</button></div>
+        <div class="tier"><div class="custo">5 MT</div><div class="seta">rende</div><div class="giros-ganhos">35 🎡</div><button class="ok" data-tipo="mt" data-custo="5" data-giros="35">Comprar</button></div>
+        <div class="tier"><div class="custo">10 MT</div><div class="seta">rende</div><div class="giros-ganhos">80 🎡</div><button class="ok" data-tipo="mt" data-custo="10" data-giros="80">Comprar</button></div>
+      </div>
+      <div class="personalizado">
+        <label>Ou indica quantos meticais queres usar</label>
+        <div class="campo-custom">
+          <input type="number" id="custom-mt" placeholder="Mín. 2 MT" min="2">
+        </div>
+        <div class="resultado-custom"><span>Vais receber</span><b id="custom-mt-resultado">0 giros</b></div>
+        <button class="btn-confirmar" id="btn-comprar-mt">Pagar com M-Pesa</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TELA: Histórico ===== -->
+<div class="tela-cheia" id="tela-historico">
+  <div class="tela-cheia-topo">
+    <div class="voltar" id="fechar-historico">←</div>
+    <h2>Histórico de giros</h2>
+  </div>
+  <div id="lista-historico"></div>
+</div>
+
+<!-- ===== TELA: Regras ===== -->
+<div class="tela-cheia" id="tela-regras">
+  <div class="tela-cheia-topo">
+    <div class="voltar" id="fechar-regras">←</div>
+    <h2>Regras do jogo</h2>
+  </div>
+  <div class="regras-lista">
+    <div class="regra-cartao"><div class="ic">🎡</div><p>Cada giro na roleta gasta <b>1 giro</b> da tua conta. Podes usar os teus giros à vontade, eles só diminuem quando giras.</p></div>
+    <div class="regra-cartao"><div class="ic">🎁</div><p>Todos os dias tens direito a <b>1 giro grátis</b>, entregue automaticamente na primeira vez que abrires a roleta no dia.</p></div>
+    <div class="regra-cartao"><div class="ic">⭐</div><p>Podes comprar giros com os teus <b>pontos</b> do Desafio MOZ, sem gastar dinheiro.</p></div>
+    <div class="regra-cartao"><div class="ic">💵</div><p>Também podes comprar giros com <b>M-Pesa</b>, para quem quer jogar mais rápido.</p></div>
+    <div class="regra-cartao"><div class="ic">🎯</div><p>O prémio é sempre aquele que fica alinhado com o <b>ponteiro no topo</b> da roleta quando ela para. Não há influência manual — o resultado é sorteado antes de a roleta começar a girar.</p></div>
+    <div class="regra-cartao"><div class="ic">💰</div><p>Prémios em <b>pontos</b> e em <b>MT</b> são creditados automaticamente na tua conta do Desafio MOZ.</p></div>
+    <div class="regra-cartao"><div class="ic">🔁</div><p>Prémios de <b>+giros</b> somam-se logo ao teu saldo de giros, podendo ser usados de imediato.</p></div>
+    <div class="regra-cartao"><div class="ic">🚫</div><p>Usar mais que uma conta para conseguir giros grátis extra é considerado fraude e pode levar ao bloqueio da conta.</p></div>
+  </div>
+</div>
+
+<div id="overlay">
+  <div class="cartao-premio" id="cartao-premio">
+    <div class="emoji" id="premio-emoji">🎉</div>
+    <h3 id="premio-titulo">GANHASTE</h3>
+    <div class="valor-premio" id="premio-valor">1000 pontos</div>
+    <button id="btn-fechar-premio">Continuar</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+<script>
+/* =========================================================
+   Firebase Desafio MOZ — pontos reais da conta
+   ========================================================= */
+if (typeof window.__DESAFIO_MOZ_FIREBASE__ === 'undefined') {
+  window.__DESAFIO_MOZ_FIREBASE__ = true;
+  var firebaseConfig = {
+    apiKey: "AIzaSyDONfggnmf9OJX_AgfvcHTRf6tsuKD5nrA",
+    authDomain: "desafio-moz-61b70.firebaseapp.com",
+    projectId: "desafio-moz-61b70",
+    storageBucket: "desafio-moz-61b70.firebasestorage.app",
+    messagingSenderId: "945658936331",
+    appId: "1:945658936331:web:7ee4b0e7de1c1daf36db0e",
+    measurementId: "G-G1DZQ1B0DB"
+  };
+  if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+  window.db = firebase.firestore();
+}
+var db = window.db;
+
+const MODO_DEMO = false;
+const EMAIL_UTILIZADOR = (localStorage.getItem('emailUtilizador') || localStorage.getItem('email') || '').trim().toLowerCase();
+const CHAVE_ESTADO = 'roletaEstado_' + (EMAIL_UTILIZADOR || 'convidado');
+const PTS_POR_MT = 8; // 8 pontos = 1 metical
+let userRef = null;
+
+/* ---------- Prémios da roleta (12 fatias) ---------- */
+const PREMIOS = [
+  {label:"1000 PTS", tipo:"pontos", valor:1000, peso:1,  cor:0xFFD24D, emoji:"👑"},
+  {label:"500 PTS",  tipo:"pontos", valor:500,  peso:3,  cor:0x22FF99, emoji:"🌟"},
+  {label:"10 MT",     tipo:"mt",     valor:10,   peso:2,  cor:0xFF7A45, emoji:"💵"},
+  {label:"1 MT",      tipo:"mt",     valor:1,    peso:15, cor:0x4FC3F7, emoji:"💸"},
+  {label:"5 MT",      tipo:"mt",     valor:5,    peso:5,  cor:0xFFD24D, emoji:"💰"},
+  {label:"100 PTS",  tipo:"pontos", valor:100,  peso:10, cor:0x22FF99, emoji:"✨"},
+  {label:"+2 GIROS",  tipo:"giros",  valor:2,    peso:20, cor:0xB388FF, emoji:"🎡"},
+  {label:"BOA SORTE", tipo:"nada", valor:0, peso:25, cor:0x3A4250, emoji:"🍀"},
+  {label:"+6 GIROS",  tipo:"giros",  valor:6,    peso:8,  cor:0xB388FF, emoji:"🎡"},
+  {label:"QUASE!",    tipo:"nada",   valor:0,    peso:20, cor:0x3A4250, emoji:"😅"},
+  {label:"20 PTS",   tipo:"pontos", valor:20,   peso:15, cor:0x22FF99, emoji:"✨"},
+  {label:"50 MT",     tipo:"mt",     valor:50,   peso:1,  cor:0xFFD24D, emoji:"🏆"}
+];
+const N = PREMIOS.length;
+const ANGULO_FATIA = (Math.PI*2)/N;
+const PESO_TOTAL = PREMIOS.reduce((s,p)=>s+p.peso,0);
+
+/* ---------- Fórmulas de conversão (interpolação pelos valores fornecidos) ---------- */
+function interpolarGiros(valor, ancoras){
+  if(valor<=0) return 0;
+  if(valor<=ancoras[0][0]){
+    return Math.max(0, Math.round(valor*(ancoras[0][1]/ancoras[0][0])));
+  }
+  for(let i=0;i<ancoras.length-1;i++){
+    const [x1,y1]=ancoras[i], [x2,y2]=ancoras[i+1];
+    if(valor>=x1 && valor<=x2){
+      return Math.round(y1 + (valor-x1)*(y2-y1)/(x2-x1));
+    }
+  }
+  const [xa,ya]=ancoras[ancoras.length-2], [xb,yb]=ancoras[ancoras.length-1];
+  const declive=(yb-ya)/(xb-xa);
+  return Math.round(yb + declive*(valor-xb));
+}
+const ANCORAS_PONTOS = [[5,3],[10,8],[24,18]];
+const ANCORAS_MT     = [[2,15],[5,35],[10,80]];
+
+/* ---------- Estado do jogador (pontos = conta Desafio MOZ) ---------- */
+let estado = { pontos: 0, mt: 0, giros: 0, historico: [], ultimoGiroGratis: null, garantias: [] };
+
+function carregarEstadoLocal(){
+  try {
+    const guardado = localStorage.getItem(CHAVE_ESTADO);
+    if(guardado){
+      const o = JSON.parse(guardado);
+      if(Array.isArray(o.historico)) estado.historico = o.historico;
+      if(o.giros != null) estado.giros = Number(o.giros) || 0;
+      if(o.ultimoGiroGratis) estado.ultimoGiroGratis = o.ultimoGiroGratis;
+    }
+  } catch(e){}
+}
+
+function sincronizarMt(){
+  // Meticais = conversão dos pontos da conta (8 pts = 1 MT)
+  estado.mt = Math.floor((Number(estado.pontos) || 0) / PTS_POR_MT);
+}
+
+function guardarEstadoLocal(){
+  try {
+    localStorage.setItem(CHAVE_ESTADO, JSON.stringify({
+      giros: estado.giros,
+      historico: estado.historico,
+      ultimoGiroGratis: estado.ultimoGiroGratis
+    }));
+  } catch(e){}
+}
+
+async function guardarEstado(){
+  guardarEstadoLocal();
+  sincronizarMt();
+  if(!userRef || MODO_DEMO) return;
+  try {
+    await userRef.update({
+      pontos: Number(estado.pontos) || 0,
+      roletaGiros: Number(estado.giros) || 0,
+      roletaUltimoGiroGratis: estado.ultimoGiroGratis || null,
+      ultimaAtualizacao: new Date().toISOString()
+    });
+  } catch(e){ console.warn('guardar roleta', e); }
+}
+
+async function carregarContaFirebase(){
+  if(!EMAIL_UTILIZADOR){
+    mostrarToast('Entra na tua conta Desafio MOZ para jogar.');
+    setTimeout(function(){ window.location.href = 'criar-conta.html'; }, 1800);
+    return;
+  }
+  try {
+    var snap = await db.collection('usuarios').where('email', '==', EMAIL_UTILIZADOR).limit(1).get();
+    if(snap.empty){
+      var em = (localStorage.getItem('emailUtilizador') || '').trim();
+      if(em && em.toLowerCase() !== EMAIL_UTILIZADOR){
+        snap = await db.collection('usuarios').where('email', '==', em).limit(1).get();
+      }
+    }
+    if(snap.empty){
+      mostrarToast('Conta não encontrada. Faz login de novo.');
+      return;
+    }
+    userRef = snap.docs[0].ref;
+    var d = snap.docs[0].data() || {};
+    estado.pontos = Number(d.pontos) || 0;
+    sincronizarMt();
+    if(d.roletaGiros != null) estado.giros = Number(d.roletaGiros) || 0;
+    if(d.roletaUltimoGiroGratis) estado.ultimoGiroGratis = d.roletaUltimoGiroGratis;
+    // histórico local complementa
+    carregarEstadoLocal();
+    if(d.roletaGiros != null) estado.giros = Number(d.roletaGiros) || estado.giros;
+    if(d.roletaUltimoGiroGratis) estado.ultimoGiroGratis = d.roletaUltimoGiroGratis;
+    atualizarUI();
+  } catch(e){
+    console.warn(e);
+    mostrarToast('Erro a carregar saldo. Tenta de novo.');
+  }
+}
+
+function hojeISO(){ return new Date().toISOString().slice(0,10); }
+function giroGratisDisponivel(){ return estado.ultimoGiroGratis !== hojeISO(); }
+async function reclamarGiroGratisSeDisponivel(){
+  if(giroGratisDisponivel()){
+    estado.giros += 1;
+    estado.ultimoGiroGratis = hojeISO();
+    await guardarEstado();
+    mostrarToast('Ganhaste 1 giro grátis hoje! 🎁');
+  }
+}
+
+/* ---------- UI: saldo, histórico, navegação entre telas ---------- */
+function atualizarUI(){
+  document.getElementById('saldo-giros').textContent = estado.giros;
+  document.getElementById('saldo-pontos').textContent = estado.pontos;
+  sincronizarMt();
+  document.getElementById('saldo-mt').textContent = ((Number(estado.pontos)||0)/PTS_POR_MT).toFixed(1)+' MT';
+  document.getElementById('btn-girar').disabled = estado.giros<=0 || girando;
+  document.getElementById('estado-gratis').textContent = giroGratisDisponivel() ? 'disponível' : 'já usado hoje';
+  renderHistorico();
+  atualizarCalculoCustom();
+}
+function renderHistorico(){
+  const lista = document.getElementById('lista-historico');
+  if(estado.historico.length===0){
+    lista.innerHTML = '<div class="hist-vazio">Ainda não giraste a roleta.<br>O teu histórico de ganhos e perdas vai aparecer aqui.</div>';
+    return;
+  }
+  lista.innerHTML = estado.historico.map(h=>{
+    return `<div class="hist-item ${h.ganhou?'ganhou':'perdeu'}"><span class="premio">${h.emoji} ${h.texto}</span><span class="quando">${h.quando}</span></div>`;
+  }).join('');
+}
+function mostrarToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.classList.add('mostrar');
+  setTimeout(()=>t.classList.remove('mostrar'), 2600);
+}
+
+/* navegação entre telas cheias */
+function abrirTela(id){ document.getElementById(id).classList.add('aberta'); }
+function fecharTela(id){ document.getElementById(id).classList.remove('aberta'); }
+document.getElementById('btn-abrir-loja').addEventListener('click', ()=>abrirTela('tela-loja'));
+document.getElementById('fechar-loja').addEventListener('click', ()=>fecharTela('tela-loja'));
+document.getElementById('abrir-historico').addEventListener('click', ()=>abrirTela('tela-historico'));
+document.getElementById('fechar-historico').addEventListener('click', ()=>fecharTela('tela-historico'));
+document.getElementById('abrir-regras').addEventListener('click', ()=>abrirTela('tela-regras'));
+document.getElementById('fechar-regras').addEventListener('click', ()=>fecharTela('tela-regras'));
+document.getElementById('btn-baixar-apk').addEventListener('click', ()=>mostrarToast('O download do app vai abrir em breve por aqui. 📲'));
+
+/* abas com deslizar */
+const paineis = document.getElementById('paineis-loja');
+const abas = document.querySelectorAll('.aba');
+abas.forEach(a=>a.addEventListener('click', ()=>irParaAba(a.dataset.aba)));
+function irParaAba(nome){
+  abas.forEach(a=>a.classList.toggle('ativa', a.dataset.aba===nome));
+  paineis.style.transform = nome==='pontos' ? 'translateX(0%)' : 'translateX(-50%)';
+}
+let toqueInicioX=null;
+paineis.addEventListener('touchstart', e=>{ toqueInicioX = e.touches[0].clientX; });
+paineis.addEventListener('touchend', e=>{
+  if(toqueInicioX===null) return;
+  const dx = e.changedTouches[0].clientX - toqueInicioX;
+  if(dx < -40) irParaAba('metical');
+  if(dx > 40) irParaAba('pontos');
+  toqueInicioX=null;
+});
+
+/* compra rápida por tier */
+document.querySelectorAll('.tier .ok').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const tipo = btn.dataset.tipo;
+    const custo = Number(btn.dataset.custo);
+    const giros = Number(btn.dataset.giros);
+    if(tipo==='pontos') comprarComPontos(custo, giros);
+    else iniciarPagamentoMetical(custo, giros);
+  });
+});
+
+/* campo personalizado */
+const inputPontos = document.getElementById('custom-pontos');
+const inputMt = document.getElementById('custom-mt');
+inputPontos.addEventListener('input', atualizarCalculoCustom);
+inputMt.addEventListener('input', atualizarCalculoCustom);
+function atualizarCalculoCustom(){
+  const vp = Number(inputPontos.value)||0;
+  const gp = interpolarGiros(vp, ANCORAS_PONTOS);
+  document.getElementById('custom-pontos-resultado').textContent = gp+' giros';
+  document.getElementById('btn-comprar-pontos').disabled = !(vp>0 && vp<=estado.pontos && gp>0);
+
+  const vm = Number(inputMt.value)||0;
+  const gm = interpolarGiros(vm, ANCORAS_MT);
+  document.getElementById('custom-mt-resultado').textContent = gm+' giros';
+}
+document.getElementById('btn-comprar-pontos').addEventListener('click', ()=>{
+  const vp = Number(inputPontos.value)||0;
+  const gp = interpolarGiros(vp, ANCORAS_PONTOS);
+  comprarComPontos(vp, gp);
+  inputPontos.value='';
+});
+document.getElementById('btn-comprar-mt').addEventListener('click', ()=>{
+  const vm = Number(inputMt.value)||0;
+  const gm = interpolarGiros(vm, ANCORAS_MT);
+  if(vm<=0 || gm<=0){ mostrarToast('Indica um valor válido em MT.'); return; }
+  iniciarPagamentoMetical(vm, gm);
+});
+
+async function comprarComPontos(custoPontos, giros){
+  if(estado.pontos < custoPontos){ mostrarToast('Não tens pontos suficientes.'); return; }
+  estado.pontos -= custoPontos;
+  estado.giros += giros;
+  sincronizarMt();
+  await guardarEstado();
+  localStorage.setItem('pontosUtilizador', String(estado.pontos));
+  atualizarUI();
+  mostrarToast(`Compraste ${giros} giros por ${custoPontos} pontos!`);
+}
+
+function itemRoletaParaMT(valorMT){
+  valorMT = Number(valorMT) || 0;
+  if(valorMT === 2) return 'roleta_2';
+  if(valorMT === 5) return 'roleta_5';
+  if(valorMT === 10) return 'roleta_10';
+  return 'roleta_giros_' + valorMT;
+}
+
+function pedirNumeroMpesa(){
+  var guardado = '';
+  try { guardado = localStorage.getItem('telUtilizador') || localStorage.getItem('msisdnRoleta') || ''; } catch(e){}
+  var n = prompt('Número M-Pesa (+258XXXXXXXXX):', guardado || '+258');
+  if(!n) return null;
+  n = String(n).trim().replace(/\s/g,'');
+  if(/^8\d{8}$/.test(n)) n = '+258' + n;
+  if(/^258\d{9}$/.test(n)) n = '+' + n;
+  if(!/^\+258\d{9}$/.test(n)){
+    mostrarToast('Número inválido. Usa +258XXXXXXXXX');
+    return null;
+  }
+  try { localStorage.setItem('msisdnRoleta', n); } catch(e){}
+  return n;
+}
+
+function registarGarantiasMetical(valorMT, girosComprados){
+  if(!estado.garantias) estado.garantias = [];
+  // índices: procurar 20 PTS e 1 MT nos PREMIOS
+  var idx20 = -1, idx1 = -1;
+  for(var i=0;i<PREMIOS.length;i++){
+    if(PREMIOS[i].tipo==='pontos' && PREMIOS[i].valor===20) idx20 = i;
+    if(PREMIOS[i].tipo==='mt' && PREMIOS[i].valor===1) idx1 = i;
+  }
+  if(idx20 >= 0) estado.garantias.push(idx20);
+  if(valorMT >= 5 && idx1 >= 0) estado.garantias.push(idx1);
+  while(estado.garantias.length > girosComprados) estado.garantias.pop();
+}
+
+async function creditarGirosAposPagamento(valorMT, giros){
+  estado.giros = (Number(estado.giros)||0) + giros;
+  registarGarantiasMetical(valorMT, giros);
+  if(typeof guardarEstado === 'function') await guardarEstado();
+  else if(typeof guardarEstadoLocal === 'function') guardarEstadoLocal();
+  atualizarUI();
+  mostrarToast('Pagamento ok! +' + giros + ' giros creditados.');
+}
+
+async function iniciarPagamentoMetical(valorMT, giros){
+  valorMT = Number(valorMT) || 0;
+  giros = Number(giros) || 0;
+  if(valorMT < 2){
+    mostrarToast('Mínimo de compra: 2 meticais.');
+    return;
+  }
+  if(giros <= 0){
+    mostrarToast('Valor inválido.');
+    return;
+  }
+  var email = (localStorage.getItem('emailUtilizador') || EMAIL_UTILIZADOR || '').trim().toLowerCase();
+  if(!email || email.indexOf('@') < 0){
+    mostrarToast('Entra na conta Desafio MOZ para pagar.');
+    return;
+  }
+  var msisdn = pedirNumeroMpesa();
+  if(!msisdn) return;
+
+  var item = itemRoletaParaMT(valorMT);
+  mostrarToast('A criar cobrança M-Pesa…');
+
+  try {
+    var resp = await fetch('/netshop-charge', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: email,
+        msisdn: msisdn,
+        method: 'mpesa',
+        item: item,
+        giros: giros,
+        amountMT: valorMT
+      })
+    });
+    var data = await resp.json().catch(function(){ return {}; });
+    if(!resp.ok || !data.id){
+      mostrarToast(data.erro || ('Erro na cobrança (' + resp.status + ')'));
+      return;
+    }
+    mostrarToast('Confirma no telemóvel M-Pesa…');
+    await esperarPagamentoRoleta(data.id, valorMT, giros);
+  } catch(e){
+    console.error(e);
+    mostrarToast('Erro de rede ao contactar NetShop.');
+  }
+}
+
+async function esperarPagamentoRoleta(chargeId, valorMT, giros){
+  var tentativas = 0;
+  var maxTentativas = 45; // ~90s
+  while(tentativas < maxTentativas){
+    tentativas++;
+    await new Promise(function(r){ setTimeout(r, 2000); });
+    try {
+      var r = await fetch('/netshop-status?id=' + encodeURIComponent(chargeId));
+      var st = await r.json().catch(function(){ return {}; });
+      if(st.status === 'failed'){
+        mostrarToast('Pagamento falhou ou expirou.');
+        return;
+      }
+      if(st.status === 'paid' && st.credited){
+        await creditarGirosAposPagamento(valorMT, giros);
+        return;
+      }
+      if(st.status === 'paid' && tentativas > 8){
+        // pago mas webhook ainda não escreveu lojaCargas — credita na mesma após espera
+        await creditarGirosAposPagamento(valorMT, giros);
+        return;
+      }
+    } catch(e){}
+  }
+  mostrarToast('Demorou muito. Se pagaste, os giros entram pelo webhook em breve.');
+}
+
+/* =========================================================
+   CENA 3D — Three.js
+   ========================================================= */
+const wrap = document.getElementById('cena-wrap');
+const canvas = document.getElementById('cena');
+const renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 100);
+camera.position.set(0, 3.3, 9.4);
+camera.lookAt(0,0.15,0);
+
+function ajustarTamanho(){
+  const w = wrap.clientWidth, h = wrap.clientHeight;
+  renderer.setSize(w,h,false);
+  camera.aspect = w/h;
+  camera.updateProjectionMatrix();
+}
+window.addEventListener('resize', ajustarTamanho);
+
+scene.add(new THREE.AmbientLight(0x9999ff, 0.6));
+const luzTopo = new THREE.PointLight(0xffe9b8, 1.5, 22);
+luzTopo.position.set(0,5.5,4.5);
+scene.add(luzTopo);
+const luzAura = new THREE.PointLight(0x22ff99, 1.7, 16);
+luzAura.position.set(-3.4,1,3.4);
+scene.add(luzAura);
+const luzAura2 = new THREE.PointLight(0xff9a3d, 1.3, 16);
+luzAura2.position.set(3.4,1,3.4);
+scene.add(luzAura2);
+
+const inclinado = new THREE.Group();
+inclinado.rotation.x = -0.5;
+scene.add(inclinado);
+
+/* Anel exterior dourado */
+const RAIO_ROLETA = 3.75;
+const anelGeo = new THREE.TorusGeometry(RAIO_ROLETA, 0.24, 24, 64);
+const anelMat = new THREE.MeshStandardMaterial({color:0xFFC94D, metalness:0.75, roughness:0.28, emissive:0x8a5a00, emissiveIntensity:0.25});
+const anel = new THREE.Mesh(anelGeo, anelMat);
+inclinado.add(anel);
+
+/* Pinos luminosos à volta */
+const pinos = new THREE.Group();
+const PIN_N = 28;
+for(let i=0;i<PIN_N;i++){
+  const ang = (i/PIN_N)*Math.PI*2;
+  const pino = new THREE.Mesh(
+    new THREE.SphereGeometry(0.085,10,10),
+    new THREE.MeshStandardMaterial({
+      color: i%2===0?0xFFF3C4:0x22FF99,
+      emissive: i%2===0?0xFFC94D:0x22FF99,
+      emissiveIntensity:0.95
+    })
+  );
+  pino.position.set(Math.cos(ang)*RAIO_ROLETA, Math.sin(ang)*RAIO_ROLETA, 0.17);
+  pinos.add(pino);
+}
+inclinado.add(pinos);
+
+const wheelMesh = new THREE.Group();
+inclinado.add(wheelMesh);
+
+const RAIO_DISCO = 3.42;
+const baseDisco = new THREE.Mesh(
+  new THREE.CylinderGeometry(RAIO_DISCO,RAIO_DISCO,0.14,64),
+  new THREE.MeshStandardMaterial({color:0x141018, metalness:0.45, roughness:0.55, emissive:0x3a2a08, emissiveIntensity:0.15})
+);
+baseDisco.rotation.x = Math.PI/2;
+wheelMesh.add(baseDisco);
+
+for(let i=0;i<N;i++){
+  const premio = PREMIOS[i];
+  const inicio = i*ANGULO_FATIA - Math.PI/2 - ANGULO_FATIA/2;
+
+  const forma = new THREE.Shape();
+  forma.moveTo(0,0);
+  forma.absarc(0,0,RAIO_DISCO-0.35, inicio, inicio+ANGULO_FATIA, false);
+  forma.lineTo(0,0);
+  const geo = new THREE.ExtrudeGeometry(forma, {depth:0.12, bevelEnabled:false});
+  const mat = new THREE.MeshStandardMaterial({
+    color: premio.cor, metalness:0.22, roughness:0.5,
+    emissive: premio.cor, emissiveIntensity:0.16
+  });
+  const fatia = new THREE.Mesh(geo, mat);
+  fatia.position.z = 0.08;
+  wheelMesh.add(fatia);
+
+  const angLinha = inicio;
+  const linha = new THREE.Mesh(
+    new THREE.BoxGeometry(RAIO_DISCO-0.35, 0.022, 0.17),
+    new THREE.MeshStandardMaterial({color:0xFFE9A8, metalness:0.8, roughness:0.3})
+  );
+  linha.position.set(Math.cos(angLinha)*(RAIO_DISCO-0.35)/2, Math.sin(angLinha)*(RAIO_DISCO-0.35)/2, 0.16);
+  linha.rotation.z = angLinha;
+  wheelMesh.add(linha);
+
+  /* texto — bem grande e com contorno para máxima legibilidade */
+  const canvasTxt = document.createElement('canvas');
+  canvasTxt.width = 420; canvasTxt.height = 170;
+  const ctx = canvasTxt.getContext('2d');
+  ctx.clearRect(0,0,420,170);
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = '900 62px -apple-system, Arial';
+  ctx.lineWidth = 9;
+  ctx.strokeStyle = 'rgba(0,0,0,0.55)';
+  ctx.fillStyle = '#ffffff';
+  ctx.strokeText(premio.label, 210, 85);
+  ctx.fillText(premio.label, 210, 85);
+  const texTxt = new THREE.CanvasTexture(canvasTxt);
+  const sprite = new THREE.Sprite(new THREE.SpriteMaterial({map:texTxt, transparent:true}));
+  const angCentro = i*ANGULO_FATIA - Math.PI/2;
+  const raioTexto = 2.28;
+  sprite.position.set(Math.cos(angCentro)*raioTexto, Math.sin(angCentro)*raioTexto, 0.27);
+  sprite.scale.set(1.85, 0.75, 1);
+  wheelMesh.add(sprite);
+}
+
+const hub = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.7,0.7,0.34,32),
+  new THREE.MeshStandardMaterial({color:0x1a1e28, metalness:0.7, roughness:0.25, emissive:0xFFC94D, emissiveIntensity:0.35})
+);
+hub.rotation.x = Math.PI/2;
+hub.position.z = 0.22;
+wheelMesh.add(hub);
+
+const aura = new THREE.Mesh(
+  new THREE.RingGeometry(0.78,1.18,48),
+  new THREE.MeshBasicMaterial({color:0xFFC94D, transparent:true, opacity:0.4, side:THREE.DoubleSide, blending:THREE.AdditiveBlending})
+);
+aura.position.z = 0.23;
+wheelMesh.add(aura);
+
+/* Ponteiro — grande, fixo, sobrepondo o topo da roleta (decide o prémio) */
+const ponteiroGrupo = new THREE.Group();
+const ponteiroCorpo = new THREE.Mesh(
+  new THREE.ConeGeometry(0.42,0.85,4),
+  new THREE.MeshStandardMaterial({color:0xff3b30, metalness:0.55, roughness:0.25, emissive:0x8a0000, emissiveIntensity:0.5})
+);
+ponteiroCorpo.rotation.x = Math.PI;
+ponteiroGrupo.add(ponteiroCorpo);
+const ponteiroBase = new THREE.Mesh(
+  new THREE.SphereGeometry(0.22,16,16),
+  new THREE.MeshStandardMaterial({color:0xFFE9A8, metalness:0.8, roughness:0.25, emissive:0xFFC94D, emissiveIntensity:0.4})
+);
+ponteiroBase.position.y = 0.46;
+ponteiroGrupo.add(ponteiroBase);
+ponteiroGrupo.position.set(0, RAIO_DISCO-0.25, 0.42);
+ponteiroGrupo.rotation.x = Math.PI/2.5;
+inclinado.add(ponteiroGrupo);
+
+/* confete */
+let particulas = null;
+function dispararConfete(){
+  const qtd = 100;
+  const geo = new THREE.BufferGeometry();
+  const pos = new Float32Array(qtd*3);
+  const vel = [];
+  const cores = new Float32Array(qtd*3);
+  const paleta = [[1,0.79,0.3],[0.13,1,0.6],[1,0.4,0.2],[0.4,0.7,1]];
+  for(let i=0;i<qtd;i++){
+    pos[i*3]=0; pos[i*3+1]=0.8; pos[i*3+2]=0.35;
+    const c = paleta[Math.floor(Math.random()*paleta.length)];
+    cores[i*3]=c[0]; cores[i*3+1]=c[1]; cores[i*3+2]=c[2];
+    vel.push({x:(Math.random()-0.5)*6.5, y:Math.random()*5.5+2, z:(Math.random()-0.5)*3});
+  }
+  geo.setAttribute('position', new THREE.BufferAttribute(pos,3));
+  geo.setAttribute('color', new THREE.BufferAttribute(cores,3));
+  particulas = new THREE.Points(geo, new THREE.PointsMaterial({size:0.13, vertexColors:true, transparent:true, opacity:1}));
+  particulas.userData = {vel, vida:0};
+  inclinado.add(particulas);
+}
+function animarConfete(dt){
+  if(!particulas) return;
+  particulas.userData.vida += dt;
+  const pos = particulas.geometry.attributes.position.array;
+  const vel = particulas.userData.vel;
+  for(let i=0;i<vel.length;i++){
+    vel[i].y -= 6*dt;
+    pos[i*3]+=vel[i].x*dt; pos[i*3+1]+=vel[i].y*dt; pos[i*3+2]+=vel[i].z*dt;
+  }
+  particulas.geometry.attributes.position.needsUpdate = true;
+  particulas.material.opacity = Math.max(0, 1 - particulas.userData.vida/1.6);
+  if(particulas.userData.vida>1.6){ inclinado.remove(particulas); particulas=null; }
+}
+
+let girando=false;
+let tempoAnterior = performance.now();
+function loop(agora){
+  const dt = Math.min((agora-tempoAnterior)/1000, 0.05);
+  tempoAnterior = agora;
+  pinos.rotation.z += dt*0.15;
+  aura.rotation.z += dt*0.6;
+  hub.material.emissiveIntensity = 0.2 + Math.sin(agora/400)*0.12;
+  animarConfete(dt);
+  renderer.render(scene, camera);
+  requestAnimationFrame(loop);
+}
+ajustarTamanho();
+requestAnimationFrame(loop);
+
+/* ---------- sorteio / giro ---------- */
+function sortearPremio(){
+  if(estado.garantias && estado.garantias.length){
+    return estado.garantias.shift();
+  }
+  let r = Math.random()*PESO_TOTAL;
+  for(let i=0;i<N;i++){ if(r < PREMIOS[i].peso) return i; r -= PREMIOS[i].peso; }
+  return N-1;
+}
+function easeOutQuint(t){ return 1 - Math.pow(1-t, 5); }
+
+function girarRoleta(indiceAlvo){
+  return new Promise(resolve=>{
+    const anguloAtual = wheelMesh.rotation.z;
+    // ângulo real do centro da fatia i, no mesmo referencial usado ao desenhá-la
+    // (tem de bater certo com "angCentro" usado para posicionar o texto de cada fatia)
+    const centroAlvo = indiceAlvo*ANGULO_FATIA - Math.PI/2;
+    let necessario = (Math.PI/2 - centroAlvo) - (anguloAtual % (Math.PI*2));
+    necessario = ((necessario % (Math.PI*2)) + Math.PI*2) % (Math.PI*2);
+    const alvoFinal = anguloAtual + 7*Math.PI*2 + necessario;
+    const duracao = 4400;
+    const inicioAnim = performance.now();
+    const partida = anguloAtual;
+    function passo(agora){
+      const t = Math.min((agora-inicioAnim)/duracao, 1);
+      wheelMesh.rotation.z = partida + (alvoFinal-partida)*easeOutQuint(t);
+      if(t<1){ requestAnimationFrame(passo); } else { wheelMesh.rotation.z = alvoFinal; resolve(); }
+    }
+    requestAnimationFrame(passo);
+  });
+}
+
+document.getElementById('btn-girar').addEventListener('click', async ()=>{
+  if(estado.giros<=0 || girando) return;
+  girando = true;
+  estado.giros -= 1;
+  await guardarEstado();
+  atualizarUI();
+
+  const indice = sortearPremio();
+  await girarRoleta(indice);
+  const premio = PREMIOS[indice];
+
+  if(premio.tipo==='pontos') estado.pontos += premio.valor;
+  if(premio.tipo==='mt') estado.pontos += premio.valor * PTS_POR_MT; // MT → pontos na conta
+  if(premio.tipo==='giros') estado.giros += premio.valor;
+  sincronizarMt();
+  await guardarEstado();
+  try { localStorage.setItem('pontosUtilizador', String(estado.pontos)); } catch(e){}
+
+  estado.historico.unshift({
+    emoji:premio.emoji,
+    texto:premio.label,
+    ganhou: premio.tipo!=='nada',
+    quando:new Date().toLocaleString('pt-PT',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})
+  });
+  estado.historico = estado.historico.slice(0,40);
+  guardarEstado();
+
+  mostrarResultado(premio);
+  girando = false;
+  atualizarUI();
+});
+
+function mostrarResultado(premio){
+  const cartao = document.getElementById('cartao-premio');
+  const perdeu = premio.tipo==='nada';
+  cartao.classList.toggle('perdeu', perdeu);
+  document.getElementById('premio-emoji').textContent = premio.emoji;
+  document.getElementById('premio-titulo').textContent = perdeu ? 'Foi por pouco' : 'Parabéns, ganhaste';
+  let textoValor = '';
+  if(premio.tipo==='pontos') textoValor = premio.valor+' pontos';
+  else if(premio.tipo==='mt') textoValor = premio.valor+' MT';
+  else if(premio.tipo==='giros') textoValor = '+'+premio.valor+' giros';
+  else textoValor = premio.label;
+  document.getElementById('premio-valor').textContent = textoValor;
+  document.getElementById('overlay').style.display='flex';
+  if(!perdeu) dispararConfete();
+}
+document.getElementById('btn-fechar-premio').addEventListener('click', ()=>{
+  document.getElementById('overlay').style.display='none';
+});
+
+/* ---------- arranque ---------- */
+(async function arranqueRoleta(){
+  carregarEstadoLocal();
+  atualizarUI();
+  await carregarContaFirebase();
+  await reclamarGiroGratisSeDisponivel();
+  atualizarUI();
+})();
+</script>
+</body>
+</html>
