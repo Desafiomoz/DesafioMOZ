@@ -332,6 +332,74 @@
     background:linear-gradient(135deg,var(--verde),var(--verde-forte)); color:#04140a;
   }
 
+
+  /* ---------- checkout M-Pesa (estilo Homejub) ---------- */
+  #overlay-checkout-roleta{
+    position:fixed; inset:0; z-index:80;
+    background:rgba(4,5,9,0.88);
+    display:none; align-items:center; justify-content:center;
+    padding:18px; backdrop-filter:blur(6px);
+  }
+  #overlay-checkout-roleta.ativo{display:flex;}
+  .ck-caixa{
+    width:min(360px,94vw);
+    background:linear-gradient(165deg,#151b24 0%,#0e1118 100%);
+    border:1px solid rgba(255,201,77,0.35);
+    border-radius:22px; padding:22px 18px 18px;
+    box-shadow:0 0 50px rgba(255,201,77,0.22), 0 16px 40px rgba(0,0,0,0.5);
+    text-align:center;
+  }
+  .ck-icone{
+    width:64px; height:64px; border-radius:18px; margin:0 auto 12px;
+    background:linear-gradient(135deg,var(--ouro),var(--ouro-forte));
+    display:flex; align-items:center; justify-content:center; font-size:30px;
+    box-shadow:0 0 24px rgba(255,201,77,0.45);
+  }
+  .ck-caixa h2{
+    margin:0 0 6px; font-size:18px; font-weight:900;
+    background:linear-gradient(90deg,var(--ouro),#fff6df);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .ck-desc{font-size:13px; color:var(--texto-fraco); line-height:1.45; margin-bottom:14px;}
+  .ck-desc b{color:var(--ouro);}
+  .ck-passo{display:none; flex-direction:column; gap:12px; align-items:stretch;}
+  .ck-passo.ativo{display:flex;}
+  .ck-label{font-size:12px; font-weight:700; color:var(--texto-fraco); text-align:left;}
+  .ck-input{
+    width:100%; padding:14px 14px; border-radius:14px;
+    border:1px solid rgba(255,201,77,0.28);
+    background:var(--painel-2); color:#fff; font-size:16px; font-weight:700;
+    letter-spacing:0.3px;
+  }
+  .ck-input:focus{outline:none; border-color:var(--ouro); box-shadow:0 0 0 3px rgba(255,201,77,0.2);}
+  .ck-hint{font-size:11.5px; color:var(--texto-fraco); text-align:left; margin-top:-4px;}
+  .ck-btns{display:flex; flex-direction:column; gap:8px; margin-top:4px;}
+  .ck-btn{
+    width:100%; padding:14px 0; border:none; border-radius:14px;
+    font-weight:900; font-size:15px; cursor:pointer;
+  }
+  .ck-btn.primario{
+    background:linear-gradient(135deg,var(--ouro),var(--ouro-forte)); color:#221200;
+    box-shadow:0 8px 22px rgba(255,170,0,0.35);
+  }
+  .ck-btn.secundario{
+    background:transparent; color:var(--texto-fraco);
+    border:1px solid rgba(255,255,255,0.1);
+  }
+  .ck-btn.verde{
+    background:linear-gradient(135deg,var(--verde),var(--verde-forte)); color:#04140a;
+  }
+  .ck-aguardar-ico{
+    font-size:42px; animation:ckPulse 1.4s ease-in-out infinite;
+  }
+  @keyframes ckPulse{
+    0%,100%{ transform:scale(1); opacity:1; }
+    50%{ transform:scale(1.08); opacity:0.75; }
+  }
+  .ck-status{font-size:13.5px; color:var(--texto-fraco); line-height:1.45;}
+  .ck-sucesso-ico{font-size:48px; filter:drop-shadow(0 0 16px rgba(34,255,153,0.6));}
+  .ck-erro-ico{font-size:42px;}
+
   #toast{
     position:fixed; bottom:20px; left:50%; transform:translateX(-50%) translateY(120%);
     background:var(--painel-2); border:1px solid rgba(34,255,153,0.35);
@@ -519,6 +587,48 @@
     <h3 id="premio-titulo">GANHASTE</h3>
     <div class="valor-premio" id="premio-valor">1000 pontos</div>
     <button id="btn-fechar-premio">Continuar</button>
+  </div>
+</div>
+
+
+<!-- Checkout M-Pesa Roleta -->
+<div id="overlay-checkout-roleta" role="dialog" aria-modal="true">
+  <div class="ck-caixa">
+    <div class="ck-icone">📱</div>
+    <h2>Pagar com M-Pesa</h2>
+    <p class="ck-desc" id="ck-descricao">Compra de giros</p>
+
+    <div class="ck-passo ativo" id="ck-passo-form">
+      <label class="ck-label" for="ck-telefone">Número M-Pesa</label>
+      <input class="ck-input" id="ck-telefone" type="tel" inputmode="tel" placeholder="+25884XXXXXXX" autocomplete="tel">
+      <div class="ck-hint">Formato: +258 seguido de 9 dígitos</div>
+      <div class="ck-btns">
+        <button type="button" class="ck-btn primario" id="ck-confirmar">Confirmar e pagar</button>
+        <button type="button" class="ck-btn secundario" id="ck-cancelar">Cancelar</button>
+      </div>
+    </div>
+
+    <div class="ck-passo" id="ck-passo-aguardar">
+      <div class="ck-aguardar-ico">⏳</div>
+      <p class="ck-status" id="ck-status-txt">A criar o pedido de pagamento…</p>
+      <p class="ck-hint" style="text-align:center">Confirma no telemóvel e espera aqui (~1 min). Não saias desta página.</p>
+      <button type="button" class="ck-btn secundario" id="ck-desistir">Cancelar espera</button>
+    </div>
+
+    <div class="ck-passo" id="ck-passo-sucesso">
+      <div class="ck-sucesso-ico">✅</div>
+      <p class="ck-status" id="ck-sucesso-txt" style="color:var(--verde);font-weight:800">Pagamento confirmado!</p>
+      <button type="button" class="ck-btn verde" id="ck-fechar-ok">Continuar</button>
+    </div>
+
+    <div class="ck-passo" id="ck-passo-erro">
+      <div class="ck-erro-ico">❌</div>
+      <p class="ck-status" id="ck-erro-txt">Não foi possível concluir o pagamento.</p>
+      <div class="ck-btns">
+        <button type="button" class="ck-btn primario" id="ck-tentar-de-novo">Tentar de novo</button>
+        <button type="button" class="ck-btn secundario" id="ck-fechar-erro">Fechar</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -832,25 +942,27 @@ function itemRoletaParaMT(valorMT){
   return 'roleta_giros_' + valorMT;
 }
 
-function pedirNumeroMpesa(){
-  var guardado = '';
-  try {
-    guardado = localStorage.getItem('telUtilizador') || localStorage.getItem('msisdnRoleta') || '';
-  } catch(e){}
-  var n = prompt('Número M-Pesa (+258XXXXXXXXX):', guardado || '+258');
-  if(!n) return null;
-  n = String(n).trim().replace(/\s/g, '');
-  if(/^8\d{8}$/.test(n)) n = '+258' + n;
-  if(/^258\d{9}$/.test(n)) n = '+' + n;
-  if(!/^\+258\d{9}$/.test(n)){
-    mostrarToast('Número inválido. Usa +258XXXXXXXXX');
-    return null;
-  }
-  try { localStorage.setItem('msisdnRoleta', n); } catch(e){}
-  return n;
+/* Checkout M-Pesa com caixa bonita (como no Homejub) */
+var ckPendente = null; // { valorMT, giros, email, item }
+var ckPollingId = null;
+var ckChargeId = null;
+var ckTentativas = 0;
+var ckAProcessar = false;
+
+function ckMostrarPasso(nome){
+  ['form','aguardar','sucesso','erro'].forEach(function(p){
+    var el = document.getElementById('ck-passo-'+p);
+    if(el) el.classList.toggle('ativo', p === nome);
+  });
 }
 
-async function iniciarPagamentoMetical(valorMT, giros){
+function ckFechar(){
+  if(ckPollingId){ clearInterval(ckPollingId); ckPollingId = null; }
+  ckAProcessar = false;
+  document.getElementById('overlay-checkout-roleta').classList.remove('ativo');
+}
+
+function iniciarPagamentoMetical(valorMT, giros){
   valorMT = Number(valorMT) || 0;
   giros = Number(giros) || 0;
   if(valorMT < 2){
@@ -866,63 +978,137 @@ async function iniciarPagamentoMetical(valorMT, giros){
     mostrarToast('Entra na conta Desafio MOZ para pagar.');
     return;
   }
-  var msisdn = pedirNumeroMpesa();
-  if(!msisdn) return;
+  ckPendente = { valorMT: valorMT, giros: giros, email: email, item: itemRoletaParaMT(valorMT) };
+  document.getElementById('ck-descricao').innerHTML =
+    'Vais receber <b>' + giros + ' giros</b> por <b>' + valorMT + ' MT</b>';
+  var guardado = '';
+  try { guardado = localStorage.getItem('telUtilizador') || localStorage.getItem('msisdnRoleta') || ''; } catch(e){}
+  document.getElementById('ck-telefone').value = guardado || '+258';
+  ckMostrarPasso('form');
+  document.getElementById('overlay-checkout-roleta').classList.add('ativo');
+  setTimeout(function(){ document.getElementById('ck-telefone').focus(); }, 200);
+}
 
-  var item = itemRoletaParaMT(valorMT);
-  mostrarToast('A criar cobrança M-Pesa…');
+function ckNormalizarTel(n){
+  n = String(n || '').trim().replace(/\s/g, '');
+  if(/^8\d{8}$/.test(n)) n = '+258' + n;
+  if(/^258\d{9}$/.test(n)) n = '+' + n;
+  return n;
+}
+
+document.getElementById('ck-cancelar').addEventListener('click', ckFechar);
+document.getElementById('ck-desistir').addEventListener('click', ckFechar);
+document.getElementById('ck-fechar-ok').addEventListener('click', ckFechar);
+document.getElementById('ck-fechar-erro').addEventListener('click', ckFechar);
+document.getElementById('ck-tentar-de-novo').addEventListener('click', function(){
+  ckMostrarPasso('form');
+});
+document.getElementById('overlay-checkout-roleta').addEventListener('click', function(e){
+  if(e.target === this && !ckPollingId) ckFechar();
+});
+
+document.getElementById('ck-confirmar').addEventListener('click', async function(){
+  if(!ckPendente) return;
+  var tel = ckNormalizarTel(document.getElementById('ck-telefone').value);
+  if(!/^\+258\d{9}$/.test(tel)){
+    mostrarToast('Número inválido. Usa +258XXXXXXXXX');
+    return;
+  }
+  try { localStorage.setItem('msisdnRoleta', tel); } catch(e){}
+
+  ckMostrarPasso('aguardar');
+  document.getElementById('ck-status-txt').textContent = 'A criar o pedido de pagamento…';
+  ckAProcessar = false;
+  ckTentativas = 0;
 
   try {
     var resp = await fetch('/netshop-charge', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        email: email,
-        msisdn: msisdn,
+        email: ckPendente.email,
+        msisdn: tel,
         method: 'mpesa',
-        item: item,
-        giros: giros,
-        amountMT: valorMT
+        item: ckPendente.item,
+        giros: ckPendente.giros,
+        amountMT: ckPendente.valorMT
       })
     });
     var data = await resp.json().catch(function(){ return {}; });
     if(!resp.ok || !data.id){
-      mostrarToast(data.erro || ('Erro na cobrança (' + resp.status + ')'));
+      document.getElementById('ck-erro-txt').textContent = data.erro || ('Erro na cobrança (' + resp.status + ')');
+      ckMostrarPasso('erro');
       return;
     }
-    mostrarToast('Confirma no telemóvel M-Pesa…');
-    await esperarPagamentoRoleta(data.id, valorMT, giros);
+    ckChargeId = data.id;
+    // grava pedidos no Firebase (ajuda o webhook), se existir db
+    if (typeof db !== 'undefined' && db && data.reference) {
+      try {
+        await db.collection('pedidosPorRef').doc(String(data.reference)).set({
+          email: ckPendente.email,
+          item: ckPendente.item,
+          giros: ckPendente.giros,
+          mt: ckPendente.valorMT,
+          jogo: 'roleta',
+          chargeId: data.id,
+          createdAt: new Date()
+        });
+      } catch (e) { console.error('pedidosPorRef', e); }
+    }
+    if (typeof db !== 'undefined' && db) {
+      try {
+        await db.collection('pedidosLoja').doc(String(data.id)).set({
+          email: ckPendente.email,
+          item: ckPendente.item,
+          giros: ckPendente.giros,
+          mt: ckPendente.valorMT,
+          jogo: 'roleta',
+          createdAt: new Date()
+        });
+      } catch (e) { console.error('pedidosLoja', e); }
+    }
+    document.getElementById('ck-status-txt').textContent =
+      'Confirma no telemóvel M-Pesa e espera aqui (~1 min)…';
+    if(ckPollingId) clearInterval(ckPollingId);
+    ckPollingId = setInterval(ckVerificarPagamento, 2500);
   } catch(e){
     console.error(e);
-    mostrarToast('Erro de rede ao contactar NetShop.');
+    document.getElementById('ck-erro-txt').textContent = 'Falha de ligação — tenta novamente.';
+    ckMostrarPasso('erro');
   }
-}
+});
 
-async function esperarPagamentoRoleta(chargeId, valorMT, giros){
-  var tentativas = 0;
-  var maxTentativas = 45; // ~90 segundos
-  while(tentativas < maxTentativas){
-    tentativas++;
-    await new Promise(function(r){ setTimeout(r, 2000); });
-    try {
-      var r = await fetch('/netshop-status?id=' + encodeURIComponent(chargeId));
-      var st = await r.json().catch(function(){ return {}; });
-      if(st.status === 'failed'){
-        mostrarToast('Pagamento falhou ou expirou.');
-        return;
-      }
-      if(st.status === 'paid' && st.credited){
-        await creditarGirosMetical(valorMT, giros);
-        return;
-      }
-      // pago mas webhook ainda a processar — após várias tentativas credita na app
-      if(st.status === 'paid' && tentativas > 8){
-        await creditarGirosMetical(valorMT, giros);
-        return;
-      }
-    } catch(e){}
+async function ckVerificarPagamento(){
+  if(ckAProcessar || !ckChargeId || !ckPendente) return;
+  ckTentativas++;
+  if(ckTentativas > 40){ // ~100s
+    if(ckPollingId){ clearInterval(ckPollingId); ckPollingId = null; }
+    document.getElementById('ck-erro-txt').textContent =
+      'O pagamento demorou demasiado. Se pagaste, atualiza a página — os giros podem entrar pelo webhook.';
+    ckMostrarPasso('erro');
+    return;
   }
-  mostrarToast('Demorou muito. Se pagaste, os giros entram pelo webhook em breve. Atualiza a página.');
+  try {
+    var r = await fetch('/netshop-status?id=' + encodeURIComponent(ckChargeId));
+    var st = await r.json().catch(function(){ return {}; });
+    if(st.status === 'failed'){
+      if(ckPollingId){ clearInterval(ckPollingId); ckPollingId = null; }
+      document.getElementById('ck-erro-txt').textContent =
+        'Pagamento não confirmado. Verifica o número e o saldo M-Pesa.';
+      ckMostrarPasso('erro');
+      return;
+    }
+    if(st.status === 'paid'){
+      if(ckAProcessar) return;
+      ckAProcessar = true;
+      if(ckPollingId){ clearInterval(ckPollingId); ckPollingId = null; }
+      await creditarGirosMetical(ckPendente.valorMT, ckPendente.giros);
+      document.getElementById('ck-sucesso-txt').textContent =
+        'Pagamento ok! +' + ckPendente.giros + ' giros na tua conta.';
+      ckMostrarPasso('sucesso');
+      ckAProcessar = false;
+    }
+  } catch(e){}
 }
 
 /* =========================================================
