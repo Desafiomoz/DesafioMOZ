@@ -478,7 +478,7 @@
 
     <div class="hero">
       <span class="badge-live"><span class="dot"></span> Programa Influencer</span>
-      <h1>Ganha 200 MT por cada 1000 pessoas</h1>
+      <h1>Ganha 200 MT por cada 1000 na contagem</h1>
       <p>Partilha o teu <b>link único</b>, traz amigos e seguidores para o Desafio MOZ e sobe no ranking dos top influencers.</p>
     </div>
 
@@ -786,11 +786,14 @@
 
   function actualizarUI(data) {
     var total = Number(data.influencerConvidados || 0);
+    var reais = Number(data.influencerConvidadosReais != null ? data.influencerConvidadosReais : total);
     var premios = Number(data.influencerPremios || 0);
+    var ratio = parseInt(data.influencerRatioApos900, 10);
+    if (!ratio || ratio < 1) ratio = 5;
+    var normal = data.influencerContagemNormal === true;
     var noCiclo = total % META;
     var faltam = META - noCiclo;
     if (noCiclo === 0 && total > 0) {
-      // acabou de fechar um ciclo — mostrar 1000/1000 até novo registo
       noCiclo = META;
       faltam = 0;
     }
@@ -802,6 +805,16 @@
     document.getElementById('stat-pct').textContent = noCiclo + ' / ' + META;
     document.getElementById('barra-fill').style.width = Math.min(100, (noCiclo / META) * 100) + '%';
     document.getElementById('nome-user').textContent = data.nome || email;
+    var infoRegra = document.getElementById('info-regra-contagem');
+    if (infoRegra) {
+      if (normal) {
+        infoRegra.innerHTML = 'Contagem <b>normal</b>: 1 registo = 1 convite contado.';
+      } else if (reais < 900) {
+        infoRegra.innerHTML = 'Convites reais: <b>' + reais + '</b>. Até <b>900</b> reais, 1 registo = 1 na barra. Depois, cada <b>' + ratio + '</b> registos = 1 na contagem.';
+      } else {
+        infoRegra.innerHTML = 'Convites reais: <b>' + reais + '</b> · Contados: <b>' + total + '</b>. Após 900, cada <b>' + ratio + '</b> registos = +1 na meta.';
+      }
+    }
 
     meuCodigo = data.codigoInfluencer || '';
     var origin = location.origin || 'https://desafiomoz.pages.dev';

@@ -403,7 +403,10 @@
     } catch (e) {}
   })();
 
-  // Credita o influencer: +1 convidado; a cada 1000 → +200 MT (1600 pts)
+  // Credita o influencer.
+  // Até 900 convites REAIS: 1 registo = 1 na contagem.
+  // Depois de 900 reais: a cada N registos (padrão 5, ou valor do admin) = +1 na contagem.
+  // Meta: 1000 na contagem → +200 MT (1600 pts).
   async function creditarInfluencer(emailNovo) {
     try {
       var infCodigo = (localStorage.getItem('infPendente') || '').trim().toUpperCase();
@@ -415,20 +418,40 @@
       }
       var ref = snap.docs[0].ref;
       var d = snap.docs[0].data() || {};
-      // não contar se o próprio influencer se registar com o link
       if ((d.email || '').toLowerCase() === (emailNovo || '').toLowerCase()) {
         localStorage.removeItem('infPendente');
         return;
       }
-      var total = (d.influencerConvidados || 0) + 1;
+
+      var reaisAntes = Number(d.influencerConvidadosReais != null ? d.influencerConvidadosReais : (d.influencerConvidados || 0));
+      var contadosAntes = Number(d.influencerConvidados || 0);
+      var reais = reaisAntes + 1;
+      var ratio = parseInt(d.influencerRatioApos900, 10);
+      if (!ratio || ratio < 1) ratio = 5;
+      var normal = d.influencerContagemNormal === true;
+
+      var contados = contadosAntes;
+      if (normal) {
+        contados = contadosAntes + 1;
+      } else if (reaisAntes < 900) {
+        // ainda na zona 1:1 (até completar 900 reais)
+        contados = contadosAntes + 1;
+      } else {
+        // após 900 reais: só sobe 1 contado a cada `ratio` registos reais
+        var beyond = reais - 900;
+        if (beyond > 0 && beyond % ratio === 0) {
+          contados = contadosAntes + 1;
+        }
+      }
+
       var premios = d.influencerPremios || 0;
       var pontos = d.pontos || 0;
       var upd = {
-        influencerConvidados: total,
+        influencerConvidadosReais: reais,
+        influencerConvidados: contados,
         ultimaAtualizacao: new Date().toISOString()
       };
-      // Meta de 1000 pessoas → 200 MT = 1600 pontos
-      if (total > 0 && total % 1000 === 0) {
+      if (contados > contadosAntes && contados > 0 && contados % 1000 === 0) {
         upd.influencerPremios = premios + 1;
         upd.pontos = pontos + 1600;
       }

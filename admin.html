@@ -230,6 +230,7 @@
     <button class="tab" data-tab="visitantes" onclick="mudarTab('visitantes')"><i class="fas fa-chart-line"></i> Visitantes</button>
     <button class="tab" data-tab="homejub" onclick="mudarTab('homejub')"><i class="fas fa-gamepad"></i> Homejub</button>
     <button class="tab" data-tab="influencer" onclick="mudarTab('influencer')"><i class="fas fa-star"></i> Influencer</button>
+    <button class="tab" data-tab="roleta" onclick="mudarTab('roleta')"><i class="fas fa-dharmachakra"></i> Roleta</button>
     <button class="tab" data-tab="chat" onclick="mudarTab('chat')"><i class="fas fa-comments"></i> Chat</button>
   </div>
 
@@ -869,6 +870,43 @@
           <div class="resumo-card"><div class="num" id="inf-total-premios">0</div><div class="lbl">Prémios (×200 MT)</div></div>
           <div class="resumo-card"><div class="num" id="inf-top">0</div><div class="lbl">Máx. convidados</div></div>
         </div>
+
+        <div class="form-box" style="margin-top:0;border:1px solid #2a2a3a;">
+          <h3 style="color:#00e676;font-size:14px;margin-bottom:10px;"><i class="fas fa-sliders-h"></i> Ajustar contagem de um influencer</h3>
+          <p style="font-size:12px;color:#888;margin-bottom:12px;">
+            Após <b>900</b> convites <b>reais</b>, por defeito cada <b>5</b> registos = 1 na contagem (meta 1000).
+            Podes mudar o ratio (ex.: 7 = 1), voltar à contagem normal 1:1, ou somar/subtrair valores.
+          </p>
+          <div class="form-row">
+            <label>E-mail do influencer</label>
+            <input type="email" id="inf-adj-email" placeholder="email@exemplo.com">
+          </div>
+          <div class="form-grid">
+            <div class="form-row">
+              <label>Ajustar contados (+ ou −)</label>
+              <input type="number" id="inf-adj-contados" placeholder="Ex: 10 ou -5" step="1">
+            </div>
+            <div class="form-row">
+              <label>Ajustar reais (+ ou −)</label>
+              <input type="number" id="inf-adj-reais" placeholder="Ex: 10 ou -5" step="1">
+            </div>
+          </div>
+          <div class="form-grid">
+            <div class="form-row">
+              <label>Ratio após 900 (N registos = 1 contado)</label>
+              <input type="number" id="inf-adj-ratio" placeholder="Padrão 5 · Ex: 7" min="1" step="1">
+            </div>
+            <div class="form-row">
+              <label>&nbsp;</label>
+              <button type="button" class="btn-verde" onclick="adminAjustarInfluencer()">Aplicar ajustes</button>
+            </div>
+          </div>
+          <div class="form-grid" style="margin-top:8px;">
+            <button type="button" class="btn-verde" style="background:linear-gradient(90deg,#1976d2,#42a5f5);" onclick="adminContagemNormalInfluencer(true)">1:1 Contagem normal</button>
+            <button type="button" class="btn-laranja" style="width:100%;padding:12px;border-radius:10px;font-size:13px;" onclick="adminContagemNormalInfluencer(false)">Reactivar regra 900 (ratio)</button>
+          </div>
+        </div>
+
         <div class="busca">
           <input type="text" id="busca-influencer" placeholder="Pesquisar nome, e-mail ou código..." oninput="filtrarInfluencerAdmin()">
         </div>
@@ -881,10 +919,12 @@
                 <th>Nome</th>
                 <th>E-mail</th>
                 <th>Código</th>
-                <th>Convidados</th>
-                <th>Faltam p/ 1000</th>
+                <th>Contados</th>
+                <th>Reais</th>
+                <th>Ratio</th>
+                <th>Faltam</th>
                 <th>Prémios</th>
-                <th>MT ganhos*</th>
+                <th>MT*</th>
               </tr>
             </thead>
             <tbody id="tbody-influencer">
@@ -916,6 +956,78 @@
       </div>
     </div>
 
+
+
+    <!-- ROLETA -->
+    <div class="painel" id="painel-roleta">
+      <div class="form-box">
+        <h3><i class="fas fa-dharmachakra"></i> Roleta — actividade dos jogadores</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:12px;">
+          Quantas vezes cada utilizador girou, se girou <b>hoje</b>, giros restantes e último giro.
+          (Dados gravados a partir desta actualização do jogo.)
+        </p>
+        <div class="resumo" style="margin-bottom:14px;">
+          <div class="resumo-card"><div class="num" id="roleta-jogadores">0</div><div class="lbl">Jogadores</div></div>
+          <div class="resumo-card"><div class="num" id="roleta-giros-hoje">0</div><div class="lbl">Giros hoje (todos)</div></div>
+          <div class="resumo-card"><div class="num" id="roleta-total-feitos">0</div><div class="lbl">Giros totais feitos</div></div>
+          <div class="resumo-card"><div class="num" id="roleta-ativos-hoje">0</div><div class="lbl">Giraram hoje</div></div>
+        </div>
+        <button type="button" class="btn-verde" style="margin-bottom:12px;" onclick="carregarRoletaAdmin()">🔄 Actualizar roleta</button>
+        <div class="busca">
+          <input type="text" id="busca-roleta-users" placeholder="Filtrar nome ou e-mail..." oninput="filtrarRoletaUsersAdmin()">
+        </div>
+        <div class="tabela-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Nome</th>
+                <th>E-mail</th>
+                <th>Giros (saldo)</th>
+                <th>Total girou</th>
+                <th>Hoje</th>
+                <th>Giros hoje</th>
+                <th>Último giro</th>
+                <th>Dias activos</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-roleta-users">
+              <tr><td colspan="9" class="vazio">Clica em Actualizar roleta.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 style="color:#00e676;font-size:14px;margin:22px 0 10px;"><i class="fas fa-money-bill"></i> Compras M-Pesa (roleta)</h3>
+        <div class="resumo" style="margin-bottom:14px;">
+          <div class="resumo-card"><div class="num" id="roleta-total-compras">0</div><div class="lbl">Compras listadas</div></div>
+          <div class="resumo-card"><div class="num" id="roleta-total-giros">0</div><div class="lbl">Giros vendidos</div></div>
+          <div class="resumo-card"><div class="num" id="roleta-total-mt">0</div><div class="lbl">MT (estim.)</div></div>
+        </div>
+        <div class="busca">
+          <input type="text" id="busca-roleta" placeholder="Filtrar e-mail ou item..." oninput="filtrarRoletaAdmin()">
+        </div>
+        <div class="tabela-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Quando</th>
+                <th>E-mail</th>
+                <th>Item</th>
+                <th>Giros</th>
+                <th>MT</th>
+                <th>Tipo</th>
+                <th>Charge</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-roleta">
+              <tr><td colspan="8" class="vazio">Clica em Actualizar roleta.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p style="font-size:11px;color:#666;margin-top:8px;">Actividade de giros só aparece depois de o jogador girar com a versão nova do roleta.html.</p>
+      </div>
+    </div>
 
     <!-- CHAT / BATE-PAPO -->
     <div class="painel" id="painel-chat">
@@ -1035,6 +1147,8 @@ function mostrarAviso(txt) {
     }
 
     function mudarTab(nome) {
+      if (nome === 'roleta') { try { carregarRoletaAdmin(); } catch (e) {} }
+
       try {
         document.querySelectorAll('.tab').forEach(function (t) {
           t.classList.toggle('ativo', t.getAttribute('data-tab') === nome);
@@ -2904,6 +3018,241 @@ async function carregarAnunciosTarefasAdmin() {
     }
 
 
+
+    async function adminAjustarInfluencer() {
+      var email = (document.getElementById('inf-adj-email').value || '').trim().toLowerCase();
+      if (!email) return alert('Escreve o e-mail do influencer.');
+      var dCont = document.getElementById('inf-adj-contados').value;
+      var dReais = document.getElementById('inf-adj-reais').value;
+      var dRatio = document.getElementById('inf-adj-ratio').value;
+      try {
+        var snap = await db.collection('usuarios').where('email', '==', email).limit(1).get();
+        if (snap.empty) return alert('Utilizador não encontrado.');
+        var ref = snap.docs[0].ref;
+        var d = snap.docs[0].data() || {};
+        var upd = { ultimaAtualizacao: new Date().toISOString() };
+        var cont = Number(d.influencerConvidados || 0);
+        var reais = Number(d.influencerConvidadosReais != null ? d.influencerConvidadosReais : cont);
+        if (dCont !== '' && dCont != null) {
+          cont = Math.max(0, cont + parseInt(dCont, 10));
+          upd.influencerConvidados = cont;
+        }
+        if (dReais !== '' && dReais != null) {
+          reais = Math.max(0, reais + parseInt(dReais, 10));
+          upd.influencerConvidadosReais = reais;
+        }
+        if (dRatio !== '' && dRatio != null) {
+          var r = parseInt(dRatio, 10);
+          if (r >= 1) {
+            upd.influencerRatioApos900 = r;
+            upd.influencerContagemNormal = false;
+          }
+        }
+        await ref.update(upd);
+        document.getElementById('inf-adj-contados').value = '';
+        document.getElementById('inf-adj-reais').value = '';
+        document.getElementById('inf-adj-ratio').value = '';
+        await carregarTudo();
+        mostrarAviso('Influencer actualizado: ' + email);
+      } catch (e) {
+        alert('Erro: ' + (e.message || e));
+      }
+    }
+
+    async function adminContagemNormalInfluencer(normal) {
+      var email = (document.getElementById('inf-adj-email').value || '').trim().toLowerCase();
+      if (!email) return alert('Escreve o e-mail do influencer.');
+      try {
+        var snap = await db.collection('usuarios').where('email', '==', email).limit(1).get();
+        if (snap.empty) return alert('Utilizador não encontrado.');
+        await snap.docs[0].ref.update({
+          influencerContagemNormal: !!normal,
+          ultimaAtualizacao: new Date().toISOString()
+        });
+        await carregarTudo();
+        mostrarAviso(normal
+          ? 'Contagem 1:1 activada para ' + email
+          : 'Regra após 900 reactivada para ' + email);
+      } catch (e) {
+        alert('Erro: ' + (e.message || e));
+      }
+    }
+
+    async function carregarRoletaAdmin() {
+      var hoje = new Date().toISOString().slice(0, 10);
+      var tbodyU = document.getElementById('tbody-roleta-users');
+      var users = (typeof todosUsers !== 'undefined' ? todosUsers : []).slice();
+      var jogadores = users.filter(function (u) {
+        return (u.roletaTotalGiros || 0) > 0 || (u.roletaGiros || 0) > 0 || u.roletaUltimoGiroAt || u.roletaGirosPorDia;
+      });
+      jogadores.sort(function (a, b) {
+        return (b.roletaTotalGiros || 0) - (a.roletaTotalGiros || 0);
+      });
+      var totalFeitos = 0, totalHoje = 0, ativosHoje = 0;
+      jogadores.forEach(function (u) {
+        totalFeitos += Number(u.roletaTotalGiros || 0);
+        var porDia = u.roletaGirosPorDia || {};
+        var gh = Number(porDia[hoje] || 0);
+        totalHoje += gh;
+        if (gh > 0) ativosHoje++;
+      });
+      var elJ = document.getElementById('roleta-jogadores');
+      var elH = document.getElementById('roleta-giros-hoje');
+      var elT = document.getElementById('roleta-total-feitos');
+      var elA = document.getElementById('roleta-ativos-hoje');
+      if (elJ) elJ.textContent = jogadores.length;
+      if (elH) elH.textContent = totalHoje;
+      if (elT) elT.textContent = totalFeitos;
+      if (elA) elA.textContent = ativosHoje;
+
+      if (tbodyU) {
+        if (!jogadores.length) {
+          tbodyU.innerHTML = '<tr><td colspan="9" class="vazio">Ainda sem actividade de giros nos utilizadores.</td></tr>';
+        } else {
+          var hu = '';
+          jogadores.forEach(function (u, i) {
+            var porDia = u.roletaGirosPorDia || {};
+            var gh = Number(porDia[hoje] || 0);
+            var girouHoje = gh > 0;
+            var diasAct = Object.keys(porDia).filter(function (k) { return Number(porDia[k]) > 0; }).length;
+            var ultimo = u.roletaUltimoGiroAt || '—';
+            if (ultimo !== '—' && String(ultimo).length > 19) ultimo = String(ultimo).replace('T', ' ').slice(0, 19);
+            hu += '<tr data-busca-user="' + escHtml(((u.nome || '') + ' ' + (u.email || '')).toLowerCase()) + '">' +
+              '<td>' + (i + 1) + '</td>' +
+              '<td>' + escHtml(u.nome || '—') + '</td>' +
+              '<td>' + escHtml(u.email || '—') + '</td>' +
+              '<td class="pts-ok">' + (u.roletaGiros || 0) + '</td>' +
+              '<td class="pts-alto">' + (u.roletaTotalGiros || 0) + '</td>' +
+              '<td>' + (girouHoje
+                ? '<span class="status-tag status-ativo">Sim</span>'
+                : '<span class="status-tag status-bloqueado">Não</span>') + '</td>' +
+              '<td>' + gh + '</td>' +
+              '<td style="font-size:11px;white-space:nowrap;">' + escHtml(ultimo) + '</td>' +
+              '<td>' + diasAct + '</td>' +
+              '</tr>';
+          });
+          tbodyU.innerHTML = hu;
+        }
+      }
+
+      var tbody = document.getElementById('tbody-roleta');
+      if (!tbody) return;
+      tbody.innerHTML = '<tr><td colspan="8" class="vazio">A carregar compras...</td></tr>';
+      var lista = [];
+      try {
+        var snap = await db.collection('lojaCargas').orderBy('processedAt', 'desc').limit(200).get();
+        snap.forEach(function (doc) {
+          var d = doc.data() || {};
+          var item = String(d.item || '');
+          if (item.indexOf('roleta') !== 0) return;
+          lista.push({
+            id: doc.id,
+            email: d.email || '—',
+            item: item,
+            giros: d.giros != null ? Number(d.giros) : null,
+            mt: d.mt != null ? Number(d.mt) : null,
+            processedAt: d.processedAt,
+            via: d.via || 'netshop'
+          });
+        });
+      } catch (e1) {
+        console.warn('lojaCargas', e1);
+        try {
+          var snap2 = await db.collection('lojaCargas').limit(200).get();
+          snap2.forEach(function (doc) {
+            var d = doc.data() || {};
+            var item = String(d.item || '');
+            if (item.indexOf('roleta') !== 0) return;
+            lista.push({
+              id: doc.id,
+              email: d.email || '—',
+              item: item,
+              giros: d.giros != null ? Number(d.giros) : null,
+              mt: d.mt != null ? Number(d.mt) : null,
+              processedAt: d.processedAt || d.createdAt,
+              via: d.via || 'netshop'
+            });
+          });
+        } catch (e2) {
+          tbody.innerHTML = '<tr><td colspan="8" class="vazio">Erro compras: ' + escHtml(e1.message || e1) + '</td></tr>';
+          return;
+        }
+      }
+
+      function girosItem(item, g) {
+        if (g != null && !isNaN(g)) return g;
+        if (item === 'roleta_2') return 15;
+        if (item === 'roleta_5') return 35;
+        if (item === 'roleta_10') return 80;
+        return 0;
+      }
+      function mtItem(item, mt) {
+        if (mt != null && !isNaN(mt)) return mt;
+        if (item === 'roleta_2') return 2;
+        if (item === 'roleta_5') return 5;
+        if (item === 'roleta_10') return 10;
+        var m = /^roleta_giros_(\d+)$/.exec(item);
+        return m ? parseInt(m[1], 10) : 0;
+      }
+
+      var totalG = 0, totalMT = 0;
+      lista.forEach(function (x) {
+        x.giros = girosItem(x.item, x.giros);
+        x.mt = mtItem(x.item, x.mt);
+        totalG += Number(x.giros) || 0;
+        totalMT += Number(x.mt) || 0;
+      });
+      var el1 = document.getElementById('roleta-total-compras');
+      var el2 = document.getElementById('roleta-total-giros');
+      var el3 = document.getElementById('roleta-total-mt');
+      if (el1) el1.textContent = lista.length;
+      if (el2) el2.textContent = totalG;
+      if (el3) el3.textContent = totalMT;
+
+      if (!lista.length) {
+        tbody.innerHTML = '<tr><td colspan="8" class="vazio">Ainda sem compras roleta em lojaCargas.</td></tr>';
+        return;
+      }
+      var html = '';
+      lista.forEach(function (x, i) {
+        var quando = '—';
+        try {
+          var ts = x.processedAt;
+          var d = ts && ts.toDate ? ts.toDate() : (ts ? new Date(ts) : null);
+          if (d && !isNaN(d.getTime())) quando = d.toLocaleString('pt-MZ');
+        } catch (e) {}
+        html += '<tr data-busca="' + escHtml((x.email + ' ' + x.item).toLowerCase()) + '">' +
+          '<td>' + (i + 1) + '</td>' +
+          '<td style="font-size:11px;white-space:nowrap;">' + escHtml(quando) + '</td>' +
+          '<td>' + escHtml(x.email) + '</td>' +
+          '<td><code>' + escHtml(x.item) + '</code></td>' +
+          '<td class="pts-ok">' + (x.giros != null ? x.giros : '—') + '</td>' +
+          '<td class="pts-alto">' + (x.mt != null ? x.mt : '—') + '</td>' +
+          '<td><span class="status-tag status-pago">Metical</span></td>' +
+          '<td style="font-size:10px;max-width:100px;overflow:hidden;text-overflow:ellipsis;">' + escHtml(String(x.id).slice(0, 12)) + '…</td>' +
+          '</tr>';
+      });
+      tbody.innerHTML = html;
+    }
+
+    function filtrarRoletaUsersAdmin() {
+      var q = (document.getElementById('busca-roleta-users') && document.getElementById('busca-roleta-users').value || '').trim().toLowerCase();
+      var tb = document.getElementById('tbody-roleta-users');
+      if (!tb) return;
+      tb.querySelectorAll('tr[data-busca-user]').forEach(function (tr) {
+        tr.style.display = (!q || (tr.getAttribute('data-busca-user') || '').indexOf(q) !== -1) ? '' : 'none';
+      });
+    }
+
+    function filtrarRoletaAdmin() {
+      var q = (document.getElementById('busca-roleta') && document.getElementById('busca-roleta').value || '').trim().toLowerCase();
+      var tb = document.getElementById('tbody-roleta');
+      if (!tb) return;
+      tb.querySelectorAll('tr[data-busca]').forEach(function (tr) {
+        tr.style.display = (!q || (tr.getAttribute('data-busca') || '').indexOf(q) !== -1) ? '' : 'none';
+      });
+    }
+
     function renderInfluencerAdmin() {
       var tbody = document.getElementById('tbody-influencer');
       var tbodyRel = document.getElementById('tbody-influencer-rels');
@@ -2942,11 +3291,15 @@ async function carregarAnunciosTarefasAdmin() {
       if (el4) el4.textContent = top;
 
       if (!lista.length) {
-        tbody.innerHTML = '<tr><td colspan="8" class="vazio">Ainda ninguém no programa influencer.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="10" class="vazio">Ainda ninguém no programa influencer.</td></tr>';
       } else {
         var html = '';
         lista.forEach(function (u, i) {
           var n = u.influencerConvidados || 0;
+          var reais = (u.influencerConvidadosReais != null) ? u.influencerConvidadosReais : n;
+          var ratio = parseInt(u.influencerRatioApos900, 10);
+          if (!ratio || ratio < 1) ratio = 5;
+          var modo = u.influencerContagemNormal === true ? '1:1' : (ratio + ':1');
           var premios = u.influencerPremios || 0;
           var ciclo = n % 1000;
           var faltam = n >= 1000 && ciclo === 0 ? 1000 : (1000 - ciclo);
@@ -2959,9 +3312,11 @@ async function carregarAnunciosTarefasAdmin() {
             '<td>' + escHtml(u.email || '—') + '</td>' +
             '<td><code>' + escHtml(u.codigoInfluencer || '—') + '</code></td>' +
             '<td class="' + cls + '">' + n + '</td>' +
+            '<td>' + reais + '</td>' +
+            '<td>' + modo + '</td>' +
             '<td>' + faltam + '</td>' +
             '<td class="pts-ok">' + premios + '</td>' +
-            '<td class="pts-alto">' + (premios * 200) + ' MT</td>' +
+            '<td class="pts-alto">' + (premios * 200) + '</td>' +
             '</tr>';
         });
         tbody.innerHTML = html;

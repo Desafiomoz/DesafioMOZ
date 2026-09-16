@@ -632,6 +632,12 @@
   </div>
 </div>
 
+
+<audio id="som-giro" src="audio/roleta-giro.mp3" preload="auto" loop></audio>
+<audio id="som-parada" src="audio/roleta-parada.mp3" preload="auto"></audio>
+<audio id="som-vitoria" src="audio/roleta-vitoria.mp3" preload="auto"></audio>
+<audio id="som-derrota" src="audio/roleta-derrota.mp3" preload="auto"></audio>
+
 <div id="toast"></div>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
@@ -711,7 +717,7 @@ const ANCORAS_PONTOS = [[5,3],[10,8],[24,18]];
 const ANCORAS_MT     = [[2,15],[5,35],[10,80]];
 
 /* ---------- Estado do jogador (pontos = conta Desafio MOZ) ---------- */
-let estado = { pontos: 0, mt: 0, giros: 0, historico: [], ultimoGiroGratis: null, garantias: [] };
+let estado = { pontos: 0, mt: 0, giros: 0, historico: [], ultimoGiroGratis: null, garantias: [], totalGirosFeitos: 0, girosPorDia: {}, ultimoGiroAt: null };
 
 function carregarEstadoLocal(){
   try {
@@ -734,12 +740,34 @@ function sincronizarMt(){
 function guardarEstadoLocal(){
   try {
     localStorage.setItem(CHAVE_ESTADO, JSON.stringify({
+      pontos: estado.pontos,
       giros: estado.giros,
-      historico: estado.historico,
-      ultimoGiroGratis: estado.ultimoGiroGratis,
-      garantias: estado.garantias || []
+      historico: estado.historico || [],
+      ultimoGiroGratis: estado.ultimoGiroGratis || null,
+      garantias: estado.garantias || [],
+      totalGirosFeitos: estado.totalGirosFeitos || 0,
+      girosPorDia: estado.girosPorDia || {},
+      ultimoGiroAt: estado.ultimoGiroAt || null
     }));
   } catch(e){}
+}
+
+function hojeISO(){ return new Date().toISOString().slice(0,10); }
+function giroGratisDisponivel(){ return estado.ultimoGiroGratis !== hojeISO(); }
+
+
+function registarGiroFeito(){
+  var dia = hojeISO();
+  estado.totalGirosFeitos = (Number(estado.totalGirosFeitos) || 0) + 1;
+  if(!estado.girosPorDia || typeof estado.girosPorDia !== 'object') estado.girosPorDia = {};
+  estado.girosPorDia[dia] = (Number(estado.girosPorDia[dia]) || 0) + 1;
+  // manter só últimos 60 dias
+  var keys = Object.keys(estado.girosPorDia).sort();
+  while(keys.length > 60){
+    delete estado.girosPorDia[keys.shift()];
+    keys = Object.keys(estado.girosPorDia).sort();
+  }
+  estado.ultimoGiroAt = new Date().toISOString();
 }
 
 async function guardarEstado(){
@@ -751,6 +779,9 @@ async function guardarEstado(){
       pontos: Number(estado.pontos) || 0,
       roletaGiros: Number(estado.giros) || 0,
       roletaUltimoGiroGratis: estado.ultimoGiroGratis || null,
+      roletaTotalGiros: Number(estado.totalGirosFeitos) || 0,
+      roletaGirosPorDia: estado.girosPorDia || {},
+      roletaUltimoGiroAt: estado.ultimoGiroAt || null,
       ultimaAtualizacao: new Date().toISOString()
     });
   } catch(e){ console.warn('guardar roleta', e); }
@@ -783,11 +814,12 @@ async function carregarContaFirebase(){
     var girosServidor = (d.roletaGiros != null) ? (Number(d.roletaGiros) || 0) : null;
     carregarEstadoLocal();
     if(girosServidor != null){
-      // servidor manda: usa o maior entre local e servidor só se local for por garantia pendente
-      // regra segura: confiar no Firebase para evitar giros a subir sem parar
       estado.giros = girosServidor;
     }
     if(d.roletaUltimoGiroGratis) estado.ultimoGiroGratis = d.roletaUltimoGiroGratis;
+    if(d.roletaTotalGiros != null) estado.totalGirosFeitos = Number(d.roletaTotalGiros) || 0;
+    if(d.roletaGirosPorDia && typeof d.roletaGirosPorDia === 'object') estado.girosPorDia = d.roletaGirosPorDia;
+    if(d.roletaUltimoGiroAt) estado.ultimoGiroAt = d.roletaUltimoGiroAt;
     atualizarUI();
   } catch(e){
     console.warn(e);
@@ -795,8 +827,6 @@ async function carregarContaFirebase(){
   }
 }
 
-function hojeISO(){ return new Date().toISOString().slice(0,10); }
-function giroGratisDisponivel(){ return estado.ultimoGiroGratis !== hojeISO(); }
 async function reclamarGiroGratisSeDisponivel(){
   if(giroGratisDisponivel()){
     estado.giros += 1;
@@ -1421,16 +1451,50 @@ async function creditarGirosMetical(valorMT, giros){
   mostrarToast('Pagamento ok! +'+giros+' giros. Um tende a 20 pts'+(valorMT>=5?' e outro a 1 MT.':'.'));
 }
 
+
+/* ---------- sons ---------- */
+function tocarSom(id, volume){
+  try {
+    var a = document.getElementById(id);
+    if(!a) return;
+    a.volume = volume == null ? 0.55 : volume;
+    a.currentTime = 0;
+    var p = a.play();
+    if(p && p.catch) p.catch(function(){});
+  } catch(e){}
+}
+function pararSom(id){
+  try {
+    var a = document.getElementById(id);
+    if(!a) return;
+    a.pause();
+    a.currentTime = 0;
+  } catch(e){}
+}
+
 document.getElementById('btn-girar').addEventListener('click', async ()=>{
   if(estado.giros<=0 || girando) return;
   girando = true;
   estado.giros -= 1;
+  registarGiroFeito();
   await guardarEstado();
   atualizarUI();
 
+  // Som de giro (durante os ~8 segundos)
+  tocarSom('som-giro', 0.45);
+
   const indice = sortearPremio();
   await girarRoleta(indice);
+
+  // Para o giro e toca som de paragem / celebração
+  pararSom('som-giro');
   const premio = PREMIOS[indice];
+  if(premio.tipo === 'nada'){
+    tocarSom('som-derrota', 0.5);
+  } else {
+    tocarSom('som-parada', 0.55);
+    setTimeout(function(){ tocarSom('som-vitoria', 0.65); }, 180);
+  }
 
   if(premio.tipo==='pontos') estado.pontos += premio.valor;
   if(premio.tipo==='mt') estado.pontos += premio.valor * PTS_POR_MT; // MT → pontos na conta
