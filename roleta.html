@@ -1483,6 +1483,26 @@ ajustarTamanho();
 requestAnimationFrame(loop);
 
 /* ---------- sorteio / giro ---------- */
+
+async function registarGiroNoFirebase(premio){
+  if(!EMAIL_UTILIZADOR || MODO_DEMO) return;
+  try {
+    var dificilAgora = false;
+    // girosDificeis already decremented in sortearPremio; we mark origem as pontos if still high or recent buy
+    await firebase.firestore().collection('roletaHistorico').add({
+      email: EMAIL_UTILIZADOR,
+      nome: (localStorage.getItem('nomeUtilizador') || localStorage.getItem('nome') || ''),
+      label: premio.label || '',
+      emoji: premio.emoji || '',
+      tipo: premio.tipo || 'nada',
+      valor: Number(premio.valor) || 0,
+      ganhou: premio.tipo !== 'nada',
+      createdAt: new Date().toISOString(),
+      totalGirosFeitos: Number(estado.totalGirosFeitos) || 0
+    });
+  } catch(e){ console.warn('roletaHistorico', e); }
+}
+
 function sortearPremio(){
   // Giros comprados em MT: consumir garantias primeiro (20 pts / 1 MT)
   if(estado.garantias && estado.garantias.length){
@@ -1698,6 +1718,7 @@ document.getElementById('btn-girar').addEventListener('click', async ()=>{
     if(premio.tipo === 'mt') estado.mtGanhos = (Number(estado.mtGanhos) || 0) + (Number(premio.valor) || 0);
   }
   guardarEstado();
+  registarGiroNoFirebase(premio);
 
   mostrarResultado(premio);
   girando = false;

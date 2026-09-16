@@ -1004,6 +1004,40 @@
           </table>
         </div>
 
+        <h3 style="color:#00e676;font-size:14px;margin:22px 0 10px;"><i class="fas fa-list-ol"></i> Histórico giro a giro</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:10px;">
+          Cada giro usado e o resultado (ganhou ou perdeu). Filtra por e-mail para ver só um jogador.
+          Só regista giros feitos <b>depois</b> desta actualização do jogo.
+        </p>
+        <div class="resumo" style="margin-bottom:12px;">
+          <div class="resumo-card"><div class="num" id="hist-giros-n">0</div><div class="lbl">Giros listados</div></div>
+          <div class="resumo-card"><div class="num" id="hist-giros-ganhos">0</div><div class="lbl">Ganhos</div></div>
+          <div class="resumo-card"><div class="num" id="hist-giros-perdas">0</div><div class="lbl">Perdas</div></div>
+        </div>
+        <div class="busca">
+          <input type="text" id="busca-roleta-hist" placeholder="Filtrar por e-mail ou resultado..." oninput="filtrarRoletaHistAdmin()">
+        </div>
+        <button type="button" class="btn-verde" style="margin-bottom:12px;" onclick="carregarRoletaHistoricoAdmin()">🔄 Actualizar histórico</button>
+        <div class="tabela-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Quando</th>
+                <th>Nome</th>
+                <th>E-mail</th>
+                <th>Resultado</th>
+                <th>Tipo</th>
+                <th>Valor</th>
+                <th>Ganhou?</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-roleta-hist">
+              <tr><td colspan="8" class="vazio">Clica em Actualizar histórico.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
         <h3 style="color:#00e676;font-size:14px;margin:22px 0 10px;"><i class="fas fa-money-bill"></i> Compras M-Pesa (roleta)</h3>
         <div class="resumo" style="margin-bottom:14px;">
           <div class="resumo-card"><div class="num" id="roleta-total-compras">0</div><div class="lbl">Compras listadas</div></div>
@@ -1329,7 +1363,7 @@ function mostrarAviso(txt) {
         if (nome === 'chat') try { carregarChatAdmin(); } catch (eC) {}
         if (nome === 'online') try { renderOnlineAdmin(); } catch (eO) {}
         if (nome === 'actividade') try { renderActividadeAdmin(); } catch (eA) {}
-        if (nome === 'roleta') try { carregarRoletaAdmin(); carregarRoletaPontosAdmin(); } catch (eR) {}
+        if (nome === 'roleta') try { carregarRoletaAdmin(); carregarRoletaPontosAdmin(); carregarRoletaHistoricoAdmin(); } catch (eR) {}
         if (nome === 'origem') try { renderOrigemPontosAdmin(); } catch (eOg) {}
       } catch (e) {
         console.error('mudarTab:', e);
@@ -3669,6 +3703,100 @@ async function carregarAnunciosTarefasAdmin() {
           '</tr>';
       });
       tbody.innerHTML = html;
+    }
+
+
+    async function carregarRoletaHistoricoAdmin() {
+      var tbody = document.getElementById('tbody-roleta-hist');
+      if (!tbody) return;
+      tbody.innerHTML = '<tr><td colspan="8" class="vazio">A carregar...</td></tr>';
+      var lista = [];
+      try {
+        var snap = await db.collection('roletaHistorico').orderBy('createdAt', 'desc').limit(300).get();
+        snap.forEach(function (doc) {
+          var d = doc.data() || {};
+          lista.push({
+            id: doc.id,
+            email: d.email || '—',
+            nome: d.nome || '',
+            label: d.label || '—',
+            emoji: d.emoji || '',
+            tipo: d.tipo || '',
+            valor: d.valor != null ? Number(d.valor) : 0,
+            ganhou: d.ganhou === true,
+            createdAt: d.createdAt
+          });
+        });
+      } catch (e1) {
+        try {
+          var snap2 = await db.collection('roletaHistorico').limit(300).get();
+          snap2.forEach(function (doc) {
+            var d = doc.data() || {};
+            lista.push({
+              id: doc.id,
+              email: d.email || '—',
+              nome: d.nome || '',
+              label: d.label || '—',
+              emoji: d.emoji || '',
+              tipo: d.tipo || '',
+              valor: d.valor != null ? Number(d.valor) : 0,
+              ganhou: d.ganhou === true,
+              createdAt: d.createdAt
+            });
+          });
+          lista.sort(function (a, b) {
+            return String(b.createdAt || '').localeCompare(String(a.createdAt || ''));
+          });
+        } catch (e2) {
+          tbody.innerHTML = '<tr><td colspan="8" class="vazio">Erro: ' + escHtml(e1.message || e1) + '. Verifica regras Firestore para roletaHistorico.</td></tr>';
+          return;
+        }
+      }
+      var nG = 0, nP = 0;
+      lista.forEach(function (x) { if (x.ganhou) nG++; else nP++; });
+      var elN = document.getElementById('hist-giros-n');
+      var elG = document.getElementById('hist-giros-ganhos');
+      var elP = document.getElementById('hist-giros-perdas');
+      if (elN) elN.textContent = lista.length;
+      if (elG) elG.textContent = nG;
+      if (elP) elP.textContent = nP;
+      if (!lista.length) {
+        tbody.innerHTML = '<tr><td colspan="8" class="vazio">Ainda sem giros registados. Os jogadores precisam de girar com a versão nova da roleta.</td></tr>';
+        return;
+      }
+      var html = '';
+      lista.forEach(function (x, i) {
+        var quando = '—';
+        try {
+          var d = x.createdAt ? new Date(x.createdAt) : null;
+          if (d && !isNaN(d.getTime())) quando = d.toLocaleString('pt-MZ');
+        } catch (e) {}
+        var tipoTxt = x.tipo === 'pontos' ? 'Pontos' : (x.tipo === 'mt' ? 'Metical' : (x.tipo === 'giros' ? 'Giros' : 'Nada'));
+        var valorTxt = x.tipo === 'nada' ? '—' : (x.valor + (x.tipo === 'mt' ? ' MT' : (x.tipo === 'pontos' ? ' pts' : '')));
+        var ganhouHtml = x.ganhou
+          ? '<span class="status-tag status-ativo">Sim</span>'
+          : '<span class="status-tag status-bloqueado">Não</span>';
+        html += '<tr data-busca-hist="' + escHtml((x.email + ' ' + x.nome + ' ' + x.label).toLowerCase()) + '">' +
+          '<td>' + (i + 1) + '</td>' +
+          '<td style="font-size:11px;white-space:nowrap;">' + escHtml(quando) + '</td>' +
+          '<td>' + escHtml(x.nome || '—') + '</td>' +
+          '<td>' + escHtml(x.email) + '</td>' +
+          '<td class="' + (x.ganhou ? 'pts-ok' : 'pts-baixo') + '">' + escHtml((x.emoji ? x.emoji + ' ' : '') + x.label) + '</td>' +
+          '<td>' + tipoTxt + '</td>' +
+          '<td class="' + (x.ganhou ? 'pts-alto' : '') + '">' + valorTxt + '</td>' +
+          '<td>' + ganhouHtml + '</td>' +
+          '</tr>';
+      });
+      tbody.innerHTML = html;
+    }
+
+    function filtrarRoletaHistAdmin() {
+      var q = (document.getElementById('busca-roleta-hist') && document.getElementById('busca-roleta-hist').value || '').trim().toLowerCase();
+      var tb = document.getElementById('tbody-roleta-hist');
+      if (!tb) return;
+      tb.querySelectorAll('tr[data-busca-hist]').forEach(function (tr) {
+        tr.style.display = (!q || (tr.getAttribute('data-busca-hist') || '').indexOf(q) !== -1) ? '' : 'none';
+      });
     }
 
     function filtrarRoletaPontosAdmin() {
