@@ -1620,6 +1620,7 @@ function mostrarResultado(premio){
   if(!perdeu) dispararConfete();
 }
 document.getElementById('btn-fechar-premio').addEventListener('click', ()=>{
+  pararSom('som-vitoria');
   document.getElementById('overlay').style.display='none';
 });
 
