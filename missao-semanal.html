@@ -984,6 +984,16 @@
           if (userData.missaoSemanalRespostas) respostas = userData.missaoSemanalRespostas;
         }
 
+        // Admin: marcar que visitou a missão semanal (hoje)
+        try {
+          var hojeVis = new Date().toISOString().slice(0, 10);
+          await docRef.update({
+            missaoSemanalVisitou: true,
+            missaoSemanalVisitouEm: new Date().toISOString(),
+            missaoSemanalVisitouDia: hojeVis
+          });
+        } catch (eVis) { console.warn('visita missao', eVis); }
+
         document.getElementById('loading').style.display = 'none';
         document.getElementById('conteudo').style.display = 'block';
 
@@ -1049,5 +1059,8 @@
 
     carregar();
   </script>
+
+<script>window.__DM_PRESENCA__ = { pagina: 'missao-semanal', jogando: null };</script>
+<script src="presenca.js?v=1"></script>
 </body>
 </html>

@@ -970,6 +970,36 @@ document.getElementById('btn-comprar-mt').addEventListener('click', ()=>{
   iniciarPagamentoMetical(vm, gm);
 });
 
+async function registarCompraPontosRoleta(custoPontos, giros){
+  try {
+    var email = (localStorage.getItem('emailUtilizador') || '').trim();
+    if(!email || !window.db) return;
+    var nome = localStorage.getItem('nomeUtilizador') || '';
+    await db.collection('roletaComprasPontos').add({
+      email: email,
+      nome: nome,
+      pontos: Number(custoPontos) || 0,
+      giros: Number(giros) || 0,
+      createdAt: new Date().toISOString(),
+      via: 'pontos'
+    });
+    // acumuladores no perfil
+    var snap = await db.collection('usuarios').where('email', '==', email).limit(1).get();
+    if(snap.empty){
+      var n = email.toLowerCase();
+      if(n !== email) snap = await db.collection('usuarios').where('email', '==', n).limit(1).get();
+    }
+    if(!snap.empty){
+      var d = snap.docs[0].data() || {};
+      await snap.docs[0].ref.update({
+        roletaPontosGastos: (Number(d.roletaPontosGastos) || 0) + (Number(custoPontos) || 0),
+        roletaGirosPorPontos: (Number(d.roletaGirosPorPontos) || 0) + (Number(giros) || 0),
+        roletaUltimaCompraPontos: new Date().toISOString()
+      });
+    }
+  } catch(e){ console.warn('registarCompraPontosRoleta', e); }
+}
+
 async function comprarComPontos(custoPontos, giros){
   if(estado.pontos < custoPontos){ mostrarToast('Não tens pontos suficientes.'); return; }
   estado.pontos -= custoPontos;
@@ -977,6 +1007,7 @@ async function comprarComPontos(custoPontos, giros){
   sincronizarMt();
   await guardarEstado();
   localStorage.setItem('pontosUtilizador', String(estado.pontos));
+  await registarCompraPontosRoleta(custoPontos, giros);
   atualizarUI();
   mostrarToast(`Compraste ${giros} giros por ${custoPontos} pontos!`);
 }
@@ -1560,6 +1591,7 @@ async function tocarVitoria(){
 document.getElementById('btn-girar').addEventListener('click', async ()=>{
   if(estado.giros<=0 || girando) return;
   girando = true;
+  try { if(window.DM_presenca) window.DM_presenca.setJogando('roleta'); } catch(e){}
   // na área da roleta: sem música de fundo
   pararSom('som-fundo');
 
@@ -1633,5 +1665,8 @@ document.getElementById('btn-fechar-premio').addEventListener('click', ()=>{
   atualizarUI();
 })();
 </script>
+
+<script>window.__DM_PRESENCA__ = { pagina: 'roleta', jogando: 'roleta' };</script>
+<script src="presenca.js?v=1"></script>
 </body>
 </html>

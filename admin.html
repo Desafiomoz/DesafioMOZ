@@ -231,6 +231,8 @@
     <button class="tab" data-tab="homejub" onclick="mudarTab('homejub')"><i class="fas fa-gamepad"></i> Homejub</button>
     <button class="tab" data-tab="influencer" onclick="mudarTab('influencer')"><i class="fas fa-star"></i> Influencer</button>
     <button class="tab" data-tab="roleta" onclick="mudarTab('roleta')"><i class="fas fa-dharmachakra"></i> Roleta</button>
+    <button class="tab" data-tab="online" onclick="mudarTab('online')"><i class="fas fa-signal"></i> Online</button>
+    <button class="tab" data-tab="actividade" onclick="mudarTab('actividade')"><i class="fas fa-clipboard-check"></i> Actividade</button>
     <button class="tab" data-tab="chat" onclick="mudarTab('chat')"><i class="fas fa-comments"></i> Chat</button>
   </div>
 
@@ -1027,6 +1029,119 @@
         </div>
         <p style="font-size:11px;color:#666;margin-top:8px;">Actividade de giros só aparece depois de o jogador girar com a versão nova do roleta.html.</p>
       </div>
+
+      <div class="form-box">
+        <h3><i class="fas fa-coins"></i> Compras de giros COM PONTOS</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:12px;">
+          Quem trocou pontos da conta por giros na Roleta (não é M-Pesa).
+        </p>
+        <div class="resumo" style="margin-bottom:12px;">
+          <div class="resumo-card"><div class="num" id="roleta-pts-n">0</div><div class="lbl">Compras</div></div>
+          <div class="resumo-card"><div class="num" id="roleta-pts-total">0</div><div class="lbl">Pontos gastos</div></div>
+          <div class="resumo-card"><div class="num" id="roleta-pts-giros">0</div><div class="lbl">Giros dados</div></div>
+        </div>
+        <button type="button" class="btn-verde" style="margin-bottom:12px;" onclick="carregarRoletaPontosAdmin()">🔄 Actualizar pontos</button>
+        <div class="busca">
+          <input type="text" id="busca-roleta-pontos" placeholder="Filtrar e-mail ou nome..." oninput="filtrarRoletaPontosAdmin()">
+        </div>
+        <div class="tabela-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Quando</th>
+                <th>Nome</th>
+                <th>E-mail</th>
+                <th>Pontos</th>
+                <th>Giros</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-roleta-pontos">
+              <tr><td colspan="6" class="vazio">Clica em Actualizar pontos.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ONLINE / PRESENÇA -->
+    <div class="painel" id="painel-online">
+      <div class="form-box">
+        <h3><i class="fas fa-signal"></i> Quem está online no site</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:12px;">
+          Consideramos <strong>online</strong> quem teve actividade nos últimos <strong>3 minutos</strong>
+          (qualquer página com o script de presença). <strong>A jogar</strong> = Roleta ou Homejub.
+        </p>
+        <div class="resumo" style="margin-bottom:14px;">
+          <div class="resumo-card"><div class="num" id="online-total">0</div><div class="lbl">Online agora</div></div>
+          <div class="resumo-card"><div class="num" id="online-jogando">0</div><div class="lbl">A jogar</div></div>
+          <div class="resumo-card"><div class="num" id="online-roleta">0</div><div class="lbl">Na Roleta</div></div>
+          <div class="resumo-card"><div class="num" id="online-homejub">0</div><div class="lbl">No Homejub</div></div>
+        </div>
+        <button type="button" class="btn-verde" style="margin-bottom:12px;" onclick="renderOnlineAdmin()">🔄 Actualizar presença</button>
+        <div class="busca">
+          <input type="text" id="busca-online" placeholder="Filtrar nome, e-mail ou página..." oninput="filtrarOnlineAdmin()">
+        </div>
+        <div class="tabela-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Nome</th>
+                <th>E-mail</th>
+                <th>Página</th>
+                <th>A jogar</th>
+                <th>Última actividade</th>
+                <th>Pontos</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-online">
+              <tr><td colspan="7" class="vazio">Clica em Actualizar presença.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ACTIVIDADE / TAREFAS CONCLUÍDAS -->
+    <div class="painel" id="painel-actividade">
+      <div class="form-box">
+        <h3><i class="fas fa-clipboard-check"></i> Actividade do dia (tarefas)</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:12px;">
+          Check-in de <strong>hoje</strong>, pesquisas internas concluídas, desafios do dia e
+          quem <strong>abriu</strong> a página da missão semanal.
+        </p>
+        <div class="resumo" style="margin-bottom:14px;">
+          <div class="resumo-card"><div class="num" id="act-checkin">0</div><div class="lbl">Check-in hoje</div></div>
+          <div class="resumo-card"><div class="num" id="act-pesquisas">0</div><div class="lbl">Todas pesquisas</div></div>
+          <div class="resumo-card"><div class="num" id="act-desafios">0</div><div class="lbl">YT + prog. feitos</div></div>
+          <div class="resumo-card"><div class="num" id="act-missao">0</div><div class="lbl">Visitou missão</div></div>
+        </div>
+        <button type="button" class="btn-verde" style="margin-bottom:12px;" onclick="renderActividadeAdmin()">🔄 Actualizar actividade</button>
+        <div class="busca">
+          <input type="text" id="busca-actividade" placeholder="Filtrar nome ou e-mail..." oninput="filtrarActividadeAdmin()">
+        </div>
+        <div class="tabela-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Nome</th>
+                <th>E-mail</th>
+                <th>Check-in</th>
+                <th>Pesquisas</th>
+                <th>Desafios</th>
+                <th>Missão semanal</th>
+                <th>Pontos</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-actividade">
+              <tr><td colspan="8" class="vazio">Clica em Actualizar actividade.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
 
     <!-- CHAT / BATE-PAPO -->
@@ -1147,8 +1262,6 @@ function mostrarAviso(txt) {
     }
 
     function mudarTab(nome) {
-      if (nome === 'roleta') { try { carregarRoletaAdmin(); } catch (e) {} }
-
       try {
         document.querySelectorAll('.tab').forEach(function (t) {
           t.classList.toggle('ativo', t.getAttribute('data-tab') === nome);
@@ -1162,6 +1275,9 @@ function mostrarAviso(txt) {
         if (nome === 'homejub') try { carregarHomejub(); } catch (eH) {}
         if (nome === 'influencer') try { renderInfluencerAdmin(); } catch (eI) {}
         if (nome === 'chat') try { carregarChatAdmin(); } catch (eC) {}
+        if (nome === 'online') try { renderOnlineAdmin(); } catch (eO) {}
+        if (nome === 'actividade') try { renderActividadeAdmin(); } catch (eA) {}
+        if (nome === 'roleta') try { carregarRoletaAdmin(); carregarRoletaPontosAdmin(); } catch (eR) {}
       } catch (e) {
         console.error('mudarTab:', e);
         alert('Erro ao abrir separador: ' + (e.message || e));
@@ -3241,6 +3357,261 @@ async function carregarAnunciosTarefasAdmin() {
       if (!tb) return;
       tb.querySelectorAll('tr[data-busca-user]').forEach(function (tr) {
         tr.style.display = (!q || (tr.getAttribute('data-busca-user') || '').indexOf(q) !== -1) ? '' : 'none';
+      });
+    }
+
+
+    function minutosDesde(iso) {
+      if (!iso) return 9999;
+      try {
+        var t = new Date(iso).getTime();
+        if (isNaN(t)) return 9999;
+        return (Date.now() - t) / 60000;
+      } catch (e) { return 9999; }
+    }
+
+    function renderOnlineAdmin() {
+      var tbody = document.getElementById('tbody-online');
+      if (!tbody) return;
+      var users = (typeof todosUsers !== 'undefined' ? todosUsers : []).slice();
+      var ONLINE_MIN = 3;
+      var lista = users.filter(function (u) {
+        return minutosDesde(u.ultimaPresenca) <= ONLINE_MIN;
+      });
+      lista.sort(function (a, b) {
+        return String(b.ultimaPresenca || '').localeCompare(String(a.ultimaPresenca || ''));
+      });
+      var nJog = 0, nRol = 0, nHom = 0;
+      lista.forEach(function (u) {
+        var j = String(u.emJogo || '').toLowerCase();
+        if (j === 'roleta' || j === 'homejub') nJog++;
+        if (j === 'roleta') nRol++;
+        if (j === 'homejub') nHom++;
+      });
+      var el1 = document.getElementById('online-total');
+      var el2 = document.getElementById('online-jogando');
+      var el3 = document.getElementById('online-roleta');
+      var el4 = document.getElementById('online-homejub');
+      if (el1) el1.textContent = lista.length;
+      if (el2) el2.textContent = nJog;
+      if (el3) el3.textContent = nRol;
+      if (el4) el4.textContent = nHom;
+      if (!lista.length) {
+        tbody.innerHTML = '<tr><td colspan="7" class="vazio">Ninguém online nos últimos 3 minutos.</td></tr>';
+        return;
+      }
+      var html = '';
+      lista.forEach(function (u, i) {
+        var j = String(u.emJogo || '').toLowerCase();
+        var jogTxt = '—';
+        if (j === 'roleta') jogTxt = '<span class="status-tag status-ativo">Roleta</span>';
+        else if (j === 'homejub') jogTxt = '<span class="status-tag status-andamento">Homejub</span>';
+        var quando = u.ultimaPresenca || '—';
+        if (quando !== '—' && String(quando).length > 19) quando = String(quando).replace('T', ' ').slice(0, 19);
+        html += '<tr data-busca-online="' + escHtml(((u.nome || '') + ' ' + (u.email || '') + ' ' + (u.paginaActual || '')).toLowerCase()) + '">' +
+          '<td>' + (i + 1) + '</td>' +
+          '<td>' + escHtml(u.nome || '—') + '</td>' +
+          '<td>' + escHtml(u.email || '—') + '</td>' +
+          '<td><code>' + escHtml(u.paginaActual || '—') + '</code></td>' +
+          '<td>' + jogTxt + '</td>' +
+          '<td style="font-size:11px;white-space:nowrap;">' + escHtml(quando) + '</td>' +
+          '<td class="pts-ok">' + (u.pontos || 0) + '</td>' +
+          '</tr>';
+      });
+      tbody.innerHTML = html;
+    }
+
+    function filtrarOnlineAdmin() {
+      var q = (document.getElementById('busca-online') && document.getElementById('busca-online').value || '').trim().toLowerCase();
+      var tb = document.getElementById('tbody-online');
+      if (!tb) return;
+      tb.querySelectorAll('tr[data-busca-online]').forEach(function (tr) {
+        tr.style.display = (!q || (tr.getAttribute('data-busca-online') || '').indexOf(q) !== -1) ? '' : 'none';
+      });
+    }
+
+    function pesquisasTodasFeitas(u) {
+      return !!(u.pesquisaDadosCompleta && u.pesquisaRapidaCompleta && u.pesquisaOpiniaoCompleta && u.pesquisaHabitosCompleta);
+    }
+
+    function countPesquisas(u) {
+      var n = 0;
+      if (u.pesquisaDadosCompleta) n++;
+      if (u.pesquisaRapidaCompleta) n++;
+      if (u.pesquisaOpiniaoCompleta) n++;
+      if (u.pesquisaHabitosCompleta) n++;
+      return n;
+    }
+
+    function checkinHoje(u) {
+      var hoje = diaISO();
+      if (u.ultimoCheckin === hoje) return true;
+      if (Array.isArray(u.checkins) && u.checkins.indexOf(hoje) !== -1) return true;
+      return false;
+    }
+
+    function desafiosResumo(u) {
+      var yt = u.desafioYoutubeCompleto === true;
+      var feitos = u.desafiosProgramadosFeitos || {};
+      var nProg = 0;
+      try {
+        Object.keys(feitos).forEach(function (k) {
+          if (feitos[k]) nProg++;
+        });
+      } catch (e) {}
+      return { yt: yt, nProg: nProg };
+    }
+
+    function visitouMissao(u) {
+      if (u.missaoSemanalVisitou === true) return true;
+      if (u.missaoSemanalVisitouDia === diaISO()) return true;
+      if (u.missaoSemanalCompleta === true && u.missaoSemanaId) return true;
+      return false;
+    }
+
+    function renderActividadeAdmin() {
+      var tbody = document.getElementById('tbody-actividade');
+      if (!tbody) return;
+      var users = (typeof todosUsers !== 'undefined' ? todosUsers : []).slice();
+      var nCk = 0, nPesq = 0, nDes = 0, nMis = 0;
+      users.forEach(function (u) {
+        if (checkinHoje(u)) nCk++;
+        if (pesquisasTodasFeitas(u)) nPesq++;
+        var d = desafiosResumo(u);
+        if (d.yt || d.nProg > 0) nDes++;
+        if (visitouMissao(u)) nMis++;
+      });
+      var el1 = document.getElementById('act-checkin');
+      var el2 = document.getElementById('act-pesquisas');
+      var el3 = document.getElementById('act-desafios');
+      var el4 = document.getElementById('act-missao');
+      if (el1) el1.textContent = nCk;
+      if (el2) el2.textContent = nPesq;
+      if (el3) el3.textContent = nDes;
+      if (el4) el4.textContent = nMis;
+
+      var lista = users.filter(function (u) {
+        return checkinHoje(u) || countPesquisas(u) > 0 || desafiosResumo(u).yt || desafiosResumo(u).nProg > 0 || visitouMissao(u);
+      });
+      lista.sort(function (a, b) {
+        return (b.pontos || 0) - (a.pontos || 0);
+      });
+      if (!lista.length) {
+        tbody.innerHTML = '<tr><td colspan="8" class="vazio">Sem actividade registada ainda.</td></tr>';
+        return;
+      }
+      var html = '';
+      lista.forEach(function (u, i) {
+        var ck = checkinHoje(u)
+          ? '<span class="status-tag status-ativo">Hoje</span>'
+          : '<span class="status-tag status-bloqueado">Não</span>';
+        var pq = countPesquisas(u);
+        var pqTxt = pq + '/4' + (pq >= 4 ? ' ✓' : '');
+        var d = desafiosResumo(u);
+        var desTxt = (d.yt ? 'YT ' : '') + (d.nProg ? (d.nProg + ' prog') : (d.yt ? '' : '—'));
+        var mis = visitouMissao(u)
+          ? (u.missaoSemanalCompleta ? '<span class="status-tag status-pago">Completa</span>' : '<span class="status-tag status-andamento">Visitou</span>')
+          : '<span class="status-tag status-bloqueado">Não</span>';
+        html += '<tr data-busca-act="' + escHtml(((u.nome || '') + ' ' + (u.email || '')).toLowerCase()) + '">' +
+          '<td>' + (i + 1) + '</td>' +
+          '<td>' + escHtml(u.nome || '—') + '</td>' +
+          '<td>' + escHtml(u.email || '—') + '</td>' +
+          '<td>' + ck + '</td>' +
+          '<td class="' + (pq >= 4 ? 'pts-ok' : '') + '">' + pqTxt + '</td>' +
+          '<td>' + escHtml(desTxt) + '</td>' +
+          '<td>' + mis + '</td>' +
+          '<td class="pts-alto">' + (u.pontos || 0) + '</td>' +
+          '</tr>';
+      });
+      tbody.innerHTML = html;
+    }
+
+    function filtrarActividadeAdmin() {
+      var q = (document.getElementById('busca-actividade') && document.getElementById('busca-actividade').value || '').trim().toLowerCase();
+      var tb = document.getElementById('tbody-actividade');
+      if (!tb) return;
+      tb.querySelectorAll('tr[data-busca-act]').forEach(function (tr) {
+        tr.style.display = (!q || (tr.getAttribute('data-busca-act') || '').indexOf(q) !== -1) ? '' : 'none';
+      });
+    }
+
+    async function carregarRoletaPontosAdmin() {
+      var tbody = document.getElementById('tbody-roleta-pontos');
+      if (!tbody) return;
+      tbody.innerHTML = '<tr><td colspan="6" class="vazio">A carregar...</td></tr>';
+      var lista = [];
+      try {
+        var snap = await db.collection('roletaComprasPontos').orderBy('createdAt', 'desc').limit(200).get();
+        snap.forEach(function (doc) {
+          var d = doc.data() || {};
+          lista.push({
+            id: doc.id,
+            email: d.email || '—',
+            nome: d.nome || '',
+            pontos: Number(d.pontos) || 0,
+            giros: Number(d.giros) || 0,
+            createdAt: d.createdAt
+          });
+        });
+      } catch (e1) {
+        try {
+          var snap2 = await db.collection('roletaComprasPontos').limit(200).get();
+          snap2.forEach(function (doc) {
+            var d = doc.data() || {};
+            lista.push({
+              id: doc.id,
+              email: d.email || '—',
+              nome: d.nome || '',
+              pontos: Number(d.pontos) || 0,
+              giros: Number(d.giros) || 0,
+              createdAt: d.createdAt
+            });
+          });
+          lista.sort(function (a, b) {
+            return String(b.createdAt || '').localeCompare(String(a.createdAt || ''));
+          });
+        } catch (e2) {
+          tbody.innerHTML = '<tr><td colspan="6" class="vazio">Erro: ' + escHtml(e1.message || e1) + '</td></tr>';
+          return;
+        }
+      }
+      var totP = 0, totG = 0;
+      lista.forEach(function (x) { totP += x.pontos; totG += x.giros; });
+      var ep = document.getElementById('roleta-pts-total');
+      var eg = document.getElementById('roleta-pts-giros');
+      var en = document.getElementById('roleta-pts-n');
+      if (ep) ep.textContent = totP;
+      if (eg) eg.textContent = totG;
+      if (en) en.textContent = lista.length;
+      if (!lista.length) {
+        tbody.innerHTML = '<tr><td colspan="6" class="vazio">Ainda sem compras com pontos.</td></tr>';
+        return;
+      }
+      var html = '';
+      lista.forEach(function (x, i) {
+        var quando = '—';
+        try {
+          var d = x.createdAt ? new Date(x.createdAt) : null;
+          if (d && !isNaN(d.getTime())) quando = d.toLocaleString('pt-MZ');
+        } catch (e) {}
+        html += '<tr data-busca-rp="' + escHtml((x.email + ' ' + x.nome).toLowerCase()) + '">' +
+          '<td>' + (i + 1) + '</td>' +
+          '<td style="font-size:11px;white-space:nowrap;">' + escHtml(quando) + '</td>' +
+          '<td>' + escHtml(x.nome || '—') + '</td>' +
+          '<td>' + escHtml(x.email) + '</td>' +
+          '<td class="pts-alto">' + x.pontos + '</td>' +
+          '<td class="pts-ok">' + x.giros + '</td>' +
+          '</tr>';
+      });
+      tbody.innerHTML = html;
+    }
+
+    function filtrarRoletaPontosAdmin() {
+      var q = (document.getElementById('busca-roleta-pontos') && document.getElementById('busca-roleta-pontos').value || '').trim().toLowerCase();
+      var tb = document.getElementById('tbody-roleta-pontos');
+      if (!tb) return;
+      tb.querySelectorAll('tr[data-busca-rp]').forEach(function (tr) {
+        tr.style.display = (!q || (tr.getAttribute('data-busca-rp') || '').indexOf(q) !== -1) ? '' : 'none';
       });
     }
 
