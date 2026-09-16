@@ -687,6 +687,24 @@ const PREMIOS = [
 const N = PREMIOS.length;
 const ANGULO_FATIA = (Math.PI*2)/N;
 const PESO_TOTAL = PREMIOS.reduce((s,p)=>s+p.peso,0);
+
+/* Probabilidades quando o giro foi comprado COM PONTOS — muito difícil.
+   Quase só BOA SORTE / QUASE; se ganhar, quase só 1 MT ou +2 giros. */
+const PESOS_DIFICIL = [
+  0,    // 1000 PTS — impossível
+  0,    // 500 PTS
+  0,    // 10 MT
+  25,   // 1 MT   ~2,4%
+  0,    // 5 MT
+  0,    // 100 PTS
+  30,   // +2 GIROS ~2,9%
+  480,  // BOA SORTE ~46,4%
+  0,    // +6 GIROS
+  480,  // QUASE ~46,4%
+  5,    // 20 PTS  ~0,5%
+  0     // 50 MT
+];
+const PESO_TOTAL_DIFICIL = PESOS_DIFICIL.reduce((s,p)=>s+p,0);
 function indicePremio(tipo, valor){
   for(let i=0;i<N;i++){
     if(PREMIOS[i].tipo===tipo && PREMIOS[i].valor===valor) return i;
@@ -716,7 +734,7 @@ const ANCORAS_PONTOS = [[5,3],[10,8],[24,18]];
 const ANCORAS_MT     = [[2,15],[5,35],[10,80]];
 
 /* ---------- Estado do jogador (pontos = conta Desafio MOZ) ---------- */
-let estado = { pontos: 0, mt: 0, giros: 0, historico: [], ultimoGiroGratis: null, garantias: [], totalGirosFeitos: 0, girosPorDia: {}, ultimoGiroAt: null };
+let estado = { pontos: 0, mt: 0, giros: 0, historico: [], ultimoGiroGratis: null, garantias: [], totalGirosFeitos: 0, girosPorDia: {}, ultimoGiroAt: null, ganhos: 0, perdas: 0, pontosGanhos: 0, mtGanhos: 0, contagemPremios: {}, girosDificeis: 0 };
 
 function carregarEstadoLocal(){
   try {
@@ -727,6 +745,15 @@ function carregarEstadoLocal(){
       if(o.giros != null) estado.giros = Number(o.giros) || 0;
       if(o.ultimoGiroGratis) estado.ultimoGiroGratis = o.ultimoGiroGratis;
       if(Array.isArray(o.garantias)) estado.garantias = o.garantias;
+      if(o.totalGirosFeitos != null) estado.totalGirosFeitos = Number(o.totalGirosFeitos) || 0;
+      if(o.girosPorDia && typeof o.girosPorDia === 'object') estado.girosPorDia = o.girosPorDia;
+      if(o.ultimoGiroAt) estado.ultimoGiroAt = o.ultimoGiroAt;
+      if(o.ganhos != null) estado.ganhos = Number(o.ganhos) || 0;
+      if(o.perdas != null) estado.perdas = Number(o.perdas) || 0;
+      if(o.pontosGanhos != null) estado.pontosGanhos = Number(o.pontosGanhos) || 0;
+      if(o.mtGanhos != null) estado.mtGanhos = Number(o.mtGanhos) || 0;
+      if(o.contagemPremios && typeof o.contagemPremios === 'object') estado.contagemPremios = o.contagemPremios;
+      if(o.girosDificeis != null) estado.girosDificeis = Number(o.girosDificeis) || 0;
     }
   } catch(e){}
 }
@@ -746,7 +773,13 @@ function guardarEstadoLocal(){
       garantias: estado.garantias || [],
       totalGirosFeitos: estado.totalGirosFeitos || 0,
       girosPorDia: estado.girosPorDia || {},
-      ultimoGiroAt: estado.ultimoGiroAt || null
+      ultimoGiroAt: estado.ultimoGiroAt || null,
+      ganhos: Number(estado.ganhos) || 0,
+      perdas: Number(estado.perdas) || 0,
+      pontosGanhos: Number(estado.pontosGanhos) || 0,
+      mtGanhos: Number(estado.mtGanhos) || 0,
+      contagemPremios: estado.contagemPremios || {},
+      girosDificeis: Number(estado.girosDificeis) || 0
     }));
   } catch(e){}
 }
@@ -781,6 +814,13 @@ async function guardarEstado(){
       roletaTotalGiros: Number(estado.totalGirosFeitos) || 0,
       roletaGirosPorDia: estado.girosPorDia || {},
       roletaUltimoGiroAt: estado.ultimoGiroAt || null,
+      roletaGanhos: Number(estado.ganhos) || 0,
+      roletaPerdas: Number(estado.perdas) || 0,
+      roletaPontosGanhos: Number(estado.pontosGanhos) || 0,
+      roletaMtGanhos: Number(estado.mtGanhos) || 0,
+      roletaContagemPremios: estado.contagemPremios || {},
+      roletaUltimos: (estado.historico || []).slice(0, 12),
+      roletaGirosDificeis: Number(estado.girosDificeis) || 0,
       ultimaAtualizacao: new Date().toISOString()
     });
   } catch(e){ console.warn('guardar roleta', e); }
@@ -819,6 +859,13 @@ async function carregarContaFirebase(){
     if(d.roletaTotalGiros != null) estado.totalGirosFeitos = Number(d.roletaTotalGiros) || 0;
     if(d.roletaGirosPorDia && typeof d.roletaGirosPorDia === 'object') estado.girosPorDia = d.roletaGirosPorDia;
     if(d.roletaUltimoGiroAt) estado.ultimoGiroAt = d.roletaUltimoGiroAt;
+    if(d.roletaGanhos != null) estado.ganhos = Number(d.roletaGanhos) || 0;
+    if(d.roletaPerdas != null) estado.perdas = Number(d.roletaPerdas) || 0;
+    if(d.roletaPontosGanhos != null) estado.pontosGanhos = Number(d.roletaPontosGanhos) || 0;
+    if(d.roletaMtGanhos != null) estado.mtGanhos = Number(d.roletaMtGanhos) || 0;
+    if(d.roletaContagemPremios && typeof d.roletaContagemPremios === 'object') estado.contagemPremios = d.roletaContagemPremios;
+    if(Array.isArray(d.roletaUltimos) && (!estado.historico || !estado.historico.length)) estado.historico = d.roletaUltimos;
+    if(d.roletaGirosDificeis != null) estado.girosDificeis = Number(d.roletaGirosDificeis) || 0;
     atualizarUI();
   } catch(e){
     console.warn(e);
@@ -1004,6 +1051,7 @@ async function comprarComPontos(custoPontos, giros){
   if(estado.pontos < custoPontos){ mostrarToast('Não tens pontos suficientes.'); return; }
   estado.pontos -= custoPontos;
   estado.giros += giros;
+  estado.girosDificeis = (Number(estado.girosDificeis) || 0) + giros;
   sincronizarMt();
   await guardarEstado();
   localStorage.setItem('pontosUtilizador', String(estado.pontos));
@@ -1440,6 +1488,17 @@ function sortearPremio(){
   if(estado.garantias && estado.garantias.length){
     return estado.garantias.shift();
   }
+  // Giros comprados COM PONTOS: tabela muito difícil (quase só Boa sorte / Quase; se ganhar → 1 MT ou +2 giros)
+  var dificil = (Number(estado.girosDificeis) || 0) > 0;
+  if(dificil){
+    estado.girosDificeis = Math.max(0, (Number(estado.girosDificeis) || 0) - 1);
+    var rd = Math.random() * PESO_TOTAL_DIFICIL;
+    for(var i = 0; i < N; i++){
+      if(rd < PESOS_DIFICIL[i]) return i;
+      rd -= PESOS_DIFICIL[i];
+    }
+    return 7; // BOA SORTE fallback
+  }
   let r = Math.random()*PESO_TOTAL;
   for(let i=0;i<N;i++){ if(r < PREMIOS[i].peso) return i; r -= PREMIOS[i].peso; }
   return N-1;
@@ -1629,6 +1688,15 @@ document.getElementById('btn-girar').addEventListener('click', async ()=>{
     quando:new Date().toLocaleString('pt-PT',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})
   });
   estado.historico = estado.historico.slice(0,40);
+  if(!estado.contagemPremios || typeof estado.contagemPremios !== 'object') estado.contagemPremios = {};
+  estado.contagemPremios[premio.label] = (Number(estado.contagemPremios[premio.label]) || 0) + 1;
+  if(premio.tipo === 'nada'){
+    estado.perdas = (Number(estado.perdas) || 0) + 1;
+  } else {
+    estado.ganhos = (Number(estado.ganhos) || 0) + 1;
+    if(premio.tipo === 'pontos') estado.pontosGanhos = (Number(estado.pontosGanhos) || 0) + (Number(premio.valor) || 0);
+    if(premio.tipo === 'mt') estado.mtGanhos = (Number(estado.mtGanhos) || 0) + (Number(premio.valor) || 0);
+  }
   guardarEstado();
 
   mostrarResultado(premio);

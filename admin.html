@@ -233,6 +233,7 @@
     <button class="tab" data-tab="roleta" onclick="mudarTab('roleta')"><i class="fas fa-dharmachakra"></i> Roleta</button>
     <button class="tab" data-tab="online" onclick="mudarTab('online')"><i class="fas fa-signal"></i> Online</button>
     <button class="tab" data-tab="actividade" onclick="mudarTab('actividade')"><i class="fas fa-clipboard-check"></i> Actividade</button>
+    <button class="tab" data-tab="origem" onclick="mudarTab('origem')"><i class="fas fa-pie-chart"></i> Origem pts</button>
     <button class="tab" data-tab="chat" onclick="mudarTab('chat')"><i class="fas fa-comments"></i> Chat</button>
   </div>
 
@@ -987,14 +988,18 @@
                 <th>E-mail</th>
                 <th>Giros (saldo)</th>
                 <th>Total girou</th>
+                <th>Ganhos</th>
+                <th>Perdas</th>
+                <th>Pts roleta</th>
+                <th>MT roleta</th>
                 <th>Hoje</th>
                 <th>Giros hoje</th>
                 <th>Último giro</th>
-                <th>Dias activos</th>
+                <th>Prémios (top)</th>
               </tr>
             </thead>
             <tbody id="tbody-roleta-users">
-              <tr><td colspan="9" class="vazio">Clica em Actualizar roleta.</td></tr>
+              <tr><td colspan="13" class="vazio">Clica em Actualizar roleta.</td></tr>
             </tbody>
           </table>
         </div>
@@ -1144,6 +1149,53 @@
       </div>
     </div>
 
+
+    <!-- ORIGEM DOS PONTOS -->
+    <div class="painel" id="painel-origem">
+      <div class="form-box">
+        <h3><i class="fas fa-pie-chart"></i> Origem dos pontos dos utilizadores</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:12px;">
+          Estimativa com base nos dados gravados: check-in, indicação, pesquisas, desafios, missão semanal e roleta.
+          O resto (ofertas CPX/Offerwall, anúncios, ajustes admin) entra em <b>Outros</b>.
+        </p>
+        <div class="resumo" style="margin-bottom:14px;">
+          <div class="resumo-card"><div class="num" id="origem-users">0</div><div class="lbl">Com pontos</div></div>
+          <div class="resumo-card"><div class="num" id="origem-checkin">0</div><div class="lbl">Pts check-in (est.)</div></div>
+          <div class="resumo-card"><div class="num" id="origem-indicacao">0</div><div class="lbl">Pts indicação</div></div>
+          <div class="resumo-card"><div class="num" id="origem-roleta">0</div><div class="lbl">Pts roleta</div></div>
+        </div>
+        <div class="busca">
+          <input type="text" id="busca-origem" placeholder="Filtrar nome ou e-mail..." oninput="filtrarOrigemAdmin()">
+        </div>
+        <div class="tabela-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Nome</th>
+                <th>E-mail</th>
+                <th>Total pts</th>
+                <th>Check-in</th>
+                <th>Indicação</th>
+                <th>Pesquisas</th>
+                <th>Desafios</th>
+                <th>Missão</th>
+                <th>Roleta</th>
+                <th>Outros (est.)</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-origem">
+              <tr><td colspan="11" class="vazio">A carregar...</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p style="font-size:11px;color:#666;margin-top:8px;">
+          Check-in ≈ dias × 3 pts. Pesquisas/desafios/missão = flags de conclusão (não o valor exacto de cada oferta).
+          Roleta = pontos ganhos na roleta (após actualização do jogo).
+        </p>
+      </div>
+    </div>
+
     <!-- CHAT / BATE-PAPO -->
     <div class="painel" id="painel-chat">
       <div class="form-box">
@@ -1278,6 +1330,7 @@ function mostrarAviso(txt) {
         if (nome === 'online') try { renderOnlineAdmin(); } catch (eO) {}
         if (nome === 'actividade') try { renderActividadeAdmin(); } catch (eA) {}
         if (nome === 'roleta') try { carregarRoletaAdmin(); carregarRoletaPontosAdmin(); } catch (eR) {}
+        if (nome === 'origem') try { renderOrigemPontosAdmin(); } catch (eOg) {}
       } catch (e) {
         console.error('mudarTab:', e);
         alert('Erro ao abrir separador: ' + (e.message || e));
@@ -3223,7 +3276,7 @@ async function carregarAnunciosTarefasAdmin() {
 
       if (tbodyU) {
         if (!jogadores.length) {
-          tbodyU.innerHTML = '<tr><td colspan="9" class="vazio">Ainda sem actividade de giros nos utilizadores.</td></tr>';
+          tbodyU.innerHTML = '<tr><td colspan="13" class="vazio">Ainda sem actividade de giros nos utilizadores.</td></tr>';
         } else {
           var hu = '';
           jogadores.forEach(function (u, i) {
@@ -3233,18 +3286,30 @@ async function carregarAnunciosTarefasAdmin() {
             var diasAct = Object.keys(porDia).filter(function (k) { return Number(porDia[k]) > 0; }).length;
             var ultimo = u.roletaUltimoGiroAt || '—';
             if (ultimo !== '—' && String(ultimo).length > 19) ultimo = String(ultimo).replace('T', ' ').slice(0, 19);
+            var ganhos = Number(u.roletaGanhos || 0);
+            var perdas = Number(u.roletaPerdas || 0);
+            var ptsR = Number(u.roletaPontosGanhos || 0);
+            var mtR = Number(u.roletaMtGanhos || 0);
+            var cont = u.roletaContagemPremios || {};
+            var topPrem = Object.keys(cont).map(function (k) { return { k: k, n: Number(cont[k]) || 0 }; })
+              .sort(function (a, b) { return b.n - a.n; }).slice(0, 3)
+              .map(function (x) { return x.k + '×' + x.n; }).join(', ') || '—';
             hu += '<tr data-busca-user="' + escHtml(((u.nome || '') + ' ' + (u.email || '')).toLowerCase()) + '">' +
               '<td>' + (i + 1) + '</td>' +
               '<td>' + escHtml(u.nome || '—') + '</td>' +
               '<td>' + escHtml(u.email || '—') + '</td>' +
               '<td class="pts-ok">' + (u.roletaGiros || 0) + '</td>' +
               '<td class="pts-alto">' + (u.roletaTotalGiros || 0) + '</td>' +
+              '<td class="pts-ok">' + ganhos + '</td>' +
+              '<td class="pts-baixo">' + perdas + '</td>' +
+              '<td class="pts-alto">' + ptsR + '</td>' +
+              '<td class="pts-ok">' + mtR + '</td>' +
               '<td>' + (girouHoje
                 ? '<span class="status-tag status-ativo">Sim</span>'
                 : '<span class="status-tag status-bloqueado">Não</span>') + '</td>' +
               '<td>' + gh + '</td>' +
               '<td style="font-size:11px;white-space:nowrap;">' + escHtml(ultimo) + '</td>' +
-              '<td>' + diasAct + '</td>' +
+              '<td style="font-size:11px;max-width:180px;">' + escHtml(topPrem) + '</td>' +
               '</tr>';
           });
           tbodyU.innerHTML = hu;
@@ -3612,6 +3677,79 @@ async function carregarAnunciosTarefasAdmin() {
       if (!tb) return;
       tb.querySelectorAll('tr[data-busca-rp]').forEach(function (tr) {
         tr.style.display = (!q || (tr.getAttribute('data-busca-rp') || '').indexOf(q) !== -1) ? '' : 'none';
+      });
+    }
+
+
+    function renderOrigemPontosAdmin() {
+      var tbody = document.getElementById('tbody-origem');
+      if (!tbody) return;
+      var users = (typeof todosUsers !== 'undefined' ? todosUsers : []).slice();
+      users = users.filter(function (u) { return (Number(u.pontos) || 0) > 0; });
+      users.sort(function (a, b) { return (b.pontos || 0) - (a.pontos || 0); });
+
+      var sumCk = 0, sumInd = 0, sumRol = 0;
+      var html = '';
+      users.forEach(function (u, i) {
+        var total = Number(u.pontos) || 0;
+        var nCk = Array.isArray(u.checkins) ? u.checkins.length : 0;
+        if (!nCk && u.ultimoCheckin) nCk = 1;
+        var ptsCk = nCk * 3;
+        var ptsInd = Number(u.pontosIndicacao) || 0;
+        var ptsRol = Number(u.roletaPontosGanhos) || 0;
+        var nPesq = 0;
+        if (u.pesquisaDadosCompleta) nPesq++;
+        if (u.pesquisaRapidaCompleta) nPesq++;
+        if (u.pesquisaOpiniaoCompleta) nPesq++;
+        if (u.pesquisaHabitosCompleta) nPesq++;
+        var pesqTxt = nPesq + '/4';
+        var dYt = u.desafioYoutubeCompleto === true;
+        var nProg = 0;
+        if (u.desafiosCompletos && typeof u.desafiosCompletos === 'object') {
+          nProg = Object.keys(u.desafiosCompletos).length;
+        } else if (Array.isArray(u.desafiosFeitos)) {
+          nProg = u.desafiosFeitos.length;
+        }
+        var desTxt = (dYt ? 'YT' : '') + (nProg ? ((dYt ? '+' : '') + nProg + ' prog') : (dYt ? '' : '—'));
+        var misTxt = u.missaoSemanalCompleta ? '✓' : (u.missaoSemanalVisitou ? 'visitou' : '—');
+        var conhecidos = ptsCk + ptsInd + ptsRol;
+        var outros = Math.max(0, total - conhecidos);
+        sumCk += ptsCk; sumInd += ptsInd; sumRol += ptsRol;
+        html += '<tr data-busca-origem="' + escHtml(((u.nome || '') + ' ' + (u.email || '')).toLowerCase()) + '">' +
+          '<td>' + (i + 1) + '</td>' +
+          '<td>' + escHtml(u.nome || '—') + '</td>' +
+          '<td>' + escHtml(u.email || '—') + '</td>' +
+          '<td class="pts-alto">' + total + '</td>' +
+          '<td class="pts-ok">' + ptsCk + ' <span style="color:#666;font-size:10px;">(' + nCk + 'd)</span></td>' +
+          '<td class="pts-ok">' + ptsInd + '</td>' +
+          '<td>' + pesqTxt + '</td>' +
+          '<td>' + escHtml(desTxt) + '</td>' +
+          '<td>' + misTxt + '</td>' +
+          '<td class="pts-ok">' + ptsRol + '</td>' +
+          '<td class="pts-baixo">' + outros + '</td>' +
+          '</tr>';
+      });
+      var elU = document.getElementById('origem-users');
+      var elC = document.getElementById('origem-checkin');
+      var elI = document.getElementById('origem-indicacao');
+      var elR = document.getElementById('origem-roleta');
+      if (elU) elU.textContent = users.length;
+      if (elC) elC.textContent = sumCk;
+      if (elI) elI.textContent = sumInd;
+      if (elR) elR.textContent = sumRol;
+      if (!users.length) {
+        tbody.innerHTML = '<tr><td colspan="11" class="vazio">Nenhum utilizador com pontos.</td></tr>';
+      } else {
+        tbody.innerHTML = html;
+      }
+    }
+
+    function filtrarOrigemAdmin() {
+      var q = (document.getElementById('busca-origem') && document.getElementById('busca-origem').value || '').trim().toLowerCase();
+      var tb = document.getElementById('tbody-origem');
+      if (!tb) return;
+      tb.querySelectorAll('tr[data-busca-origem]').forEach(function (tr) {
+        tr.style.display = (!q || (tr.getAttribute('data-busca-origem') || '').indexOf(q) !== -1) ? '' : 'none';
       });
     }
 
