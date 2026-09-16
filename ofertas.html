@@ -212,194 +212,86 @@
             padding: 0 8px;
         }
 
-        /* Carrossel horizontal: Ofertas | Influencer */
-        .swipe-hint {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            margin-bottom: 12px;
-            font-size: 12px;
-            color: #8e9bb8;
-        }
-        .swipe-hint i { color: #22FF99; animation: setaMove 1.2s ease-in-out infinite; }
-        @keyframes setaMove {
-            0%, 100% { transform: translateX(0); opacity: 0.7; }
-            50% { transform: translateX(6px); opacity: 1; }
-        }
-        .tabs-swipe {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 14px;
-            background: rgba(0,0,0,0.28);
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 14px;
-            padding: 5px;
-        }
-        .tab-swipe {
-            flex: 1;
+        .sep-inf {
+            margin: 28px 0 18px;
             text-align: center;
-            padding: 11px 8px;
-            border-radius: 10px;
-            border: none;
-            background: transparent;
-            color: #8e9bb8;
-            font-size: 13px;
-            font-weight: 700;
-            cursor: pointer;
+            position: relative;
         }
-        .tab-swipe.ativa {
-            background: linear-gradient(90deg, #00C853, #22FF99);
-            color: #04140a;
-            box-shadow: 0 4px 14px rgba(0,200,83,0.3);
-        }
-        .tab-swipe.inf.ativa {
-            background: linear-gradient(90deg, #a855f7, #3b9eff);
-            color: #fff;
-            box-shadow: 0 4px 14px rgba(168,85,247,0.35);
-        }
-        .carrossel {
-            display: flex;
-            overflow-x: auto;
-            overflow-y: visible;
-            scroll-snap-type: x mandatory;
-            -webkit-overflow-scrolling: touch;
-            gap: 0;
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            max-width: 100%;
-            scrollbar-width: none;
-            /* evita ver o painel seguinte no canto */
-            overscroll-behavior-x: contain;
-        }
-        .carrossel::-webkit-scrollbar { display: none; }
-        .painel {
-            flex: 0 0 100%;
-            width: 100%;
-            max-width: 100%;
-            min-width: 100%;
-            scroll-snap-align: start;
-            scroll-snap-stop: always;
-            box-sizing: border-box;
-            padding: 0;
-            /* corta qualquer sombra/overflow do painel seguinte */
-            overflow: hidden;
-        }
-
-        /* Painel Influencer */
-        .inf-hero {
-            text-align: center;
-            padding: 8px 4px 18px;
-        }
-        .inf-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 7px;
+        .sep-inf span {
+            display: inline-block;
+            padding: 6px 14px;
             font-size: 11px;
             font-weight: 700;
-            letter-spacing: 0.04em;
+            letter-spacing: 0.06em;
             text-transform: uppercase;
             color: #FFC94D;
             background: rgba(255,201,77,0.12);
-            border: 1px solid rgba(255,201,77,0.35);
-            padding: 6px 12px;
+            border: 1px solid rgba(255,201,77,0.3);
             border-radius: 99px;
+        }
+
+        .inf-hero { text-align: center; padding: 4px 4px 16px; }
+        .inf-badge {
+            display: inline-flex; align-items: center; gap: 7px;
+            font-size: 11px; font-weight: 700; letter-spacing: 0.04em;
+            text-transform: uppercase; color: #FFC94D;
+            background: rgba(255,201,77,0.12);
+            border: 1px solid rgba(255,201,77,0.35);
+            padding: 6px 12px; border-radius: 99px;
             box-shadow: 0 0 18px rgba(255,201,77,0.2);
         }
         .inf-badge .dot {
             width: 7px; height: 7px; border-radius: 50%;
-            background: #22FF99;
-            box-shadow: 0 0 8px #22FF99;
+            background: #22FF99; box-shadow: 0 0 8px #22FF99;
         }
         .inf-hero h2 {
-            font-size: 22px;
-            font-weight: 800;
-            margin: 14px 0 8px;
-            line-height: 1.2;
+            font-size: 22px; font-weight: 800; margin: 14px 0 8px; line-height: 1.2;
             background: linear-gradient(105deg, #fff 10%, #22FF99 45%, #FFC94D 75%, #ff4d9e 100%);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
+            -webkit-background-clip: text; background-clip: text; color: transparent;
         }
-        .inf-hero p {
-            color: #A8B0C8;
-            font-size: 13.5px;
-            line-height: 1.5;
-        }
+        .inf-hero p { color: #A8B0C8; font-size: 13.5px; line-height: 1.5; }
         .inf-hero p b { color: #22FF99; }
         .inf-card {
             background: linear-gradient(160deg, rgba(40,28,55,0.95), rgba(18,22,36,0.98));
             border: 1px solid rgba(168,85,247,0.35);
-            border-radius: 20px;
-            padding: 18px 16px;
-            margin-bottom: 14px;
+            border-radius: 20px; padding: 18px 16px; margin-bottom: 14px;
             box-shadow: 0 10px 32px rgba(0,0,0,0.35), 0 0 28px rgba(168,85,247,0.12);
         }
         .inf-card h3 {
-            font-size: 15px;
-            font-weight: 700;
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            font-size: 15px; font-weight: 700; margin-bottom: 12px;
+            display: flex; align-items: center; gap: 8px;
         }
         .inf-card h3 i { color: #a855f7; }
         .inf-ponto {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 12px;
-            align-items: flex-start;
+            display: flex; gap: 12px; margin-bottom: 12px; align-items: flex-start;
         }
         .inf-ponto .num {
-            width: 28px; height: 28px;
-            border-radius: 10px;
+            width: 28px; height: 28px; border-radius: 10px;
             background: linear-gradient(135deg, #a855f7, #3b9eff);
             display: flex; align-items: center; justify-content: center;
-            font-size: 13px; font-weight: 800;
-            flex-shrink: 0;
+            font-size: 13px; font-weight: 800; flex-shrink: 0;
         }
-        .inf-ponto p {
-            font-size: 13px;
-            color: #A8B0C8;
-            line-height: 1.45;
-        }
+        .inf-ponto p { font-size: 13px; color: #A8B0C8; line-height: 1.45; }
         .inf-ponto p b { color: #fff; }
         .inf-premio {
-            display: flex;
-            align-items: center;
-            gap: 14px;
+            display: flex; align-items: center; gap: 14px;
             background: linear-gradient(135deg, rgba(255,201,77,0.15), rgba(255,77,158,0.1));
             border: 1px solid rgba(255,201,77,0.35);
-            border-radius: 16px;
-            padding: 14px;
-            margin-bottom: 16px;
+            border-radius: 16px; padding: 14px; margin-bottom: 16px;
         }
         .inf-premio-ico {
-            width: 52px; height: 52px;
-            border-radius: 16px;
+            width: 52px; height: 52px; border-radius: 16px;
             background: linear-gradient(145deg, #FFC94D, #ff9a3c);
             display: flex; align-items: center; justify-content: center;
-            font-size: 24px;
-            box-shadow: 0 0 22px rgba(255,201,77,0.45);
-            flex-shrink: 0;
+            font-size: 24px; box-shadow: 0 0 22px rgba(255,201,77,0.45); flex-shrink: 0;
         }
         .inf-premio h4 { font-size: 15px; margin-bottom: 4px; }
         .inf-premio p { font-size: 12.5px; color: #A8B0C8; line-height: 1.4; }
         .inf-premio p b { color: #FFC94D; }
         .btn-participar {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            width: 100%;
-            padding: 16px;
-            border: none;
-            border-radius: 14px;
-            font-size: 15px;
-            font-weight: 800;
-            color: #fff;
-            text-decoration: none;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+            width: 100%; padding: 16px; border: none; border-radius: 14px;
+            font-size: 15px; font-weight: 800; color: #fff; text-decoration: none;
             background: linear-gradient(135deg, #a855f7, #3b9eff, #22FF99);
             background-size: 200% 100%;
             box-shadow: 0 8px 28px rgba(168,85,247,0.45);
@@ -410,11 +302,8 @@
             50% { background-position: 100% 50%; }
         }
         .inf-nota {
-            text-align: center;
-            font-size: 12px;
-            color: #6b7388;
-            margin-top: 14px;
-            line-height: 1.45;
+            text-align: center; font-size: 12px; color: #6b7388;
+            margin-top: 14px; line-height: 1.45;
         }
     </style>
 </head>
@@ -423,21 +312,10 @@
     <div class="cabecalho">
         <div class="icone">🎁</div>
         <div>
-            <h1>Ofertas &amp; Pesquisas &amp; Jogos</h1>
+            <h1>Ofertas &amp; Pesquisas</h1>
             <p>Escolha uma opção abaixo e ganhe pontos extra na sua conta</p>
         </div>
     </div>
-
-    <div class="tabs-swipe">
-        <button type="button" class="tab-swipe ativa" data-painel="0">Ofertas</button>
-        <button type="button" class="tab-swipe inf" data-painel="1">Influencer</button>
-    </div>
-    <div class="swipe-hint"><i class="fas fa-hand-point-right"></i> Desliza para a direita → Programa Influencer</div>
-
-    <div class="carrossel" id="carrossel-ofertas">
-
-        <!-- PAINEL 1: Ofertas (sem alterar conteúdo) -->
-        <div class="painel" id="painel-ofertas">
 
     <div class="aviso">
         Toque numa oferta para abrir. Complete até ao fim e os pontos entram <b>automaticamente</b> na sua conta (pode demorar alguns minutos após a confirmação).
@@ -445,26 +323,7 @@
 
     <div class="lista-ofertas">
 
-        <!-- 1. Offerwall.ad → página intermédia -->
-        <a href="offerwall-ad.html" class="card-oferta" id="cardOfferwallAd">
-            <div class="card-topo">
-                <div class="logo-box">
-                    <img src="https://i.supaimg.com/9447b725-0914-4700-9681-fccbd9cb5399/d5f8f268-07f8-4797-aa9a-37b9d218b2d1.jpg" alt="Offerwall.ad" onerror="this.style.display='none'">
-                </div>
-                <div class="card-info">
-                    <h2>Offerwall ad</h2>
-                    <p>Complete ofertas e ganhe pontos na sua conta</p>
-                    <span class="badge"><i class="fas fa-bolt"></i> Disponível agora</span>
-                </div>
-            </div>
-            <div class="btn-oferta">
-                <i class="fas fa-gift"></i>
-                Ver ofertas
-                <i class="fas fa-arrow-right seta"></i>
-            </div>
-        </a>
-
-        <!-- 2. CPX Research -->
+        <!-- CPX Research -->
         <a href="disponivel.html" class="card-oferta" id="cardCpx">
             <div class="card-topo">
                 <div class="logo-box">
@@ -483,7 +342,7 @@
             </div>
         </a>
 
-        <!-- 3. Offerwall.me -->
+        <!-- Offerwall.me -->
         <a href="#" class="card-oferta" id="cardOfferwall">
             <div class="card-topo">
                 <div class="logo-box">
@@ -502,45 +361,6 @@
             </div>
         </a>
 
-        <!-- 4. MyLead – em manutenção (wall 404) -->
-        <div class="card-oferta" id="cardMylead" style="opacity:0.72;pointer-events:none;">
-            <div class="card-topo">
-                <div class="logo-box">
-                    <img src="https://i.supaimg.com/9447b725-0914-4700-9681-fccbd9cb5399/f96292ac-9b0f-4e16-bd5c-7b260ed43da5.jpg" alt="MyLead" onerror="this.style.display='none'">
-                </div>
-                <div class="card-info">
-                    <h2>Jogos &amp; Ofertas</h2>
-                    <p>Instalar apps, jogos e ofertas especiais</p>
-                    <span class="badge" style="color:#FFB74D;background:rgba(255,183,77,0.12);border-color:rgba(255,183,77,0.35);">
-                        <i class="fas fa-tools"></i> Em manutenção
-                    </span>
-                </div>
-            </div>
-            <div class="btn-oferta" style="background:linear-gradient(135deg,#6b7388,#4a5160);color:#ddd;box-shadow:none;">
-                <i class="fas fa-pause-circle"></i>
-                Indisponível de momento
-            </div>
-        </div>
-
-        <!-- 5. CPAGrip -->
-        <a href="#" class="card-oferta" id="cardCpagrip">
-            <div class="card-topo">
-                <div class="logo-box">
-                    <img src="https://i.supaimg.com/9447b725-0914-4700-9681-fccbd9cb5399/bb402b9c-5df3-4b74-978f-67e6c8d9ae8b.jpg" alt="CPAGrip" onerror="this.style.display='none'">
-                </div>
-                <div class="card-info">
-                    <h2>CPAGrip Ofertas</h2>
-                    <p>Complete ofertas, instale apps e ganhe pontos extra</p>
-                    <span class="badge"><i class="fas fa-bolt"></i> Disponível agora</span>
-                </div>
-            </div>
-            <div class="btn-oferta">
-                <i class="fas fa-gift"></i>
-                Ver ofertas CPAGrip
-                <i class="fas fa-arrow-right seta"></i>
-            </div>
-        </a>
-
     </div>
 
     <p class="rodape-dica">
@@ -548,53 +368,49 @@
         Evite fechar a página a meio da oferta.
     </p>
 
-        </div><!-- /painel-ofertas -->
+    <!-- Programa Influencer (em baixo, mesma página) -->
+    <div class="sep-inf"><span>Programa Influencer</span></div>
 
-        <!-- PAINEL 2: Programa Influencer -->
-        <div class="painel" id="painel-influencer">
-            <div class="inf-hero">
-                <span class="inf-badge"><span class="dot"></span> Novo programa</span>
-                <h2>Programa Influencer</h2>
-                <p>Para <b>todos</b> os que têm conta nas redes sociais — Facebook, TikTok, Instagram, WhatsApp… Não precisas de ser famoso.</p>
-            </div>
+    <div class="inf-hero">
+        <span class="inf-badge"><span class="dot"></span> Novo programa</span>
+        <h2>Programa Influencer</h2>
+        <p>Para <b>todos</b> os que têm conta nas redes sociais — Facebook, TikTok, Instagram, WhatsApp… Não precisas de ser famoso.</p>
+    </div>
 
-            <div class="inf-premio">
-                <div class="inf-premio-ico">💰</div>
-                <div>
-                    <h4>200 MT a cada 1000 pessoas</h4>
-                    <p>Cada vez que <b>1000 pessoas</b> criarem conta com o teu link único, recebes <b>200 meticais</b> na conta Desafio MOZ.</p>
-                </div>
-            </div>
+    <div class="inf-premio">
+        <div class="inf-premio-ico">💰</div>
+        <div>
+            <h4>200 MT a cada 1000 na contagem</h4>
+            <p>Cada vez que a contagem chegar a <b>1000</b> com o teu link único, recebes <b>200 meticais</b> na conta Desafio MOZ.</p>
+        </div>
+    </div>
 
-            <div class="inf-card">
-                <h3><i class="fas fa-star"></i> O que precisas de saber</h3>
-                <div class="inf-ponto">
-                    <div class="num">1</div>
-                    <p><b>Qualquer pessoa pode participar</b> — basta teres conta no site e uma rede social para partilhar o teu link.</p>
-                </div>
-                <div class="inf-ponto">
-                    <div class="num">2</div>
-                    <p><b>Recebes um link único</b> na página Influencer. Só contam registos feitos com esse link.</p>
-                </div>
-                <div class="inf-ponto">
-                    <div class="num">3</div>
-                    <p><b>Vês o progresso em tempo real</b>: quantas pessoas entraram, quantas faltam para os 200 MT e o ranking.</p>
-                </div>
-                <div class="inf-ponto">
-                    <div class="num">4</div>
-                    <p><b>Podes combinar</b> com o jogo Homejub e as ofertas — quantas mais formas usares, mais depressa sacas.</p>
-                </div>
-            </div>
+    <div class="inf-card">
+        <h3><i class="fas fa-star"></i> O que precisas de saber</h3>
+        <div class="inf-ponto">
+            <div class="num">1</div>
+            <p><b>Qualquer pessoa pode participar</b> — basta teres conta no site e uma rede social para partilhar o teu link.</p>
+        </div>
+        <div class="inf-ponto">
+            <div class="num">2</div>
+            <p><b>Recebes um link único</b> na página Influencer. Só contam registos feitos com esse link.</p>
+        </div>
+        <div class="inf-ponto">
+            <div class="num">3</div>
+            <p><b>Vês o progresso em tempo real</b>: quantas pessoas entraram, quantas faltam para os 200 MT e o ranking.</p>
+        </div>
+        <div class="inf-ponto">
+            <div class="num">4</div>
+            <p><b>Podes combinar</b> com o jogo Homejub e as ofertas — quantas mais formas usares, mais depressa sacas.</p>
+        </div>
+    </div>
 
-            <a class="btn-participar" href="influencer.html">
-                <i class="fas fa-rocket"></i>
-                Participar no programa
-                <i class="fas fa-arrow-right"></i>
-            </a>
-            <p class="inf-nota">Ao tocar em Participar vais para a página do programa,<br>onde geras o teu link e segues o ranking.</p>
-        </div><!-- /painel-influencer -->
-
-    </div><!-- /carrossel -->
+    <a class="btn-participar" href="influencer.html">
+        <i class="fas fa-rocket"></i>
+        Participar no programa
+        <i class="fas fa-arrow-right"></i>
+    </a>
+    <p class="inf-nota">Ao tocar em Participar vais para a página do programa,<br>onde geras o teu link e segues o ranking.</p>
 
     <script>
         (function () {
@@ -603,7 +419,7 @@
                         localStorage.getItem('userEmail') || '';
 
             if (!email) {
-                ['cardCpx', 'cardCpagrip', 'cardOfferwall', 'cardOfferwallAd'].forEach(function (id) {
+                ['cardCpx', 'cardOfferwall'].forEach(function (id) {
                     var card = document.getElementById(id);
                     if (card) {
                         card.addEventListener('click', function (e) {
@@ -615,17 +431,6 @@
                 return;
             }
 
-            // CPAGrip
-            var cardCpagrip = document.getElementById('cardCpagrip');
-            if (cardCpagrip) {
-                cardCpagrip.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    var link = 'https://installyourfiles.com/1910102?tracking_id=' + encodeURIComponent(email);
-                    window.open(link, '_blank');
-                });
-            }
-
-            // Offerwall.me
             var cardOfferwall = document.getElementById('cardOfferwall');
             if (cardOfferwall) {
                 cardOfferwall.addEventListener('click', function (e) {
@@ -634,49 +439,7 @@
                     window.open(link, '_blank');
                 });
             }
-
-            // Offerwall.ad → usa href="offerwall-ad.html" (página intermédia)
         })();
-
-        // Abas + deslize horizontal Ofertas | Influencer
-        (function () {
-            var car = document.getElementById('carrossel-ofertas');
-            var tabs = document.querySelectorAll('.tab-swipe');
-            if (!car || !tabs.length) return;
-
-            function irPara(idx) {
-                var painel = car.children[idx];
-                if (painel) painel.scrollIntoView({ behavior: 'smooth', inline: 'start', block: 'nearest' });
-                tabs.forEach(function (t, i) {
-                    t.classList.toggle('ativa', i === idx);
-                });
-            }
-
-            tabs.forEach(function (tab) {
-                tab.addEventListener('click', function () {
-                    irPara(Number(tab.getAttribute('data-painel') || 0));
-                });
-            });
-
-            var scrollTimer = null;
-            car.addEventListener('scroll', function () {
-                var idx = Math.round(car.scrollLeft / Math.max(1, car.clientWidth));
-                tabs.forEach(function (t, i) {
-                    t.classList.toggle('ativa', i === idx);
-                });
-                // ao parar de deslizar, encaixa o painel completo (sem canto a vazar)
-                clearTimeout(scrollTimer);
-                scrollTimer = setTimeout(function () {
-                    var w = car.clientWidth;
-                    if (!w) return;
-                    var alvo = Math.round(car.scrollLeft / w) * w;
-                    if (Math.abs(car.scrollLeft - alvo) > 2) {
-                        car.scrollTo({ left: alvo, behavior: 'smooth' });
-                    }
-                }, 80);
-            }, { passive: true });
-        })();
-
     </script>
 
     <div class="menu-baixo">
@@ -687,7 +450,6 @@
         <a href="online.html"><i class="fas fa-gamepad"></i> Online</a>
         <a href="perfil.html"><i class="fas fa-cog"></i> Conta</a>
     </div>
-
 
 <script>
   window.__DM_NOTIF__ = { mencao: true, idle: false, idleSegundos: 20, idleMaxDia: 2 };
