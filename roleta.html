@@ -633,10 +633,9 @@
 </div>
 
 
+<audio id="som-fundo" src="audio/roleta-fundo.mp3" preload="auto" loop></audio>
 <audio id="som-giro" src="audio/roleta-giro.mp3" preload="auto" loop></audio>
-<audio id="som-parada" src="audio/roleta-parada.mp3" preload="auto"></audio>
 <audio id="som-vitoria" src="audio/roleta-vitoria.mp3" preload="auto"></audio>
-<audio id="som-derrota" src="audio/roleta-derrota.mp3" preload="auto"></audio>
 
 <div id="toast"></div>
 
@@ -889,8 +888,22 @@ function mostrarToast(msg){
 }
 
 /* navegação entre telas cheias */
-function abrirTela(id){ document.getElementById(id).classList.add('aberta'); }
-function fecharTela(id){ document.getElementById(id).classList.remove('aberta'); }
+function algumaTelaSecundariaAberta(){
+  return ['tela-loja','tela-historico','tela-regras'].some(function(id){
+    var el = document.getElementById(id);
+    return el && el.classList.contains('aberta');
+  });
+}
+function abrirTela(id){
+  document.getElementById(id).classList.add('aberta');
+  // fundo só em regras / histórico / compra de giros
+  iniciarFundoRoleta();
+}
+function fecharTela(id){
+  document.getElementById(id).classList.remove('aberta');
+  // na área da roleta o fundo NÃO toca
+  if(!algumaTelaSecundariaAberta()) pararSom('som-fundo');
+}
 document.getElementById('btn-abrir-loja').addEventListener('click', ()=>abrirTela('tela-loja'));
 document.getElementById('fechar-loja').addEventListener('click', ()=>fecharTela('tela-loja'));
 document.getElementById('abrir-historico').addEventListener('click', ()=>abrirTela('tela-historico'));
@@ -1452,13 +1465,19 @@ async function creditarGirosMetical(valorMT, giros){
 }
 
 
-/* ---------- sons ---------- */
-function tocarSom(id, volume){
+
+/* ---------- áudio ---------- */
+/* No telemóvel, play() só é fiável se o som for "desbloqueado" no clique.
+   O giro toca logo no clique (ok). A vitória toca 8s depois — por isso
+   desbloqueamos o elemento de vitória no próprio clique de Girar. */
+
+function iniciarFundoRoleta(){
   try {
-    var a = document.getElementById(id);
+    var a = document.getElementById('som-fundo');
     if(!a) return;
-    a.volume = volume == null ? 0.55 : volume;
-    a.currentTime = 0;
+    a.loop = true;
+    a.volume = 0.1;
+    a.muted = false;
     var p = a.play();
     if(p && p.catch) p.catch(function(){});
   } catch(e){}
@@ -1471,30 +1490,98 @@ function pararSom(id){
     a.currentTime = 0;
   } catch(e){}
 }
+function tocarSom(id, volume, loop){
+  try {
+    var a = document.getElementById(id);
+    if(!a) return null;
+    a.loop = !!loop;
+    a.muted = false;
+    a.volume = volume == null ? 0.55 : volume;
+    try { a.pause(); } catch(e){}
+    try { a.currentTime = 0; } catch(e){}
+    var p = a.play();
+    if(p && p.catch) p.catch(function(err){ console.warn('play', id, err); });
+    return p;
+  } catch(e){ return null; }
+}
+
+/** Desbloqueia um <audio> no gesto do utilizador (obrigatório no iOS/Android). */
+async function desbloquearElemento(id){
+  var a = document.getElementById(id);
+  if(!a) return;
+  try {
+    a.muted = true;
+    a.volume = 0.01;
+    await a.play();
+    a.pause();
+    a.currentTime = 0;
+    a.muted = false;
+  } catch(e){
+    try { a.muted = false; } catch(e2){}
+  }
+}
+
+function desbloquearAudios(){
+  desbloquearElemento('som-fundo');
+  desbloquearElemento('som-giro');
+  desbloquearElemento('som-vitoria');
+}
+document.addEventListener('pointerdown', function once(){
+  desbloquearAudios();
+  document.removeEventListener('pointerdown', once);
+}, {passive:true});
+
+async function tocarVitoria(){
+  pararSom('som-giro');
+  // pequena pausa para o som de giro libertar o canal
+  await new Promise(function(r){ setTimeout(r, 150); });
+  try {
+    var a = document.getElementById('som-vitoria');
+    if(!a) return;
+    a.loop = false;
+    a.muted = false;
+    a.volume = 0.75;
+    try { a.currentTime = 0; } catch(e){}
+    var p = a.play();
+    if(p && p.catch){
+      p.catch(function(err){
+        console.warn('vitoria', err);
+        // fallback absoluto
+        try {
+          var b = new Audio('audio/roleta-vitoria.mp3?v=2');
+          b.volume = 0.75;
+          b.play().catch(function(){});
+        } catch(e2){}
+      });
+    }
+  } catch(e){ console.warn(e); }
+}
 
 document.getElementById('btn-girar').addEventListener('click', async ()=>{
   if(estado.giros<=0 || girando) return;
   girando = true;
+  // na área da roleta: sem música de fundo
+  pararSom('som-fundo');
+
+  // CRÍTICO: desbloquear vitória AINDA no clique (gesto do utilizador)
+  // senão o telemóvel bloqueia o play() 8 segundos depois
+  await desbloquearElemento('som-vitoria');
+  await desbloquearElemento('som-giro');
+
   estado.giros -= 1;
   registarGiroFeito();
   await guardarEstado();
   atualizarUI();
 
-  // Som de giro (durante os ~8 segundos)
-  tocarSom('som-giro', 0.45);
+  // Som de giro a 30% (logo no clique → permitido)
+  tocarSom('som-giro', 0.3, true);
 
   const indice = sortearPremio();
   await girarRoleta(indice);
 
-  // Para o giro e toca som de paragem / celebração
-  pararSom('som-giro');
+  // Quando o giro pára → vitória (já desbloqueada no clique)
   const premio = PREMIOS[indice];
-  if(premio.tipo === 'nada'){
-    tocarSom('som-derrota', 0.5);
-  } else {
-    tocarSom('som-parada', 0.55);
-    setTimeout(function(){ tocarSom('som-vitoria', 0.65); }, 180);
-  }
+  await tocarVitoria();
 
   if(premio.tipo==='pontos') estado.pontos += premio.valor;
   if(premio.tipo==='mt') estado.pontos += premio.valor * PTS_POR_MT; // MT → pontos na conta
