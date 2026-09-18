@@ -336,27 +336,6 @@
       <div class="aba ativa" id="aba-cadastro" onclick="mostrarFormulario('cadastro')">Cadastro</div>
     </div>
 
-    
-    <div id="aviso-voltar-comunicado" style="display:none;margin-bottom:14px;padding:14px 14px;border-radius:14px;background:rgba(255,201,77,0.12);border:1px solid rgba(255,201,77,0.4);text-align:center;">
-      <div style="font-size:13px;color:#ffc94d;font-weight:800;margin-bottom:4px;">📢 Comunicado do Papo</div>
-      <div style="font-size:12.5px;color:#c5cde0;line-height:1.45;">
-        Faz <b style="color:#fff">login</b> (ou cria conta) e a seguir vais à página do comunicado
-        para leres tudo e receberes os <b style="color:#22FF99">80 pontos grátis</b>.
-        <br>Se não leres com atenção, <b style="color:#fff">nunca sacas rápido</b> no Desafio MOZ.
-      </div>
-    </div>
-    <script>
-      (function(){
-        try {
-          var v = new URLSearchParams(location.search).get('voltar') || localStorage.getItem('voltarAposLogin') || '';
-          if (v.indexOf('comunicado') !== -1) {
-            var el = document.getElementById('aviso-voltar-comunicado');
-            if (el) el.style.display = 'block';
-          }
-        } catch(e){}
-      })();
-    </script>
-
     <div class="aviso-erro" id="aviso-campo"></div>
 
     <form class="formulario" id="form-login">
@@ -412,27 +391,6 @@
 
 <script>
   var aviso = document.getElementById('aviso-campo');
-
-  function destinoAposLogin() {
-    try {
-      var params = new URLSearchParams(window.location.search);
-      var voltar = (params.get('voltar') || localStorage.getItem('voltarAposLogin') || '').trim();
-      if (voltar) {
-        localStorage.removeItem('voltarAposLogin');
-        // só páginas internas simples
-        if (/^[a-z0-9\-]+\.html$/i.test(voltar)) return voltar;
-      }
-    } catch (e) {}
-    return 'desafios.html';
-  }
-  (function () {
-    try {
-      var params = new URLSearchParams(window.location.search);
-      var voltar = (params.get('voltar') || '').trim();
-      if (voltar) localStorage.setItem('voltarAposLogin', voltar);
-    } catch (e) {}
-  })();
-
 
   (function guardarRefDoLink() {
     try {
@@ -622,7 +580,7 @@
 
       mostrarAviso('✅ Entrando com Google...', 'sucesso');
       setTimeout(function () {
-        window.location.href = destinoAposLogin() === 'desafios.html' && googleFoiNovo ? 'desafios.html?nova=1' : destinoAposLogin();
+        window.location.href = googleFoiNovo ? 'desafios.html?nova=1' : 'desafios.html';
       }, 1000);
     } catch (erro) {
       console.error(erro);
@@ -678,7 +636,7 @@
       localStorage.setItem('pesquisaHabitosCompleta', usuario.pesquisaHabitosCompleta ? 'true' : 'false');
       if (usuario.codigoIndicacao) localStorage.setItem('codigoIndicacao', usuario.codigoIndicacao);
       mostrarAviso('✅ Entrando...', 'sucesso');
-      setTimeout(function () { window.location.href = destinoAposLogin(); }, 1000);
+      setTimeout(function () { window.location.href = 'desafios.html'; }, 1000);
     } catch (erro) {
       console.error(erro);
       mostrarAviso(mensagemPermissao(erro));
@@ -765,7 +723,7 @@
       localStorage.setItem('dataCadastro', dadosNovo.dataCadastro || new Date().toISOString());
       localStorage.setItem('dmContaNova', '1'); try { sessionStorage.setItem('dmContaNova', '1'); } catch (eS) {}
       mostrarAviso('✅ Conta criada com sucesso!', 'sucesso');
-      setTimeout(function () { window.location.href = destinoAposLogin(); }, 1200);
+      setTimeout(function () { window.location.href = 'desafios.html?nova=1'; }, 1200);
     } catch (erro) {
       console.error(erro);
       mostrarAviso(mensagemPermissao(erro));

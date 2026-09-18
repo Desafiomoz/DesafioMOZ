@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="pt-MZ">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Entrar – Comunicado Desafio MOZ</title>
+  <meta name="theme-color" content="#06080e">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+  <script>
+    if (typeof window.__DESAFIO_MOZ_FIREBASE__ === 'undefined') {
+      window.__DESAFIO_MOZ_FIREBASE__ = true;
+      var firebaseConfig = {
+        apiKey: "AIzaSyDONfggnmf9OJX_AgfvcHTRf6tsuKD5nrA",
+        authDomain: "desafio-moz-61b70.firebaseapp.com",
+        projectId: "desafio-moz-61b70",
+        storageBucket: "desafio-moz-61b70.firebasestorage.app",
+        messagingSenderId: "945658936331",
+        appId: "1:945658936331:web:7ee4b0e7de1c1daf36db0e",
+        measurementId: "G-G1DZQ1B0DB"
+      };
+      if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+      window.db = firebase.firestore();
+    }
+    var db = window.db;
+  </script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    :root {
+      --bg: #06080e; --verde: #22FF99; --ouro: #FFC94D; --azul: #3b9eff; --suave: #8e9bb8;
+    }
+    body {
+      min-height: 100vh; color: #f4f6fb;
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      padding: 28px 16px 40px;
+      display: flex; flex-direction: column; align-items: center;
+    }
+    body::before {
+      content: ''; position: fixed; inset: 0; z-index: -1;
+      background:
+        radial-gradient(ellipse at 50% 0%, rgba(34,255,153,0.22), transparent 50%),
+        radial-gradient(ellipse at 80% 80%, rgba(255,201,77,0.12), transparent 45%),
+        var(--bg);
+    }
+    .box {
+      width: 100%; max-width: 400px;
+      background: rgba(16, 20, 32, 0.95);
+      border: 1px solid rgba(34,255,153,0.28);
+      border-radius: 22px; padding: 28px 20px 24px;
+      box-shadow: 0 0 40px rgba(34,255,153,0.12), 0 16px 40px rgba(0,0,0,0.4);
+    }
+    .selo {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 6px 12px; border-radius: 99px; margin-bottom: 14px;
+      background: rgba(255,201,77,0.12); border: 1px solid rgba(255,201,77,0.4);
+      color: var(--ouro); font-size: 11px; font-weight: 800; letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    h1 {
+      font-family: 'Sora', sans-serif; font-size: 22px; font-weight: 800;
+      margin-bottom: 8px;
+      background: linear-gradient(90deg, #fff, var(--verde));
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    .info {
+      font-size: 13.5px; color: var(--suave); line-height: 1.55; margin-bottom: 18px;
+    }
+    .info b { color: #fff; }
+    .info .alerta { color: var(--ouro); font-weight: 700; }
+    label {
+      display: block; font-size: 12px; color: var(--suave); font-weight: 600; margin-bottom: 5px;
+    }
+    input {
+      width: 100%; padding: 13px 14px; border-radius: 12px; margin-bottom: 12px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(8,10,18,0.95); color: #fff; font-size: 15px; outline: none;
+    }
+    input:focus { border-color: var(--verde); }
+    .btn {
+      width: 100%; padding: 15px; border: none; border-radius: 14px; margin-top: 6px;
+      font-family: 'Sora', sans-serif; font-size: 15px; font-weight: 800; cursor: pointer;
+      color: #04140a;
+      background: linear-gradient(90deg, var(--verde), var(--azul));
+      box-shadow: 0 8px 24px rgba(34,255,153,0.3);
+    }
+    .btn:disabled { opacity: 0.6; cursor: default; }
+    .erro {
+      display: none; margin-top: 12px; text-align: center;
+      color: #ff8a8a; font-size: 13px; line-height: 1.4;
+    }
+    .erro.mostrar { display: block; }
+    .links {
+      margin-top: 16px; text-align: center; font-size: 13px;
+    }
+    .links a { color: var(--verde); text-decoration: none; font-weight: 600; }
+    .links .sep { color: #4a5568; margin: 0 8px; }
+    .voltar {
+      margin-top: 18px; font-size: 13px; color: var(--suave); text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <div class="selo"><i class="fas fa-bullhorn"></i> Comunicado do Papo</div>
+    <h1>Entra na tua conta</h1>
+    <p class="info">
+      Esta página é só para <b>entrar</b> com a conta do Desafio MOZ.
+      Depois vais ao comunicado: lê <b>tudo</b> com atenção e recebe os
+      <b>80 pontos grátis</b>.
+      <br><br>
+      <span class="alerta">Se não leres e não entenderes as dicas dos veteranos, nunca vais sacar rápido no Desafio MOZ.</span>
+    </p>
+    <label for="email">E-mail</label>
+    <input type="email" id="email" placeholder="seuemail@gmail.com" autocomplete="email">
+    <label for="senha">Senha</label>
+    <input type="password" id="senha" placeholder="A tua senha" autocomplete="current-password">
+    <button type="button" class="btn" id="btn-entrar">Entrar e ir ao comunicado</button>
+    <div class="erro" id="erro"></div>
+    <div class="links">
+      <a href="criar-conta.html">Criar conta</a>
+      <span class="sep">·</span>
+      <a href="desafios.html">Início</a>
+    </div>
+  </div>
+  <a class="voltar" href="comunicado-papo.html">Já entrei → ir ao comunicado</a>
+
+  <script>
+  (function () {
+    var DESTINO = 'comunicado-papo.html';
+
+    async function hashSenha(texto) {
+      var dados = new TextEncoder().encode(texto);
+      var hashBuffer = await crypto.subtle.digest('SHA-256', dados);
+      var hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map(function (b) { return b.toString(16).padStart(2, '0'); }).join('');
+    }
+
+    function mostrarErro(msg) {
+      var el = document.getElementById('erro');
+      el.textContent = msg;
+      el.classList.add('mostrar');
+    }
+
+    document.getElementById('btn-entrar').addEventListener('click', async function () {
+      var email = (document.getElementById('email').value || '').trim().toLowerCase();
+      var senha = document.getElementById('senha').value || '';
+      var btn = document.getElementById('btn-entrar');
+      document.getElementById('erro').classList.remove('mostrar');
+      if (!email || !senha) {
+        mostrarErro('Preenche e-mail e senha.');
+        return;
+      }
+      btn.disabled = true;
+      btn.textContent = 'A entrar...';
+      try {
+        var senhaHash = await hashSenha(senha);
+        var procura = await db.collection('usuarios')
+          .where('email', '==', email)
+          .where('senha', '==', senhaHash)
+          .limit(1).get();
+        var precisaMigrar = false;
+        if (procura.empty) {
+          procura = await db.collection('usuarios')
+            .where('email', '==', email)
+            .where('senha', '==', senha)
+            .limit(1).get();
+          precisaMigrar = !procura.empty;
+        }
+        if (procura.empty) {
+          mostrarErro('E-mail ou senha inválidos.');
+          btn.disabled = false;
+          btn.textContent = 'Entrar e ir ao comunicado';
+          return;
+        }
+        var doc = procura.docs[0];
+        var u = doc.data() || {};
+        if (precisaMigrar) {
+          try { await doc.ref.update({ senha: senhaHash }); } catch (e) {}
+        }
+        localStorage.setItem('nomeUtilizador', u.nome || '');
+        localStorage.setItem('telUtilizador', u.telemovel || '');
+        localStorage.setItem('emailUtilizador', u.email || email);
+        localStorage.setItem('pontosUtilizador', String(u.pontos || 0));
+        if (u.codigoIndicacao) localStorage.setItem('codigoIndicacao', u.codigoIndicacao);
+        if (u.bonusPapo80 === true) localStorage.setItem('bonusPapo80', '1');
+        window.location.href = DESTINO;
+      } catch (e) {
+        console.error(e);
+        mostrarErro('Erro de ligação. Tenta de novo.');
+        btn.disabled = false;
+        btn.textContent = 'Entrar e ir ao comunicado';
+      }
+    });
+
+    document.getElementById('senha').addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') document.getElementById('btn-entrar').click();
+    });
+  })();
+  </script>
+</body>
+</html>
