@@ -238,6 +238,7 @@
     <button class="tab" data-tab="dicas" onclick="mudarTab('dicas')"><i class="fas fa-lightbulb"></i> Dicas</button>
     <button class="tab" data-tab="pedidos-dicas" onclick="mudarTab('pedidos-dicas')"><i class="fas fa-reply"></i> Pedidos dicas <span class="badge" id="badge-pedidos-dicas">0</span></button>
     <button class="tab" data-tab="notif-admin" onclick="mudarTab('notif-admin')"><i class="fas fa-bell"></i> Notificações</button>
+    <button class="tab" data-tab="bonus80" onclick="mudarTab('bonus80')"><i class="fas fa-gift"></i> Bonus 80</button>
     <button class="tab" data-tab="privado" onclick="mudarTab('privado')"><i class="fas fa-lock"></i> Privado</button>
   </div>
 
@@ -1379,7 +1380,75 @@
         <button type="button" class="btn-cinza" style="width:100%;margin-top:8px;padding:10px;" onclick="fecharRespostaDica()">Cancelar</button>
       </div>
     </div>
-    <div class="painel" id="painel-privado">
+    
+    <!-- BONUS 80 PONTOS (COMUNICADO PAPO) -->
+    <div class="painel" id="painel-bonus80">
+      <div class="form-box">
+        <h3><i class="fas fa-gift"></i> Bonus 80 pontos — Comunicado do Papo</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:12px;">
+          Lista de quem já recebeu os <strong>80 pontos</strong> do comunicado.
+          Podes creditar manualmente a quem ainda não recebeu (entra na lista a seguir).
+          Cada conta só pode receber <strong>uma vez</strong>.
+        </p>
+        <div class="form-grid">
+          <div class="form-row">
+            <label>E-mail para creditar manualmente</label>
+            <input type="email" id="bonus80-email" placeholder="email@exemplo.com">
+          </div>
+          <div class="form-row" style="display:flex;align-items:flex-end;">
+            <button type="button" class="btn-verde" style="width:100%;" onclick="creditarBonus80Manual()">🎁 Dar 80 pts a este e-mail</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="resumo" style="margin-bottom:14px;">
+        <div class="resumo-card"><div class="num" id="bonus80-total-sim">0</div><div class="lbl">Já receberam</div></div>
+        <div class="resumo-card"><div class="num" id="bonus80-total-nao">0</div><div class="lbl">Ainda não</div></div>
+      </div>
+
+      <div class="busca">
+        <input type="text" id="busca-bonus80" placeholder="Pesquisar nome ou e-mail..." oninput="filtrarBonus80()">
+      </div>
+
+      <h3 style="color:#00e676;font-size:14px;margin:12px 0 8px;">✅ Já receberam os 80 pontos</h3>
+      <div class="tabela-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Nome</th>
+              <th>E-mail</th>
+              <th>Pontos agora</th>
+              <th>Recebeu em</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-bonus80-sim">
+            <tr><td colspan="5" class="vazio">A carregar...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 style="color:#ffc107;font-size:14px;margin:20px 0 8px;">⏳ Ainda não receberam</h3>
+      <p style="font-size:12px;color:#888;margin-bottom:8px;">Podes creditar com o botão acima ou o utilizador reclama em comunicado-papo.html</p>
+      <div class="tabela-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Nome</th>
+              <th>E-mail</th>
+              <th>Pontos</th>
+              <th>Acção</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-bonus80-nao">
+            <tr><td colspan="5" class="vazio">A carregar...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+<div class="painel" id="painel-privado">
       <div class="form-box">
         <h3><i class="fas fa-trash"></i> Limpar mensagens privadas</h3>
         <p style="font-size:12px;color:#888;margin-bottom:12px;">Apaga mensagens da coleção chatPrivado. Podes limpar tudo ou só de um e-mail.</p>
@@ -1522,6 +1591,9 @@ function mostrarAviso(txt) {
     }
 
     function mudarTab(nome) {
+      if (nome === 'bonus80') {
+        try { carregarBonus80(); } catch (e) {}
+      }
       if (nome === 'notif-admin') {
         try { carregarNotifAdminHist(); carregarAtrasadosNotif(); } catch (e) {}
       }
@@ -4873,6 +4945,133 @@ async function enviarNotifAdmin() {
       var el2 = document.getElementById('des-data');
       if (el2) el2.value = val;
     })();
+
+
+    async function carregarBonus80() {
+      var tSim = document.getElementById('tbody-bonus80-sim');
+      var tNao = document.getElementById('tbody-bonus80-nao');
+      if (!tSim || !tNao) return;
+      tSim.innerHTML = '<tr><td colspan="5" class="vazio">A carregar...</td></tr>';
+      tNao.innerHTML = '<tr><td colspan="5" class="vazio">A carregar...</td></tr>';
+      try {
+        var users = (typeof todosUsers !== 'undefined' && todosUsers.length) ? todosUsers.slice() : [];
+        if (!users.length) {
+          var snap = await db.collection('usuarios').limit(800).get();
+          snap.forEach(function (doc) {
+            var d = doc.data() || {};
+            d._id = doc.id;
+            users.push(d);
+          });
+        }
+        var sim = [], nao = [];
+        users.forEach(function (u) {
+          if (u.bonusPapo80 === true) sim.push(u);
+          else nao.push(u);
+        });
+        sim.sort(function (a, b) {
+          return String(b.bonusPapo80Em || '').localeCompare(String(a.bonusPapo80Em || ''));
+        });
+        nao.sort(function (a, b) {
+          return String(a.nome || '').localeCompare(String(b.nome || ''));
+        });
+        var elS = document.getElementById('bonus80-total-sim');
+        var elN = document.getElementById('bonus80-total-nao');
+        if (elS) elS.textContent = sim.length;
+        if (elN) elN.textContent = nao.length;
+
+        if (!sim.length) {
+          tSim.innerHTML = '<tr><td colspan="5" class="vazio">Ninguém recebeu ainda.</td></tr>';
+        } else {
+          var hs = '';
+          sim.forEach(function (u, i) {
+            var quando = u.bonusPapo80Em ? String(u.bonusPapo80Em).slice(0, 19).replace('T', ' ') : '—';
+            hs += '<tr data-busca-b80="' + escHtml((u.nome || '') + ' ' + (u.email || '')).toLowerCase() + '">' +
+              '<td>' + (i + 1) + '</td>' +
+              '<td>' + escHtml(u.nome || '—') + '</td>' +
+              '<td>' + escHtml(u.email || '—') + '</td>' +
+              '<td class="pts-ok">' + (u.pontos || 0) + '</td>' +
+              '<td style="font-size:11px;">' + escHtml(quando) + '</td>' +
+              '</tr>';
+          });
+          tSim.innerHTML = hs;
+        }
+
+        if (!nao.length) {
+          tNao.innerHTML = '<tr><td colspan="5" class="vazio">Todos já receberam.</td></tr>';
+        } else {
+          var hn = '';
+          nao.forEach(function (u, i) {
+            var em = (u.email || '').replace(/'/g, "\\'");
+            hn += '<tr data-busca-b80="' + escHtml((u.nome || '') + ' ' + (u.email || '')).toLowerCase() + '">' +
+              '<td>' + (i + 1) + '</td>' +
+              '<td>' + escHtml(u.nome || '—') + '</td>' +
+              '<td>' + escHtml(u.email || '—') + '</td>' +
+              '<td class="pts-baixo">' + (u.pontos || 0) + '</td>' +
+              '<td><button type="button" class="btn-laranja" onclick="creditarBonus80Email(\'' + em + '\')">+80</button></td>' +
+              '</tr>';
+          });
+          tNao.innerHTML = hn;
+        }
+      } catch (e) {
+        tSim.innerHTML = '<tr><td colspan="5" class="vazio">Erro: ' + escHtml(e.message || e) + '</td></tr>';
+        tNao.innerHTML = '<tr><td colspan="5" class="vazio">Erro</td></tr>';
+      }
+    }
+
+    function filtrarBonus80() {
+      var q = (document.getElementById('busca-bonus80') && document.getElementById('busca-bonus80').value || '').trim().toLowerCase();
+      ['tbody-bonus80-sim', 'tbody-bonus80-nao'].forEach(function (id) {
+        var tb = document.getElementById(id);
+        if (!tb) return;
+        tb.querySelectorAll('tr[data-busca-b80]').forEach(function (tr) {
+          tr.style.display = (!q || (tr.getAttribute('data-busca-b80') || '').indexOf(q) !== -1) ? '' : 'none';
+        });
+      });
+    }
+
+    async function creditarBonus80Email(email) {
+      email = String(email || '').trim().toLowerCase();
+      if (!email) return;
+      if (!confirm('Dar 80 pontos a ' + email + '? (só se ainda não tiver recebido)')) return;
+      try {
+        var snap = await db.collection('usuarios').where('email', '==', email).limit(1).get();
+        if (snap.empty) return alert('Utilizador não encontrado.');
+        var doc = snap.docs[0];
+        var d = doc.data() || {};
+        if (d.bonusPapo80 === true) {
+          alert('Esta conta já recebeu os 80 pontos.');
+          return;
+        }
+        var novos = (Number(d.pontos) || 0) + 80;
+        await doc.ref.update({
+          pontos: novos,
+          bonusPapo80: true,
+          bonusPapo80Em: new Date().toISOString(),
+          bonusPapo80Via: 'admin',
+          ultimaAtualizacao: new Date().toISOString()
+        });
+        // refresh local cache
+        if (typeof todosUsers !== 'undefined') {
+          todosUsers.forEach(function (u) {
+            if ((u.email || '').toLowerCase() === email) {
+              u.pontos = novos;
+              u.bonusPapo80 = true;
+              u.bonusPapo80Em = new Date().toISOString();
+            }
+          });
+        }
+        mostrarAviso('+80 pontos creditados a ' + email);
+        carregarBonus80();
+      } catch (e) {
+        alert('Erro: ' + (e.message || e));
+      }
+    }
+
+    function creditarBonus80Manual() {
+      var email = (document.getElementById('bonus80-email') && document.getElementById('bonus80-email').value || '').trim();
+      creditarBonus80Email(email);
+    }
+
 
     // carregarTudo() agora é chamado pelo onAuthStateChanged, após login confirmado.
   </script>
