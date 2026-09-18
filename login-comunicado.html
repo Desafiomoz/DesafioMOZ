@@ -185,7 +185,7 @@
         localStorage.setItem('emailUtilizador', u.email || email);
         localStorage.setItem('pontosUtilizador', String(u.pontos || 0));
         if (u.codigoIndicacao) localStorage.setItem('codigoIndicacao', u.codigoIndicacao);
-        if (u.bonusPapo80 === true) localStorage.setItem('bonusPapo80', '1');
+        if (u.bonusPapo80 === true) localStorage.setItem('bonusPapo80_' + email, '1');
         window.location.href = DESTINO;
       } catch (e) {
         console.error(e);

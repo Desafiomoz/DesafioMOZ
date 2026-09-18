@@ -410,6 +410,16 @@
   function nomeSessao() {
     return (localStorage.getItem('nomeUtilizador') || localStorage.getItem('nome') || '').trim();
   }
+  /** Flag só desta conta (não partilha entre e-mails no mesmo telemóvel) */
+  function flagKey(email) {
+    return FLAG + '_' + String(email || '').trim().toLowerCase();
+  }
+  function jaRecebeuLocal(email) {
+    return localStorage.getItem(flagKey(email)) === '1';
+  }
+  function marcarRecebeuLocal(email) {
+    localStorage.setItem(flagKey(email), '1');
+  }
 
   /* Sem login no site → vai primeiro ao login, depois volta aqui */
   var email = emailSessao();
@@ -463,7 +473,7 @@
       el.style.display = 'block';
       el.innerHTML = 'Conta: <b>' + (nomeSessao() || email.split('@')[0]) + '</b> · ' + email;
     }
-    if (localStorage.getItem(FLAG) === '1') {
+    if (jaRecebeuLocal(email)) {
       setClaimRecebido();
       return;
     }
@@ -472,7 +482,7 @@
       if (!snap.empty) {
         var d = snap.docs[0].data() || {};
         if (d[FLAG] === true) {
-          localStorage.setItem(FLAG, '1');
+          marcarRecebeuLocal(email);
           setClaimRecebido();
           return;
         }
@@ -496,7 +506,7 @@
       var doc = snap.docs[0];
       var d = doc.data() || {};
       if (d[FLAG] === true) {
-        localStorage.setItem(FLAG, '1');
+        marcarRecebeuLocal(email);
         setClaimRecebido();
         return;
       }
@@ -507,7 +517,7 @@
         bonusPapo80Em: new Date().toISOString(),
         ultimaAtualizacao: new Date().toISOString()
       });
-      localStorage.setItem(FLAG, '1');
+      marcarRecebeuLocal(email);
       localStorage.setItem('pontosUtilizador', String(novos));
       sparks();
       setClaimRecebido();
