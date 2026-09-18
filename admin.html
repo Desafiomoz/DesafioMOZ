@@ -235,6 +235,10 @@
     <button class="tab" data-tab="actividade" onclick="mudarTab('actividade')"><i class="fas fa-clipboard-check"></i> Actividade</button>
     <button class="tab" data-tab="origem" onclick="mudarTab('origem')"><i class="fas fa-pie-chart"></i> Origem pts</button>
     <button class="tab" data-tab="chat" onclick="mudarTab('chat')"><i class="fas fa-comments"></i> Chat</button>
+    <button class="tab" data-tab="dicas" onclick="mudarTab('dicas')"><i class="fas fa-lightbulb"></i> Dicas</button>
+    <button class="tab" data-tab="pedidos-dicas" onclick="mudarTab('pedidos-dicas')"><i class="fas fa-reply"></i> Pedidos dicas <span class="badge" id="badge-pedidos-dicas">0</span></button>
+    <button class="tab" data-tab="notif-admin" onclick="mudarTab('notif-admin')"><i class="fas fa-bell"></i> Notificações</button>
+    <button class="tab" data-tab="privado" onclick="mudarTab('privado')"><i class="fas fa-lock"></i> Privado</button>
   </div>
 
   <div class="conteudo">
@@ -269,6 +273,20 @@
           </div>
         </div>
         <button type="button" class="btn-verde" onclick="ajustarPontosUtilizador()">⚡ Aplicar ajuste de pontos</button>
+      </div>
+
+      <div class="form-box">
+        <h3><i class="fas fa-users"></i> Ajustar pontos de TODOS os utilizadores</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:12px;">
+          Soma ou subtrai o <strong>mesmo valor</strong> a <strong>todas</strong> as contas de uma vez.
+          Ex.: <code>5</code> = +5 pts a cada utilizador · <code>-2</code> = tira 2 pts a cada um.
+          Confirma antes — não se desfaz sozinho.
+        </p>
+        <div class="form-row">
+          <label>Pontos para todos (+ ou −)</label>
+          <input type="number" id="ajuste-pts-todos-valor" placeholder="Ex: 5 ou -2" step="1">
+        </div>
+        <button type="button" class="btn-laranja" style="width:100%;padding:12px;border-radius:10px;font-size:14px;margin-top:8px;" onclick="ajustarPontosTodos()">🌍 Aplicar a todos os utilizadores</button>
       </div>
 
       <div class="form-box">
@@ -1190,7 +1208,7 @@
         <h3><i class="fas fa-pie-chart"></i> Origem dos pontos dos utilizadores</h3>
         <p style="font-size:12px;color:#888;margin-bottom:12px;">
           Estimativa com base nos dados gravados: check-in, indicação, pesquisas, desafios, missão semanal e roleta.
-          O resto (ofertas CPX/Offerwall, anúncios, ajustes admin) entra em <b>Outros</b>.
+          Colunas com valores reais gravados na conta. “Por identificar” = total − soma das origens conhecidas (pontos antigos antes do rastreio).
         </p>
         <div class="resumo" style="margin-bottom:14px;">
           <div class="resumo-card"><div class="num" id="origem-users">0</div><div class="lbl">Com pontos</div></div>
@@ -1208,14 +1226,15 @@
                 <th>#</th>
                 <th>Nome</th>
                 <th>E-mail</th>
-                <th>Total pts</th>
+                <th>Total</th>
                 <th>Check-in</th>
                 <th>Indicação</th>
-                <th>Pesquisas</th>
-                <th>Desafios</th>
-                <th>Missão</th>
+                <th>CPX</th>
+                <th>Offerwall.me</th>
+                <th>Homejub</th>
                 <th>Roleta</th>
-                <th>Outros (est.)</th>
+                <th>Admin</th>
+                <th>Por identificar</th>
               </tr>
             </thead>
             <tbody id="tbody-origem">
@@ -1224,9 +1243,164 @@
           </table>
         </div>
         <p style="font-size:11px;color:#666;margin-top:8px;">
-          Check-in ≈ dias × 3 pts. Pesquisas/desafios/missão = flags de conclusão (não o valor exacto de cada oferta).
-          Roleta = pontos ganhos na roleta (após actualização do jogo).
+          CPX / Offerwall.me / Homejub / Roleta / Admin passam a gravar-se a partir desta actualização. Pontos antigos podem aparecer em “Por identificar”.
         </p>
+      </div>
+    </div>
+
+
+    <div class="painel" id="painel-dicas">
+      <div class="form-box">
+        <h3><i class="fas fa-lightbulb"></i> Dicas para novatos</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:12px;">Apaga dicas inadequadas ou todas de uma vez.</p>
+        <button type="button" class="btn-vermelho" style="width:100%;padding:12px;border-radius:10px;margin-bottom:12px;" onclick="apagarTodasDicas()">🗑 Apagar TODAS as dicas</button>
+        <button type="button" class="btn-verde" style="margin-bottom:12px;" onclick="carregarDicasAdmin()">🔄 Actualizar</button>
+        <div class="tabela-wrap">
+          <table>
+            <thead><tr><th>#</th><th>Quando</th><th>Autor</th><th>E-mail</th><th>Dica</th><th>Expira</th><th>Ações</th></tr></thead>
+            <tbody id="tbody-dicas"><tr><td colspan="7" class="vazio">Clica em Actualizar.</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+
+    <div class="painel" id="painel-notif-admin">
+      <div class="form-box">
+        <h3><i class="fas fa-bell"></i> Enviar notificação</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:12px;">
+          Envia de imediato. Se o utilizador estiver online, vê na hora.
+          Se estiver offline, vê quando entrar no site (até à duração que escolheres).
+        </p>
+        <div class="form-row">
+          <label>Destino</label>
+          <select id="notif-destino">
+            <option value="todos">Todos os utilizadores</option>
+            <option value="um">Um utilizador (e-mail)</option>
+          </select>
+        </div>
+        <div class="form-row" id="notif-email-row" style="display:none;">
+          <label>E-mail do utilizador</label>
+          <input type="email" id="notif-email" placeholder="email@exemplo.com">
+        </div>
+        <div class="form-row">
+          <label>Título</label>
+          <input type="text" id="notif-titulo" placeholder="Ex: Novidade no Desafio MOZ" maxlength="80">
+        </div>
+        <div class="form-row">
+          <label>Descrição / mensagem</label>
+          <textarea id="notif-texto" rows="4" placeholder="Texto que o utilizador vai ler..." maxlength="400"></textarea>
+        </div>
+        <div class="form-row">
+          <label>Duração no ecrã (segundos)</label>
+          <input type="number" id="notif-duracao" value="15" min="5" max="120" step="1">
+        </div>
+        <div class="form-row">
+          <label>Link do botão (opcional)</label>
+          <input type="text" id="notif-link" placeholder="Ex: chat-dicas.html ou ofertas.html">
+        </div>
+        <div class="form-row">
+          <label>Texto do botão (opcional)</label>
+          <input type="text" id="notif-btn" placeholder="Ex: Ver agora" value="Ver">
+        </div>
+        <button type="button" class="btn-verde" onclick="enviarNotifAdmin()">📢 Enviar notificação</button>
+      </div>
+      <div class="form-box">
+        <h3><i class="fas fa-user-clock"></i> Chegaram depois do envio a todos</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:12px;">
+          Utilizadores que <strong>criaram conta depois</strong> da última notificação enviada a <strong>todos</strong>.
+          Não viram o aviso. Podes reenviar a mesma mensagem só para eles.
+        </p>
+        <div id="atrasados-resumo" style="font-size:13px;color:#00e676;margin-bottom:10px;">—</div>
+        <button type="button" class="btn-cinza" style="margin-bottom:8px;padding:8px 12px;" onclick="carregarAtrasadosNotif()">Actualizar lista</button>
+        <button type="button" class="btn-laranja" style="margin-bottom:8px;padding:8px 12px;" onclick="reenviarNotifAtrasados()">📢 Reenviar última (só aos atrasados)</button>
+        <div class="tabela-wrap" style="margin-top:10px;">
+          <table>
+            <thead><tr><th>#</th><th>Nome</th><th>E-mail</th><th>Cadastro</th><th>Pontos</th></tr></thead>
+            <tbody id="tbody-atrasados-notif"><tr><td colspan="5" class="vazio">Carrega a lista ou envia primeiro uma notificação a todos.</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="form-box">
+        <h3>Últimas enviadas</h3>
+        <button type="button" class="btn-cinza" style="margin-bottom:10px;" onclick="carregarNotifAdminHist()">Actualizar</button>
+        <button type="button" class="btn-vermelho" style="margin-bottom:10px;padding:8px 12px;" onclick="apagarTodasNotifAdmin()">Apagar histórico de envios</button>
+        <button type="button" class="btn-laranja" style="margin-bottom:10px;padding:8px 12px;" onclick="apagarNotifChatPendentes()">Limpar fila notificaçõesChat</button>
+        <div class="tabela-wrap">
+          <table>
+            <thead><tr><th>Quando</th><th>Destino</th><th>Título</th><th>Duração</th><th></th></tr></thead>
+            <tbody id="tbody-notif-admin"><tr><td colspan="5" class="vazio">—</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="painel" id="painel-pedidos-dicas">
+      <div class="form-box">
+        <h3><i class="fas fa-reply"></i> Pedidos de explicação (dicas)</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:12px;">
+          Quando um utilizador pede mais explicações a um autor de dica (incluindo nomes da comunidade),
+          aparece aqui. Responde <strong>como esse autor</strong> — a mensagem vai para o papo privado do utilizador.
+        </p>
+        <button type="button" class="btn-verde" style="margin-bottom:12px;" onclick="carregarPedidosDicasAdmin()">🔄 Actualizar pedidos</button>
+        <div class="tabela-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Quando</th>
+                <th>Autor da dica</th>
+                <th>Texto da dica (o que leu)</th>
+                <th>Estado</th>
+                <th>Conversa</th>
+                <th>Acção</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-pedidos-dicas"><tr><td colspan="7" class="vazio">Clica em Actualizar.</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="form-box" id="caixa-resposta-dica" style="display:none;">
+        <h3>✉️ Responder como <span id="resp-dica-autor">—</span></h3>
+        <p style="font-size:12px;color:#888;margin-bottom:8px;">Para: <span id="resp-dica-user">—</span></p>
+        <div style="background:#0d0d12;border:1px solid #2a2a3a;border-radius:10px;padding:10px;margin-bottom:12px;font-size:12px;color:#ccc;">
+          <b style="color:#00e676;">Dica que o utilizador leu:</b>
+          <div id="resp-dica-texto-dica" style="margin-top:6px;line-height:1.45;">—</div>
+        </div>
+        <div class="form-row">
+          <label>Mensagem (vai ao papo privado do utilizador)</label>
+          <textarea id="resp-dica-texto" rows="4" placeholder="Escreve a resposta no tom do autor da dica..."></textarea>
+        </div>
+        <input type="hidden" id="resp-dica-pedido-id">
+        <input type="hidden" id="resp-dica-conversa">
+        <input type="hidden" id="resp-dica-autor-email">
+        <input type="hidden" id="resp-dica-user-email">
+        <button type="button" class="btn-verde" onclick="enviarRespostaDicaAdmin()">Enviar como o autor</button>
+        <button type="button" class="btn-cinza" style="width:100%;margin-top:8px;padding:10px;" onclick="fecharRespostaDica()">Cancelar</button>
+      </div>
+    </div>
+    <div class="painel" id="painel-privado">
+      <div class="form-box">
+        <h3><i class="fas fa-trash"></i> Limpar mensagens privadas</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:12px;">Apaga mensagens da coleção chatPrivado. Podes limpar tudo ou só de um e-mail.</p>
+        <div class="form-row">
+          <label>E-mail (opcional — vazio = TODAS as mensagens privadas)</label>
+          <input type="email" id="apagar-priv-email" placeholder="email@exemplo.com ou vazio">
+        </div>
+        <button type="button" class="btn-vermelho" style="width:100%;padding:12px;" onclick="apagarMensagensPrivado()">🗑 Apagar mensagens privadas</button>
+      </div>
+
+      <div class="form-box">
+        <h3><i class="fas fa-lock"></i> Conversas privadas</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:12px;">Quem falou com quem e mensagens recentes.</p>
+        <button type="button" class="btn-verde" style="margin-bottom:12px;" onclick="carregarPrivadoAdmin()">🔄 Actualizar</button>
+        <div class="busca"><input type="text" id="busca-privado" placeholder="Filtrar e-mail..." oninput="filtrarPrivadoAdmin()"></div>
+        <div class="tabela-wrap">
+          <table>
+            <thead><tr><th>#</th><th>Quando</th><th>De</th><th>Conversa</th><th>Mensagem</th></tr></thead>
+            <tbody id="tbody-privado"><tr><td colspan="5" class="vazio">Clica em Actualizar.</td></tr></tbody>
+          </table>
+        </div>
       </div>
     </div>
 
@@ -1348,6 +1522,10 @@ function mostrarAviso(txt) {
     }
 
     function mudarTab(nome) {
+      if (nome === 'notif-admin') {
+        try { carregarNotifAdminHist(); carregarAtrasadosNotif(); } catch (e) {}
+      }
+
       try {
         document.querySelectorAll('.tab').forEach(function (t) {
           t.classList.toggle('ativo', t.getAttribute('data-tab') === nome);
@@ -1365,6 +1543,10 @@ function mostrarAviso(txt) {
         if (nome === 'actividade') try { renderActividadeAdmin(); } catch (eA) {}
         if (nome === 'roleta') try { carregarRoletaAdmin(); carregarRoletaPontosAdmin(); carregarRoletaHistoricoAdmin(); } catch (eR) {}
         if (nome === 'origem') try { renderOrigemPontosAdmin(); } catch (eOg) {}
+        if (nome === 'dicas') try { carregarDicasAdmin(); } catch (eD) {}
+        if (nome === 'pedidos-dicas') try { carregarPedidosDicasAdmin(); } catch (ePD) {}
+        if (nome === 'notif-admin') try { carregarNotifAdminHist(); } catch (eN) {}
+        if (nome === 'privado') try { carregarPrivadoAdmin(); } catch (eP) {}
       } catch (e) {
         console.error('mudarTab:', e);
         alert('Erro ao abrir separador: ' + (e.message || e));
@@ -2896,7 +3078,45 @@ async function carregarAnunciosTarefasAdmin() {
       }
     }
 
-    async function ajustarPontosUtilizador() {
+    
+    async function ajustarPontosTodos() {
+      var delta = parseInt(document.getElementById('ajuste-pts-todos-valor').value, 10);
+      if (isNaN(delta) || delta === 0) return alert('Indique quantos pontos (+ ou −) para todos.');
+      if (!confirm('Aplicar ' + (delta > 0 ? '+' : '') + delta + ' pontos a TODOS os utilizadores?')) return;
+      try {
+        var snap = await db.collection('usuarios').get();
+        var n = 0, erros = 0;
+        var batch = db.batch();
+        var ops = 0;
+        for (var i = 0; i < snap.docs.length; i++) {
+          var doc = snap.docs[i];
+          var dados = doc.data() || {};
+          var atual = Number(dados.pontos) || 0;
+          var novo = Math.max(0, atual + delta);
+          var payload = {
+            pontos: novo,
+            ultimaAtualizacao: new Date().toISOString()
+          };
+          if (delta > 0) payload.pontosAdmin = (Number(dados.pontosAdmin) || 0) + delta;
+          batch.update(doc.ref, payload);
+          ops++;
+          n++;
+          if (ops >= 400) {
+            await batch.commit();
+            batch = db.batch();
+            ops = 0;
+          }
+        }
+        if (ops > 0) await batch.commit();
+        document.getElementById('ajuste-pts-todos-valor').value = '';
+        await carregarTudo();
+        mostrarAviso('Ajuste aplicado a ' + n + ' utilizadores (' + (delta > 0 ? '+' : '') + delta + ' pts cada).');
+      } catch (e) {
+        alert('Erro: ' + (e.message || e));
+      }
+    }
+
+async function ajustarPontosUtilizador() {
       var email = (document.getElementById('ajuste-pts-email').value || '').trim().toLowerCase();
       var delta = parseInt(document.getElementById('ajuste-pts-valor').value, 10);
       if (!email) return alert('Escreva o e-mail do utilizador.');
@@ -2913,7 +3133,7 @@ async function carregarAnunciosTarefasAdmin() {
         var dados = snap.docs[0].data();
         var atual = dados.pontos || 0;
         var novo = Math.max(0, atual + delta);
-        await ref.update({
+        var adminUp = {
           pontos: novo,
           ultimaAtualizacao: new Date().toISOString(),
           ultimoAjustePontos: {
@@ -2922,7 +3142,11 @@ async function carregarAnunciosTarefasAdmin() {
             depois: novo,
             em: new Date().toISOString()
           }
-        });
+        };
+        if (delta > 0) {
+          adminUp.pontosAdmin = (Number(dados.pontosAdmin) || 0) + delta;
+        }
+        await ref.update(adminUp);
         if (dados.indicadoPor) { await creditarBonusMarcoIndicacao(dados.indicadoPor, atual, novo); }
         document.getElementById('ajuste-pts-email').value = '';
         document.getElementById('ajuste-pts-valor').value = '';
@@ -3816,45 +4040,39 @@ async function carregarAnunciosTarefasAdmin() {
       users = users.filter(function (u) { return (Number(u.pontos) || 0) > 0; });
       users.sort(function (a, b) { return (b.pontos || 0) - (a.pontos || 0); });
 
-      var sumCk = 0, sumInd = 0, sumRol = 0;
+      var sumCk = 0, sumInd = 0, sumRol = 0, sumCpx = 0, sumOw = 0, sumHj = 0;
       var html = '';
       users.forEach(function (u, i) {
         var total = Number(u.pontos) || 0;
-        var nCk = Array.isArray(u.checkins) ? u.checkins.length : 0;
-        if (!nCk && u.ultimoCheckin) nCk = 1;
-        var ptsCk = nCk * 3;
-        var ptsInd = Number(u.pontosIndicacao) || 0;
-        var ptsRol = Number(u.roletaPontosGanhos) || 0;
-        var nPesq = 0;
-        if (u.pesquisaDadosCompleta) nPesq++;
-        if (u.pesquisaRapidaCompleta) nPesq++;
-        if (u.pesquisaOpiniaoCompleta) nPesq++;
-        if (u.pesquisaHabitosCompleta) nPesq++;
-        var pesqTxt = nPesq + '/4';
-        var dYt = u.desafioYoutubeCompleto === true;
-        var nProg = 0;
-        if (u.desafiosCompletos && typeof u.desafiosCompletos === 'object') {
-          nProg = Object.keys(u.desafiosCompletos).length;
-        } else if (Array.isArray(u.desafiosFeitos)) {
-          nProg = u.desafiosFeitos.length;
+        var ptsCk = Number(u.pontosCheckin);
+        if (!ptsCk || ptsCk < 0) {
+          var nCk = Array.isArray(u.checkins) ? u.checkins.length : 0;
+          if (!nCk && u.ultimoCheckin) nCk = 1;
+          ptsCk = nCk * 3;
         }
-        var desTxt = (dYt ? 'YT' : '') + (nProg ? ((dYt ? '+' : '') + nProg + ' prog') : (dYt ? '' : '—'));
-        var misTxt = u.missaoSemanalCompleta ? '✓' : (u.missaoSemanalVisitou ? 'visitou' : '—');
-        var conhecidos = ptsCk + ptsInd + ptsRol;
-        var outros = Math.max(0, total - conhecidos);
+        var ptsInd = Number(u.pontosIndicacao) || 0;
+        var ptsCpx = Number(u.pontosCpx) || 0;
+        var ptsOw = Number(u.pontosOfferwallMe) || 0;
+        var ptsHj = Number(u.pontosHomejub) || 0;
+        var ptsRol = Number(u.roletaPontosGanhos) || 0;
+        var ptsAd = Number(u.pontosAdmin) || 0;
+        var conhecidos = ptsCk + ptsInd + ptsCpx + ptsOw + ptsHj + ptsRol + ptsAd;
+        var resto = Math.max(0, total - conhecidos);
         sumCk += ptsCk; sumInd += ptsInd; sumRol += ptsRol;
+        sumCpx += ptsCpx; sumOw += ptsOw; sumHj += ptsHj;
         html += '<tr data-busca-origem="' + escHtml(((u.nome || '') + ' ' + (u.email || '')).toLowerCase()) + '">' +
           '<td>' + (i + 1) + '</td>' +
           '<td>' + escHtml(u.nome || '—') + '</td>' +
           '<td>' + escHtml(u.email || '—') + '</td>' +
           '<td class="pts-alto">' + total + '</td>' +
-          '<td class="pts-ok">' + ptsCk + ' <span style="color:#666;font-size:10px;">(' + nCk + 'd)</span></td>' +
+          '<td class="pts-ok">' + ptsCk + '</td>' +
           '<td class="pts-ok">' + ptsInd + '</td>' +
-          '<td>' + pesqTxt + '</td>' +
-          '<td>' + escHtml(desTxt) + '</td>' +
-          '<td>' + misTxt + '</td>' +
+          '<td class="pts-ok">' + ptsCpx + '</td>' +
+          '<td class="pts-ok">' + ptsOw + '</td>' +
+          '<td class="pts-ok">' + ptsHj + '</td>' +
           '<td class="pts-ok">' + ptsRol + '</td>' +
-          '<td class="pts-baixo">' + outros + '</td>' +
+          '<td class="pts-ok">' + ptsAd + '</td>' +
+          '<td class="pts-baixo">' + resto + '</td>' +
           '</tr>';
       });
       var elU = document.getElementById('origem-users');
@@ -3866,10 +4084,531 @@ async function carregarAnunciosTarefasAdmin() {
       if (elI) elI.textContent = sumInd;
       if (elR) elR.textContent = sumRol;
       if (!users.length) {
-        tbody.innerHTML = '<tr><td colspan="11" class="vazio">Nenhum utilizador com pontos.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="12" class="vazio">Nenhum utilizador com pontos.</td></tr>';
       } else {
         tbody.innerHTML = html;
       }
+    }
+
+
+
+
+    document.addEventListener('change', function (e) {
+      if (e.target && e.target.id === 'notif-destino') {
+        var row = document.getElementById('notif-email-row');
+        if (row) row.style.display = e.target.value === 'um' ? 'block' : 'none';
+      }
+    });
+
+    
+    async function apagarTodasNotifAdmin() {
+      if (!confirm('Apagar todo o histórico adminNotificacoes?')) return;
+      try {
+        var snap = await db.collection('adminNotificacoes').limit(300).get();
+        var batch = db.batch(), n = 0;
+        snap.forEach(function (doc) { batch.delete(doc.ref); n++; });
+        if (n) await batch.commit();
+        carregarNotifAdminHist();
+        mostrarAviso('Histórico apagado (' + n + ').');
+      } catch (e) { alert('Erro: ' + (e.message || e)); }
+    }
+
+    async function apagarNotifChatPendentes() {
+      if (!confirm('Limpar documentos em notificacoesChat (até 300)?')) return;
+      try {
+        var snap = await db.collection('notificacoesChat').limit(300).get();
+        var batch = db.batch(), n = 0;
+        snap.forEach(function (doc) { batch.delete(doc.ref); n++; });
+        if (n) await batch.commit();
+        mostrarAviso('Fila notificacoesChat limpa (' + n + ').');
+      } catch (e) { alert('Erro: ' + (e.message || e)); }
+    }
+
+    async function apagarUmaNotifAdmin(id) {
+      if (!id || !confirm('Apagar este registo?')) return;
+      try {
+        await db.collection('adminNotificacoes').doc(id).delete();
+        carregarNotifAdminHist();
+      } catch (e) { alert('Erro: ' + (e.message || e)); }
+    }
+
+    async function apagarMensagensPrivado() {
+      var em = ((document.getElementById('apagar-priv-email') || {}).value || '').trim().toLowerCase();
+      var msg = em
+        ? 'Apagar mensagens privadas que envolvem ' + em + '?'
+        : 'Apagar TODAS as mensagens privadas do site?';
+      if (!confirm(msg)) return;
+      try {
+        var snap;
+        if (em) {
+          snap = await db.collection('chatPrivado').where('participantes', 'array-contains', em).limit(400).get();
+        } else {
+          snap = await db.collection('chatPrivado').limit(400).get();
+        }
+        var batch = db.batch(), n = 0;
+        snap.forEach(function (doc) { batch.delete(doc.ref); n++; });
+        if (n) await batch.commit();
+        carregarPrivadoAdmin();
+        mostrarAviso('Apagadas ' + n + ' mensagens privadas.');
+      } catch (e) { alert('Erro: ' + (e.message || e)); }
+    }
+
+async function enviarNotifAdmin() {
+      var dest = (document.getElementById('notif-destino') || {}).value || 'todos';
+      var titulo = ((document.getElementById('notif-titulo') || {}).value || '').trim().slice(0, 80);
+      var texto = ((document.getElementById('notif-texto') || {}).value || '').trim().slice(0, 400);
+      var duracao = parseInt((document.getElementById('notif-duracao') || {}).value, 10) || 15;
+      var link = ((document.getElementById('notif-link') || {}).value || '').trim();
+      var btnTxt = ((document.getElementById('notif-btn') || {}).value || 'Ver').trim() || 'Ver';
+      if (!titulo || !texto) return alert('Preenche título e descrição.');
+      if (duracao < 5) duracao = 5;
+      if (duracao > 120) duracao = 120;
+
+      var alvoEmail = '_broadcast_admin_';
+      if (dest === 'um') {
+        alvoEmail = ((document.getElementById('notif-email') || {}).value || '').trim().toLowerCase();
+        if (!alvoEmail || alvoEmail.indexOf('@') === -1) return alert('Indica um e-mail válido.');
+      }
+
+      try {
+        await db.collection('notificacoesChat').add({
+          email: alvoEmail,
+          tipo: 'admin',
+          titulo: titulo,
+          texto: texto,
+          duracaoMs: duracao * 1000,
+          link: link || 'index.html',
+          btnTexto: btnTxt,
+          deNome: 'Desafio MOZ',
+          deEmail: 'admin@desafiomoz',
+          lida: false,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        // histórico completo (serve para reenviar aos atrasados)
+        await db.collection('adminNotificacoes').add({
+          destino: dest === 'um' ? alvoEmail : 'todos',
+          titulo: titulo,
+          texto: texto,
+          duracao: duracao,
+          link: link || 'index.html',
+          btnTexto: btnTxt,
+          paraTodos: dest !== 'um',
+          createdAt: new Date().toISOString()
+        });
+        mostrarAviso('Notificação enviada' + (dest === 'um' ? ' para ' + alvoEmail : ' a todos') + '.');
+        document.getElementById('notif-titulo').value = '';
+        document.getElementById('notif-texto').value = '';
+        carregarNotifAdminHist();
+        if (dest !== 'um') carregarAtrasadosNotif();
+      } catch (e) {
+        alert('Erro: ' + (e.message || e));
+      }
+    }
+
+
+    var _ultimaNotifTodos = null;
+    var _listaAtrasadosNotif = [];
+
+    async function carregarAtrasadosNotif() {
+      var tbody = document.getElementById('tbody-atrasados-notif');
+      var resumo = document.getElementById('atrasados-resumo');
+      if (!tbody) return;
+      tbody.innerHTML = '<tr><td colspan="5" class="vazio">A carregar...</td></tr>';
+      try {
+        // última notificação enviada a TODOS
+        var snap = await db.collection('adminNotificacoes').limit(80).get();
+        var globals = [];
+        snap.forEach(function (doc) {
+          var d = doc.data() || {};
+          d._id = doc.id;
+          if (d.destino === 'todos' || d.paraTodos === true) globals.push(d);
+        });
+        globals.sort(function (a, b) {
+          return String(b.createdAt || '').localeCompare(String(a.createdAt || ''));
+        });
+        if (!globals.length) {
+          _ultimaNotifTodos = null;
+          _listaAtrasadosNotif = [];
+          if (resumo) resumo.textContent = 'Ainda não enviaste nenhuma notificação a todos.';
+          tbody.innerHTML = '<tr><td colspan="5" class="vazio">Sem envio global ainda.</td></tr>';
+          return;
+        }
+        _ultimaNotifTodos = globals[0];
+        var desde = String(_ultimaNotifTodos.createdAt || '');
+        if (resumo) {
+          resumo.innerHTML = 'Última a todos: <b>' + escHtml(_ultimaNotifTodos.titulo || '') + '</b> · ' +
+            escHtml(desde.slice(0, 19)) + ' · duração ' + (_ultimaNotifTodos.duracao || 15) + 's';
+        }
+
+        // utilizadores cadastrados DEPOIS desse envio
+        var users = (typeof todosUsers !== 'undefined' && todosUsers.length) ? todosUsers : [];
+        if (!users.length) {
+          var us = await db.collection('usuarios').limit(500).get();
+          users = [];
+          us.forEach(function (doc) {
+            var u = doc.data() || {};
+            u._id = doc.id;
+            users.push(u);
+          });
+        }
+        var atrasados = [];
+        users.forEach(function (u) {
+          var cad = u.dataCadastro || u.criadoEm || '';
+          if (!cad) return;
+          if (String(cad) > desde) {
+            atrasados.push(u);
+          }
+        });
+        atrasados.sort(function (a, b) {
+          return String(b.dataCadastro || b.criadoEm || '').localeCompare(String(a.dataCadastro || a.criadoEm || ''));
+        });
+        _listaAtrasadosNotif = atrasados;
+
+        if (!atrasados.length) {
+          tbody.innerHTML = '<tr><td colspan="5" class="vazio">Ninguém se registou depois deste envio. ✅</td></tr>';
+          return;
+        }
+        var html = '';
+        atrasados.forEach(function (u, i) {
+          var cad = u.dataCadastro || u.criadoEm || '—';
+          if (String(cad).length > 19) cad = String(cad).slice(0, 19);
+          html += '<tr>' +
+            '<td>' + (i + 1) + '</td>' +
+            '<td>' + escHtml(u.nome || '—') + '</td>' +
+            '<td>' + escHtml(u.email || '—') + '</td>' +
+            '<td style="font-size:11px;">' + escHtml(cad) + '</td>' +
+            '<td class="pts-ok">' + (u.pontos || 0) + '</td>' +
+            '</tr>';
+        });
+        tbody.innerHTML = html;
+        if (resumo) {
+          resumo.innerHTML += '<br><span style="color:#ffc107;">' + atrasados.length +
+            ' utilizador(es) chegaram depois e ainda podem receber o reenvio.</span>';
+        }
+      } catch (e) {
+        console.error(e);
+        tbody.innerHTML = '<tr><td colspan="5" class="vazio">Erro: ' + escHtml(e.message || e) + '</td></tr>';
+      }
+    }
+
+    async function reenviarNotifAtrasados() {
+      if (!_ultimaNotifTodos) {
+        await carregarAtrasadosNotif();
+      }
+      if (!_ultimaNotifTodos) return alert('Não há notificação global para reenviar.');
+      if (!_listaAtrasadosNotif.length) return alert('Não há utilizadores atrasados neste momento.');
+      var n = _listaAtrasadosNotif.length;
+      if (!confirm('Reenviar "' + (_ultimaNotifTodos.titulo || '') + '" a ' + n + ' utilizador(es) que chegaram depois?')) return;
+
+      var titulo = _ultimaNotifTodos.titulo || 'Desafio MOZ';
+      var texto = _ultimaNotifTodos.texto || '';
+      var duracao = parseInt(_ultimaNotifTodos.duracao, 10) || 15;
+      var link = _ultimaNotifTodos.link || 'index.html';
+      var btnTxt = _ultimaNotifTodos.btnTexto || 'Ver';
+      var ok = 0, falhas = 0;
+
+      for (var i = 0; i < _listaAtrasadosNotif.length; i++) {
+        var em = String(_listaAtrasadosNotif[i].email || '').trim().toLowerCase();
+        if (!em) { falhas++; continue; }
+        try {
+          await db.collection('notificacoesChat').add({
+            email: em,
+            tipo: 'admin',
+            titulo: titulo,
+            texto: texto,
+            duracaoMs: duracao * 1000,
+            link: link,
+            btnTexto: btnTxt,
+            deNome: 'Desafio MOZ',
+            deEmail: 'admin@desafiomoz',
+            lida: false,
+            reenvioAtrasados: true,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+          ok++;
+        } catch (e) { falhas++; console.warn(e); }
+      }
+
+      try {
+        await db.collection('adminNotificacoes').add({
+          destino: 'atrasados (' + ok + ')',
+          titulo: titulo,
+          texto: texto,
+          duracao: duracao,
+          link: link,
+          btnTexto: btnTxt,
+          paraTodos: false,
+          reenvio: true,
+          createdAt: new Date().toISOString()
+        });
+      } catch (e) {}
+
+      mostrarAviso('Reenvio: ' + ok + ' ok' + (falhas ? ', ' + falhas + ' falhas' : '') + '.');
+      carregarNotifAdminHist();
+      // depois do reenvio a lista continua (podem aparecer novos) — actualiza
+      carregarAtrasadosNotif();
+    }
+
+    async function carregarNotifAdminHist() {
+      var tbody = document.getElementById('tbody-notif-admin');
+      if (!tbody) return;
+      try {
+        var snap = await db.collection('adminNotificacoes').limit(40).get();
+        var lista = [];
+        snap.forEach(function (doc) {
+          var d = doc.data() || {};
+          d._id = doc.id;
+          lista.push(d);
+        });
+        lista.sort(function (a, b) { return String(b.createdAt || '').localeCompare(String(a.createdAt || '')); });
+        if (!lista.length) {
+          tbody.innerHTML = '<tr><td colspan="5" class="vazio">Ainda sem envios.</td></tr>';
+          return;
+        }
+        var html = '';
+        lista.forEach(function (d) {
+          html += '<tr><td style="font-size:11px;">' + escHtml(String(d.createdAt || '').slice(0,19)) + '</td>' +
+            '<td>' + escHtml(d.destino || '') + '</td>' +
+            '<td>' + escHtml(d.titulo || '') + '</td>' +
+            '<td>' + (d.duracao || '—') + 's</td>' +
+            '<td><button type="button" class="btn-apagar" onclick="apagarUmaNotifAdmin(\'' + d._id + '\')">Apagar</button></td></tr>';
+        });
+        tbody.innerHTML = html;
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="5" class="vazio">Erro ou falta regras adminNotificacoes.</td></tr>';
+      }
+    }
+
+    async function carregarPedidosDicasAdmin() {
+      var tbody = document.getElementById('tbody-pedidos-dicas');
+      if (!tbody) return;
+      tbody.innerHTML = '<tr><td colspan="7" class="vazio">A carregar...</td></tr>';
+      try {
+        var snap = await db.collection('pedidosDicas').limit(200).get();
+        var lista = [];
+        snap.forEach(function (doc) {
+          var d = doc.data() || {};
+          d._id = doc.id;
+          lista.push(d);
+        });
+        lista.sort(function (a, b) {
+          var ea = String(a.deEmail || '').toLowerCase();
+          var eb = String(b.deEmail || '').toLowerCase();
+          if (ea !== eb) return ea.localeCompare(eb);
+          return String(b.createdAt || '').localeCompare(String(a.createdAt || ''));
+        });
+        var pendentes = lista.filter(function (d) { return d.status !== 'respondido'; }).length;
+        var badge = document.getElementById('badge-pedidos-dicas');
+        if (badge) {
+          badge.textContent = pendentes;
+          badge.style.display = pendentes ? 'inline' : 'none';
+        }
+        if (!lista.length) {
+          tbody.innerHTML = '<tr><td colspan="7" class="vazio">Nenhum pedido ainda.</td></tr>';
+          return;
+        }
+        var html = '';
+        var ultimoEmail = null;
+        lista.forEach(function (d, i) {
+          var em = String(d.deEmail || '').toLowerCase();
+          if (em !== ultimoEmail) {
+            ultimoEmail = em;
+            html += '<tr style="background:#1a1a28;"><td colspan="7" style="color:#00e676;font-weight:800;font-size:13px;">' +
+              '👤 ' + escHtml(d.deNome || 'Utilizador') + ' · ' + escHtml(d.deEmail || '') +
+              '</td></tr>';
+          }
+          var st = d.status === 'respondido'
+            ? '<span class="status-tag status-pago">Respondido</span>'
+            : '<span class="status-tag status-pendente">Pendente</span>';
+          var btn = '<button type="button" class="btn-verde" style="width:auto;padding:6px 10px;font-size:11px;" onclick="abrirRespostaDica(\'' + d._id + '\')">' +
+            (d.status === 'respondido' ? 'Responder de novo' : 'Responder') + '</button>';
+          html += '<tr>' +
+            '<td>' + (i+1) + '</td>' +
+            '<td style="font-size:11px;">' + escHtml(String(d.createdAt || '').slice(0,19)) + '</td>' +
+            '<td class="pts-ok"><b>' + escHtml(d.dicaAutor || '—') + '</b></td>' +
+            '<td style="font-size:12px;max-width:260px;line-height:1.4;color:#ccc;">' + escHtml((d.textoDica || '(dica não registada)').slice(0, 180)) + '</td>' +
+            '<td>' + st + '</td>' +
+            '<td style="font-size:11px;">' + escHtml(String(d.conversaId || '').slice(0, 28)) + '</td>' +
+            '<td>' + btn + '</td>' +
+            '</tr>';
+        });
+        tbody.innerHTML = html;
+        window.__pedidosDicasCache = lista;
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="7" class="vazio">Erro: ' + escHtml(e.message || e) + '</td></tr>';
+      }
+    }
+
+    function abrirRespostaDica(id) {
+      var lista = window.__pedidosDicasCache || [];
+      var d = null;
+      for (var i = 0; i < lista.length; i++) {
+        if (lista[i]._id === id) { d = lista[i]; break; }
+      }
+      if (!d) return alert('Pedido não encontrado. Actualiza a lista.');
+      document.getElementById('resp-dica-pedido-id').value = id;
+      document.getElementById('resp-dica-conversa').value = d.conversaId || '';
+      document.getElementById('resp-dica-autor').textContent = d.dicaAutor || 'Autor';
+      document.getElementById('resp-dica-user').textContent = (d.deNome || '') + ' · ' + (d.deEmail || '');
+      var elTd = document.getElementById('resp-dica-texto-dica');
+      if (elTd) elTd.textContent = d.textoDica || '(sem texto da dica guardado)';
+      document.getElementById('resp-dica-autor-email').value = d.dicaAutorEmail || '';
+      document.getElementById('resp-dica-user-email').value = d.deEmail || '';
+      document.getElementById('resp-dica-texto').value = '';
+      document.getElementById('caixa-resposta-dica').style.display = 'block';
+      document.getElementById('caixa-resposta-dica').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function fecharRespostaDica() {
+      document.getElementById('caixa-resposta-dica').style.display = 'none';
+    }
+
+    async function enviarRespostaDicaAdmin() {
+      var id = document.getElementById('resp-dica-pedido-id').value;
+      var conversaId = document.getElementById('resp-dica-conversa').value;
+      var autor = document.getElementById('resp-dica-autor').textContent;
+      var autorEmail = (document.getElementById('resp-dica-autor-email').value || '').toLowerCase();
+      var userEmail = (document.getElementById('resp-dica-user-email').value || '').toLowerCase();
+      var texto = (document.getElementById('resp-dica-texto').value || '').trim().slice(0, 500);
+      if (!texto) return alert('Escreve a mensagem.');
+      if (!conversaId || !userEmail) return alert('Dados do pedido incompletos.');
+      if (!autorEmail) autorEmail = 'dica.' + String(autor).toLowerCase().replace(/[^a-z0-9]+/g,'') + '@desafiomoz.internal';
+      try {
+        await db.collection('chatPrivado').add({
+          conversaId: conversaId,
+          participantes: [userEmail, autorEmail].sort(),
+          deEmail: autorEmail,
+          deNome: autor,
+          texto: texto,
+          createdAt: new Date().toISOString(),
+          tipo: 'resposta-dica-admin'
+        });
+        await db.collection('chatPrivadoConversas').doc(conversaId).set({
+          ultimaMsg: texto.slice(0, 80),
+          ultimaDeEmail: autorEmail,
+          updatedAt: new Date().toISOString()
+        }, { merge: true });
+        if (id) {
+          await db.collection('pedidosDicas').doc(id).update({
+            status: 'respondido',
+            respondidoEm: new Date().toISOString()
+          });
+        }
+        try {
+          await db.collection('notificacoesChat').add({
+            email: userEmail,
+            tipo: 'privado',
+            deNome: autor,
+            deEmail: autorEmail,
+            texto: texto.slice(0, 120),
+            lida: false,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+        } catch (eN) {}
+        fecharRespostaDica();
+        carregarPedidosDicasAdmin();
+        mostrarAviso('Resposta enviada como ' + autor + ' para o papo privado.');
+      } catch (e) {
+        alert('Erro ao enviar: ' + (e.message || e));
+      }
+    }
+
+    async function carregarDicasAdmin() {
+      var tbody = document.getElementById('tbody-dicas');
+      if (!tbody) return;
+      tbody.innerHTML = '<tr><td colspan="7" class="vazio">A carregar...</td></tr>';
+      try {
+        var snap = await db.collection('chatDicas').limit(150).get();
+        var lista = [];
+        snap.forEach(function (doc) {
+          var d = doc.data() || {};
+          d._id = doc.id;
+          lista.push(d);
+        });
+        lista.sort(function (a, b) { return String(b.createdAt || '').localeCompare(String(a.createdAt || '')); });
+        if (!lista.length) {
+          tbody.innerHTML = '<tr><td colspan="7" class="vazio">Sem dicas.</td></tr>';
+          return;
+        }
+        var html = '';
+        lista.forEach(function (d, i) {
+          html += '<tr>' +
+            '<td>' + (i+1) + '</td>' +
+            '<td style="font-size:11px;">' + escHtml(String(d.createdAt || '').slice(0,19)) + '</td>' +
+            '<td>' + escHtml(d.nome || '—') + '</td>' +
+            '<td>' + escHtml(d.email || '—') + '</td>' +
+            '<td style="max-width:240px;font-size:12px;">' + escHtml((d.texto || '').slice(0,120)) + '</td>' +
+            '<td style="font-size:11px;">' + escHtml(String(d.expiraEm || '').slice(0,10)) + '</td>' +
+            '<td><button type="button" class="btn-apagar" onclick="apagarDica(\'' + d._id + '\')">Apagar</button></td>' +
+            '</tr>';
+        });
+        tbody.innerHTML = html;
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="7" class="vazio">Erro: ' + escHtml(e.message || e) + '</td></tr>';
+      }
+    }
+
+    async function apagarDica(id) {
+      if (!id || !confirm('Apagar esta dica?')) return;
+      try {
+        await db.collection('chatDicas').doc(id).delete();
+        carregarDicasAdmin();
+        mostrarAviso('Dica apagada.');
+      } catch (e) { alert('Erro: ' + (e.message || e)); }
+    }
+
+    async function apagarTodasDicas() {
+      if (!confirm('Apagar TODAS as dicas? Esta acção não se reverte.')) return;
+      try {
+        var snap = await db.collection('chatDicas').limit(400).get();
+        var batch = db.batch(), n = 0;
+        snap.forEach(function (doc) { batch.delete(doc.ref); n++; });
+        if (n) await batch.commit();
+        carregarDicasAdmin();
+        mostrarAviso('Apagadas ' + n + ' dicas.');
+      } catch (e) { alert('Erro: ' + (e.message || e)); }
+    }
+
+    async function carregarPrivadoAdmin() {
+      var tbody = document.getElementById('tbody-privado');
+      if (!tbody) return;
+      tbody.innerHTML = '<tr><td colspan="5" class="vazio">A carregar...</td></tr>';
+      try {
+        var snap = await db.collection('chatPrivado').limit(200).get();
+        var lista = [];
+        snap.forEach(function (doc) {
+          var d = doc.data() || {};
+          lista.push(d);
+        });
+        lista.sort(function (a, b) { return String(b.createdAt || '').localeCompare(String(a.createdAt || '')); });
+        if (!lista.length) {
+          tbody.innerHTML = '<tr><td colspan="5" class="vazio">Sem mensagens privadas registadas.</td></tr>';
+          return;
+        }
+        var html = '';
+        lista.forEach(function (d, i) {
+          var parts = (d.participantes || []).join(' ↔ ');
+          html += '<tr data-busca-priv="' + escHtml((d.deEmail || '') + ' ' + parts).toLowerCase() + '">' +
+            '<td>' + (i+1) + '</td>' +
+            '<td style="font-size:11px;white-space:nowrap;">' + escHtml(String(d.createdAt || '').slice(0,19)) + '</td>' +
+            '<td>' + escHtml((d.deNome || '') + ' (' + (d.deEmail || '') + ')') + '</td>' +
+            '<td style="font-size:11px;">' + escHtml(parts) + '</td>' +
+            '<td style="font-size:12px;max-width:220px;">' + escHtml((d.texto || '').slice(0,100)) + '</td>' +
+            '</tr>';
+        });
+        tbody.innerHTML = html;
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="5" class="vazio">Erro: ' + escHtml(e.message || e) + '</td></tr>';
+      }
+    }
+
+    function filtrarPrivadoAdmin() {
+      var q = (document.getElementById('busca-privado') && document.getElementById('busca-privado').value || '').trim().toLowerCase();
+      var tb = document.getElementById('tbody-privado');
+      if (!tb) return;
+      tb.querySelectorAll('tr[data-busca-priv]').forEach(function (tr) {
+        tr.style.display = (!q || (tr.getAttribute('data-busca-priv') || '').indexOf(q) !== -1) ? '' : 'none';
+      });
     }
 
     function filtrarOrigemAdmin() {

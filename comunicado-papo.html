@@ -403,9 +403,9 @@
     <div class="card">
       <h2><i class="fas fa-gift"></i> O que fazer agora</h2>
       <p>
-        <b>1.</b> Faz <span class="destaque">login</span> (se ainda não estiveres).<br>
-        <b>2.</b> Recebe os <b>80 pontos grátis</b> no botão de baixo.<br>
-        <b>3.</b> Vai ver as <span class="destaque">dicas dos veteranos</span> no Papo.
+        <b>1.</b> Lê <span class="destaque">todo</span> este comunicado (se não entenderes, nunca sacas rápido).<br>
+        <b>2.</b> Faz <span class="destaque">login com e-mail e senha</span> aqui nesta página.<br>
+        <b>3.</b> Recebe os <b>80 pontos grátis</b> e vai às <span class="destaque">dicas dos veteranos</span>.
       </p>
     </div>
 
@@ -413,8 +413,12 @@
     <div class="login-box" id="login-box">
       <h3><i class="fas fa-user-lock"></i> Faz login e recebe a tua parte</h3>
       <p>
-        Entra com a tua conta do <b>Desafio MOZ</b> para receberes os <b>80 pontos</b>
-        e veres mais informações sobre a actualização do papo.
+        Tens de <b>entrar com e-mail e senha</b> nesta página (não usamos a sessão guardada no navegador).
+        Lê <b>tudo</b> o comunicado com atenção: se não entenderes as dicas dos veteranos,
+        <b>nunca vais sacar rápido</b> no Desafio MOZ.
+      </p>
+      <p>
+        Depois do login podes receber os <b>80 pontos grátis</b> e seguir para o Papo.
       </p>
       <label>E-mail</label>
       <input type="email" id="login-email" placeholder="seuemail@gmail.com" autocomplete="email">
@@ -460,22 +464,11 @@
   <script>
 (function () {
   var BONUS = 80;
-  var FLAG = 'bonusPapo80'; // campo no Firebase + localStorage
-
-  function emailSessao() {
-    return (localStorage.getItem('emailUtilizador') || localStorage.getItem('email') || '').trim().toLowerCase();
-  }
-  function nomeSessao() {
-    return (localStorage.getItem('nomeUtilizador') || localStorage.getItem('nome') || '').trim();
-  }
-
-  async function hashSenha(texto) {
-    var encoder = new TextEncoder();
-    var dados = encoder.encode(texto);
-    var hashBuffer = await crypto.subtle.digest('SHA-256', dados);
-    var hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map(function (b) { return b.toString(16).padStart(2, '0'); }).join('');
-  }
+  var FLAG = 'bonusPapo80';
+  /* Só vale login feito NESTA página nesta visita — não usa conta do localStorage */
+  var authEmail = '';
+  var authNome = '';
+  var authDocRef = null;
 
   function sparks() {
     var wrap = document.getElementById('claim-wrap');
@@ -505,59 +498,62 @@
     document.getElementById('claim-sub').textContent = 'Só era válido uma vez';
   }
 
-  function mostrarUser(email) {
-    var el = document.getElementById('user-line');
-    el.style.display = 'block';
-    el.innerHTML = 'Conta: <b>' + (nomeSessao() || email.split('@')[0]) + '</b> · ' + email;
+  function setClaimPrecisaLogin() {
+    var btn = document.getElementById('btn-claim');
+    btn.disabled = true;
+    btn.classList.remove('ja-recebeu');
+    document.getElementById('claim-txt').textContent = '🔒 Faz login para receber';
+    document.getElementById('claim-sub').textContent = 'Obrigatório nesta página · só uma vez';
+    document.getElementById('login-box').classList.add('mostrar');
+    document.getElementById('user-line').style.display = 'none';
   }
 
-  async function verificarEstado() {
-    var email = emailSessao();
-    var loginBox = document.getElementById('login-box');
+  function setClaimPronto() {
     var btn = document.getElementById('btn-claim');
-
-    if (!email) {
-      loginBox.classList.add('mostrar');
-      btn.disabled = true;
-      document.getElementById('claim-txt').textContent = '🔒 Faz login para receber';
-      document.getElementById('claim-sub').textContent = 'Só uma vez · 80 pontos grátis';
-      return;
-    }
-
-    loginBox.classList.remove('mostrar');
-    mostrarUser(email);
-
-    // local rápido
-    if (localStorage.getItem(FLAG) === '1') {
-      setClaimRecebido();
-      return;
-    }
-
-    try {
-      var snap = await db.collection('usuarios').where('email', '==', email).limit(1).get();
-      if (snap.empty) {
-        var norm = email;
-        snap = await db.collection('usuarios').where('email', '==', norm).limit(1).get();
-      }
-      if (!snap.empty) {
-        var d = snap.docs[0].data() || {};
-        if (d[FLAG] === true) {
-          localStorage.setItem(FLAG, '1');
-          setClaimRecebido();
-          return;
-        }
-      }
-    } catch (e) { console.warn(e); }
-
     btn.disabled = false;
+    btn.classList.remove('ja-recebeu');
     document.getElementById('claim-txt').textContent = '✨ Receber 80 pontos grátis';
     document.getElementById('claim-sub').textContent = 'Só uma vez · 10 MT de valor';
+    document.getElementById('login-box').classList.remove('mostrar');
+    var el = document.getElementById('user-line');
+    el.style.display = 'block';
+    el.innerHTML = 'Login nesta página: <b>' + (authNome || authEmail.split('@')[0]) + '</b> · ' + authEmail;
+  }
+
+  async function hashSenha(texto) {
+    var encoder = new TextEncoder();
+    var dados = encoder.encode(texto);
+    var hashBuffer = await crypto.subtle.digest('SHA-256', dados);
+    var hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(function (b) { return b.toString(16).padStart(2, '0'); }).join('');
+  }
+
+  async function aposLogin(email, u, docRef) {
+    authEmail = email;
+    authNome = (u.nome || '').trim();
+    authDocRef = docRef;
+    // Actualiza sessão do site só DEPOIS do login manual nesta página
+    localStorage.setItem('nomeUtilizador', u.nome || '');
+    localStorage.setItem('telUtilizador', u.telemovel || '');
+    localStorage.setItem('emailUtilizador', u.email || email);
+    localStorage.setItem('pontosUtilizador', String(u.pontos || 0));
+    if (u.codigoIndicacao) localStorage.setItem('codigoIndicacao', u.codigoIndicacao);
+
+    if (u[FLAG] === true) {
+      localStorage.setItem(FLAG, '1');
+      setClaimRecebido();
+      document.getElementById('login-box').classList.remove('mostrar');
+      var el = document.getElementById('user-line');
+      el.style.display = 'block';
+      el.innerHTML = 'Login nesta página: <b>' + (authNome || email.split('@')[0]) + '</b> · ' + email;
+      return;
+    }
+    setClaimPronto();
   }
 
   async function receberPontos() {
-    var email = emailSessao();
-    if (!email) {
-      document.getElementById('login-box').classList.add('mostrar');
+    if (!authEmail || !authDocRef) {
+      setClaimPrecisaLogin();
       document.getElementById('login-box').scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
@@ -567,22 +563,15 @@
     document.getElementById('claim-txt').textContent = 'A creditar...';
 
     try {
-      var snap = await db.collection('usuarios').where('email', '==', email).limit(1).get();
-      if (snap.empty) {
-        alert('Conta não encontrada. Faz login de novo.');
-        btn.disabled = false;
-        document.getElementById('claim-txt').textContent = '✨ Receber 80 pontos grátis';
-        return;
-      }
-      var doc = snap.docs[0];
-      var d = doc.data() || {};
+      var fresh = await authDocRef.get();
+      var d = fresh.exists ? (fresh.data() || {}) : {};
       if (d[FLAG] === true) {
         localStorage.setItem(FLAG, '1');
         setClaimRecebido();
         return;
       }
       var novos = (Number(d.pontos) || 0) + BONUS;
-      await doc.ref.update({
+      await authDocRef.update({
         pontos: novos,
         bonusPapo80: true,
         bonusPapo80Em: new Date().toISOString(),
@@ -595,7 +584,7 @@
       document.getElementById('toast-ok').classList.add('mostrar');
     } catch (e) {
       console.error(e);
-      alert('Erro ao creditar. Tenta de novo. Se continuar, verifica as regras do Firebase.');
+      alert('Erro ao creditar. Tenta de novo.');
       btn.disabled = false;
       document.getElementById('claim-txt').textContent = '✨ Receber 80 pontos grátis';
     }
@@ -626,7 +615,6 @@
         .where('senha', '==', senhaHash)
         .limit(1).get();
       if (procura.empty) {
-        // senha antiga em texto
         procura = await db.collection('usuarios')
           .where('email', '==', email)
           .where('senha', '==', senha)
@@ -635,18 +623,10 @@
       if (procura.empty) {
         erro.textContent = 'E-mail ou senha inválidos.';
         erro.classList.add('mostrar');
-        btn.disabled = false;
-        btn.textContent = 'Entrar e continuar';
         return;
       }
-      var u = procura.docs[0].data() || {};
-      localStorage.setItem('nomeUtilizador', u.nome || '');
-      localStorage.setItem('telUtilizador', u.telemovel || '');
-      localStorage.setItem('emailUtilizador', u.email || email);
-      localStorage.setItem('pontosUtilizador', String(u.pontos || 0));
-      if (u.codigoIndicacao) localStorage.setItem('codigoIndicacao', u.codigoIndicacao);
-      if (u.bonusPapo80 === true) localStorage.setItem(FLAG, '1');
-      await verificarEstado();
+      var doc = procura.docs[0];
+      await aposLogin(email, doc.data() || {}, doc.ref);
     } catch (e) {
       console.error(e);
       erro.textContent = 'Erro de ligação. Tenta de novo.';
@@ -657,8 +637,10 @@
     }
   });
 
-  verificarEstado();
+  // Sempre exige login nesta página — ignora conta já guardada no navegador
+  setClaimPrecisaLogin();
 })();
-  </script>
+</script>
+</script>
 </body>
 </html>

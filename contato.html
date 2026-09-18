@@ -28,6 +28,7 @@
             --texto: #FFFFFF;
             --texto-claro: #A8B0C8;
             --destaque: #FFD700;
+            --whatsapp: #25D366;
         }
 
         body {
@@ -57,7 +58,6 @@
             padding: 0 20px;
         }
 
-        /* CABEÇALHO */
         .cabecalho {
             text-align: center;
             padding: 40px 0 35px;
@@ -95,7 +95,6 @@
             margin: 0 auto;
         }
 
-        /* CAIXA DE MENSAGEM INICIAL */
         .aviso-contato {
             background: rgba(0,200,83,0.08);
             border: 1px solid rgba(0,200,83,0.3);
@@ -112,7 +111,12 @@
             font-size: 20px;
         }
 
-        /* CARDS DE CONTATO */
+        .aviso-contato p {
+            color: var(--texto-claro);
+            font-size: 15px;
+            line-height: 1.6;
+        }
+
         .grade-contato {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -150,10 +154,21 @@
             box-shadow: 0 20px 50px rgba(0,200,83,0.2);
         }
 
+        .card-contato.whatsapp {
+            border-color: rgba(37,211,102,0.4);
+        }
+        .card-contato.whatsapp:hover {
+            border-color: var(--whatsapp);
+            box-shadow: 0 20px 50px rgba(37,211,102,0.25);
+        }
+
         .icone-contato {
             font-size: 55px;
             margin-bottom: 18px;
             color: var(--verde-claro);
+        }
+        .card-contato.whatsapp .icone-contato {
+            color: var(--whatsapp);
         }
 
         .card-contato h4 {
@@ -173,9 +188,48 @@
             color: var(--texto-claro);
             margin-top: 8px;
             font-size: 15px;
+            line-height: 1.5;
         }
 
-        /* BOTÕES */
+        .btn-whatsapp {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 18px;
+            padding: 14px 24px;
+            border-radius: 12px;
+            background: linear-gradient(90deg, #25D366, #128C7E);
+            color: #fff;
+            font-weight: 800;
+            font-size: 15px;
+            text-decoration: none;
+            box-shadow: 0 6px 24px rgba(37,211,102,0.4);
+            transition: transform 0.25s, box-shadow 0.25s;
+        }
+        .btn-whatsapp:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 32px rgba(37,211,102,0.55);
+        }
+
+        .btn-email {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 18px;
+            padding: 14px 24px;
+            border-radius: 12px;
+            background: linear-gradient(90deg, var(--verde), var(--verde-claro));
+            color: #04140a;
+            font-weight: 800;
+            font-size: 15px;
+            text-decoration: none;
+            box-shadow: 0 6px 24px rgba(0,200,83,0.35);
+            transition: transform 0.25s;
+        }
+        .btn-email:hover { transform: translateY(-3px); }
+
         .area-botoes {
             display: flex;
             justify-content: center;
@@ -223,49 +277,65 @@
         @media (max-width: 600px) {
             .area-botoes { flex-direction: column; align-items: center; }
             .btn { width: 100%; max-width: 320px; justify-content: center; }
+            .btn-whatsapp, .btn-email { width: 100%; }
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <!-- CABEÇALHO -->
     <header class="cabecalho">
         <img src="https://i.supaimg.com/b173afd9-4344-4026-a5d7-6a53e4b6efdc/8f054a24-2746-4a43-9f1c-354584289dc3.png" alt="Desafio MOZ" class="logo">
         <h1 class="titulo-principal">📞 Fale Connosco</h1>
         <p class="subtitulo">Tens alguma dúvida, preocupação ou problema? Estamos aqui para ajudar!</p>
     </header>
 
-    <!-- AVISO -->
     <div class="aviso-contato">
-        <h3>💬 Não hesites em contactar‑nos</h3>
-        <p>Responderemos o mais rápido possível para resolver tudo da melhor forma para ti.</p>
+        <h3>💬 Qualquer preocupação, fala com o agente</h3>
+        <p>
+            Entra em contacto com o agente do Desafio MOZ — serás atendido o mais rápido possível.
+            Se houver muitas pessoas na linha, pode ser necessário aguardar um pouco.
+            Também podes enviar um e-mail.
+        </p>
     </div>
 
-    <!-- CARDS DE CONTATO -->
     <div class="grade-contato">
-        <div class="card-contato">
-            <div class="icone-contato"><i class="fas fa-phone-alt"></i></div>
-            <h4>Contacto por Telefone</h4>
-            <div class="valor-contato">+258 86 951 7893</div>
-            <p class="descricao-contato">Chamada ou mensagem por WhatsApp</p>
+        <div class="card-contato whatsapp">
+            <div class="icone-contato"><i class="fab fa-whatsapp"></i></div>
+            <h4>Agente no WhatsApp</h4>
+            <div class="valor-contato">Desafio MOZ</div>
+            <p class="descricao-contato">
+                Esqueceste a senha? Tens uma dúvida ou problema?
+                Fala directamente com o nosso agente no WhatsApp.
+            </p>
+            <a href="https://wa.link/64y9y2" class="btn-whatsapp" target="_blank" rel="noopener">
+                <i class="fab fa-whatsapp"></i> Falar com o agente
+            </a>
         </div>
 
         <div class="card-contato">
             <div class="icone-contato"><i class="fas fa-envelope"></i></div>
             <h4>Contacto por E‑mail</h4>
             <div class="valor-contato">desafiomoz@gmail.com</div>
-            <p class="descricao-contato">Envia‑nos a tua mensagem detalhada</p>
+            <p class="descricao-contato">
+                Envia a tua mensagem detalhada. Preferes e-mail?
+                Também respondemos por aqui.
+            </p>
+            <a href="mailto:desafiomoz@gmail.com" class="btn-email">
+                <i class="fas fa-paper-plane"></i> Enviar e-mail
+            </a>
         </div>
     </div>
 
-    <!-- DICAS -->
     <div class="aviso-contato">
         <h3>📝 Dica para um atendimento mais rápido</h3>
-        <p>Quando contactares, indica o teu nome de utilizador e explica claramente o que se passa — assim resolvemos o teu assunto mais depressa!</p>
+        <p>
+            Quando contactares, indica o teu <strong style="color:#22FF99">nome de utilizador</strong> e o
+            <strong style="color:#22FF99">e-mail da conta</strong> e explica claramente o que se passa —
+            assim resolvemos o teu assunto mais depressa (incluindo recuperação de senha).
+        </p>
     </div>
 
-    <!-- BOTÕES -->
     <div class="area-botoes">
         <a href="index.html" class="btn btn-voltar">
             <i class="fas fa-arrow-left"></i> Voltar ao Início
