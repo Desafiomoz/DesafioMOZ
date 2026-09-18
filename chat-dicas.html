@@ -199,7 +199,7 @@
     <div class="caixa">
       <div class="ico">⏳✨</div>
       <h2>Pedido enviado!</h2>
-      <p>A equipa vai ler o teu pedido.<br><b>Espera a resposta</b> no papo privado — não demora.</p>
+      <p><b id="txt-espere-autor">O autor</b> vai responder assim que for possível, se for do agrado dele. Aguarda a resposta dele no papo privado.</p>
       <button type="button" id="btn-ok-espere">Ir ao papo privado</button>
     </div>
   </div>
@@ -322,6 +322,8 @@
 
       var dest = 'chat-privado.html?com=' + encodeURIComponent(emAutor) + '&nome=' + encodeURIComponent(autor);
       var el = document.getElementById('toast-espere');
+      var elNomeAutor = document.getElementById('txt-espere-autor');
+      if (elNomeAutor) elNomeAutor.textContent = autor;
       el.classList.add('mostrar');
       document.getElementById('btn-ok-espere').onclick = function () {
         el.classList.remove('mostrar');
