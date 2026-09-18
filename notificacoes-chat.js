@@ -130,6 +130,24 @@
     el._t = setTimeout(fechar, ms || 30000);
   }
 
+
+  function toastAdmin(titulo, texto, link, btnTexto, ms) {
+    var href = link || 'index.html';
+    var btn = btnTexto || 'Ver';
+    mostrarToast(
+      'dm-toast-mencao',
+      '<div class="dm-toast-card">' +
+        '<div class="dm-toast-ico">📢</div>' +
+        '<div class="dm-toast-body">' +
+          '<h4>' + titulo + '</h4>' +
+          '<p>' + texto + '</p>' +
+          '<a class="dm-toast-btn" href="' + href + '">' + btn + '</a>' +
+        '</div>' +
+        '<button type="button" class="dm-toast-x" aria-label="Fechar">×</button>' +
+      '</div>',
+      ms || 15000
+    );
+  }
   function toastMencao(titulo, texto) {
     mostrarToast(
       'dm-toast-mencao',
@@ -220,7 +238,46 @@
     var db = window.db;
     var emailLow = email.toLowerCase();
 
-    function tratar(ch) {
+    function toastPrivado(quem, trecho, deEmail) {
+    var href = 'chat-privado.html';
+    if (deEmail) {
+      href += '?com=' + encodeURIComponent(String(deEmail).toLowerCase()) +
+        '&nome=' + encodeURIComponent(quem || 'Membro');
+    }
+    mostrarToast(
+      'dm-toast-mencao',
+      '<div class="dm-toast-card">' +
+        '<div class="dm-toast-ico">🔒</div>' +
+        '<div class="dm-toast-body">' +
+          '<h4>Papo privado</h4>' +
+          '<p><b>' + quem + '</b> quer falar contigo em privado' +
+            (trecho ? ': “' + trecho + '”' : '') + '</p>' +
+          '<a class="dm-toast-btn" href="' + href + '">Abrir papo privado</a>' +
+        '</div>' +
+        '<button type="button" class="dm-toast-x" aria-label="Fechar">×</button>' +
+      '</div>',
+      30000
+    );
+  }
+
+  function toastDica(quem) {
+    mostrarToast(
+      'dm-toast-idle',
+      '<div class="dm-toast-card">' +
+        '<div class="dm-toast-ico">💡</div>' +
+        '<div class="dm-toast-body">' +
+          '<h4>Dicas para novatos</h4>' +
+          '<p>Membros experientes partilham como <b>sacar mais rápido</b>' +
+            (quem ? ' — nova dica de <b>' + quem + '</b>' : '') + '.</p>' +
+          '<a class="dm-toast-btn" href="chat-dicas.html">Ver dicas</a>' +
+        '</div>' +
+        '<button type="button" class="dm-toast-x" aria-label="Fechar">×</button>' +
+      '</div>',
+      15000
+    );
+  }
+
+  function tratar(ch) {
       if (ch.type !== 'added') return;
       var id = ch.doc.id;
       if (jaMostrou(id)) return;
@@ -228,6 +285,7 @@
       var t = 0;
       try {
         if (d.createdAt && d.createdAt.toDate) t = d.createdAt.toDate().getTime();
+        else if (typeof d.createdAt === 'string') t = new Date(d.createdAt).getTime();
       } catch (e) {}
       if (t && Date.now() - t > 600000) {
         marcarVista(id);
@@ -236,11 +294,20 @@
       marcarVista(id);
       var quem = d.deNome || 'Alguém';
       var trecho = (d.texto || '').slice(0, 90);
-      toastMencao(
-        'Foste mencionado no bate-papo',
-        '<b>' + quem + '</b> ' + (d.tipo === 'resposta' ? 'respondeu-te' : 'mencionou-te') +
-          (trecho ? ': “' + trecho + '”' : '')
-      );
+      var tipo = d.tipo || 'mencao';
+      if (tipo === 'privado') {
+        toastPrivado(quem, trecho, d.deEmail || '');
+      } else if (tipo === 'dica') {
+        toastDica(quem);
+      } else if (tipo === 'admin') {
+        toastAdmin(d.titulo || 'Desafio MOZ', trecho || (d.texto || ''), d.link || 'index.html', d.btnTexto || 'Ver', d.duracaoMs || 15000);
+      } else {
+        toastMencao(
+          'Foste mencionado no bate-papo',
+          '<b>' + quem + '</b> ' + (tipo === 'resposta' ? 'respondeu-te' : 'mencionou-te') +
+            (trecho ? ': “' + trecho + '”' : '')
+        );
+      }
       try { ch.doc.ref.update({ lida: true }).catch(function () {}); } catch (e) {}
     }
 
@@ -256,13 +323,100 @@
     try {
       ligar(emailLow);
       if (email !== emailLow) ligar(email);
+      ligar('_broadcast_admin_');
     } catch (e) { console.warn(e); }
   }
 
-  function boot() {
+  function eNovato() {
+    try {
+      var pts = parseInt(localStorage.getItem('pontosUtilizador') || '0', 10);
+      if (pts < 80) return true;
+      var cad = localStorage.getItem('dataCadastro') || '';
+      if (cad) {
+        var t = new Date(cad).getTime();
+        if (!isNaN(t) && (Date.now() - t) < 30 * 24 * 3600 * 1000) return true;
+      }
+    } catch (e) {}
+    return false;
+  }
+
+  /* Só uma vez na vida da conta — nunca todos os dias */
+  function jaMostrouDicaNovato() {
+    try {
+      return localStorage.getItem('dmDicaNovatoVisto') === '1';
+    } catch (e) { return false; }
+  }
+
+  function marcarDicaNovato() {
+    try { localStorage.setItem('dmDicaNovatoVisto', '1'); } catch (e) {}
+  }
+
+    function eContaNova() {
+    try {
+      if (localStorage.getItem('dmContaNova') === '1') return true;
+      if (localStorage.getItem('dmDicaNovatoVisto') === '1') return false;
+      var cad = localStorage.getItem('dataCadastro') || '';
+      if (cad) {
+        var t = new Date(cad).getTime();
+        if (!isNaN(t) && (Date.now() - t) < 48 * 3600 * 1000) return true;
+      }
+      var pts = parseInt(localStorage.getItem('pontosUtilizador') || '0', 10);
+      if (pts <= 15 && !cad) return true;
+    } catch (e) {}
+    return false;
+  }
+
+  function jaMostrouDicaNovato() {
+    try {
+      return localStorage.getItem('dmDicaNovatoVisto') === '1';
+    } catch (e) { return false; }
+  }
+
+  function marcarDicaNovato() {
+    try { localStorage.setItem('dmDicaNovatoVisto', '1'); } catch (e) {}
+  }
+
+  function toastDicasNovato() {
+    mostrarToast(
+      'dm-toast-idle',
+      '<div class="dm-toast-card">' +
+        '<div class="dm-toast-ico">💡</div>' +
+        '<div class="dm-toast-body">' +
+          '<h4>Dicas dos veteranos</h4>' +
+          '<p>Contas que já estão a <b>ganhar</b> partilham como sacar mais rápido. Vale a pena ler!</p>' +
+          '<a class="dm-toast-btn" href="chat-dicas.html">Ver dicas dos veteranos</a>' +
+        '</div>' +
+        '<button type="button" class="dm-toast-x" aria-label="Fechar">×</button>' +
+      '</div>',
+      20000
+    );
+  }
+
+  /* Só contas novas + página Início (desafios): após 5s, 15s no ecrã, uma vez só */
+  function sugerirDicasNovato() {
+    try {
+      var p = (cfg.pagina || location.pathname || location.href || '').toLowerCase();
+      var eInicio = p.indexOf('desafio') !== -1 || p.indexOf('index') !== -1 ||
+        p === '/' || p === '' || /\/$/.test(p);
+      if (!eInicio) return;
+      if (p.indexOf('chat') !== -1) return;
+      if (jaMostrouDicaNovato()) return;
+      if (!eContaNova()) return;
+      // email opcional — conta nova já tem flag
+      setTimeout(function () {
+        if (jaMostrouDicaNovato()) return;
+        if (!eContaNova() && localStorage.getItem('dmContaNova') !== '1') return;
+        marcarDicaNovato();
+        try { localStorage.removeItem('dmContaNova'); } catch (e) {}
+        toastDicasNovato();
+      }, 5000);
+    } catch (e) { console.warn('dica novato', e); }
+  }
+
+function boot() {
     injetaCSS();
-    /* idle tratado inline nas páginas */
     escutarMencoes();
+    sugerirDicasNovato();
   }
 
   if (document.readyState === 'loading') {

@@ -537,7 +537,9 @@
       var procura = await db.collection('usuarios').where('email', '==', email).limit(1).get();
       var usuario;
 
+      var googleFoiNovo = false;
       if (procura.empty) {
+        googleFoiNovo = true;
         // Utilizador novo — cria o registo em "usuarios", igual ao cadastro normal.
         var meuCodigo = 'MOZ' + hashCode(email).toString(36).toUpperCase().substring(0, 8);
         var dadosNovo = {
@@ -560,6 +562,8 @@
         var novoRef = await db.collection('usuarios').add(dadosNovo);
         usuario = dadosNovo;
         await creditarInfluencer(email);
+        localStorage.setItem('dmContaNova', '1'); try { sessionStorage.setItem('dmContaNova', '1'); } catch (eS) {}
+        localStorage.setItem('dataCadastro', dadosNovo.dataCadastro || new Date().toISOString());
       } else {
         usuario = procura.docs[0].data();
       }
@@ -575,7 +579,9 @@
       if (usuario.codigoIndicacao) localStorage.setItem('codigoIndicacao', usuario.codigoIndicacao);
 
       mostrarAviso('✅ Entrando com Google...', 'sucesso');
-      setTimeout(function () { window.location.href = 'desafios.html'; }, 1000);
+      setTimeout(function () {
+        window.location.href = googleFoiNovo ? 'desafios.html?nova=1' : 'desafios.html';
+      }, 1000);
     } catch (erro) {
       console.error(erro);
       if (erro.code === 'auth/popup-closed-by-user') return;
@@ -714,8 +720,10 @@
       localStorage.setItem('pesquisaOpiniaoCompleta', 'false');
       localStorage.setItem('pesquisaHabitosCompleta', 'false');
       localStorage.setItem('codigoIndicacao', meuCodigo);
+      localStorage.setItem('dataCadastro', dadosNovo.dataCadastro || new Date().toISOString());
+      localStorage.setItem('dmContaNova', '1'); try { sessionStorage.setItem('dmContaNova', '1'); } catch (eS) {}
       mostrarAviso('✅ Conta criada com sucesso!', 'sucesso');
-      setTimeout(function () { window.location.href = 'desafios.html'; }, 1200);
+      setTimeout(function () { window.location.href = 'desafios.html?nova=1'; }, 1200);
     } catch (erro) {
       console.error(erro);
       mostrarAviso(mensagemPermissao(erro));

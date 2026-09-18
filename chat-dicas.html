@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="pt-MZ">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Dicas para novatos – Desafio MOZ</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#06080e">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+  <script>
+    if (typeof window.__DESAFIO_MOZ_FIREBASE__ === 'undefined') {
+      window.__DESAFIO_MOZ_FIREBASE__ = true;
+      var firebaseConfig = {
+        apiKey: "AIzaSyDONfggnmf9OJX_AgfvcHTRf6tsuKD5nrA",
+        authDomain: "desafio-moz-61b70.firebaseapp.com",
+        projectId: "desafio-moz-61b70",
+        storageBucket: "desafio-moz-61b70.firebasestorage.app",
+        messagingSenderId: "945658936331",
+        appId: "1:945658936331:web:7ee4b0e7de1c1daf36db0e",
+        measurementId: "G-G1DZQ1B0DB"
+      };
+      if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+      window.db = firebase.firestore();
+    }
+    var db = window.db;
+  </script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root { --bg:#06080e; --verde:#22FF99; --ouro:#ffc94d; --roxo:#a855f7; --texto:#f4f6fb; --suave:#8e9bb8; }
+    body {
+      min-height: 100vh; color: var(--texto); font-family: 'Inter', system-ui, sans-serif;
+      background:
+        radial-gradient(ellipse at 50% 0%, rgba(34,255,153,0.22), transparent 50%),
+        radial-gradient(ellipse at 90% 80%, rgba(255,201,77,0.1), transparent 40%),
+        var(--bg);
+      padding: 16px; padding-bottom: 140px;
+    }
+    .wrap { max-width: 520px; margin: 0 auto; }
+    a.voltar { color: var(--verde); text-decoration: none; font-size: 13px; font-weight: 600; }
+    h1 {
+      font-family: 'Sora', sans-serif; font-size: 20px; margin: 12px 0 6px;
+      background: linear-gradient(90deg, #fff, var(--verde), var(--ouro));
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    .aviso {
+      font-size: 12.5px; line-height: 1.45; color: var(--suave); padding: 12px;
+      border-radius: 14px; margin-bottom: 14px;
+      background: rgba(255,201,77,0.1); border: 1px solid rgba(255,201,77,0.35);
+    }
+    .aviso b { color: var(--ouro); }
+    .dica {
+      background: rgba(18,22,34,0.95); border: 1px solid rgba(34,255,153,0.25);
+      border-radius: 16px; padding: 14px; margin-bottom: 10px;
+      position: relative;
+    }
+    .dica .autor { font-size: 12px; font-weight: 800; color: var(--verde); margin-bottom: 6px; }
+    .dica .txt { font-size: 14px; line-height: 1.45; white-space: pre-wrap; }
+    .dica .meta { font-size: 11px; color: var(--suave); margin-top: 8px; }
+    .dica .btn-pedir {
+      margin-top: 10px; width: 100%; border: none; border-radius: 10px; padding: 10px 12px;
+      font-size: 12.5px; font-weight: 800; cursor: pointer; color: #04140a;
+      background: linear-gradient(90deg, #3b9eff, var(--verde));
+      box-shadow: 0 4px 16px rgba(59,158,255,0.35);
+    }
+    .dica .btn-apagar {
+      position: absolute; top: 10px; right: 10px;
+      background: rgba(255,80,80,0.15); border: 1px solid rgba(255,80,80,0.4);
+      color: #ff8a8a; font-size: 11px; font-weight: 700; padding: 5px 10px;
+      border-radius: 8px; cursor: pointer;
+    }
+    .composer {
+      position: fixed; left: 0; right: 0; bottom: 0; padding: 12px;
+      background: rgba(8,10,18,0.96); border-top: 1px solid rgba(255,255,255,0.08);
+    }
+    .composer-inner { max-width: 520px; margin: 0 auto; }
+    .composer textarea {
+      width: 100%; min-height: 56px; border-radius: 12px; border: 1px solid rgba(34,255,153,0.35);
+      background: #0c0e16; color: #fff; padding: 10px 12px; font-size: 14px; font-family: inherit; resize: vertical;
+    }
+    .row { display: flex; gap: 8px; margin-top: 8px; align-items: center; }
+    .row select {
+      background: #15151f; color: #fff; border: 1px solid #333; border-radius: 10px; padding: 10px; font-size: 13px;
+    }
+    .btn {
+      flex: 1; border: none; border-radius: 12px; padding: 12px; font-weight: 800; cursor: pointer;
+      background: linear-gradient(90deg, var(--verde), var(--roxo)); color: #04140a;
+      font-family: 'Sora', sans-serif; font-size: 14px;
+    }
+    .vazio { text-align: center; color: var(--suave); padding: 28px; font-size: 13px; }
+    .admin-only { display: none; }
+    body.e-admin .admin-only { display: block; }
+
+    /* Toast obrigado */
+    .toast-obrigado {
+      position: fixed; inset: 0; z-index: 500; display: none;
+      align-items: center; justify-content: center; padding: 20px;
+      background: rgba(0,0,0,0.7); backdrop-filter: blur(8px);
+    }
+    .toast-obrigado.mostrar { display: flex; }
+    .toast-obrigado .caixa {
+      max-width: 340px; width: 100%; text-align: center; padding: 28px 22px;
+      border-radius: 22px;
+      background: linear-gradient(160deg, rgba(30,50,40,0.98), rgba(14,18,32,0.99));
+      border: 1px solid rgba(34,255,153,0.5);
+      box-shadow: 0 0 50px rgba(34,255,153,0.3), 0 20px 50px rgba(0,0,0,0.5);
+      animation: popIn .35s cubic-bezier(.2,.8,.2,1);
+    }
+    @keyframes popIn {
+      from { transform: scale(0.85); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    .toast-obrigado .ico {
+      font-size: 48px; margin-bottom: 12px;
+      filter: drop-shadow(0 0 16px rgba(34,255,153,0.5));
+    }
+    .toast-obrigado h2 {
+      font-family: 'Sora', sans-serif; font-size: 20px; font-weight: 800;
+      background: linear-gradient(90deg, var(--verde), var(--ouro));
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+      margin-bottom: 10px;
+    }
+    .toast-obrigado p { font-size: 14px; color: #c5cde0; line-height: 1.5; margin-bottom: 18px; }
+    .toast-espere {
+      position: fixed; inset: 0; z-index: 520; display: none;
+      align-items: center; justify-content: center; padding: 20px;
+      background: rgba(0,0,0,0.75); backdrop-filter: blur(10px);
+    }
+    .toast-espere.mostrar { display: flex; }
+    .toast-espere .caixa {
+      max-width: 360px; width: 100%; text-align: center; padding: 30px 24px;
+      border-radius: 24px;
+      background: linear-gradient(160deg, rgba(25,45,80,0.98), rgba(10,16,30,0.99));
+      border: 2px solid rgba(59,158,255,0.55);
+      box-shadow: 0 0 60px rgba(59,158,255,0.4), 0 0 40px rgba(34,255,153,0.25), 0 20px 50px rgba(0,0,0,0.55);
+      animation: popIn .4s cubic-bezier(.2,.8,.2,1);
+    }
+    .toast-espere .ico {
+      font-size: 52px; margin-bottom: 14px;
+      filter: drop-shadow(0 0 20px rgba(59,158,255,0.7));
+      animation: pulseEspere 1.6s ease-in-out infinite;
+    }
+    @keyframes pulseEspere {
+      0%,100% { transform: scale(1); filter: drop-shadow(0 0 16px rgba(59,158,255,0.5)); }
+      50% { transform: scale(1.08); filter: drop-shadow(0 0 28px rgba(34,255,153,0.7)); }
+    }
+    .toast-espere h2 {
+      font-family: 'Sora', sans-serif; font-size: 22px; font-weight: 800;
+      background: linear-gradient(90deg, #3b9eff, var(--verde), var(--ouro));
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+      margin-bottom: 12px;
+    }
+    .toast-espere p { font-size: 14.5px; color: #c5cde0; line-height: 1.55; margin-bottom: 20px; }
+    .toast-espere p b { color: var(--verde); }
+    .toast-espere button {
+      border: none; border-radius: 14px; padding: 14px 32px; font-weight: 800;
+      background: linear-gradient(90deg, #3b9eff, var(--verde)); color: #04140a;
+      font-size: 15px; cursor: pointer;
+      box-shadow: 0 8px 28px rgba(59,158,255,0.45);
+    }
+    .toast-obrigado button {
+      border: none; border-radius: 12px; padding: 12px 28px; font-weight: 800;
+      background: linear-gradient(90deg, var(--verde), #3b9eff); color: #04140a;
+      font-size: 14px; cursor: pointer;
+      box-shadow: 0 8px 24px rgba(34,255,153,0.35);
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <a class="voltar" href="chat.html">← Salas</a>
+    <h1>💡 Dicas para novatos</h1>
+    <div class="aviso">
+      Aqui só são permitidas <b>dicas úteis</b> para sacar mais rápido no Desafio MOZ.
+      Conversas, insultos ou spam podem levar a <b>risco de conta</b>.
+      <span class="admin-only">Como admin podes definir a duração e apagar qualquer dica.</span>
+    </div>
+    <div id="lista"></div>
+  </div>
+  <div class="composer">
+    <div class="composer-inner">
+      <textarea id="txt" maxlength="400" placeholder="Escreve só uma dica útil para novatos..."></textarea>
+      <div class="row">
+        <select id="duracao" class="admin-only" title="Duração (só admin)">
+          <option value="1">1 dia</option>
+          <option value="3">3 dias</option>
+          <option value="7" selected>7 dias</option>
+          <option value="14">14 dias</option>
+          <option value="30">30 dias</option>
+        </select>
+        <button type="button" class="btn" id="btn-pub">Publicar dica</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-espere" id="toast-espere">
+    <div class="caixa">
+      <div class="ico">⏳✨</div>
+      <h2>Pedido enviado!</h2>
+      <p>A equipa vai ler o teu pedido.<br><b>Espera a resposta</b> no papo privado — não demora.</p>
+      <button type="button" id="btn-ok-espere">Ir ao papo privado</button>
+    </div>
+  </div>
+
+  <div class="toast-obrigado" id="toast-obrigado">
+    <div class="caixa">
+      <div class="ico">🙏✨</div>
+      <h2>Obrigado pela dica!</h2>
+      <p>A tua mensagem vai ajudar os novatos a ganhar mais rápido no Desafio MOZ. Continua a partilhar o que funciona!</p>
+      <button type="button" id="btn-ok-obrigado">Continuar</button>
+    </div>
+  </div>
+
+  <script>
+(function () {
+  /* E-mails do administrador — só estes vêem duração e podem apagar */
+  var ADMIN_EMAILS = ['desafiomoz@gmail.com'];
+
+  var email = (localStorage.getItem('emailUtilizador') || localStorage.getItem('email') || '').trim().toLowerCase();
+  var nome = (localStorage.getItem('nomeUtilizador') || localStorage.getItem('nome') || (email ? email.split('@')[0] : 'Membro')).trim();
+  var isAdmin = ADMIN_EMAILS.indexOf(email) !== -1;
+  if (isAdmin) document.body.classList.add('e-admin');
+
+  /* Duração por defeito para utilizadores normais (dias) */
+  var DURACAO_PADRAO = 7;
+
+  function esc(s) {
+    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function mostrarObrigado() {
+    document.getElementById('toast-obrigado').classList.add('mostrar');
+  }
+  document.getElementById('btn-ok-obrigado').addEventListener('click', function () {
+    document.getElementById('toast-obrigado').classList.remove('mostrar');
+  });
+
+  var DICAS_COMUNIDADE = [
+    { nome: 'Mario João', texto: 'Para sacar o mais rápido devem usar a área Online e a área Ofertas. O resto se virem!' },
+    { nome: 'António Carlos', texto: 'Eu ganho com convite de influencer: a cada 1000 pessoas convidadas recebo 200 MZN. O segredo é só publicar o teu link nas redes sociais — Facebook, TikTok, YouTube, não importa. Espero ter ajudado.' },
+    { nome: 'Marla Carlos', texto: 'Olá, eu jogo a roleta kkk' },
+    { nome: 'Nardo Augusto', texto: 'O segredo da roleta é comprar giros com metical: usas por exemplo 2 meticais da tua conta M-Pesa, compras giros e tens mais chance de ganhar. Se usarem só os pontos dá para ganhar, mas não é fácil.' },
+    { nome: 'Júnior', texto: 'Joguem Homejub — dá para sacar muito rápido. No meu caso, quando fico preso num nível compro o desbloqueio de níveis e os 10 à frente abrem. Fica bom assim, dá para sacar bem rápido kkk' },
+    { nome: 'Francisco', texto: 'O sistema é o seguinte, pessoal: compram as coisas com M-Pesa. Dão-lhes 2 meticais e podem ganhar mais — por exemplo 4 meticais nos giros.' }
+  ];
+
+  function slugAutor(nome) {
+    return String(nome || 'membro').toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '').slice(0, 40) || 'membro';
+  }
+  function emailDicaAutor(nome) {
+    return 'dica.' + slugAutor(nome) + '@desafiomoz.internal';
+  }
+
+  function htmlDica(d, id, dias, podeApagar) {
+    var autor = d.nome || 'Membro';
+    var emAutor = d.emailAutor || emailDicaAutor(autor);
+    return '<div class="dica" data-id="' + esc(id || '') + '">' +
+      (podeApagar && id ? '<button type="button" class="btn-apagar" data-id="' + esc(id) + '">Apagar</button>' : '') +
+      '<div class="autor">' + esc(autor) + '</div>' +
+      '<div class="txt">' + esc(d.texto) + '</div>' +
+      '<div class="meta">Dica da comunidade · sem prazo de validade</div>' +
+      '<button type="button" class="btn-pedir" data-autor="' + esc(autor) + '" data-email-autor="' + esc(emAutor) + '" data-texto-dica="' + esc((d.texto || '').slice(0, 280)) + '">' +
+      '💬 Quero mais explicações com ' + esc(autor) + '</button>' +
+      '</div>';
+  }
+
+  async function pedirPapoComAutor(autor, emailAutor, textoDica) {
+    if (!email) {
+      alert('Entra na tua conta para pedir mais explicações.');
+      return;
+    }
+    var emUser = String(email).toLowerCase();
+    var emAutor = String(emailAutor || emailDicaAutor(autor)).toLowerCase();
+    var conversaId = emUser < emAutor ? emUser + '__' + emAutor : emAutor + '__' + emUser;
+    try {
+      await db.collection('chatPrivadoConversas').doc(conversaId).set({
+        participantes: [emUser, emAutor].sort(),
+        nomes: (function () { var o = {}; o[emUser] = nome; o[emAutor] = autor; return o; })(),
+        tipo: 'dica-autor',
+        dicaAutor: autor,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+
+      await db.collection('pedidosDicas').add({
+        deEmail: emUser,
+        deNome: nome,
+        dicaAutor: autor,
+        dicaAutorEmail: emAutor,
+        textoDica: String(textoDica || '').slice(0, 400),
+        conversaId: conversaId,
+        status: 'pendente',
+        createdAt: new Date().toISOString()
+      });
+
+      await db.collection('chatPrivado').add({
+        conversaId: conversaId,
+        participantes: [emUser, emAutor].sort(),
+        deEmail: emUser,
+        deNome: nome,
+        texto: 'Olá ' + autor + '! Li a tua dica e queria mais explicações. Podes ajudar?',
+        createdAt: new Date().toISOString(),
+        tipo: 'pedido-dica'
+      });
+
+      // Notifica o "sistema" (admin vê no painel)
+      try {
+        await db.collection('notificacoesChat').add({
+          email: 'admin@desafiomoz.internal',
+          tipo: 'pedido-dica',
+          deNome: nome,
+          deEmail: emUser,
+          dicaAutor: autor,
+          texto: 'Quer falar com ' + autor,
+          lida: false,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      } catch (eN) {}
+
+      var dest = 'chat-privado.html?com=' + encodeURIComponent(emAutor) + '&nome=' + encodeURIComponent(autor);
+      var el = document.getElementById('toast-espere');
+      el.classList.add('mostrar');
+      document.getElementById('btn-ok-espere').onclick = function () {
+        el.classList.remove('mostrar');
+        location.href = dest;
+      };
+    } catch (e) {
+      console.error(e);
+      alert('Não foi possível abrir o pedido. Tenta de novo.');
+    }
+  }
+
+  function ligarBotoesPedir(host) {
+    host.querySelectorAll('.btn-pedir').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        pedirPapoComAutor(btn.getAttribute('data-autor'), btn.getAttribute('data-email-autor'), btn.getAttribute('data-texto-dica'));
+      });
+    });
+  }
+
+  function carregar() {
+    var host = document.getElementById('lista');
+    host.innerHTML = '<div class="vazio">A carregar dicas...</div>';
+    db.collection('chatDicas').orderBy('createdAt', 'desc').limit(80).get().then(function (snap) {
+      var agora = Date.now();
+      var html = '';
+      // Dicas fixas da comunidade (sempre no topo)
+      DICAS_COMUNIDADE.forEach(function (d) {
+        html += htmlDica(d, null, null, false);
+      });
+      snap.forEach(function (doc) {
+        var d = doc.data() || {};
+        if (d.ativa === false) return;
+        // Sem expiração automática — só o admin apaga
+        html += htmlDica(d, doc.id, null, isAdmin);
+      });
+      host.innerHTML = html || '<div class="vazio">Ainda não há dicas activas. Sê o primeiro a ajudar os novatos!</div>';
+      ligarBotoesPedir(host);
+      if (isAdmin) {
+        host.querySelectorAll('.btn-apagar').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var id = btn.getAttribute('data-id');
+            if (!confirm('Apagar esta dica?')) return;
+            db.collection('chatDicas').doc(id).update({ ativa: false }).then(carregar).catch(function () {
+              db.collection('chatDicas').doc(id).delete().then(carregar);
+            });
+          });
+        });
+      }
+    }).catch(function (e) {
+      console.error(e);
+      db.collection('chatDicas').limit(80).get().then(function (snap) {
+        var arr = [];
+        snap.forEach(function (doc) { arr.push({ id: doc.id, d: doc.data() }); });
+        arr.sort(function (a, b) { return String(b.d.createdAt || '').localeCompare(String(a.d.createdAt || '')); });
+        var agora = Date.now(), html = '';
+        DICAS_COMUNIDADE.forEach(function (d) { html += htmlDica(d, null, null, false); });
+        arr.forEach(function (x) {
+          var d = x.d || {};
+          if (d.ativa === false) return;
+          html += htmlDica(d, x.id, null, isAdmin);
+        });
+        host.innerHTML = html || '<div class="vazio">Sem dicas ainda.</div>';
+        ligarBotoesPedir(host);
+        if (isAdmin) {
+          host.querySelectorAll('.btn-apagar').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+              var id = btn.getAttribute('data-id');
+              if (!confirm('Apagar esta dica?')) return;
+              db.collection('chatDicas').doc(id).update({ ativa: false }).then(carregar).catch(function () {
+                db.collection('chatDicas').doc(id).delete().then(carregar);
+              });
+            });
+          });
+        }
+      });
+    });
+  }
+
+  document.getElementById('btn-pub').addEventListener('click', async function () {
+    if (!email) { alert('Entra na conta para publicar dicas.'); return; }
+    var texto = (document.getElementById('txt').value || '').trim().slice(0, 400);
+    if (texto.length < 10) { alert('Escreve uma dica com pelo menos 10 caracteres.'); return; }
+    var dias = DURACAO_PADRAO;
+    if (isAdmin) {
+      dias = parseInt(document.getElementById('duracao').value, 10) || 7;
+    }
+    var exp = new Date(Date.now() + dias * 86400000).toISOString();
+    var btn = document.getElementById('btn-pub');
+    btn.disabled = true;
+    try {
+      await db.collection('chatDicas').add({
+        texto: texto,
+        nome: nome,
+        email: email,
+        emailAutor: email, // autor real — pode ser puxado ao privado
+        createdAt: new Date().toISOString(),
+        ativa: true,
+        dias: dias
+      });
+      try {
+        await db.collection('notificacoesChat').add({
+          email: '_broadcast_dica_',
+          tipo: 'dica',
+          deNome: nome,
+          deEmail: email,
+          texto: texto.slice(0, 80),
+          lida: false,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      } catch (eN) {}
+      document.getElementById('txt').value = '';
+      carregar();
+      mostrarObrigado();
+    } catch (e) {
+      console.error(e);
+      alert('Erro ao publicar. Verifica regras Firebase (chatDicas).');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  carregar();
+})();
+  </script>
+  <script>window.__DM_PRESENCA__ = { pagina: 'chat-dicas', jogando: null };</script>
+  <script src="presenca.js?v=1"></script>
+</body>
+</html>

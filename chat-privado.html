@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="pt-MZ">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Papo privado – Desafio MOZ</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#06080e">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+  <script>
+    if (typeof window.__DESAFIO_MOZ_FIREBASE__ === 'undefined') {
+      window.__DESAFIO_MOZ_FIREBASE__ = true;
+      var firebaseConfig = {
+        apiKey: "AIzaSyDONfggnmf9OJX_AgfvcHTRf6tsuKD5nrA",
+        authDomain: "desafio-moz-61b70.firebaseapp.com",
+        projectId: "desafio-moz-61b70",
+        storageBucket: "desafio-moz-61b70.firebasestorage.app",
+        messagingSenderId: "945658936331",
+        appId: "1:945658936331:web:7ee4b0e7de1c1daf36db0e",
+        measurementId: "G-G1DZQ1B0DB"
+      };
+      if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+      window.db = firebase.firestore();
+    }
+    var db = window.db;
+  </script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    :root { --bg:#06080e; --verde:#22FF99; --azul:#3b9eff; --roxo:#a855f7; --texto:#f4f6fb; --suave:#8e9bb8; }
+    html, body { height: 100%; background: var(--bg); color: var(--texto); font-family: 'Inter', system-ui, sans-serif; overflow: hidden; }
+    body { background: radial-gradient(ellipse at 20% 0%, rgba(59,158,255,0.25), transparent 45%), var(--bg); }
+    .shell { display: flex; flex-direction: column; height: 100%; max-width: 520px; margin: 0 auto; }
+    .topo { flex-shrink: 0; padding: 12px 14px; border-bottom: 1px solid rgba(255,255,255,0.08); background: rgba(8,10,18,0.92); }
+    .topo a { color: var(--verde); text-decoration: none; font-size: 13px; }
+    .topo h1 { font-family: 'Sora', sans-serif; font-size: 16px; margin-top: 6px; }
+    .topo p { font-size: 11.5px; color: var(--suave); margin-top: 2px; }
+    .painel { flex: 1; overflow-y: auto; padding: 12px; -webkit-overflow-scrolling: touch; }
+    .user-card {
+      display: flex; align-items: center; gap: 12px; padding: 12px; margin-bottom: 8px;
+      border-radius: 14px; background: rgba(18,22,34,0.9); border: 1px solid rgba(59,158,255,0.25);
+      cursor: pointer;
+    }
+    .user-card .av {
+      width: 42px; height: 42px; border-radius: 12px; background: linear-gradient(135deg, var(--azul), var(--roxo));
+      display: flex; align-items: center; justify-content: center; font-weight: 800;
+    }
+    .user-card .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--verde); box-shadow: 0 0 8px var(--verde); }
+    .user-card .nome { font-weight: 700; font-size: 14px; }
+    .user-card .meta { font-size: 11px; color: var(--suave); }
+    .user-card.tem-nova { border-color: rgba(34,255,153,0.55); box-shadow: 0 0 18px rgba(34,255,153,0.25); }
+    .badge-nova {
+      margin-left: 6px; display: inline-flex; align-items: center; justify-content: center;
+      min-width: 18px; height: 18px; padding: 0 5px; border-radius: 99px;
+      background: linear-gradient(135deg, #22FF99, #3b9eff); color: #04140a;
+      font-size: 10px; font-weight: 900;
+      box-shadow: 0 0 12px rgba(34,255,153,0.6);
+      animation: piscaNova 1.4s ease-in-out infinite;
+    }
+    @keyframes piscaNova {
+      0%,100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.75; transform: scale(1.08); }
+    }
+    .msg {
+      max-width: 88%; padding: 10px 12px; border-radius: 16px; margin-bottom: 8px;
+      font-size: 14px; line-height: 1.4; position: relative;
+    }
+    .msg.minha { align-self: flex-end; margin-left: auto; background: linear-gradient(145deg, rgba(20,60,50,0.98), rgba(18,40,55,0.98)); border: 1px solid rgba(34,255,153,0.35); }
+    .msg.outra { background: linear-gradient(145deg, rgba(30,40,70,0.95), rgba(24,28,48,0.98)); border: 1px solid rgba(59,158,255,0.35); }
+    .msg.selecionada { outline: 2px solid rgba(34,255,153,0.5); }
+    .msg-hora { font-size: 10px; color: var(--suave); margin-top: 4px; text-align: right; }
+    .msg-quote {
+      margin-bottom: 6px; padding: 6px 8px; border-radius: 8px; border-left: 3px solid var(--verde);
+      background: rgba(0,0,0,0.25); font-size: 12px;
+    }
+    .msg-quote .q-nome { font-weight: 800; color: var(--verde); font-size: 11px; }
+    .msg-quote .q-txt { color: var(--suave); }
+    #lista-msgs { display: flex; flex-direction: column; gap: 4px; min-height: 40vh; }
+    .composer { flex-shrink: 0; padding: 10px 12px; border-top: 1px solid rgba(255,255,255,0.08); background: rgba(8,10,18,0.95); }
+    .reply-bar {
+      display: none; align-items: center; gap: 10px; margin-bottom: 8px; padding: 8px 10px;
+      border-radius: 12px; background: rgba(59,158,255,0.15); border-left: 3px solid var(--verde);
+    }
+    .reply-bar.mostrar { display: flex; }
+    .reply-bar .rb-nome { font-size: 12px; font-weight: 800; color: var(--verde); }
+    .reply-bar .rb-msg { font-size: 12px; color: var(--suave); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .reply-bar .rb-x { background: none; border: none; color: #ccc; font-size: 18px; cursor: pointer; }
+    .composer-row { display: flex; gap: 8px; }
+    .composer textarea {
+      flex: 1; min-height: 44px; max-height: 100px; resize: none; border-radius: 14px;
+      border: 1px solid rgba(59,158,255,0.35); background: rgba(12,14,22,0.95); color: #fff;
+      padding: 12px; font-size: 14px; font-family: inherit; outline: none;
+    }
+    .btn-enviar {
+      width: 48px; height: 48px; border: none; border-radius: 14px; color: #fff; font-size: 18px; cursor: pointer;
+      background: linear-gradient(135deg, var(--azul), var(--verde));
+    }
+    .vazio { text-align: center; color: var(--suave); padding: 30px 16px; font-size: 13px; line-height: 1.5; }
+    .oculto { display: none !important; }
+    .btn-voltar-lista { background: none; border: none; color: var(--azul); font-size: 13px; cursor: pointer; margin-bottom: 8px; }
+    .toast {
+      position: fixed; left: 50%; bottom: 90px; transform: translateX(-50%);
+      background: rgba(20,24,36,0.95); border: 1px solid rgba(255,255,255,0.1);
+      padding: 10px 16px; border-radius: 20px; font-size: 12.5px; opacity: 0; transition: .25s; z-index: 200;
+      pointer-events: none;
+    }
+    .toast.mostrar { opacity: 1; }
+    .sheet-fundo { display: none; position: fixed; inset: 0; z-index: 300; background: rgba(0,0,0,0.55); }
+    .sheet-fundo.mostrar { display: block; }
+    .sheet-acoes {
+      position: fixed; left: 12px; right: 12px; bottom: 18px; z-index: 301;
+      background: linear-gradient(165deg, rgba(30,40,70,0.98), rgba(14,18,32,0.99));
+      border: 1px solid rgba(59,158,255,0.4); border-radius: 20px; overflow: hidden;
+      transform: translateY(120%); transition: transform .25s ease;
+      box-shadow: 0 16px 50px rgba(0,0,0,0.5), 0 0 30px rgba(59,158,255,0.2);
+    }
+    .sheet-acoes.mostrar { transform: translateY(0); }
+    .sheet-acoes .sheet-titulo {
+      padding: 12px 16px 8px; font-size: 11px; font-weight: 800; letter-spacing: 0.08em;
+      text-transform: uppercase; color: var(--suave); text-align: center;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .sheet-acoes button {
+      display: flex; align-items: center; gap: 12px; width: 100%; padding: 15px 18px;
+      background: transparent; border: none; border-bottom: 1px solid rgba(255,255,255,0.06);
+      color: #fff; font-size: 15px; font-weight: 700; text-align: left; cursor: pointer;
+    }
+    .sheet-acoes button:last-child { border-bottom: none; color: #ff8a8a; }
+    .sheet-acoes button i {
+      width: 36px; height: 36px; border-radius: 12px; display: flex; align-items: center; justify-content: center;
+      background: rgba(59,158,255,0.15); color: var(--azul);
+    }
+    .edit-modal-fundo {
+      display: none; position: fixed; inset: 0; z-index: 400;
+      background: rgba(0,0,0,0.65); backdrop-filter: blur(6px);
+    }
+    .edit-modal-fundo.mostrar { display: block; }
+    .edit-modal {
+      position: fixed; left: 16px; right: 16px; top: 50%; z-index: 401;
+      transform: translateY(-50%); max-width: 420px; margin: 0 auto;
+      background: linear-gradient(160deg, rgba(30,40,70,0.98), rgba(14,18,32,0.99));
+      border: 1px solid rgba(34,255,153,0.4); border-radius: 20px; padding: 18px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.55), 0 0 40px rgba(34,255,153,0.2);
+    }
+    .edit-modal h3 {
+      font-family: 'Sora', sans-serif; font-size: 16px; font-weight: 800; margin-bottom: 12px; text-align: center;
+      background: linear-gradient(90deg, var(--verde), var(--azul));
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    .edit-modal textarea {
+      width: 100%; min-height: 90px; border-radius: 14px; border: 1px solid rgba(59,158,255,0.4);
+      background: rgba(8,10,18,0.95); color: #fff; padding: 12px; font-size: 14px; font-family: inherit;
+    }
+    .edit-modal .edit-actions { display: flex; gap: 10px; margin-top: 12px; }
+    .edit-modal .edit-actions button {
+      flex: 1; border: none; border-radius: 12px; padding: 12px; font-weight: 800; cursor: pointer;
+    }
+    .btn-cancel-edit { background: rgba(255,255,255,0.08); color: #ccc; }
+    .btn-save-edit { background: linear-gradient(90deg, var(--verde), var(--azul)); color: #04140a; }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="topo">
+      <a href="chat.html">← Salas</a>
+      <h1 id="titulo">Papo privado</h1>
+      <p id="subtitulo">Quem está online e disponível (não a jogar)</p>
+    </div>
+    <div class="painel" id="painel-lista"></div>
+    <div class="painel oculto" id="painel-chat">
+      <button type="button" class="btn-voltar-lista" id="btn-voltar">← Voltar à lista</button>
+      <p style="font-size:11px;color:#8e9bb8;margin:0 0 8px;text-align:center;">Segura ou toca numa mensagem para responder / editar</p>
+      <div id="lista-msgs"></div>
+    </div>
+    <div class="composer oculto" id="composer">
+      <div class="reply-bar" id="reply-bar">
+        <div style="flex:1;min-width:0">
+          <div class="rb-nome" id="reply-nome">—</div>
+          <div class="rb-msg" id="reply-preview">—</div>
+        </div>
+        <button type="button" class="rb-x" id="reply-cancel">×</button>
+      </div>
+      <div class="composer-row">
+        <textarea id="input-msg" rows="1" maxlength="500" placeholder="Mensagem privada..."></textarea>
+        <button type="button" class="btn-enviar" id="btn-enviar"><i class="fas fa-paper-plane"></i></button>
+      </div>
+    </div>
+  </div>
+  <div class="toast" id="toast"></div>
+  <div class="sheet-fundo" id="sheet-fundo"></div>
+  <div class="sheet-acoes" id="sheet-acoes">
+    <div class="sheet-titulo">⚡ Acções da mensagem</div>
+    <button type="button" id="sheet-responder"><i class="fas fa-reply"></i> Responder</button>
+    <button type="button" id="sheet-copiar"><i class="fas fa-copy"></i> Copiar</button>
+    <button type="button" id="sheet-editar" style="display:none;"><i class="fas fa-pen"></i> Editar</button>
+    <button type="button" id="sheet-cancelar"><i class="fas fa-times"></i> Cancelar</button>
+  </div>
+  <div class="edit-modal-fundo" id="edit-modal-fundo">
+    <div class="edit-modal">
+      <h3>✏️ Editar mensagem</h3>
+      <textarea id="edit-textarea" maxlength="500"></textarea>
+      <div class="edit-actions">
+        <button type="button" class="btn-cancel-edit" id="edit-cancel">Cancelar</button>
+        <button type="button" class="btn-save-edit" id="edit-save">Guardar</button>
+      </div>
+    </div>
+  </div>
+  <script>
+(function () {
+  var email = (localStorage.getItem('emailUtilizador') || localStorage.getItem('email') || '').trim().toLowerCase();
+  var nomeUser = (localStorage.getItem('nomeUtilizador') || localStorage.getItem('nome') || '').trim();
+  if (!nomeUser && email) nomeUser = email.split('@')[0];
+  var conversaId = null;
+  var parceiro = null;
+  var unsub = null;
+  var msgsCache = {};
+  var replyAlvo = null;
+  var msgMenuId = null;
+  var editMsgId = null;
+  var ONLINE_MS = 3 * 60 * 1000;
+
+  function esc(s) {
+    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  function toast(t) {
+    var el = document.getElementById('toast');
+    el.textContent = t;
+    el.classList.add('mostrar');
+    setTimeout(function () { el.classList.remove('mostrar'); }, 2500);
+  }
+  function idConversa(a, b) {
+    var x = String(a).toLowerCase(), y = String(b).toLowerCase();
+    return x < y ? x + '__' + y : y + '__' + x;
+  }
+  function soNome(n, em) {
+    n = String(n || '').trim();
+    if (n && n.indexOf('@') === -1) return n;
+    em = String(em || '').trim();
+    if (em.indexOf('@desafiomoz.internal') !== -1) {
+      // dica.mariojoao@... → Mariojoao
+      var local = em.split('@')[0].replace(/^dica\./, '');
+      return local.charAt(0).toUpperCase() + local.slice(1);
+    }
+    if (em.indexOf('@') !== -1) return em.split('@')[0];
+    return 'Membro';
+  }
+  function formatHora(iso) {
+    try {
+      var d = iso && iso.toDate ? iso.toDate() : new Date(iso);
+      if (isNaN(d.getTime())) return '';
+      return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+    } catch (e) { return ''; }
+  }
+
+  async function limparAntigas() {
+    if (!db || !email) return;
+    try {
+      var limite = new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString(); // 1 mês
+      var snap = await db.collection('chatPrivado').where('participantes', 'array-contains', email).limit(200).get();
+      var batch = db.batch(), n = 0;
+      snap.forEach(function (doc) {
+        var d = doc.data() || {};
+        var t = d.createdAt;
+        if (typeof t !== 'string') {
+          try { t = t && t.toDate ? t.toDate().toISOString() : ''; } catch (e) { t = ''; }
+        }
+        if (t && t < limite) { batch.delete(doc.ref); n++; }
+      });
+      if (n) await batch.commit();
+    } catch (e) { console.warn('limpeza', e); }
+  }
+
+  async function carregarOnline() {
+    var host = document.getElementById('painel-lista');
+    if (!email) {
+      host.innerHTML = '<div class="vazio">Entra na tua conta para usar o papo privado.<br><a href="criar-conta.html" style="color:#22FF99">Login</a></div>';
+      return;
+    }
+    host.innerHTML = '<div class="vazio">A carregar quem está online...</div>';
+    try {
+      var agora = Date.now();
+      var snap = await db.collection('usuarios').limit(400).get();
+      var lista = [];
+      snap.forEach(function (doc) {
+        var d = doc.data() || {};
+        var em = String(d.email || '').toLowerCase();
+        if (!em || em === email) return;
+        var up = d.ultimaPresenca ? new Date(d.ultimaPresenca).getTime() : 0;
+        if (!up || agora - up > ONLINE_MS) return;
+        if (d.emJogo && String(d.emJogo) !== 'null' && String(d.emJogo).length) return;
+        lista.push({ email: em, nome: soNome(d.nome, em), pagina: d.paginaActual || 'site' });
+      });
+      lista.sort(function (a, b) { return a.nome.localeCompare(b.nome); });
+
+      var convHtml = '';
+      try {
+        var cSnap = await db.collection('chatPrivadoConversas').where('participantes', 'array-contains', email).limit(50).get();
+        var convs = [];
+        cSnap.forEach(function (doc) { convs.push({ id: doc.id, data: doc.data() || {} }); });
+        convs.sort(function (a, b) {
+          return String(b.data.updatedAt || '').localeCompare(String(a.data.updatedAt || ''));
+        });
+        if (convs.length) {
+          var lidos = {};
+          try { lidos = JSON.parse(localStorage.getItem('dmPrivadoLido') || '{}'); } catch (eL) {}
+          convHtml += '<p style="font-size:12px;color:#8e9bb8;margin:8px 0;">Conversas recentes</p>';
+          convs.forEach(function (c) {
+            var outros = (c.data.participantes || []).filter(function (x) { return x !== email; });
+            var em = outros[0] || '';
+            var nm = soNome((c.data.nomes && c.data.nomes[em]) || '', em);
+            var upd = String(c.data.updatedAt || '');
+            var ultimaDe = String(c.data.ultimaDeEmail || '').toLowerCase();
+            var temNova = upd && lidos[c.id] !== upd && ultimaDe && ultimaDe !== email;
+            // se não há ultimaDeEmail, ainda mostra se updatedAt mudou
+            if (!temNova && upd && lidos[c.id] !== upd && !ultimaDe) temNova = true;
+            if (lidos[c.id] === upd) temNova = false;
+            convHtml += '<div class="user-card' + (temNova ? ' tem-nova' : '') + '" data-email="' + esc(em) + '" data-nome="' + esc(nm) + '" data-conv="' + esc(c.id) + '" data-upd="' + esc(upd) + '">' +
+              '<div class="av">' + esc((nm || '?').charAt(0).toUpperCase()) + '</div>' +
+              '<div style="flex:1"><div class="nome">' + esc(nm) +
+              (temNova ? ' <span class="badge-nova">1</span>' : '') +
+              '</div>' +
+              '<div class="meta">' + esc((c.data.ultimaMsg || '').slice(0, 40)) + '</div></div></div>';
+          });
+        }
+      } catch (e2) {}
+
+      var html = convHtml;
+      html += '<p style="font-size:12px;color:#8e9bb8;margin:12px 0 8px;">Online e disponível</p>';
+      if (!lista.length) {
+        html += '<div class="vazio">Ninguém disponível neste momento.<br>Quem está a jogar não aparece aqui.</div>';
+      } else {
+        lista.forEach(function (u) {
+          html += '<div class="user-card" data-email="' + esc(u.email) + '" data-nome="' + esc(u.nome) + '">' +
+            '<div class="av">' + esc(u.nome.charAt(0).toUpperCase()) + '</div>' +
+            '<div style="flex:1"><div class="nome">' + esc(u.nome) + ' <span class="dot" style="display:inline-block;vertical-align:middle;margin-left:4px;"></span></div>' +
+            '<div class="meta">Em: ' + esc(u.pagina) + '</div></div></div>';
+        });
+      }
+      host.innerHTML = html;
+      host.querySelectorAll('.user-card').forEach(function (el) {
+        el.addEventListener('click', function () {
+          abrirChat(el.getAttribute('data-email'), el.getAttribute('data-nome'));
+        });
+      });
+    } catch (e) {
+      console.error(e);
+      host.innerHTML = '<div class="vazio">Erro ao carregar. Tenta de novo.</div>';
+    }
+  }
+
+  function renderMsgs() {
+    var lista = document.getElementById('lista-msgs');
+    var ids = Object.keys(msgsCache);
+    ids.sort(function (a, b) {
+      var ta = msgsCache[a].createdAt || '';
+      var tb = msgsCache[b].createdAt || '';
+      return String(ta).localeCompare(String(tb));
+    });
+    var html = '';
+    ids.forEach(function (id) {
+      var d = msgsCache[id];
+      var minha = String(d.deEmail || '').toLowerCase() === email;
+      var quote = '';
+      if (d.replyNome || d.replyTexto) {
+        quote = '<div class="msg-quote"><div class="q-nome">' + esc(soNome(d.replyNome, '')) + '</div>' +
+          '<div class="q-txt">' + esc(d.replyTexto || '') + '</div></div>';
+      }
+      html += '<div class="msg ' + (minha ? 'minha' : 'outra') + '" data-id="' + esc(id) + '">' +
+        quote +
+        '<div>' + esc(d.texto) + (d.editado ? ' <span style="font-size:10px;color:#8e9bb8">(editado)</span>' : '') +
+        (d._local ? ' <span style="font-size:10px;color:#8e9bb8">…</span>' : '') + '</div>' +
+        '<div class="msg-hora">' + esc(formatHora(d.createdAt)) + '</div></div>';
+    });
+    lista.innerHTML = html || '<div class="vazio">Ainda sem mensagens. Diz olá!</div>';
+    lista.scrollTop = lista.scrollHeight;
+    lista.querySelectorAll('.msg').forEach(function (el) {
+      var id = el.getAttribute('data-id');
+      var timer = null;
+      function startPress(e) {
+        if (String(id).indexOf('local_') === 0) return;
+        timer = setTimeout(function () {
+          timer = null;
+          abrirMenu(id);
+        }, 420);
+      }
+      function cancelPress() {
+        if (timer) { clearTimeout(timer); timer = null; }
+      }
+      el.addEventListener('touchstart', startPress, { passive: true });
+      el.addEventListener('touchend', cancelPress);
+      el.addEventListener('touchmove', cancelPress);
+      el.addEventListener('mousedown', startPress);
+      el.addEventListener('mouseup', cancelPress);
+      el.addEventListener('mouseleave', cancelPress);
+      // clique simples também abre (como atalho)
+      el.addEventListener('click', function (e) {
+        if (e.target && e.target.closest && e.target.closest('a')) return;
+        abrirMenu(id);
+      });
+    });
+  }
+
+  function abrirMenu(id) {
+    if (!id || String(id).indexOf('local_') === 0) return;
+    if (!msgsCache[id]) return;
+    msgMenuId = id;
+    document.querySelectorAll('.msg.selecionada').forEach(function (el) { el.classList.remove('selecionada'); });
+    var el = null;
+    document.querySelectorAll('.msg[data-id]').forEach(function (m) {
+      if (m.getAttribute('data-id') === id) el = m;
+    });
+    if (el) el.classList.add('selecionada');
+    var d = msgsCache[id] || {};
+    var minha = String(d.deEmail || '').toLowerCase() === String(email).toLowerCase();
+    // Responder: sempre (como no grupal)
+    document.getElementById('sheet-responder').style.display = 'flex';
+    // Editar: só as tuas mensagens
+    document.getElementById('sheet-editar').style.display = minha ? 'flex' : 'none';
+    document.getElementById('sheet-fundo').classList.add('mostrar');
+    document.getElementById('sheet-acoes').classList.add('mostrar');
+  }
+  function fecharMenu() {
+    msgMenuId = null;
+    document.getElementById('sheet-fundo').classList.remove('mostrar');
+    document.getElementById('sheet-acoes').classList.remove('mostrar');
+    document.querySelectorAll('.msg.selecionada').forEach(function (el) { el.classList.remove('selecionada'); });
+  }
+
+  async function abrirChat(emParceiro, nomeParceiro) {
+    if (!email || !emParceiro) return;
+    var nm = soNome(nomeParceiro, emParceiro);
+    // Se só veio e-mail, tenta buscar nome no Firebase
+    if (!nomeParceiro || String(nomeParceiro).indexOf('@') !== -1) {
+      try {
+        var qs = await db.collection('usuarios').where('email', '==', String(emParceiro).toLowerCase()).limit(1).get();
+        if (!qs.empty) nm = soNome(qs.docs[0].data().nome, emParceiro);
+      } catch (e) {}
+    }
+    parceiro = { email: String(emParceiro).toLowerCase(), nome: nm };
+    conversaId = idConversa(email, parceiro.email);
+    try {
+      var lidos = JSON.parse(localStorage.getItem('dmPrivadoLido') || '{}');
+      // mark after we know updatedAt from firestore merge below
+      window.__dmConvIdAbrir = conversaId;
+    } catch (eR) {}
+    document.getElementById('titulo').textContent = parceiro.nome;
+    document.getElementById('subtitulo').textContent = 'Conversa privada · mensagens apagam após 1 mês';
+    document.getElementById('painel-lista').classList.add('oculto');
+    document.getElementById('painel-chat').classList.remove('oculto');
+    document.getElementById('composer').classList.remove('oculto');
+    msgsCache = {};
+
+    try {
+      var nomes = {};
+      nomes[email] = nomeUser;
+      nomes[parceiro.email] = parceiro.nome;
+      var snapC = await db.collection('chatPrivadoConversas').doc(conversaId).get();
+      var updMark = (snapC.exists && snapC.data().updatedAt) ? snapC.data().updatedAt : new Date().toISOString();
+      await db.collection('chatPrivadoConversas').doc(conversaId).set({
+        participantes: [email, parceiro.email].sort(),
+        nomes: nomes
+      }, { merge: true });
+      try {
+        var lidos2 = JSON.parse(localStorage.getItem('dmPrivadoLido') || '{}');
+        lidos2[conversaId] = updMark;
+        localStorage.setItem('dmPrivadoLido', JSON.stringify(lidos2));
+      } catch (eR2) {}
+    } catch (e) {}
+
+    if (unsub) try { unsub(); } catch (e) {}
+    unsub = db.collection('chatPrivado')
+      .where('conversaId', '==', conversaId)
+      .orderBy('createdAt', 'asc')
+      .limitToLast(150)
+      .onSnapshot(function (snap) {
+        // Merge com locais
+        var vindos = {};
+        snap.forEach(function (doc) {
+          vindos[doc.id] = doc.data() || {};
+        });
+        // Remove locais que já chegaram ao servidor
+        Object.keys(msgsCache).forEach(function (id) {
+          if (String(id).indexOf('local_') === 0) {
+            var L = msgsCache[id];
+            var match = false;
+            Object.keys(vindos).forEach(function (rid) {
+              var R = vindos[rid];
+              if (String(R.texto || '') === String(L.texto || '') &&
+                  String(R.deEmail || '').toLowerCase() === String(L.deEmail || '').toLowerCase()) {
+                match = true;
+              }
+            });
+            if (match) delete msgsCache[id];
+          } else if (!vindos[id]) {
+            delete msgsCache[id];
+          }
+        });
+        Object.keys(vindos).forEach(function (id) { msgsCache[id] = vindos[id]; });
+        renderMsgs();
+      }, function (err) {
+        console.error(err);
+        db.collection('chatPrivado').where('conversaId', '==', conversaId).limit(150).get().then(function (snap) {
+          msgsCache = {};
+          snap.forEach(function (doc) { msgsCache[doc.id] = doc.data() || {}; });
+          renderMsgs();
+        });
+      });
+  }
+
+  async function enviar() {
+    var ta = document.getElementById('input-msg');
+    var texto = (ta.value || '').trim().slice(0, 500);
+    if (!texto || !conversaId || !parceiro) return;
+    var btn = document.getElementById('btn-enviar');
+    btn.disabled = true;
+    var agora = new Date().toISOString();
+    var tempId = 'local_' + Date.now();
+    var payload = {
+      conversaId: conversaId,
+      participantes: [String(email).toLowerCase(), String(parceiro.email).toLowerCase()].sort(),
+      deEmail: String(email).toLowerCase(),
+      deNome: nomeUser,
+      texto: texto,
+      createdAt: agora,
+      _local: true
+    };
+    if (replyAlvo) {
+      payload.replyNome = replyAlvo.nome;
+      payload.replyTexto = (replyAlvo.texto || '').slice(0, 200);
+      payload.replyId = replyAlvo.id;
+    }
+    msgsCache[tempId] = payload;
+    renderMsgs();
+    ta.value = '';
+    var replyGuardado = replyAlvo;
+    replyAlvo = null;
+    document.getElementById('reply-bar').classList.remove('mostrar');
+
+    try {
+      var dataFire = {
+        conversaId: conversaId,
+        participantes: [String(email).toLowerCase(), String(parceiro.email).toLowerCase()].sort(),
+        deEmail: String(email).toLowerCase(),
+        deNome: nomeUser,
+        texto: texto,
+        createdAt: agora
+      };
+      if (replyGuardado) {
+        dataFire.replyNome = replyGuardado.nome;
+        dataFire.replyTexto = (replyGuardado.texto || '').slice(0, 200);
+        dataFire.replyId = replyGuardado.id;
+      }
+      var ref = await db.collection('chatPrivado').add(dataFire);
+      delete msgsCache[tempId];
+      payload._local = false;
+      msgsCache[ref.id] = payload;
+      renderMsgs();
+      await db.collection('chatPrivadoConversas').doc(conversaId).set({
+        ultimaMsg: texto.slice(0, 80),
+        ultimaDeEmail: String(email).toLowerCase(),
+        updatedAt: agora
+      }, { merge: true });
+      try {
+        await db.collection('notificacoesChat').add({
+          email: String(parceiro.email).toLowerCase(),
+          tipo: 'privado',
+          deNome: nomeUser,
+          deEmail: String(email).toLowerCase(),
+          texto: texto.slice(0, 120),
+          conversaId: conversaId,
+          lida: false,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      } catch (eN) { console.warn('notif privado', eN); }
+    } catch (e) {
+      console.error(e);
+      toast('Falha ao enviar');
+    } finally {
+      btn.disabled = false;
+      ta.focus();
+    }
+  }
+
+  document.getElementById('btn-enviar').addEventListener('click', enviar);
+  document.getElementById('input-msg').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); enviar(); }
+  });
+  document.getElementById('btn-voltar').addEventListener('click', function () {
+    if (unsub) try { unsub(); } catch (e) {}
+    conversaId = null; parceiro = null; msgsCache = {};
+    document.getElementById('painel-chat').classList.add('oculto');
+    document.getElementById('composer').classList.add('oculto');
+    document.getElementById('painel-lista').classList.remove('oculto');
+    document.getElementById('titulo').textContent = 'Papo privado';
+    document.getElementById('subtitulo').textContent = 'Quem está online e disponível (não a jogar)';
+    carregarOnline();
+  });
+
+  document.getElementById('sheet-fundo').addEventListener('click', fecharMenu);
+  document.getElementById('sheet-cancelar').addEventListener('click', fecharMenu);
+  document.getElementById('sheet-responder').addEventListener('click', function () {
+    var d = msgMenuId && msgsCache[msgMenuId];
+    if (d) {
+      replyAlvo = { id: msgMenuId, nome: soNome(d.deNome, d.deEmail), texto: d.texto || '' };
+      document.getElementById('reply-nome').textContent = 'A responder a ' + replyAlvo.nome;
+      document.getElementById('reply-preview').textContent = (replyAlvo.texto || '').slice(0, 80);
+      document.getElementById('reply-bar').classList.add('mostrar');
+      document.getElementById('input-msg').focus();
+    }
+    fecharMenu();
+  });
+  document.getElementById('reply-cancel').addEventListener('click', function () {
+    replyAlvo = null;
+    document.getElementById('reply-bar').classList.remove('mostrar');
+  });
+  document.getElementById('sheet-copiar').addEventListener('click', function () {
+    var d = msgMenuId && msgsCache[msgMenuId];
+    if (d && d.texto) {
+      try { navigator.clipboard.writeText(String(d.texto)).then(function () { toast('Copiado!'); }); }
+      catch (e) { toast('Não foi possível copiar'); }
+    }
+    fecharMenu();
+  });
+  document.getElementById('sheet-editar').addEventListener('click', function () {
+    var d = msgMenuId && msgsCache[msgMenuId];
+    if (!d || !msgMenuId) { fecharMenu(); return; }
+    editMsgId = msgMenuId;
+    document.getElementById('edit-textarea').value = d.texto || '';
+    fecharMenu();
+    document.getElementById('edit-modal-fundo').classList.add('mostrar');
+  });
+  document.getElementById('edit-cancel').addEventListener('click', function () {
+    editMsgId = null;
+    document.getElementById('edit-modal-fundo').classList.remove('mostrar');
+  });
+  document.getElementById('edit-modal-fundo').addEventListener('click', function (e) {
+    if (e.target === this) {
+      editMsgId = null;
+      document.getElementById('edit-modal-fundo').classList.remove('mostrar');
+    }
+  });
+  document.getElementById('edit-save').addEventListener('click', function () {
+    if (!editMsgId) return;
+    var novo = String(document.getElementById('edit-textarea').value || '').trim().slice(0, 500);
+    if (!novo) { toast('Mensagem vazia'); return; }
+    var id = editMsgId;
+    if (msgsCache[id]) {
+      msgsCache[id].texto = novo;
+      msgsCache[id].editado = true;
+    }
+    document.getElementById('edit-modal-fundo').classList.remove('mostrar');
+    editMsgId = null;
+    renderMsgs();
+    toast('Mensagem editada ✨');
+    db.collection('chatPrivado').doc(id).update({
+      texto: novo,
+      editado: true,
+      editadoEm: new Date().toISOString()
+    }).then(function () {
+      /* ok */
+    }).catch(function (err) {
+      console.warn('update edit', err);
+      db.collection('chatPrivado').doc(id).set({
+        texto: novo,
+        editado: true,
+        editadoEm: new Date().toISOString()
+      }, { merge: true }).catch(function (e2) {
+        toast('Não foi possível guardar a edição. Verifica as regras Firebase.');
+        console.error(e2);
+      });
+    });
+  });
+
+  var params = new URLSearchParams(location.search);
+  var com = (params.get('com') || '').toLowerCase();
+  var nomeUrl = params.get('nome') || '';
+  if (!com) {
+    try {
+      var a = JSON.parse(localStorage.getItem('dmPrivadoAlvo') || 'null');
+      if (a && a.email) {
+        com = String(a.email).toLowerCase();
+        nomeUrl = a.nome || '';
+        localStorage.removeItem('dmPrivadoAlvo');
+      }
+    } catch (e) {}
+  }
+
+  limparAntigas().then(function () {
+    if (com && email) {
+      abrirChat(com, nomeUrl || soNome('', com));
+    } else {
+      carregarOnline();
+    }
+  });
+})();
+  </script>
+  <script>window.__DM_PRESENCA__ = { pagina: 'chat-privado', jogando: null };</script>
+  <script src="presenca.js?v=1"></script>
+  <script>window.__DM_NOTIF__ = { mencao: true, idle: false };</script>
+  <script src="notificacoes-chat.js?v=6"></script>
+</body>
+</html>

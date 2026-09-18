@@ -816,9 +816,9 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
 
 
 <script>
-  window.__DM_NOTIF__ = { mencao: true, idle: true, idleSegundos: 20, idleMaxDia: 2 };
+  window.__DM_NOTIF__ = { mencao: true, idle: true, idleSegundos: 40, idleMaxDia: 2 };
 </script>
-<script src="notificacoes-chat.js?v=5"></script>
+<script src="notificacoes-chat.js?v=10"></script>
 
 
 <script>
@@ -913,5 +913,94 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
 
 <script>window.__DM_PRESENCA__ = { pagina: 'desafios', jogando: null };</script>
 <script src="presenca.js?v=1"></script>
+
+
+<script>
+/* Conta nova → dicas (URL ?nova=1 ou flag). 5s espera, 20s ecrã, 1 vez. */
+(function () {
+  var KEY = 'dmDicaNovatoVisto';
+  function jaViu() {
+    try { return localStorage.getItem(KEY) === '1'; } catch (e) { return false; }
+  }
+  function marcar() {
+    try {
+      localStorage.setItem(KEY, '1');
+      localStorage.removeItem('dmContaNova');
+      sessionStorage.removeItem('dmContaNova');
+    } catch (e) {}
+  }
+  function eNova() {
+    try {
+      var q = new URLSearchParams(location.search || '');
+      if (q.get('nova') === '1') return true;
+      if (sessionStorage.getItem('dmContaNova') === '1') return true;
+      if (localStorage.getItem('dmContaNova') === '1') return true;
+    } catch (e) {}
+    return false;
+  }
+  if (jaViu()) return;
+  if (!eNova()) return;
+
+  // limpa ?nova=1 da barra sem recarregar
+  try {
+    if (location.search.indexOf('nova=') !== -1) {
+      history.replaceState(null, '', location.pathname + location.hash);
+    }
+  } catch (e) {}
+
+  function mostrar() {
+    if (jaViu()) return;
+    marcar();
+    if (document.getElementById('dm-dica-box')) return;
+
+    var st = document.createElement('style');
+    st.textContent =
+      '#dm-dica-bd{position:fixed;inset:0;z-index:999999;background:rgba(4,6,12,.55)}' +
+      '#dm-dica-box{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:1000000;max-width:min(400px,92vw);width:100%;padding:0 8px}' +
+      '#dm-dica-box .card{border-radius:22px;padding:18px 16px;display:flex;gap:12px;align-items:flex-start;' +
+      'background:linear-gradient(145deg,rgba(48,22,80,.98),rgba(8,42,38,.98));border:2px solid rgba(34,255,153,.75);' +
+      'box-shadow:0 0 50px rgba(34,255,153,.45)}' +
+      '#dm-dica-box .ico{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;' +
+      'background:linear-gradient(135deg,#a855f7,#22FF99);flex-shrink:0}' +
+      '#dm-dica-box h4{margin:0 0 6px;font-size:17px;font-weight:800;color:#22FF99}' +
+      '#dm-dica-box p{margin:0;font-size:14px;color:#d5dbe8;line-height:1.45}' +
+      '#dm-dica-box b{color:#22FF99}' +
+      '#dm-dica-box a.btn{margin-top:12px;display:inline-block;padding:12px 16px;border-radius:12px;font-size:14px;font-weight:800;' +
+      'color:#04140a;text-decoration:none;background:linear-gradient(90deg,#22FF99,#a855f7)}' +
+      '#dm-dica-box .x{border:none;background:rgba(255,255,255,.15);color:#fff;border-radius:10px;font-size:18px;padding:4px 10px;cursor:pointer}';
+    document.head.appendChild(st);
+
+    var bd = document.createElement('div');
+    bd.id = 'dm-dica-bd';
+    var box = document.createElement('div');
+    box.id = 'dm-dica-box';
+    box.innerHTML =
+      '<div class="card">' +
+        '<div class="ico">💡</div>' +
+        '<div style="flex:1">' +
+          '<h4>Dicas dos veteranos</h4>' +
+          '<p>Contas que já estão a <b>ganhar</b> partilham como sacar mais rápido. Vale a pena ler!</p>' +
+          '<a class="btn" href="chat-dicas.html">Ver dicas dos veteranos</a>' +
+        '</div>' +
+        '<button type="button" class="x">×</button>' +
+      '</div>';
+    document.body.appendChild(bd);
+    document.body.appendChild(box);
+
+    function fechar() {
+      try {
+        if (bd.parentNode) bd.parentNode.removeChild(bd);
+        if (box.parentNode) box.parentNode.removeChild(box);
+      } catch (e) {}
+    }
+    box.querySelector('.x').onclick = fechar;
+    bd.onclick = fechar;
+    setTimeout(fechar, 20000);
+  }
+
+  setTimeout(mostrar, 5000);
+})();
+</script>
+
 </body>
 </html>

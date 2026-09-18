@@ -6,928 +6,245 @@
   <title>Bate-papo – Desafio MOZ</title>
   <link rel="manifest" href="/manifest.json">
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
-  <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-32.png">
   <meta name="theme-color" content="#06080e">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
-  <script>
-    if (typeof window.__DESAFIO_MOZ_FIREBASE__ === 'undefined') {
-      window.__DESAFIO_MOZ_FIREBASE__ = true;
-      var firebaseConfig = {
-        apiKey: "AIzaSyDONfggnmf9OJX_AgfvcHTRf6tsuKD5nrA",
-        authDomain: "desafio-moz-61b70.firebaseapp.com",
-        projectId: "desafio-moz-61b70",
-        storageBucket: "desafio-moz-61b70.firebasestorage.app",
-        messagingSenderId: "945658936331",
-        appId: "1:945658936331:web:7ee4b0e7de1c1daf36db0e",
-        measurementId: "G-G1DZQ1B0DB"
-      };
-      if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-      window.db = firebase.firestore();
-    }
-    var db = window.db;
-  </script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     :root {
-      --bg: #06080e;
-      --painel: rgba(18, 22, 34, 0.92);
-      --verde: #22FF99;
-      --azul: #3b9eff;
-      --roxo: #a855f7;
-      --ouro: #ffc94d;
-      --rosa: #ff4d9e;
-      --texto: #f4f6fb;
-      --suave: #8e9bb8;
-    }
-    html, body {
-      height: 100%;
-      background: var(--bg);
-      color: var(--texto);
-      font-family: 'Inter', system-ui, sans-serif;
-      overflow: hidden;
+      --bg: #06080e; --verde: #22FF99; --azul: #3b9eff; --roxo: #a855f7; --ouro: #ffc94d;
+      --rosa: #ff4d9e; --texto: #f4f6fb; --suave: #8e9bb8;
     }
     body {
+      min-height: 100vh; color: var(--texto); font-family: 'Inter', system-ui, sans-serif;
       background:
-        radial-gradient(ellipse at 10% 0%, rgba(168,85,247,0.28), transparent 42%),
-        radial-gradient(ellipse at 90% 10%, rgba(59,158,255,0.22), transparent 40%),
-        radial-gradient(ellipse at 50% 100%, rgba(34,255,153,0.12), transparent 45%),
+        radial-gradient(ellipse at 8% 0%, rgba(168,85,247,0.42), transparent 42%),
+        radial-gradient(ellipse at 95% 8%, rgba(59,158,255,0.32), transparent 40%),
+        radial-gradient(ellipse at 50% 100%, rgba(34,255,153,0.18), transparent 48%),
+        radial-gradient(ellipse at 70% 40%, rgba(255,201,77,0.08), transparent 35%),
         var(--bg);
+      padding: 12px 12px 28px;
+      overflow-x: hidden;
     }
     body::before {
       content: '';
       position: fixed; inset: 0; pointer-events: none; z-index: 0;
-      background-image: radial-gradient(rgba(255,255,255,0.55) 1px, transparent 1px);
-      background-size: 28px 28px;
-      opacity: 0.05;
-      animation: estrelas 5s ease-in-out infinite alternate;
+      background-image:
+        radial-gradient(rgba(255,255,255,0.7) 1px, transparent 1px),
+        radial-gradient(rgba(34,255,153,0.35) 1px, transparent 1px);
+      background-size: 26px 26px, 52px 52px;
+      background-position: 0 0, 13px 13px;
+      opacity: 0.07;
+      animation: estrelas 6s ease-in-out infinite alternate;
     }
-    @keyframes estrelas { 0% { opacity: 0.04; } 100% { opacity: 0.09; } }
+    body::after {
+      content: '';
+      position: fixed; top: -20%; left: -10%; width: 60%; height: 50%;
+      background: radial-gradient(circle, rgba(168,85,247,0.25), transparent 70%);
+      pointer-events: none; z-index: 0;
+      animation: flare 8s ease-in-out infinite alternate;
+    }
+    @keyframes estrelas { 0% { opacity: 0.05; } 100% { opacity: 0.11; } }
+    @keyframes flare { 0% { transform: translate(0,0) scale(1); opacity: 0.6; } 100% { transform: translate(8%,12%) scale(1.15); opacity: 1; } }
 
-    .shell {
-      position: relative; z-index: 1;
-      display: flex; flex-direction: column;
-      height: 100%;
-      max-width: 520px;
-      margin: 0 auto;
-    }
+    .wrap { max-width: 480px; margin: 0 auto; position: relative; z-index: 1; }
 
-    .topo-chat {
-      flex-shrink: 0;
-      padding: 14px 14px 10px;
-      background: linear-gradient(180deg, rgba(8,10,18,0.95), rgba(8,10,18,0.55));
-      border-bottom: 1px solid rgba(255,255,255,0.08);
-      backdrop-filter: blur(12px);
+    .voltar {
+      display: inline-flex; align-items: center; gap: 8px;
+      color: #fff; text-decoration: none; font-size: 13px; font-weight: 600;
+      margin-bottom: 12px; padding: 6px 12px; border-radius: 99px;
+      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+      backdrop-filter: blur(8px);
     }
-    .topo-linha {
-      display: flex; align-items: center; gap: 12px;
-    }
-    .logo-chat {
-      width: 46px; height: 46px; border-radius: 14px;
-      background: linear-gradient(135deg, var(--roxo), var(--azul), var(--verde));
-      display: flex; align-items: center; justify-content: center;
-      font-size: 20px;
-      box-shadow: 0 0 24px rgba(168,85,247,0.55), 0 0 40px rgba(59,158,255,0.25);
-      animation: pulsarLogo 2.4s ease-in-out infinite;
-    }
-    @keyframes pulsarLogo {
-      0%,100% { box-shadow: 0 0 18px rgba(168,85,247,0.45); transform: scale(1); }
-      50% { box-shadow: 0 0 32px rgba(34,255,153,0.55); transform: scale(1.04); }
-    }
-    .topo-txt h1 {
-      font-family: 'Sora', sans-serif;
-      font-size: 17px; font-weight: 800;
-      background: linear-gradient(90deg, #fff, var(--verde), var(--ouro));
-      -webkit-background-clip: text; background-clip: text; color: transparent;
-    }
-    .topo-txt p { font-size: 11.5px; color: var(--suave); margin-top: 2px; }
-    .badge-vivo {
-      margin-left: auto;
-      display: inline-flex; align-items: center; gap: 6px;
-      font-size: 10px; font-weight: 800; letter-spacing: 0.06em;
-      text-transform: uppercase;
-      padding: 6px 10px; border-radius: 99px;
-      background: rgba(34,255,153,0.12);
-      border: 1px solid rgba(34,255,153,0.35);
-      color: var(--verde);
-      box-shadow: 0 0 16px rgba(34,255,153,0.2);
-    }
-    .badge-vivo .dot {
-      width: 7px; height: 7px; border-radius: 50%;
-      background: var(--verde);
-      box-shadow: 0 0 8px var(--verde);
-      animation: pisca 1.2s ease-in-out infinite;
-    }
-    @keyframes pisca { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+    .voltar:active { transform: scale(0.97); }
 
-    .aviso-mes {
-      margin-top: 10px;
-      font-size: 11.5px;
-      line-height: 1.4;
-      color: var(--suave);
-      padding: 8px 12px;
-      border-radius: 12px;
-      background: linear-gradient(90deg, rgba(168,85,247,0.12), rgba(255,201,77,0.08));
-      border: 1px solid rgba(255,255,255,0.08);
-    }
-    .aviso-mes b { color: var(--ouro); }
-
-    .lista-msgs {
-      flex: 1;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-      padding: 14px 12px 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .lista-msgs::-webkit-scrollbar { width: 4px; }
-    .lista-msgs::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 4px; }
-
-    .msg {
-      max-width: 88%;
-      padding: 10px 12px 8px;
-      border-radius: 16px;
-      position: relative;
-      animation: entraMsg .28s ease;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.25);
-    }
-    @keyframes entraMsg {
-      from { opacity: 0; transform: translateY(8px) scale(0.97); }
-      to { opacity: 1; transform: translateY(0) scale(1); }
-    }
-    .msg.outra {
-      align-self: flex-start;
-      background: linear-gradient(145deg, rgba(40,36,70,0.95), rgba(24,28,48,0.98));
-      border: 1px solid rgba(168,85,247,0.35);
-      border-bottom-left-radius: 6px;
-    }
-    .msg.minha {
-      align-self: flex-end;
-      background: linear-gradient(145deg, rgba(20,60,50,0.98), rgba(18,40,55,0.98));
-      border: 1px solid rgba(34,255,153,0.4);
-      border-bottom-right-radius: 6px;
-      box-shadow: 0 0 20px rgba(34,255,153,0.12);
-    }
-    .msg-nome {
-      font-family: 'Sora', sans-serif;
-      font-size: 12px; font-weight: 800;
-      margin-bottom: 4px;
-      background: linear-gradient(90deg, var(--ouro), var(--rosa), var(--azul));
-      -webkit-background-clip: text; background-clip: text; color: transparent;
-    }
-    .msg.minha .msg-nome {
-      background: linear-gradient(90deg, var(--verde), var(--azul));
-      -webkit-background-clip: text; background-clip: text; color: transparent;
-      text-align: right;
-    }
-    .msg-txt {
-      font-size: 14px;
-      line-height: 1.45;
-      color: #e8ecf8;
-      word-break: break-word;
-      white-space: pre-wrap;
-    }
-    .msg-hora {
-      font-size: 10px;
-      color: var(--suave);
-      margin-top: 6px;
-      text-align: right;
-    }
-
-    .msg-quote {
-      margin-bottom: 8px;
-      padding: 7px 10px;
-      border-radius: 10px;
-      border-left: 3px solid var(--verde);
-      background: rgba(0,0,0,0.28);
-      font-size: 12px;
-      line-height: 1.35;
-    }
-    .msg-quote .q-nome { font-weight: 800; font-size: 11px; color: var(--verde); margin-bottom: 2px; }
-    .msg-quote .q-txt {
-      color: var(--suave);
-      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
-    }
-    .msg.selecionada {
-      outline: 2px solid rgba(34,255,153,0.55);
-      box-shadow: 0 0 20px rgba(34,255,153,0.25);
-    }
-    .reply-bar {
-      display: none; align-items: center; gap: 10px;
-      margin-bottom: 8px; padding: 8px 10px; border-radius: 12px;
-      background: rgba(168,85,247,0.15);
-      border: 1px solid rgba(168,85,247,0.35);
-      border-left: 3px solid var(--verde);
-    }
-    .reply-bar.mostrar { display: flex; }
-    .reply-bar .rb-txt { flex: 1; min-width: 0; }
-    .reply-bar .rb-nome { font-size: 12px; font-weight: 800; color: var(--verde); }
-    .reply-bar .rb-msg {
-      font-size: 12px; color: var(--suave);
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
-    .reply-bar .rb-x {
-      background: transparent; border: none; color: #ccc;
-      font-size: 18px; cursor: pointer; padding: 4px 8px;
-    }
-    .sheet-fundo {
-      display: none; position: fixed; inset: 0; z-index: 300;
-      background: rgba(0,0,0,0.55);
-    }
-    .sheet-fundo.mostrar { display: block; }
-    .sheet-acoes {
-      position: fixed; left: 12px; right: 12px; bottom: 18px; z-index: 301;
-      background: rgba(18,22,34,0.98);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 18px; overflow: hidden;
-      transform: translateY(120%);
-      transition: transform .25s ease;
-      box-shadow: 0 12px 40px rgba(0,0,0,0.5);
-    }
-    .sheet-acoes.mostrar { transform: translateY(0); }
-    .sheet-acoes button {
-      display: flex; align-items: center; gap: 12px;
-      width: 100%; padding: 16px 18px;
-      background: transparent; border: none;
-      border-bottom: 1px solid rgba(255,255,255,0.06);
-      color: #fff; font-size: 15px; font-weight: 600;
-      text-align: left; cursor: pointer;
-    }
-    .sheet-acoes button:last-child { border-bottom: none; color: #ff6b6b; }
-    .sheet-acoes button i { width: 22px; color: var(--verde); }
-    .sheet-acoes button:last-child i { color: #ff6b6b; }
-
-
-    .vazio-chat {
-      margin: auto;
-      text-align: center;
-      padding: 30px 20px;
-      color: var(--suave);
-      font-size: 13.5px;
-      line-height: 1.5;
-    }
-    .vazio-chat i {
-      font-size: 36px;
-      display: block;
-      margin-bottom: 12px;
-      background: linear-gradient(135deg, var(--roxo), var(--verde));
-      -webkit-background-clip: text; background-clip: text; color: transparent;
-    }
-
-    .composer {
-      flex-shrink: 0;
-      padding: 10px 12px 12px;
-      padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
-      background: linear-gradient(0deg, rgba(8,10,18,0.98), rgba(8,10,18,0.85));
-      border-top: 1px solid rgba(255,255,255,0.08);
-      margin-bottom: 0;
-    }
-    .composer-row {
-      display: flex;
-      gap: 8px;
-      align-items: flex-end;
-    }
-    .composer textarea {
-      flex: 1;
-      min-height: 44px;
-      max-height: 110px;
-      resize: none;
-      border-radius: 16px;
-      border: 1px solid rgba(168,85,247,0.35);
-      background: rgba(12,14,22,0.95);
-      color: #fff;
-      padding: 12px 14px;
-      font-size: 14.5px;
-      font-family: inherit;
-      outline: none;
-      box-shadow: 0 0 0 0 rgba(168,85,247,0.3);
-      transition: border-color .2s, box-shadow .2s;
-    }
-    .composer textarea:focus {
-      border-color: var(--verde);
-      box-shadow: 0 0 18px rgba(34,255,153,0.2);
-    }
-    .btn-enviar {
-      width: 48px; height: 48px;
-      border: none; border-radius: 16px;
+    .topo { text-align: center; margin-bottom: 16px; }
+    .topo .logo {
+      width: 56px; height: 56px; border-radius: 16px; margin: 0 auto 10px;
       background: linear-gradient(135deg, var(--roxo), var(--azul), var(--verde));
       background-size: 200% 200%;
-      color: #fff;
-      font-size: 18px;
-      cursor: pointer;
-      flex-shrink: 0;
-      box-shadow: 0 6px 22px rgba(168,85,247,0.45);
-      animation: gradMove 4s ease infinite;
+      display: flex; align-items: center; justify-content: center; font-size: 26px;
+      box-shadow:
+        0 0 0 4px rgba(168,85,247,0.25),
+        0 0 40px rgba(168,85,247,0.55),
+        0 0 80px rgba(59,158,255,0.25);
+      animation: logoPulse 2.8s ease-in-out infinite, gradShift 5s ease infinite;
     }
-    @keyframes gradMove {
+    @keyframes logoPulse {
+      0%,100% { transform: scale(1); box-shadow: 0 0 0 4px rgba(168,85,247,0.25), 0 0 36px rgba(168,85,247,0.5); }
+      50% { transform: scale(1.06); box-shadow: 0 0 0 6px rgba(34,255,153,0.2), 0 0 56px rgba(34,255,153,0.45); }
+    }
+    @keyframes gradShift {
       0%,100% { background-position: 0% 50%; }
       50% { background-position: 100% 50%; }
     }
-    .btn-enviar:disabled { opacity: 0.5; cursor: wait; }
-    .composer-meta {
-      display: flex; justify-content: space-between; align-items: center;
-      margin-top: 6px; font-size: 11px; color: var(--suave);
+    .topo h1 {
+      font-family: 'Sora', sans-serif; font-size: 20px; font-weight: 800; letter-spacing: -0.02em;
+      background: linear-gradient(90deg, #fff, var(--verde), var(--ouro), var(--rosa));
+      background-size: 220% auto;
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+      animation: textShine 4s linear infinite;
     }
-    .composer-meta .eu { color: var(--verde); font-weight: 700; }
+    @keyframes textShine {
+      0% { background-position: 0% center; }
+      100% { background-position: 220% center; }
+    }
+    .topo p {
+      color: var(--suave); font-size: 12px; margin-top: 6px; line-height: 1.5;
+      max-width: 320px; margin-left: auto; margin-right: auto;
+    }
+    .badge-vivo {
+      display: inline-flex; align-items: center; gap: 7px;
+      margin-top: 8px; padding: 4px 10px; border-radius: 99px;
+      font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--verde);
+      background: rgba(34,255,153,0.12);
+      border: 1px solid rgba(34,255,153,0.4);
+      box-shadow: 0 0 20px rgba(34,255,153,0.25);
+    }
+    .badge-vivo .dot {
+      width: 8px; height: 8px; border-radius: 50%; background: var(--verde);
+      box-shadow: 0 0 10px var(--verde);
+      animation: pisca 1.2s ease-in-out infinite;
+    }
+    @keyframes pisca { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
 
-    .bloqueio-login {
-      position: absolute; inset: 0; z-index: 5;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      gap: 14px; text-align: center; padding: 24px;
-      background: rgba(6,8,14,0.92);
-      backdrop-filter: blur(8px);
+    .card {
+      display: block; text-decoration: none; color: inherit;
+      border-radius: 16px; padding: 12px 12px; margin-bottom: 10px;
+      position: relative; overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.12);
+      box-shadow: 0 14px 40px rgba(0,0,0,0.4);
+      transition: transform .18s, box-shadow .18s;
     }
-    .bloqueio-login.oculto { display: none; }
-    .bloqueio-login h2 {
-      font-family: 'Sora', sans-serif; font-size: 20px; font-weight: 800;
+    .card::before {
+      content: '';
+      position: absolute; top: -40%; right: -20%; width: 55%; height: 90%;
+      border-radius: 50%; pointer-events: none; opacity: 0.35;
+      filter: blur(20px);
+    }
+    .card::after {
+      content: '';
+      position: absolute; inset: 0; border-radius: 22px; pointer-events: none;
+      background: linear-gradient(135deg, rgba(255,255,255,0.12), transparent 40%, transparent 60%, rgba(255,255,255,0.05));
+    }
+    .card:active { transform: scale(0.975); }
+
+    .card.privado {
+      background: linear-gradient(155deg, rgba(59,158,255,0.28), rgba(18,22,40,0.96) 55%);
+      border-color: rgba(59,158,255,0.5);
+      box-shadow: 0 14px 40px rgba(0,0,0,0.4), 0 0 32px rgba(59,158,255,0.18);
+    }
+    .card.privado::before { background: rgba(59,158,255,0.55); }
+
+    .card.grupo {
+      background: linear-gradient(155deg, rgba(168,85,247,0.3), rgba(18,22,40,0.96) 55%);
+      border-color: rgba(168,85,247,0.55);
+      box-shadow: 0 14px 40px rgba(0,0,0,0.4), 0 0 36px rgba(168,85,247,0.22);
+    }
+    .card.grupo::before { background: rgba(168,85,247,0.55); }
+
+    .card.dicas {
+      background: linear-gradient(155deg, rgba(34,255,153,0.22), rgba(255,201,77,0.14), rgba(18,22,40,0.96) 60%);
+      border-color: rgba(34,255,153,0.5);
+      box-shadow: 0 14px 40px rgba(0,0,0,0.4), 0 0 36px rgba(34,255,153,0.2);
+    }
+    .card.dicas::before { background: rgba(34,255,153,0.45); }
+
+    .card .ico {
+      width: 40px; height: 40px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; margin-bottom: 8px; position: relative; z-index: 1;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    }
+    .card.privado .ico {
+      background: linear-gradient(135deg, rgba(59,158,255,0.45), rgba(59,158,255,0.15));
+      border: 1px solid rgba(59,158,255,0.5);
+    }
+    .card.grupo .ico {
+      background: linear-gradient(135deg, rgba(168,85,247,0.5), rgba(168,85,247,0.15));
+      border: 1px solid rgba(168,85,247,0.55);
+    }
+    .card.dicas .ico {
+      background: linear-gradient(135deg, rgba(34,255,153,0.4), rgba(255,201,77,0.2));
+      border: 1px solid rgba(34,255,153,0.5);
+    }
+
+    .card h2 {
+      font-family: 'Sora', sans-serif; font-size: 15px; font-weight: 800;
+      margin-bottom: 4px; position: relative; z-index: 1;
+    }
+    .card.privado h2 { color: #9fd0ff; }
+    .card.grupo h2 { color: #d4b4ff; }
+    .card.dicas h2 {
       background: linear-gradient(90deg, var(--verde), var(--ouro));
       -webkit-background-clip: text; background-clip: text; color: transparent;
     }
-    .bloqueio-login p { color: var(--suave); font-size: 13.5px; line-height: 1.45; max-width: 280px; }
-    .btn-login {
-      display: inline-flex; align-items: center; gap: 8px;
-      padding: 13px 22px; border-radius: 14px; border: none;
-      font-family: 'Sora', sans-serif; font-weight: 800; font-size: 14px;
-      color: #04140a;
-      background: linear-gradient(90deg, var(--verde), var(--azul));
-      text-decoration: none;
-      box-shadow: 0 8px 28px rgba(34,255,153,0.35);
+
+    .card p {
+      font-size: 12px; color: #c5cde0; line-height: 1.4;
+      position: relative; z-index: 1;
+    }
+    .card .destaque {
+      display: block; margin-top: 5px; font-size: 11.5px; font-weight: 700;
+      color: var(--ouro); line-height: 1.4;
+    }
+    .card .seta {
+      margin-top: 8px; font-size: 11.5px; font-weight: 800;
+      color: var(--verde); position: relative; z-index: 1;
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 5px 10px; border-radius: 99px;
+      background: rgba(34,255,153,0.12);
+      border: 1px solid rgba(34,255,153,0.35);
+      box-shadow: 0 0 16px rgba(34,255,153,0.15);
     }
 
-
-    .toast-chat {
-      position: fixed; left: 50%; bottom: 90px; transform: translateX(-50%) translateY(12px);
-      background: rgba(20,24,36,0.95); border: 1px solid rgba(255,255,255,0.1);
-      padding: 10px 16px; border-radius: 20px; font-size: 12.5px;
-      opacity: 0; transition: .25s; z-index: 200; pointer-events: none;
-      max-width: 90%; text-align: center;
+    .rodape-hint {
+      text-align: center; margin-top: 14px; font-size: 11px; color: var(--suave);
+      line-height: 1.45; padding: 0 8px;
     }
-    .toast-chat.mostrar { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .rodape-hint b { color: var(--verde); }
   </style>
 </head>
 <body>
-  <div class="shell">
-    <div class="topo-chat">
-      <div class="topo-linha">
-        <div class="logo-chat">💬</div>
-        <div class="topo-txt">
-          <h1>Bate-papo MOZ</h1>
-          <p>Sala geral · fala à vontade</p>
-        </div>
-        <div class="badge-vivo"><span class="dot"></span> Ao vivo</div>
-      </div>
-      <div class="aviso-mes" id="aviso-mes">
-        As mensagens deste <b>mês</b> ficam aqui para leres à vontade.
-        No início de cada mês o histórico é limpo e a sala recomeça a zero.
-      </div>
+  <div class="wrap">
+    <a class="voltar" href="perfil.html"><i class="fas fa-arrow-left"></i> Conta</a>
+    <div class="topo">
+      <div class="logo">💬</div>
+      <h1>Bate-papo MOZ</h1>
+      <p>A comunidade está viva. Escolhe como queres falar — privado, grupo ou dicas de quem já ganha.</p>
+      <div class="badge-vivo"><span class="dot"></span> Ao vivo agora</div>
     </div>
 
-    <div class="lista-msgs" id="lista-msgs">
-      <div class="vazio-chat" id="vazio-chat">
-        <i class="fas fa-comments"></i>
-        Ainda não há mensagens este mês.<br>Sê o primeiro a escrever!
-      </div>
-    </div>
+    <a class="card privado" href="chat-privado.html">
+      <div class="ico">🔒</div>
+      <h2>Papo privado</h2>
+      <p>Fala a sós com quem está online e disponível. Só vocês dois vêem as mensagens. O histórico apaga-se após 1 semana.</p>
+      <div class="seta">Entrar no privado →</div>
+    </a>
 
-    <div class="composer">
-      <div class="reply-bar" id="reply-bar">
-        <div class="rb-txt">
-          <div class="rb-nome" id="reply-nome">—</div>
-          <div class="rb-msg" id="reply-preview">—</div>
-        </div>
-        <button type="button" class="rb-x" id="reply-cancel" aria-label="Cancelar">×</button>
-      </div>
-      <div class="composer-row">
-        <textarea id="input-msg" rows="1" maxlength="500" placeholder="Escreve a tua mensagem..."></textarea>
-        <button type="button" class="btn-enviar" id="btn-enviar" title="Enviar"><i class="fas fa-paper-plane"></i></button>
-      </div>
-      <div class="composer-meta">
-        <span>Como: <span class="eu" id="nome-eu">—</span></span>
-        <span id="contador-chars">0/500</span>
-      </div>
-    </div>
+    <a class="card grupo" href="chat-grupal.html">
+      <div class="ico">👥</div>
+      <h2>Bate-papo grupal</h2>
+      <p>Sala geral da comunidade. Todos vêem, respondem e partilham. Mensagens do mês — no início do mês a sala recomeça a zero.</p>
+      <div class="seta">Entrar no grupo →</div>
+    </a>
 
-    <div class="bloqueio-login" id="bloqueio-login">
-      <h2>Entra para falar</h2>
-      <p>O bate-papo é só para membros com conta no Desafio MOZ.</p>
-      <a class="btn-login" href="criar-conta.html"><i class="fas fa-user"></i> Criar conta / Login</a>
-    </div>
+    <a class="card dicas" href="chat-dicas.html">
+      <div class="ico">💡</div>
+      <h2>Dicas para novatos</h2>
+      <p>És novo no Desafio MOZ? Lê as dicas de quem já está cá há muito tempo e <b style="color:#22FF99">já está a ganhar</b>.</p>
+      <span class="destaque">⚡ Aprende com quem já sacou — evita erros e chega mais rápido ao saque mínimo.</span>
+      <div class="seta">Ver dicas dos veteranos →</div>
+    </a>
+
+    <p class="rodape-hint">
+      Fala com respeito. Nas dicas só conteúdo útil —
+      quem violar a regra <b>corre risco de conta</b>.
+    </p>
   </div>
 
-  <div class="toast-chat" id="toast-chat"></div>
-  <div class="sheet-fundo" id="sheet-fundo"></div>
-  <div class="sheet-acoes" id="sheet-acoes">
-    <button type="button" id="sheet-responder"><i class="fas fa-reply"></i> Responder</button>
-    <button type="button" id="sheet-cancelar"><i class="fas fa-times"></i> Cancelar</button>
-  </div>
-
-
-  <script>
-(function () {
-  var email = (localStorage.getItem('emailUtilizador') || localStorage.getItem('email') || localStorage.getItem('userEmail') || '').trim();
-  var nomeUser = (localStorage.getItem('nomeUtilizador') || localStorage.getItem('nome') || '').trim();
-  var unsub = null;
-  var limpandoMes = false;
-  var msgsCache = {}; // id -> data para manter lista estável
-  var replyAlvo = null;
-  var msgMenuId = null;
-
-  function mesAtualId() {
-    var d = new Date();
-    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
-  }
-
-  function inicioDoMes() {
-    var d = new Date();
-    return new Date(d.getFullYear(), d.getMonth(), 1, 0, 0, 0, 0);
-  }
-
-  function toast(txt) {
-    var el = document.getElementById('toast-chat');
-    el.textContent = txt;
-    el.classList.add('mostrar');
-    setTimeout(function () { el.classList.remove('mostrar'); }, 2800);
-  }
-
-  function esc(s) {
-    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  }
-
-  function formatHora(ts) {
-    try {
-      var d;
-      if (ts && typeof ts.toDate === 'function') d = ts.toDate();
-      else if (ts instanceof Date) d = ts;
-      else if (typeof ts === 'number') d = new Date(ts);
-      else d = new Date(ts);
-      if (isNaN(d.getTime())) return '';
-      var hh = String(d.getHours()).padStart(2, '0');
-      var mm = String(d.getMinutes()).padStart(2, '0');
-      var dia = String(d.getDate()).padStart(2, '0');
-      var mes = String(d.getMonth() + 1).padStart(2, '0');
-      return dia + '/' + mes + ' · ' + hh + ':' + mm;
-    } catch (e) { return ''; }
-  }
-
-  function getTimeMs(ts) {
-    try {
-      if (ts && typeof ts.toDate === 'function') return ts.toDate().getTime();
-      if (ts instanceof Date) return ts.getTime();
-      if (typeof ts === 'number') return ts;
-      var d = new Date(ts);
-      return isNaN(d.getTime()) ? 0 : d.getTime();
-    } catch (e) { return 0; }
-  }
-
-  function coresNome(str) {
-    var cores = ['#ffc94d', '#ff4d9e', '#3b9eff', '#22FF99', '#a855f7', '#ff9a3c'];
-    var h = 0;
-    for (var i = 0; i < str.length; i++) h = (h + str.charCodeAt(i) * (i + 1)) % cores.length;
-    return cores[h];
-  }
-
-  async function garantirNome() {
-    if (nomeUser) return nomeUser;
-    if (!email || !db) return (email.split('@')[0] || 'Membro');
-    try {
-      var snap = await db.collection('usuarios').where('email', '==', email).limit(1).get();
-      if (snap.empty) {
-        snap = await db.collection('usuarios').where('email', '==', email.toLowerCase()).limit(1).get();
-      }
-      if (!snap.empty) {
-        var d = snap.docs[0].data();
-        nomeUser = (d.nome || '').trim() || email.split('@')[0];
-        try { localStorage.setItem('nomeUtilizador', nomeUser); } catch (e) {}
-      }
-    } catch (e) {}
-    if (!nomeUser) nomeUser = email.split('@')[0] || 'Membro';
-    return nomeUser;
-  }
-
-  async function limparMesesAnteriores() {
-    if (!db || limpandoMes) return;
-    limpandoMes = true;
-    try {
-      var mesId = mesAtualId();
-      // Preferência: apagar por campo mes (sem índice composto)
-      var snap = await db.collection('chatMensagens').limit(400).get();
-      if (snap.empty) return;
-      var batch = db.batch();
-      var n = 0;
-      var inicioMs = inicioDoMes().getTime();
-      snap.forEach(function (doc) {
-        var d = doc.data() || {};
-        var antigo = false;
-        if (d.mes && String(d.mes) !== mesId) antigo = true;
-        else {
-          var tms = getTimeMs(d.createdAt);
-          if (tms && tms < inicioMs) antigo = true;
-        }
-        if (antigo) {
-          batch.delete(doc.ref);
-          n++;
-        }
-      });
-      if (n) await batch.commit();
-    } catch (e) {
-      console.warn('limpeza mensal chat', e);
-    } finally {
-      limpandoMes = false;
-    }
-  }
-
-  function listaOrdenada() {
-    var inicioMs = inicioDoMes().getTime();
-    var mesId = mesAtualId();
-    var arr = [];
-    Object.keys(msgsCache).forEach(function (id) {
-      var d = msgsCache[id];
-      if (!d) return;
-      if (d.mes && String(d.mes) !== mesId) return;
-      var tms = getTimeMs(d.createdAt);
-      if (tms && tms < inicioMs && !d._local) return;
-      arr.push({ id: id, data: d, tms: tms || Date.now() });
-    });
-    arr.sort(function (a, b) { return a.tms - b.tms; });
-    return arr;
-  }
-
-
-
-  function limparDuplicadosLocais() {
-    var locais = [];
-    var reais = [];
-    Object.keys(msgsCache).forEach(function (id) {
-      var d = msgsCache[id];
-      if (!d) return;
-      if (String(id).indexOf('local_') === 0) locais.push(id);
-      else reais.push(id);
-    });
-    locais.forEach(function (lid) {
-      var L = msgsCache[lid];
-      if (!L) return;
-      var textoL = String(L.texto || '').trim();
-      var emailL = String(L.email || '').toLowerCase();
-      for (var i = 0; i < reais.length; i++) {
-        var R = msgsCache[reais[i]];
-        if (!R) continue;
-        if (String(R.texto || '').trim() !== textoL) continue;
-        if (String(R.email || '').toLowerCase() !== emailL) continue;
-        delete msgsCache[lid];
-        break;
-      }
-    });
-    // dois local_ iguais → um só
-    var visto = {};
-    Object.keys(msgsCache).forEach(function (id) {
-      if (String(id).indexOf('local_') !== 0) return;
-      var d = msgsCache[id];
-      var k = String(d.email || '').toLowerCase() + '|' + String(d.texto || '').trim();
-      if (visto[k]) delete msgsCache[id];
-      else visto[k] = id;
-    });
-  }
-
-  function renderLista() {
-    limparDuplicadosLocais();
-    var lista = document.getElementById('lista-msgs');
-    var items = listaOrdenada();
-    if (!items.length) {
-      lista.innerHTML = '<div class="vazio-chat" id="vazio-chat"><i class="fas fa-comments"></i>Ainda não há mensagens este mês.<br>Sê o primeiro a escrever!</div>';
-      return;
-    }
-    var emailLow = email.toLowerCase();
-    var html = '';
-    var nearBottom = (lista.scrollHeight - lista.scrollTop - lista.clientHeight) < 80;
-    items.forEach(function (item) {
-      var d = item.data;
-      var minha = String(d.email || '').toLowerCase() === emailLow;
-      var nome = d.nome || 'Membro';
-      var cor = coresNome(nome + (d.email || ''));
-      var quoteHtml = '';
-      if (d.replyNome || d.replyTexto) {
-        quoteHtml = '<div class="msg-quote"><div class="q-nome">' + esc(d.replyNome || 'Alguém') + '</div>' +
-          '<div class="q-txt">' + esc(d.replyTexto || '') + '</div></div>';
-      }
-      html += '<div class="msg ' + (minha ? 'minha' : 'outra') + '" data-id="' + esc(item.id) + '">' +
-        '<div class="msg-nome" style="' + (minha ? '' : 'background:none;-webkit-text-fill-color:' + cor + ';color:' + cor + ';') + '">' + esc(nome) + '</div>' +
-        quoteHtml +
-        '<div class="msg-txt">' + esc(d.texto) + '</div>' +
-        '<div class="msg-hora">' + esc(formatHora(d.createdAt)) + (d._local ? ' · a enviar…' : '') + '</div>' +
-        '</div>';
-    });
-    lista.innerHTML = html;
-    ligarGestosMsgs();
-    if (nearBottom || items.length) {
-      lista.scrollTop = lista.scrollHeight;
-    }
-  }
-
-  function abrirMenuMsg(id) {
-    if (!id || String(id).indexOf('local_') === 0) return;
-    if (!msgsCache[id]) return;
-    msgMenuId = id;
-    document.querySelectorAll('.msg.selecionada').forEach(function (el) { el.classList.remove('selecionada'); });
-    var el = document.querySelector('.msg[data-id="' + String(id).replace(/\\/g,'\\\\').replace(/"/g,'\\"') + '"]');
-    if (el) el.classList.add('selecionada');
-    document.getElementById('sheet-fundo').classList.add('mostrar');
-    document.getElementById('sheet-acoes').classList.add('mostrar');
-  }
-
-  function fecharMenuMsg() {
-    msgMenuId = null;
-    document.getElementById('sheet-fundo').classList.remove('mostrar');
-    document.getElementById('sheet-acoes').classList.remove('mostrar');
-    document.querySelectorAll('.msg.selecionada').forEach(function (el) { el.classList.remove('selecionada'); });
-  }
-
-  function definirResposta(id) {
-    var d = msgsCache[id];
-    if (!d) return;
-    replyAlvo = { id: id, nome: d.nome || 'Membro', texto: d.texto || '', email: d.email || '' };
-    document.getElementById('reply-nome').textContent = 'A responder a ' + replyAlvo.nome;
-    var prev = replyAlvo.texto;
-    if (prev.length > 80) prev = prev.slice(0, 80) + '…';
-    document.getElementById('reply-preview').textContent = prev;
-    document.getElementById('reply-bar').classList.add('mostrar');
-    document.getElementById('input-msg').focus();
-  }
-
-  function cancelarResposta() {
-    replyAlvo = null;
-    document.getElementById('reply-bar').classList.remove('mostrar');
-  }
-
-  function ligarGestosMsgs() {
-    document.querySelectorAll('#lista-msgs .msg').forEach(function (el) {
-      var id = el.getAttribute('data-id');
-      var timer = null;
-      el.addEventListener('click', function (e) {
-        e.preventDefault();
-        abrirMenuMsg(id);
-      });
-      el.addEventListener('contextmenu', function (e) {
-        e.preventDefault();
-        abrirMenuMsg(id);
-      });
-      el.addEventListener('touchstart', function () {
-        timer = setTimeout(function () { abrirMenuMsg(id); }, 450);
-      }, { passive: true });
-      el.addEventListener('touchmove', function () {
-        if (timer) clearTimeout(timer);
-      }, { passive: true });
-      el.addEventListener('touchend', function () {
-        if (timer) clearTimeout(timer);
-      });
-    });
-  }
-
-  function ouvirMensagens() {
-    if (!db) return;
-    if (unsub) { try { unsub(); } catch (e) {} unsub = null; }
-
-    // Query simples (só orderBy createdAt) — não precisa de índice composto
-    // Filtra o mês no cliente
-    unsub = db.collection('chatMensagens')
-      .orderBy('createdAt', 'asc')
-      .limitToLast(300)
-      .onSnapshot({ includeMetadataChanges: true }, function (snap) {
-        snap.docChanges().forEach(function (change) {
-          var id = change.doc.id;
-          if (change.type === 'removed') {
-            delete msgsCache[id];
-            return;
-          }
-          var d = change.doc.data() || {};
-          // Se ainda não tem timestamp do servidor, mantém o que temos
-          if (!d.createdAt && msgsCache[id] && msgsCache[id].createdAt) {
-            d.createdAt = msgsCache[id].createdAt;
-          }
-          d._local = change.doc.metadata && change.doc.metadata.hasPendingWrites;
-          msgsCache[id] = d;
-        });
-        // Também sincroniza estado completo do snapshot
-        snap.forEach(function (doc) {
-          var d = doc.data() || {};
-          if (!d.createdAt && msgsCache[doc.id] && msgsCache[doc.id].createdAt) {
-            d.createdAt = msgsCache[doc.id].createdAt;
-          }
-          d._local = !!(doc.metadata && doc.metadata.hasPendingWrites);
-          msgsCache[doc.id] = d;
-        });
-        limparDuplicadosLocais();
-        renderLista();
-      }, function (err) {
-        console.error('chat listener', err);
-        // Fallback sem limitToLast (alguns browsers / versões)
-        if (unsub) try { unsub(); } catch (e) {}
-        unsub = db.collection('chatMensagens')
-          .orderBy('createdAt', 'desc')
-          .limit(300)
-          .onSnapshot(function (snap) {
-            msgsCache = {};
-            snap.forEach(function (doc) {
-              msgsCache[doc.id] = doc.data() || {};
-            });
-            renderLista();
-          }, function (err2) {
-            console.error(err2);
-            toast('Erro ao carregar mensagens. Confirma as regras e o índice createdAt.');
-          });
-      });
-  }
-
-
-  async function criarNotificacoesChat(refId, dataFire, meuEmail, meuNome) {
-    if (!db) return;
-    var alvos = {};
-    // Resposta estilo WhatsApp
-    if (dataFire.replyEmail) {
-      var re = String(dataFire.replyEmail).trim().toLowerCase();
-      if (re && re !== String(meuEmail).toLowerCase()) {
-        alvos[re] = { tipo: 'resposta' };
-      }
-    }
-    // @nome no texto
-    var texto = String(dataFire.texto || '');
-    var mencoes = texto.match(/@([A-Za-zÀ-ÿ0-9_.\-]{2,40})/g) || [];
-    for (var i = 0; i < mencoes.length; i++) {
-      var tag = mencoes[i].slice(1);
-      try {
-        var snap = await db.collection('usuarios').where('nome', '==', tag).limit(3).get();
-        // também procura case-insensitive aproximado: se vazio, varre limitados é caro; tenta nome lowercase field se existir
-        if (snap.empty) {
-          // fallback: get users is too heavy - try exact common storage
-          continue;
-        }
-        snap.forEach(function (doc) {
-          var em = String((doc.data().email || '')).trim().toLowerCase();
-          if (em && em !== String(meuEmail).toLowerCase()) {
-            alvos[em] = { tipo: 'mencao' };
-          }
-        });
-      } catch (e) {}
-    }
-    // Também @parte do nome se o utilizador escreveu @PrimeiroNome matching start of nome
-    if (mencoes.length) {
-      try {
-        var todosSnap = await db.collection('usuarios').limit(200).get();
-        mencoes.forEach(function (m) {
-          var tag = m.slice(1).toLowerCase();
-          todosSnap.forEach(function (doc) {
-            var d = doc.data() || {};
-            var nm = String(d.nome || '').toLowerCase();
-            var em = String(d.email || '').trim().toLowerCase();
-            if (!em || em === String(meuEmail).toLowerCase()) return;
-            if (nm === tag || nm.indexOf(tag) === 0 || nm.split(/\s+/)[0] === tag) {
-              alvos[em] = alvos[em] || { tipo: 'mencao' };
-            }
-          });
-        });
-      } catch (e2) {}
-    }
-    var ids = Object.keys(alvos);
-    for (var j = 0; j < ids.length; j++) {
-      try {
-        await db.collection('notificacoesChat').add({
-          email: ids[j],
-          tipo: alvos[ids[j]].tipo,
-          deNome: meuNome || 'Alguém',
-          deEmail: String(meuEmail || '').toLowerCase(),
-          texto: String(dataFire.texto || '').slice(0, 120),
-          msgId: refId,
-          lida: false,
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-      } catch (e3) { console.warn('notif', e3); }
-    }
-  }
-
-  async function enviar() {
-    var ta = document.getElementById('input-msg');
-    var btn = document.getElementById('btn-enviar');
-    var texto = (ta.value || '').trim();
-    if (!texto) return;
-    if (!email) {
-      toast('Entra na tua conta para enviar mensagens.');
-      return;
-    }
-    if (texto.length > 500) {
-      toast('Máximo 500 caracteres.');
-      return;
-    }
-    btn.disabled = true;
-    var nome = await garantirNome();
-    var agora = new Date();
-    var tempId = 'local_' + Date.now();
-
-    var payload = {
-      texto: texto,
-      nome: nome,
-      email: email,
-      mes: mesAtualId(),
-      createdAt: agora,
-      _local: true
-    };
-    if (replyAlvo) {
-      payload.replyId = replyAlvo.id;
-      payload.replyNome = replyAlvo.nome;
-      payload.replyTexto = (replyAlvo.texto || '').slice(0, 200);
-      payload.replyEmail = replyAlvo.email || '';
-    }
-    msgsCache[tempId] = payload;
-    renderLista();
-    ta.value = '';
-    document.getElementById('contador-chars').textContent = '0/500';
-    ta.style.height = 'auto';
-    var replyGuardado = replyAlvo;
-    cancelarResposta();
-
-    try {
-      var dataFire = {
-        texto: texto,
-        nome: nome,
-        email: email,
-        mes: mesAtualId(),
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      };
-      if (replyGuardado) {
-        dataFire.replyId = replyGuardado.id;
-        dataFire.replyNome = replyGuardado.nome;
-        dataFire.replyTexto = (replyGuardado.texto || '').slice(0, 200);
-        dataFire.replyEmail = replyGuardado.email || '';
-      }
-      var ref = await db.collection('chatMensagens').add(dataFire);
-      // Remove TODOS os temporários desta mensagem (evita 2 caixas)
-      Object.keys(msgsCache).forEach(function (id) {
-        if (String(id).indexOf('local_') === 0) {
-          var x = msgsCache[id];
-          if (x && String(x.texto || '').trim() === texto && String(x.email || '').toLowerCase() === String(email).toLowerCase()) {
-            delete msgsCache[id];
-          }
-        }
-      });
-      delete msgsCache[tempId];
-      payload._local = false;
-      payload.createdAt = agora;
-      msgsCache[ref.id] = payload;
-      limparDuplicadosLocais();
-      renderLista();
-      try { await criarNotificacoesChat(ref.id, dataFire, email, nome); } catch (eN) { console.warn(eN); }
-    } catch (e) {
-      console.error(e);
-      delete msgsCache[tempId];
-      renderLista();
-      toast('Falha ao enviar. Verifica as regras do Firebase.');
-    } finally {
-      btn.disabled = false;
-      ta.focus();
-    }
-  }
-
-  var ta = document.getElementById('input-msg');
-  ta.addEventListener('input', function () {
-    document.getElementById('contador-chars').textContent = ta.value.length + '/500';
-    ta.style.height = 'auto';
-    ta.style.height = Math.min(110, ta.scrollHeight) + 'px';
-  });
-  ta.addEventListener('keydown', function (e) {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      enviar();
-    }
-  });
-  document.getElementById('btn-enviar').addEventListener('click', enviar);
-
-  document.getElementById('sheet-fundo').addEventListener('click', fecharMenuMsg);
-  document.getElementById('sheet-cancelar').addEventListener('click', fecharMenuMsg);
-  document.getElementById('sheet-responder').addEventListener('click', function () {
-    if (msgMenuId) definirResposta(msgMenuId);
-    fecharMenuMsg();
-  });
-  document.getElementById('reply-cancel').addEventListener('click', cancelarResposta);
-
-  if (!email) {
-    document.getElementById('bloqueio-login').classList.remove('oculto');
-  } else {
-    document.getElementById('bloqueio-login').classList.add('oculto');
-    garantirNome().then(function (n) {
-      document.getElementById('nome-eu').textContent = n;
-    });
-    limparMesesAnteriores().then(function () {
-      ouvirMensagens();
-    });
-  }
-
-  var mesNomes = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-  var agora = new Date();
-  document.getElementById('aviso-mes').innerHTML =
-    'Mensagens de <b>' + mesNomes[agora.getMonth()] + ' ' + agora.getFullYear() + '</b> — podes reler à vontade. ' +
-    'No próximo mês o histórico é apagado e a sala recomeça a zero.';
-})();
-  </script>
+  <script>window.__DM_PRESENCA__ = { pagina: 'chat', jogando: null };</script>
+  <script src="presenca.js?v=1"></script>
 </body>
 </html>
