@@ -532,14 +532,19 @@
       <div class="ic">⭐</div>
       <div class="txt">
         <h3>Comprar giros com pontos</h3>
-        <p>Podes trocar pontos da tua conta Desafio MOZ por giros. Quanto mais pontos usares, mais giros recebes. Os pontos saem da conta na hora da compra.</p>
+        <p>
+          <b>5 pts = 3 giros:</b> <span class="destaque">não ganha nada</span> — os 3 giros perdem.<br>
+          <b>10 pts = 8 giros:</b> podes ganhar <span class="destaque">1 MT</span>; às vezes +2/+6 giros (esses giros extra depois perdem tudo).<br>
+          <b>24 pts = 18 giros:</b> um giro garante <span class="destaque">20 pts</span>; <b>1 MT</b> só se tiveres sorte; +2/+6 também podem sair (e depois perdem).<br>
+          <b>Outros valores:</b> dificuldade alta (sistema clássico).
+        </p>
       </div>
     </div>
     <div class="regra-cartao">
       <div class="ic">💵</div>
       <div class="txt">
         <h3>Comprar giros com metical</h3>
-        <p>Mínimo <span class="destaque">2 MT</span>. Nos giros dessa compra só podem sair: <b>1 MT</b>, <b>20 pts</b>, <b>+2 giros</b>, <b>+6 giros</b> ou perder. O total em prémios (em valor de MT) fica entre <b>0 e o dobro</b> do que pagaste — por exemplo, com 2 MT podes chegar a 4 MT em prémios, ou a nada. A sorte decide. Giros extra (+2 / +6) quando usados <b>não dão prémio</b>.</p>
+        <p>Mínimo <span class="destaque">2 MT</span>. <b>Tens de ganhar</b> algo nos giros desta compra: o total em prémios fica entre <b>1 MT e o dobro</b> do que pagaste (ex.: 2 MT → até 4 MT). Só saem: <b>1 MT</b>, <b>20 pts</b>, <b>+2 / +6 giros</b> ou perder nos giros restantes. Giros +2/+6 ganhos, quando usados, <b>não dão prémio</b>.</p>
       </div>
     </div>
     <div class="regra-cartao verde">
@@ -1055,17 +1060,80 @@ async function registarCompraPontosRoleta(custoPontos, giros){
   } catch(e){ console.warn('registarCompraPontosRoleta', e); }
 }
 
+async 
+/* Compra com PONTOS — pacotes fixos:
+   5 pts → 3 giros: quase só perde
+   10 pts → 8 giros: pode 1 MT; +2/+6 (depois perdem); resto perde
+   24 pts → 18 giros: 1× garante 20 PTS; 1 MT só se tiver sorte; +2/+6 perdedores; resto perde
+   outros valores: sistema antigo (girosDificeis)
+*/
+function perdaIdx(){
+  return Math.random() < 0.5 ? (IDX_BOA >= 0 ? IDX_BOA : 7) : (IDX_QUASE >= 0 ? IDX_QUASE : 9);
+}
+function baralhar(arr){
+  for(var i = arr.length - 1; i > 0; i--){
+    var j = Math.floor(Math.random() * (i + 1));
+    var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+  }
+  return arr;
+}
+function montarListaPremiosPontos(custoPontos, girosComprados){
+  var c = Number(custoPontos) || 0;
+  var g = Math.max(0, Math.floor(Number(girosComprados) || 0));
+  var lista = [];
+  if(g <= 0) return { lista: [], modo: 'vazio' };
+
+  // 5 pontos = 3 giros → NÃO ganha nada (só boa sorte / quase)
+  if(c === 5 && g === 3){
+    for(var i = 0; i < g; i++) lista.push(perdaIdx());
+    return { lista: baralhar(lista), modo: '5pts' };
+  }
+
+  // 10 pontos = 8 giros → 1 MT com alguma chance; giros extra; resto perde
+  if(c === 10 && g === 8){
+    for(var i = 0; i < g; i++) lista.push(perdaIdx());
+    // ~45% chance de 1 MT num dos giros
+    if(Math.random() < 0.45 && IDX_1_MT >= 0) lista[0] = IDX_1_MT;
+    // ~35% +2 giros, ~12% +6 giros
+    if(Math.random() < 0.35 && IDX_2_GIROS >= 0) lista[1] = IDX_2_GIROS;
+    else if(Math.random() < 0.12 && IDX_6_GIROS >= 0) lista[1] = IDX_6_GIROS;
+    return { lista: baralhar(lista), modo: '10pts' };
+  }
+
+  // 24 pontos = 18 giros → 1 garantido 20 PTS; 1 MT difícil; giros extra; resto perde
+  if(c === 24 && g === 18){
+    for(var i = 0; i < g; i++) lista.push(perdaIdx());
+    if(IDX_20_PTS >= 0) lista[0] = IDX_20_PTS; // garantido
+    // ~22% chance de 1 MT (não fácil)
+    if(Math.random() < 0.22 && IDX_1_MT >= 0) lista[1] = IDX_1_MT;
+    // +2 ou +6 com alguma frequência
+    if(Math.random() < 0.40 && IDX_2_GIROS >= 0) lista[2] = IDX_2_GIROS;
+    if(Math.random() < 0.18 && IDX_6_GIROS >= 0) lista[3] = IDX_6_GIROS;
+    return { lista: baralhar(lista), modo: '24pts' };
+  }
+
+  return null; // usa sistema antigo (girosDificeis)
+}
+
 async function comprarComPontos(custoPontos, giros){
   if(estado.pontos < custoPontos){ mostrarToast('Não tens pontos suficientes.'); return; }
   estado.pontos -= custoPontos;
   estado.giros += giros;
-  estado.girosDificeis = (Number(estado.girosDificeis) || 0) + giros;
+  var planoPts = montarListaPremiosPontos(custoPontos, giros);
+  if(planoPts && planoPts.lista && planoPts.lista.length){
+    // Pacote 5 / 10 / 24 pts: fila de garantias (não usa tabela difícil genérica)
+    if(!estado.garantias) estado.garantias = [];
+    estado.garantias = (estado.garantias || []).concat(planoPts.lista);
+  } else {
+    // Outros valores: sistema antigo — giros difíceis
+    estado.girosDificeis = (Number(estado.girosDificeis) || 0) + giros;
+  }
   sincronizarMt();
   await guardarEstado();
   localStorage.setItem('pontosUtilizador', String(estado.pontos));
   await registarCompraPontosRoleta(custoPontos, giros);
   atualizarUI();
-  mostrarToast(`Compraste ${giros} giros por ${custoPontos} pontos!`);
+  mostrarToast('Compraste ' + giros + ' giros por ' + custoPontos + ' pontos!');
 }
 
 function itemRoletaParaMT(valorMT){
@@ -1586,24 +1654,25 @@ function valorPremioEmMT(idx){
 }
 
 function escolherAlvoMT(maxMT){
-  // Casa ganha muito: pesos altos em 0 e valores baixos
-  // maxMT = 2 * gasto
+  // Compra em MT: o jogador TEM de ganhar algo (mínimo 1 MT de valor)
+  // Máximo = 2 × gasto. Distribuição: mais peso no meio-baixo, ainda pode chegar ao teto.
+  maxMT = Math.max(1, Math.floor(Number(maxMT) || 0));
   var pesos = [];
   for(var t = 0; t <= maxMT; t++){
-    // peso decresce com t; 0 tem peso alto
-    if(t === 0) pesos.push(40);
-    else if(t <= Math.max(1, Math.floor(maxMT * 0.25))) pesos.push(18);
-    else if(t <= Math.floor(maxMT * 0.5)) pesos.push(12);
-    else if(t <= Math.floor(maxMT * 0.75)) pesos.push(6);
-    else pesos.push(3);
+    if(t === 0){ pesos.push(0); continue; } // nunca 0 — tem de ganhar
+    if(t === 1) pesos.push(22);
+    else if(t <= Math.max(1, Math.floor(maxMT * 0.35))) pesos.push(28);
+    else if(t <= Math.floor(maxMT * 0.55)) pesos.push(24);
+    else if(t <= Math.floor(maxMT * 0.75)) pesos.push(16);
+    else pesos.push(10); // chega ao 2× com alguma chance
   }
   var total = pesos.reduce(function(s,p){ return s+p; }, 0);
   var r = Math.random() * total;
   for(var i = 0; i < pesos.length; i++){
-    if(r < pesos[i]) return i;
+    if(r < pesos[i]) return Math.max(1, i);
     r -= pesos[i];
   }
-  return 0;
+  return 1;
 }
 
 function montarListaPremiosMT(valorMT, girosComprados){
@@ -1667,8 +1736,7 @@ async function creditarGirosMetical(valorMT, giros){
   await guardarEstado();
   atualizarUI();
   var msg = 'Pagamento ok! +' + giros + ' giros.';
-  if(plano && plano.alvoMT === 0) msg += ' Desta vez a sorte pode não ajudar — gira e vê.';
-  else if(plano) msg += ' Nos teus giros podes chegar até ' + plano.maxMT + ' MT em prémios (ou menos).';
+  if(plano) msg += ' Vais ganhar prémios até ' + plano.maxMT + ' MT no total destes giros. Boa sorte!';
   mostrarToast(msg);
 }
 
