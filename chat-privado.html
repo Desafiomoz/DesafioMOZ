@@ -469,6 +469,8 @@
     ids.sort(function (a, b) {
       var ta = msgsCache[a].createdAt || '';
       var tb = msgsCache[b].createdAt || '';
+      if (ta && ta.toDate) try { ta = ta.toDate().toISOString(); } catch (e) {}
+      if (tb && tb.toDate) try { tb = tb.toDate().toISOString(); } catch (e) {}
       return String(ta).localeCompare(String(tb));
     });
     var html = '';
@@ -588,17 +590,21 @@
     } catch (e) {}
 
     if (unsub) try { unsub(); } catch (e) {}
+    // Query simples (só conversaId) — tempo real rápido, sem índice composto
     unsub = db.collection('chatPrivado')
       .where('conversaId', '==', conversaId)
-      .orderBy('createdAt', 'asc')
-      .limitToLast(150)
-      .onSnapshot(function (snap) {
-        // Merge com locais
+      .onSnapshot({ includeMetadataChanges: true }, function (snap) {
         var vindos = {};
         snap.forEach(function (doc) {
-          vindos[doc.id] = doc.data() || {};
+          var d = doc.data() || {};
+          // normaliza createdAt para string comparável
+          if (d.createdAt && d.createdAt.toDate) {
+            try { d.createdAt = d.createdAt.toDate().toISOString(); } catch (e) {}
+          }
+          d._local = !!(doc.metadata && doc.metadata.hasPendingWrites);
+          vindos[doc.id] = d;
         });
-        // Remove locais que já chegaram ao servidor
+        // Remove temporários locais já confirmados no servidor
         Object.keys(msgsCache).forEach(function (id) {
           if (String(id).indexOf('local_') === 0) {
             var L = msgsCache[id];
@@ -618,12 +624,8 @@
         Object.keys(vindos).forEach(function (id) { msgsCache[id] = vindos[id]; });
         renderMsgs();
       }, function (err) {
-        console.error(err);
-        db.collection('chatPrivado').where('conversaId', '==', conversaId).limit(150).get().then(function (snap) {
-          msgsCache = {};
-          snap.forEach(function (doc) { msgsCache[doc.id] = doc.data() || {}; });
-          renderMsgs();
-        });
+        console.error('listener privado', err);
+        toast('Erro ao ouvir mensagens. Tenta reabrir o chat.');
       });
   }
 
@@ -671,18 +673,28 @@
         dataFire.replyTexto = (replyGuardado.texto || '').slice(0, 200);
         dataFire.replyId = replyGuardado.id;
       }
+      // Envia já — o outro vê no onSnapshot em tempo real
       var ref = await db.collection('chatPrivado').add(dataFire);
       delete msgsCache[tempId];
       payload._local = false;
+      payload.createdAt = agora;
       msgsCache[ref.id] = payload;
       renderMsgs();
-      await db.collection('chatPrivadoConversas').doc(conversaId).set({
-        ultimaMsg: texto.slice(0, 80),
-        ultimaDeEmail: String(email).toLowerCase(),
-        updatedAt: agora
-      }, { merge: true });
-      try {
-        await db.collection('notificacoesChat').add({
+      // Actualizações secundárias em paralelo (não atrasam a mensagem)
+      Promise.all([
+        db.collection('chatPrivadoConversas').doc(conversaId).set({
+          participantes: [String(email).toLowerCase(), String(parceiro.email).toLowerCase()].sort(),
+          ultimaMsg: texto.slice(0, 80),
+          ultimaDeEmail: String(email).toLowerCase(),
+          updatedAt: agora,
+          nomes: (function () {
+            var n = {};
+            n[String(email).toLowerCase()] = nomeUser;
+            n[String(parceiro.email).toLowerCase()] = parceiro.nome;
+            return n;
+          })()
+        }, { merge: true }),
+        db.collection('notificacoesChat').add({
           email: String(parceiro.email).toLowerCase(),
           tipo: 'privado',
           deNome: nomeUser,
@@ -691,10 +703,12 @@
           conversaId: conversaId,
           lida: false,
           createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-      } catch (eN) { console.warn('notif privado', eN); }
+        }).catch(function (eN) { console.warn('notif privado', eN); })
+      ]).catch(function (e2) { console.warn('pos-envio', e2); });
     } catch (e) {
       console.error(e);
+      delete msgsCache[tempId];
+      renderMsgs();
       toast('Falha ao enviar');
     } finally {
       btn.disabled = false;
