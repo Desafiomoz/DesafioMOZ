@@ -440,7 +440,7 @@
 <div class="acao-central">
   <div class="badge-giros">🎡 Giros disponíveis: <b id="saldo-giros">0</b></div>
   <button id="btn-girar" disabled>GIRAR AGORA</button>
-  <div class="nota-gratis">Giro grátis diário: <b id="estado-gratis">disponível</b></div>
+  <div class="nota-gratis">Giros grátis diários: <b id="estado-gratis">disponível</b></div>
 </div>
 
 <button class="btn-comprar-mais" id="btn-abrir-loja">🎡 Comprar mais giros</button>
@@ -524,8 +524,8 @@
     <div class="regra-cartao verde">
       <div class="ic">🎁</div>
       <div class="txt">
-        <h3>Giro grátis diário</h3>
-        <p>Todos os dias recebes <span class="destaque">1 giro grátis</span> na primeira vez que abrires a roleta. Não acumula para o dia seguinte: usa-o no próprio dia.</p>
+        <h3>Giros grátis diários</h3>
+        <p>Todos os dias recebes <span class="destaque">3 giros grátis</span>. São <b>difíceis</b>: no máximo podes ganhar <b>1 MT</b> no total; o resto costuma perder. Não acumulam para o dia seguinte.</p>
       </div>
     </div>
     <div class="regra-cartao">
@@ -539,7 +539,7 @@
       <div class="ic">💵</div>
       <div class="txt">
         <h3>Comprar giros com metical</h3>
-        <p>Mínimo <span class="destaque">2 MT</span>. Nos giros dessa compra só podem sair: <b>1 MT</b>, <b>20 pts</b>, <b>+2 giros</b>, <b>+6 giros</b> ou perder. O total em prémios (em valor de MT) fica entre <b>0 e o dobro</b> do que pagaste — por exemplo, com 2 MT podes chegar a 4 MT em prémios, ou a nada. A sorte decide. Giros extra (+2 / +6) quando usados <b>não dão prémio</b>.</p>
+        <p>Mínimo <span class="destaque">2 MT</span>. <b>Garantia:</b> cerca de <b>2 × o que pagaste</b> em prémios (ex.: 2→4; 5→10; 50→100). Com <b>sorte</b> até <b>+3 MT</b> (2→7; 5→13; 50→103). Os prémios saem em ordem aleatória. Giros +2/+6, quando usados, <b>não dão prémio</b>.</p>
       </div>
     </div>
     <div class="regra-cartao verde">
@@ -550,9 +550,9 @@
           <b>Pontos baixos</b> (ex.: 20 pts) — mais acessíveis.<br>
           <b>Pontos altos</b> (100, 500, 1000) — <span class="destaque">muito </span>.<br>
           <b>1 MT e 5 MT</b> — possíveis.<br>
-          <b>10 MT e 50 MT</b> — <span class="destaque"></span>.<br>
+          <b>10 MT e 50 MT</b>  <span class="destaque"></span>.<br>
           <b>+2 giros</b> — aparece .<br>
-          <b>+6 giros</b> — <span class="destaque"></span>.<br>
+          <b>+6 giros</b>  <span class="destaque"></span>.<br>
           <b>Boa sorte / Quase</b> — as fatias mais comuns (não dão prémio).
         </p>
       </div>
@@ -712,7 +712,11 @@ function indicePremio(tipo, valor){
   return -1;
 }
 const IDX_20_PTS = indicePremio('pontos', 20);
+const IDX_100_PTS = indicePremio('pontos', 100);
 const IDX_1_MT = indicePremio('mt', 1);
+const IDX_5_MT = indicePremio('mt', 5);
+const IDX_10_MT = indicePremio('mt', 10);
+const IDX_50_MT = indicePremio('mt', 50);
 const IDX_2_GIROS = indicePremio('giros', 2);
 const IDX_6_GIROS = indicePremio('giros', 6);
 const IDX_BOA = PREMIOS.findIndex(function(p){ return p.label === 'BOA SORTE'; });
@@ -854,7 +858,13 @@ async function carregarContaFirebase(){
     userRef = snap.docs[0].ref;
     var d = snap.docs[0].data() || {};
     estado.pontos = Number(d.pontos) || 0;
+    try { localStorage.setItem('pontosUtilizador', String(estado.pontos)); } catch(e0){}
     sincronizarMt();
+    try {
+      var nome = d.nome || localStorage.getItem('nomeUtilizador') || localStorage.getItem('nome') || EMAIL_UTILIZADOR.split('@')[0];
+      var elTopo = document.querySelector('.titulo-topo span');
+      if(elTopo) elTopo.textContent = 'Conta: ' + nome + ' · Gira e ganha';
+    } catch(e1){}
     if(d.roletaUltimoGiroGratis) estado.ultimoGiroGratis = d.roletaUltimoGiroGratis;
     // histórico local complementa (NÃO sobrescrever giros do servidor com local antigo)
     var girosServidor = (d.roletaGiros != null) ? (Number(d.roletaGiros) || 0) : null;
@@ -883,10 +893,28 @@ async function carregarContaFirebase(){
 
 async function reclamarGiroGratisSeDisponivel(){
   if(giroGratisDisponivel()){
-    estado.giros += 1;
+    var n = 3;
+    estado.giros = (Number(estado.giros) || 0) + n;
     estado.ultimoGiroGratis = hojeISO();
+    if(!estado.garantias) estado.garantias = [];
+    function perdaLocal(){
+      var b = (typeof IDX_BOA !== 'undefined' && IDX_BOA >= 0) ? IDX_BOA : 7;
+      var q = (typeof IDX_QUASE !== 'undefined' && IDX_QUASE >= 0) ? IDX_QUASE : 9;
+      return Math.random() < 0.5 ? b : q;
+    }
+    var listaG = [];
+    for(var i = 0; i < n; i++) listaG.push(perdaLocal());
+    // ~30% chance de 1 dos 3 ser 1 MT (máximo nos grátis)
+    if(Math.random() < 0.30 && typeof IDX_1_MT !== 'undefined' && IDX_1_MT >= 0){
+      listaG[0] = IDX_1_MT;
+    }
+    for(var a = listaG.length - 1; a > 0; a--){
+      var b = Math.floor(Math.random() * (a + 1));
+      var t = listaG[a]; listaG[a] = listaG[b]; listaG[b] = t;
+    }
+    estado.garantias = (estado.garantias || []).concat(listaG);
     await guardarEstado();
-    mostrarToast('Ganhaste 1 giro grátis hoje! 🎁');
+    mostrarToast('Ganhaste 3 giros grátis hoje! 🎁 (difíceis — no máx. 1 MT)');
   }
 }
 
@@ -1055,17 +1083,93 @@ async function registarCompraPontosRoleta(custoPontos, giros){
   } catch(e){ console.warn('registarCompraPontosRoleta', e); }
 }
 
+function perdaIdx(){
+  var b = (IDX_BOA >= 0) ? IDX_BOA : 7;
+  var q = (IDX_QUASE >= 0) ? IDX_QUASE : 9;
+  return Math.random() < 0.5 ? b : q;
+}
+function baralhar(arr){
+  for(var i = arr.length - 1; i > 0; i--){
+    var j = Math.floor(Math.random() * (i + 1));
+    var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+  }
+  return arr;
+}
+/* Pacotes de pontos: 5=nada; 10 e 24 regras fixas; ≥50 → ~48 pts (sorte até 60) */
+function montarListaPremiosPontos(custoPontos, girosComprados){
+  var c = Number(custoPontos) || 0;
+  var g = Math.max(0, Math.floor(Number(girosComprados) || 0));
+  var lista = [];
+  if(g <= 0) return { lista: [], modo: 'vazio' };
+
+  if(c === 5 && g === 3){
+    for(var i = 0; i < g; i++) lista.push(perdaIdx());
+    return { lista: baralhar(lista), modo: '5pts' };
+  }
+  if(c === 10 && g === 8){
+    for(var i = 0; i < g; i++) lista.push(perdaIdx());
+    if(Math.random() < 0.45 && IDX_1_MT >= 0) lista[0] = IDX_1_MT;
+    if(Math.random() < 0.35 && IDX_2_GIROS >= 0) lista[1] = IDX_2_GIROS;
+    else if(Math.random() < 0.12 && IDX_6_GIROS >= 0) lista[1] = IDX_6_GIROS;
+    return { lista: baralhar(lista), modo: '10pts' };
+  }
+  if(c === 24 && g === 18){
+    for(var i = 0; i < g; i++) lista.push(perdaIdx());
+    if(IDX_20_PTS >= 0) lista[0] = IDX_20_PTS;
+    if(Math.random() < 0.22 && IDX_1_MT >= 0) lista[1] = IDX_1_MT;
+    if(Math.random() < 0.40 && IDX_2_GIROS >= 0) lista[2] = IDX_2_GIROS;
+    if(Math.random() < 0.18 && IDX_6_GIROS >= 0) lista[3] = IDX_6_GIROS;
+    return { lista: baralhar(lista), modo: '24pts' };
+  }
+  if(c >= 50){
+    var alvoPts = 48;
+    var r = Math.random();
+    if(r < 0.45) alvoPts = 48;
+    else if(r < 0.70) alvoPts = 52;
+    else if(r < 0.88) alvoPts = 56;
+    else alvoPts = 60;
+    var rest = alvoPts;
+    while(rest >= 20 && lista.length < g && IDX_20_PTS >= 0){
+      lista.push(IDX_20_PTS);
+      rest -= 20;
+    }
+    if(rest >= 8 && lista.length < g && Math.random() < 0.35 && IDX_1_MT >= 0){
+      lista.push(IDX_1_MT);
+      rest -= 8;
+    }
+    while(rest >= 20 && lista.length < g && IDX_20_PTS >= 0){
+      lista.push(IDX_20_PTS);
+      rest -= 20;
+    }
+    while(lista.length < g){
+      var u = Math.random();
+      if(u < 0.12 && IDX_2_GIROS >= 0) lista.push(IDX_2_GIROS);
+      else lista.push(perdaIdx());
+    }
+    if(lista.length > g) lista = lista.slice(0, g);
+    return { lista: baralhar(lista), modo: 'pts_alto', alvoPts: alvoPts };
+  }
+  return null; // sistema clássico girosDificeis
+}
+
 async function comprarComPontos(custoPontos, giros){
   if(estado.pontos < custoPontos){ mostrarToast('Não tens pontos suficientes.'); return; }
   estado.pontos -= custoPontos;
   estado.giros += giros;
-  estado.girosDificeis = (Number(estado.girosDificeis) || 0) + giros;
+  var plano = montarListaPremiosPontos(custoPontos, giros);
+  if(plano && plano.lista && plano.lista.length){
+    if(!estado.garantias) estado.garantias = [];
+    estado.garantias = estado.garantias.concat(plano.lista);
+  } else {
+    // valores não mapeados: dificuldade alta
+    estado.girosDificeis = (Number(estado.girosDificeis) || 0) + giros;
+  }
   sincronizarMt();
   await guardarEstado();
-  localStorage.setItem('pontosUtilizador', String(estado.pontos));
+  try { localStorage.setItem('pontosUtilizador', String(estado.pontos)); } catch(e){}
   await registarCompraPontosRoleta(custoPontos, giros);
   atualizarUI();
-  mostrarToast(`Compraste ${giros} giros por ${custoPontos} pontos!`);
+  mostrarToast('Compraste ' + giros + ' giros por ' + custoPontos + ' pontos!');
 }
 
 function itemRoletaParaMT(valorMT){
@@ -1581,76 +1685,80 @@ function girarRoleta(indiceAlvo){
 */
 function valorPremioEmMT(idx){
   if(idx === IDX_1_MT) return 1;
-  if(idx === IDX_20_PTS) return 2; // 20 pts ≈ 2 MT (8 pts = 1 MT → 20 ≈ 2.5, arredondamos a 2 para o orçamento)
-  return 0; // +2 / +6 giros não contam para o teto em MT
-}
-
-function escolherAlvoMT(maxMT){
-  // Casa ganha muito: pesos altos em 0 e valores baixos
-  // maxMT = 2 * gasto
-  var pesos = [];
-  for(var t = 0; t <= maxMT; t++){
-    // peso decresce com t; 0 tem peso alto
-    if(t === 0) pesos.push(40);
-    else if(t <= Math.max(1, Math.floor(maxMT * 0.25))) pesos.push(18);
-    else if(t <= Math.floor(maxMT * 0.5)) pesos.push(12);
-    else if(t <= Math.floor(maxMT * 0.75)) pesos.push(6);
-    else pesos.push(3);
-  }
-  var total = pesos.reduce(function(s,p){ return s+p; }, 0);
-  var r = Math.random() * total;
-  for(var i = 0; i < pesos.length; i++){
-    if(r < pesos[i]) return i;
-    r -= pesos[i];
-  }
+  if(idx === IDX_5_MT) return 5;
+  if(idx === IDX_10_MT) return 10;
+  if(idx === IDX_50_MT) return 50;
+  if(idx === IDX_20_PTS) return 2;   // 20 pts ≈ 2 MT
+  if(idx === IDX_100_PTS) return 12; // 100 pts ≈ 12 MT
   return 0;
 }
 
+/* Compra em MT: garantia 2×X. Com sorte até 2×X + 3.
+   Ex.: 2 MT → 4 (sorte até 7) | 5 → 10 (até 13) | 50 → 100 (até 103) */
+function escolherAlvoMT(valorPago){
+  var x = Math.max(1, Math.floor(Number(valorPago) || 0));
+  var base = x * 2;
+  var max = base + 3;
+  var r = Math.random();
+  if(r < 0.55) return base;
+  if(r < 0.78) return base + 1;
+  if(r < 0.92) return base + 2;
+  return max;
+}
+
 function montarListaPremiosMT(valorMT, girosComprados){
-  var maxMT = Math.max(0, Math.floor(Number(valorMT) || 0) * 2);
-  var alvo = escolherAlvoMT(maxMT);
+  var pago = Math.max(0, Math.floor(Number(valorMT) || 0));
+  var alvo = escolherAlvoMT(pago);
+  var maxMT = pago * 2 + 3;
   var lista = [];
   var restante = alvo;
+  var alto = pago >= 50;
 
-  // Preencher com 20 PTS (2) e 1 MT (1) até atingir o alvo, sem ultrapassar nº de giros
-  while(restante >= 2 && lista.length < girosComprados && IDX_20_PTS >= 0){
-    // às vezes preferir 1+1 em vez de 20 pts
-    if(restante >= 2 && Math.random() < 0.45 && lista.length + 1 < girosComprados){
-      lista.push(IDX_1_MT);
-      lista.push(IDX_1_MT);
-      restante -= 2;
-    } else {
-      lista.push(IDX_20_PTS);
-      restante -= 2;
-    }
+  var pecas = alto
+    ? [
+        {idx: IDX_50_MT, v: 50},
+        {idx: IDX_10_MT, v: 10},
+        {idx: IDX_5_MT, v: 5},
+        {idx: IDX_100_PTS, v: 12},
+        {idx: IDX_1_MT, v: 1},
+        {idx: IDX_20_PTS, v: 2}
+      ].filter(function(p){ return p.idx >= 0; })
+    : [
+        {idx: IDX_1_MT, v: 1},
+        {idx: IDX_20_PTS, v: 2}
+      ].filter(function(p){ return p.idx >= 0; });
+
+  var guard = 0;
+  while(restante > 0 && lista.length < girosComprados && guard++ < 500){
+    var candidatas = pecas.filter(function(p){ return p.v <= restante; });
+    if(!candidatas.length) break;
+    var escolhida = (Math.random() < 0.55) ? candidatas[0] : candidatas[Math.floor(Math.random() * candidatas.length)];
+    lista.push(escolhida.idx);
+    restante -= escolhida.v;
   }
   while(restante >= 1 && lista.length < girosComprados && IDX_1_MT >= 0){
     lista.push(IDX_1_MT);
     restante -= 1;
   }
 
-  // Espaço livre: pode meter +2 / +6 giros (não contam MT) ou perdas
   var livres = girosComprados - lista.length;
   for(var k = 0; k < livres; k++){
     var u = Math.random();
-    if(u < 0.12 && IDX_6_GIROS >= 0) lista.push(IDX_6_GIROS);
-    else if(u < 0.28 && IDX_2_GIROS >= 0) lista.push(IDX_2_GIROS);
-    else if(u < 0.64) lista.push(IDX_QUASE >= 0 ? IDX_QUASE : 9);
+    if(u < 0.14 && IDX_6_GIROS >= 0) lista.push(IDX_6_GIROS);
+    else if(u < 0.32 && IDX_2_GIROS >= 0) lista.push(IDX_2_GIROS);
+    else if(u < 0.66) lista.push(IDX_QUASE >= 0 ? IDX_QUASE : 9);
     else lista.push(IDX_BOA >= 0 ? IDX_BOA : 7);
   }
-
-  // Se ainda faltou slots (alvo 0 e livres já preenchidos no loop acima ok)
   while(lista.length < girosComprados){
     lista.push(Math.random() < 0.5 ? (IDX_BOA >= 0 ? IDX_BOA : 7) : (IDX_QUASE >= 0 ? IDX_QUASE : 9));
   }
   if(lista.length > girosComprados) lista = lista.slice(0, girosComprados);
 
-  // Baralhar
   for(var i = lista.length - 1; i > 0; i--){
     var j = Math.floor(Math.random() * (i + 1));
     var tmp = lista[i]; lista[i] = lista[j]; lista[j] = tmp;
   }
-  return { lista: lista, alvoMT: alvo, maxMT: maxMT };
+  return { lista: lista, alvoMT: alvo, maxMT: maxMT, baseMT: pago * 2 };
 }
 
 function registarGarantiasMetical(valorMT, girosComprados){
@@ -1667,8 +1775,7 @@ async function creditarGirosMetical(valorMT, giros){
   await guardarEstado();
   atualizarUI();
   var msg = 'Pagamento ok! +' + giros + ' giros.';
-  if(plano && plano.alvoMT === 0) msg += ' Desta vez a sorte pode não ajudar — gira e vê.';
-  else if(plano) msg += ' Nos teus giros podes chegar até ' + plano.maxMT + ' MT em prémios (ou menos).';
+  if(plano) msg += ' Garantido cerca de ' + (plano.baseMT || (Math.floor(valorMT)*2)) + ' MT; com sorte até ' + plano.maxMT + ' MT.';
   mostrarToast(msg);
 }
 
@@ -1849,11 +1956,16 @@ document.getElementById('btn-fechar-premio').addEventListener('click', ()=>{
 
 /* ---------- arranque ---------- */
 (async function arranqueRoleta(){
+  try {
+    var ptsCache = Number(localStorage.getItem('pontosUtilizador') || 0);
+    if(ptsCache > 0){ estado.pontos = ptsCache; try{ sincronizarMt(); }catch(e){} }
+  } catch(e){}
   carregarEstadoLocal();
   atualizarUI();
   await carregarContaFirebase();
   await reclamarGiroGratisSeDisponivel();
   atualizarUI();
+  try { if(typeof ajustarTamanho === 'function') setTimeout(ajustarTamanho, 200); } catch(e){}
 })();
 </script>
 
