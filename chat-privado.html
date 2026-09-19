@@ -51,14 +51,38 @@
     .user-card .nome { font-weight: 700; font-size: 14px; }
     .user-card .meta { font-size: 11px; color: var(--suave); }
     .user-card.tem-nova { border-color: rgba(34,255,153,0.55); box-shadow: 0 0 18px rgba(34,255,153,0.25); }
+
+    .user-card {
+      position: relative;
+    }
+    .btn-apagar-conv {
+      flex-shrink: 0;
+      width: 36px; height: 36px; border-radius: 10px;
+      border: 1px solid rgba(255,100,100,0.35);
+      background: rgba(255,60,60,0.12);
+      color: #ff8a8a;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 0 12px rgba(255,80,80,0.15);
+    }
+    .btn-apagar-conv:active { background: rgba(255,60,60,0.3); }
     .badge-nova {
       margin-left: 6px; display: inline-flex; align-items: center; justify-content: center;
-      min-width: 18px; height: 18px; padding: 0 5px; border-radius: 99px;
-      background: linear-gradient(135deg, #22FF99, #3b9eff); color: #04140a;
-      font-size: 10px; font-weight: 900;
-      box-shadow: 0 0 12px rgba(34,255,153,0.6);
-      animation: piscaNova 1.4s ease-in-out infinite;
+      min-width: 22px; height: 22px; padding: 0 7px; border-radius: 99px;
+      background: linear-gradient(135deg, #22FF99, #3b9eff);
+      color: #04140a;
+      font-size: 11px; font-weight: 900;
+      box-shadow: 0 0 16px rgba(34,255,153,0.75), 0 0 28px rgba(59,158,255,0.4);
+      animation: piscaNova 1.2s ease-in-out infinite;
     }
+    .user-card.tem-nova {
+      border-color: rgba(34,255,153,0.65) !important;
+      box-shadow: 0 0 22px rgba(34,255,153,0.35), inset 0 0 20px rgba(34,255,153,0.06);
+      background: linear-gradient(135deg, rgba(20,50,45,0.95), rgba(18,22,40,0.95));
+    }
+    .user-card.tem-nova .nome { color: #22FF99; }
+
     @keyframes piscaNova {
       0%,100% { opacity: 1; transform: scale(1); }
       50% { opacity: 0.75; transform: scale(1.08); }
@@ -435,6 +459,42 @@
       }, function () { esconderTyping(); });
   }
 
+
+  async function apagarConversaCompleta(convId) {
+    if (!db || !convId || !email) return;
+    if (!confirm('Apagar esta conversa para sempre?\nTodas as mensagens desaparecem e não voltam.')) return;
+    try {
+      toast('A apagar…');
+      // Apaga mensagens em lotes
+      for (var voltas = 0; voltas < 20; voltas++) {
+        var snap = await db.collection('chatPrivado').where('conversaId', '==', convId).limit(400).get();
+        if (snap.empty) break;
+        var batch = db.batch();
+        snap.forEach(function (doc) { batch.delete(doc.ref); });
+        await batch.commit();
+        if (snap.size < 400) break;
+      }
+      await db.collection('chatPrivadoConversas').doc(convId).delete();
+      try {
+        var lidos = JSON.parse(localStorage.getItem('dmPrivadoLido') || '{}');
+        delete lidos[convId];
+        localStorage.setItem('dmPrivadoLido', JSON.stringify(lidos));
+      } catch (e) {}
+      toast('Conversa apagada');
+      carregarOnline();
+    } catch (e) {
+      console.error(e);
+      toast('Não foi possível apagar. Verifica as regras Firebase.');
+    }
+  }
+
+  function lerNaoLidas(dataConv, meuEmail) {
+    var map = dataConv && dataConv.naoLidas ? dataConv.naoLidas : {};
+    var n = map[String(meuEmail).toLowerCase()];
+    n = parseInt(n, 10);
+    return isNaN(n) || n < 0 ? 0 : n;
+  }
+
   async function carregarOnline() {
     var host = document.getElementById('painel-lista');
     if (!email) {
@@ -475,16 +535,23 @@
             var nm = soNome((c.data.nomes && c.data.nomes[em]) || '', em);
             var upd = String(c.data.updatedAt || '');
             var ultimaDe = String(c.data.ultimaDeEmail || '').toLowerCase();
-            var temNova = upd && lidos[c.id] !== upd && ultimaDe && ultimaDe !== email;
-            // se não há ultimaDeEmail, ainda mostra se updatedAt mudou
-            if (!temNova && upd && lidos[c.id] !== upd && !ultimaDe) temNova = true;
-            if (lidos[c.id] === upd) temNova = false;
+            var qtdNaoLidas = lerNaoLidas(c.data, email);
+            // fallback local se ainda não há contador no Firebase
+            if (!qtdNaoLidas) {
+              var temNova = upd && lidos[c.id] !== upd && ultimaDe && ultimaDe !== email;
+              if (!temNova && upd && lidos[c.id] !== upd && !ultimaDe) temNova = true;
+              if (lidos[c.id] === upd) temNova = false;
+              if (temNova) qtdNaoLidas = 1;
+            }
+            var temNova = qtdNaoLidas > 0;
             convHtml += '<div class="user-card' + (temNova ? ' tem-nova' : '') + '" data-email="' + esc(em) + '" data-nome="' + esc(nm) + '" data-conv="' + esc(c.id) + '" data-upd="' + esc(upd) + '">' +
               '<div class="av">' + esc((nm || '?').charAt(0).toUpperCase()) + '</div>' +
-              '<div style="flex:1"><div class="nome">' + esc(nm) +
-              (temNova ? ' <span class="badge-nova">1</span>' : '') +
+              '<div style="flex:1;min-width:0"><div class="nome">' + esc(nm) +
+              (temNova ? ' <span class="badge-nova">' + (qtdNaoLidas > 99 ? '99+' : String(qtdNaoLidas)) + '</span>' : '') +
               '</div>' +
-              '<div class="meta">' + esc((c.data.ultimaMsg || '').slice(0, 40)) + '</div></div></div>';
+              '<div class="meta">' + esc((c.data.ultimaMsg || '').slice(0, 40)) + '</div></div>' +
+              '<button type="button" class="btn-apagar-conv" data-apagar-conv="' + esc(c.id) + '" title="Apagar conversa"><i class="fas fa-trash"></i></button>' +
+              '</div>';
           });
         }
       } catch (e2) {}
@@ -503,8 +570,17 @@
       }
       host.innerHTML = html;
       host.querySelectorAll('.user-card').forEach(function (el) {
-        el.addEventListener('click', function () {
+        el.addEventListener('click', function (ev) {
+          if (ev.target && (ev.target.closest && ev.target.closest('.btn-apagar-conv'))) return;
           abrirChat(el.getAttribute('data-email'), el.getAttribute('data-nome'));
+        });
+      });
+      host.querySelectorAll('.btn-apagar-conv').forEach(function (btn) {
+        btn.addEventListener('click', function (ev) {
+          ev.preventDefault();
+          ev.stopPropagation();
+          var id = btn.getAttribute('data-apagar-conv');
+          if (id) apagarConversaCompleta(id);
         });
       });
     } catch (e) {
@@ -697,10 +773,9 @@
       nomes[parceiro.email] = parceiro.nome;
       var snapC = await db.collection('chatPrivadoConversas').doc(conversaId).get();
       var updMark = (snapC.exists && snapC.data().updatedAt) ? snapC.data().updatedAt : new Date().toISOString();
-      await db.collection('chatPrivadoConversas').doc(conversaId).set({
-        participantes: [email, parceiro.email].sort(),
-        nomes: nomes
-      }, { merge: true });
+      var resetNL = { participantes: [email, parceiro.email].sort(), nomes: nomes };
+      resetNL['naoLidas.' + String(email).toLowerCase()] = 0;
+      await db.collection('chatPrivadoConversas').doc(conversaId).set(resetNL, { merge: true });
       try {
         var lidos2 = JSON.parse(localStorage.getItem('dmPrivadoLido') || '{}');
         lidos2[conversaId] = updMark;
@@ -812,7 +887,11 @@
             n[String(email).toLowerCase()] = nomeUser;
             n[String(parceiro.email).toLowerCase()] = parceiro.nome;
             return n;
-          })()
+          })(),
+          // incrementa não lidas do parceiro
+          ['naoLidas.' + String(parceiro.email).toLowerCase()]: firebase.firestore.FieldValue.increment(1),
+          // quem envia fica a 0
+          ['naoLidas.' + String(email).toLowerCase()]: 0
         }, { merge: true }),
         db.collection('notificacoesChat').add({
           email: String(parceiro.email).toLowerCase(),
