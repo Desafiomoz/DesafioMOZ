@@ -434,6 +434,30 @@
       max-width: 90%; text-align: center;
     }
     .toast-chat.mostrar { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    .typing-ind {
+      display: none; align-items: center; gap: 8px;
+      padding: 4px 14px 6px; font-size: 12px; color: var(--suave);
+      flex-shrink: 0;
+    }
+    .typing-ind.mostrar { display: flex; }
+    .typing-ind .dots {
+      display: inline-flex; gap: 4px; align-items: center;
+      padding: 8px 12px; border-radius: 14px;
+      background: rgba(40,36,70,0.95); border: 1px solid rgba(168,85,247,0.35);
+    }
+    .typing-ind .dots span {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--verde);
+      animation: typingDot 1.2s ease-in-out infinite;
+    }
+    .typing-ind .dots span:nth-child(2) { animation-delay: 0.2s; }
+    .typing-ind .dots span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes typingDot {
+      0%, 60%, 100% { opacity: 0.3; transform: translateY(0); }
+      30% { opacity: 1; transform: translateY(-4px); }
+    }
+    .typing-ind .typing-nome { font-weight: 700; color: var(--verde); }
   </style>
 </head>
 <body>
@@ -460,7 +484,11 @@
       </div>
     </div>
 
-    <div class="composer">
+        <div class="typing-ind" id="typing-ind" aria-live="polite">
+      <div class="dots"><span></span><span></span><span></span></div>
+      <span id="typing-txt"><span class="typing-nome" id="typing-nome">Alguém</span> está a escrever…</span>
+    </div>
+<div class="composer">
       <div class="reply-bar" id="reply-bar">
         <div class="rb-txt">
           <div class="rb-nome" id="reply-nome">—</div>
@@ -537,6 +565,10 @@
   var msgsCache = {}; // id -> data para manter lista estável
   var replyAlvo = null;
   var msgMenuId = null;
+  var unsubTyping = null;
+  var typingTimer = null;
+  var typingStopTimer = null;
+  var TYPING_DOC = 'grupal';
 
   function mesAtualId() {
     var d = new Date();
@@ -803,6 +835,83 @@
     });
   }
 
+
+  function mostrarTypingG(nome, varios) {
+    var el = document.getElementById('typing-ind');
+    var nm = document.getElementById('typing-nome');
+    var txt = document.getElementById('typing-txt');
+    if (varios && varios.length > 1) {
+      if (txt) txt.innerHTML = '<span class="typing-nome">' + esc(varios.slice(0, 2).join(', ')) + '</span> estão a escrever…';
+    } else {
+      if (nm) nm.textContent = nome || 'Alguém';
+      if (txt) txt.innerHTML = '<span class="typing-nome" id="typing-nome">' + esc(nome || 'Alguém') + '</span> está a escrever…';
+    }
+    if (el) el.classList.add('mostrar');
+  }
+  function esconderTypingG() {
+    var el = document.getElementById('typing-ind');
+    if (el) el.classList.remove('mostrar');
+  }
+  function pararTypingEuG() {
+    if (!email || !db) return;
+    if (typingStopTimer) { clearTimeout(typingStopTimer); typingStopTimer = null; }
+    if (typingTimer) { clearTimeout(typingTimer); typingTimer = null; }
+    try {
+      // doc por utilizador para vários a escreverem ao mesmo tempo
+      var id = 'grupal__' + String(email).toLowerCase().replace(/[^a-z0-9@._-]/gi, '_');
+      db.collection('chatTyping').doc(id).delete().catch(function () {});
+    } catch (e) {}
+  }
+  function sinalizarTypingEuG() {
+    if (!email || !db) return;
+    if (typingTimer) {
+      // só renova o stop timer
+      if (typingStopTimer) clearTimeout(typingStopTimer);
+      typingStopTimer = setTimeout(function () { pararTypingEuG(); }, 2500);
+      return;
+    }
+    typingTimer = setTimeout(function () { typingTimer = null; }, 1200);
+    try {
+      var id = 'grupal__' + String(email).toLowerCase().replace(/[^a-z0-9@._-]/gi, '_');
+      db.collection('chatTyping').doc(id).set({
+        email: String(email).toLowerCase(),
+        nome: nomeUser || 'Alguém',
+        updatedAt: Date.now(),
+        tipo: 'grupal',
+        sala: 'grupal'
+      });
+    } catch (e) {}
+    if (typingStopTimer) clearTimeout(typingStopTimer);
+    typingStopTimer = setTimeout(function () { pararTypingEuG(); }, 2500);
+  }
+  function ouvirTypingG() {
+    if (unsubTyping) { try { unsubTyping(); } catch (e) {} unsubTyping = null; }
+    esconderTypingG();
+    if (!db) return;
+    // Ouve todos os que estão a escrever no grupal
+    unsubTyping = db.collection('chatTyping')
+      .where('sala', '==', 'grupal')
+      .onSnapshot(function (snap) {
+        var nomes = [];
+        var agora = Date.now();
+        snap.forEach(function (doc) {
+          var d = doc.data() || {};
+          var em = String(d.email || '').toLowerCase();
+          if (!em || em === String(email || '').toLowerCase()) return;
+          var t = Number(d.updatedAt) || 0;
+          if (agora - t > 4000) return;
+          var n = d.nome || em.split('@')[0];
+          if (nomes.indexOf(n) === -1) nomes.push(n);
+        });
+        if (!nomes.length) esconderTypingG();
+        else mostrarTypingG(nomes[0], nomes);
+      }, function (err) {
+        console.warn('typing grupal', err);
+        // fallback: sem índice, não mostra
+        esconderTypingG();
+      });
+  }
+
   function ouvirMensagens() {
     if (!db) return;
     if (unsub) { try { unsub(); } catch (e) {} unsub = null; }
@@ -1011,6 +1120,8 @@
     document.getElementById('contador-chars').textContent = ta.value.length + '/500';
     ta.style.height = 'auto';
     ta.style.height = Math.min(110, ta.scrollHeight) + 'px';
+    if ((ta.value || '').trim()) sinalizarTypingEuG();
+    else pararTypingEuG();
   });
   ta.addEventListener('keydown', function (e) {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -1127,9 +1238,11 @@
     document.getElementById('bloqueio-login').classList.add('oculto');
     garantirNome().then(function (n) {
       document.getElementById('nome-eu').textContent = n;
+      nomeUser = n;
     });
     limparMesesAnteriores().then(function () {
       ouvirMensagens();
+      ouvirTypingG();
     });
   }
   function arrancarChat() {

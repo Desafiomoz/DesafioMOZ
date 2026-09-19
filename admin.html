@@ -240,6 +240,7 @@
     <button class="tab" data-tab="notif-admin" onclick="mudarTab('notif-admin')"><i class="fas fa-bell"></i> Notificações</button>
     <button class="tab" data-tab="bonus80" onclick="mudarTab('bonus80')"><i class="fas fa-gift"></i> Bonus 80</button>
     <button class="tab" data-tab="msg-privado" onclick="mudarTab('msg-privado')"><i class="fas fa-paper-plane"></i> Msg privado</button>
+    <button class="tab" data-tab="email-massa" onclick="mudarTab('email-massa')"><i class="fas fa-envelope"></i> E-mail em massa</button>
     <button class="tab" data-tab="privado" onclick="mudarTab('privado')"><i class="fas fa-lock"></i> Privado</button>
   </div>
 
@@ -1489,16 +1490,137 @@
         <p id="msgpriv-status" style="font-size:12px;color:#888;margin-top:10px;"></p>
       </div>
       <div class="form-box">
-        <h3><i class="fas fa-history"></i> Últimos envios (histórico)</h3>
+        <h3><i class="fas fa-history"></i> Mensagens enviadas (histórico)</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:12px;">
+          Cada mensagem mostra quantos <strong>já receberam</strong> e quantos <strong>ainda não</strong> (ex.: utilizadores novos).
+          Clica em <strong>Enviar aos que faltam</strong> para mandar a mesma mensagem só a quem ainda não recebeu.
+        </p>
         <button type="button" class="btn-verde" style="margin-bottom:12px;" onclick="carregarHistMsgPrivado()">🔄 Actualizar</button>
         <div class="tabela-wrap">
           <table>
-            <thead><tr><th>#</th><th>Quando</th><th>Destino</th><th>Mensagem</th><th>Link</th></tr></thead>
-            <tbody id="tbody-msgpriv-hist"><tr><td colspan="5" class="vazio">Clica em Actualizar.</td></tr></tbody>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Quando</th>
+                <th>Mensagem</th>
+                <th>Já receberam</th>
+                <th>Ainda não</th>
+                <th>Acção</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-msgpriv-hist"><tr><td colspan="6" class="vazio">Clica em Actualizar.</td></tr></tbody>
           </table>
+        </div>
+        <div id="msgpriv-detalhe" style="display:none;margin-top:14px;background:#0d0d12;border:1px solid #2a2a3a;border-radius:12px;padding:14px;">
+          <h3 style="color:#00e676;font-size:14px;margin-bottom:10px;" id="msgpriv-detalhe-titulo">Detalhe</h3>
+          <div class="form-grid">
+            <div>
+              <p style="font-size:12px;color:#00e676;margin-bottom:6px;">✅ Já receberam</p>
+              <div id="msgpriv-lista-sim" style="font-size:11px;color:#ccc;max-height:180px;overflow-y:auto;line-height:1.5;"></div>
+            </div>
+            <div>
+              <p style="font-size:12px;color:#ffc107;margin-bottom:6px;">⏳ Ainda não receberam</p>
+              <div id="msgpriv-lista-nao" style="font-size:11px;color:#ccc;max-height:180px;overflow-y:auto;line-height:1.5;"></div>
+            </div>
+          </div>
+          <button type="button" class="btn-laranja" style="width:100%;padding:12px;margin-top:12px;border-radius:10px;" id="msgpriv-btn-falta" onclick="reenviarMsgPrivadoFaltam()">📨 Enviar aos que faltam</button>
+          <p id="msgpriv-reenv-status" style="font-size:12px;color:#888;margin-top:8px;"></p>
         </div>
       </div>
     </div>
+
+    
+    <!-- E-MAIL EM MASSA -->
+    <div class="painel" id="painel-email-massa">
+      <div class="form-box">
+        <h3><i class="fas fa-cog"></i> Configuração do envio de e-mail</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:12px;">
+          O site envia o pedido para o <strong>webhook</strong> (Pipedream + Gmail).
+          Cola o URL uma vez e guarda. Depois podes enviar para todos ou só para um.
+        </p>
+        <div class="form-row">
+          <label>URL do webhook de e-mail (Pipedream)</label>
+          <input type="url" id="emailmassa-webhook" placeholder="https://xxxx.m.pipedream.net" value="https://eo5164eervzi98.m.pipedream.net">
+        </div>
+        <div class="form-row">
+          <label>Nome do remetente</label>
+          <input type="text" id="emailmassa-from-name" placeholder="Desafio MOZ" value="Desafio MOZ">
+        </div>
+        <button type="button" class="btn-verde" onclick="guardarConfigEmailMassa()">💾 Guardar configuração</button>
+        <p id="emailmassa-config-status" style="font-size:12px;color:#888;margin-top:8px;"></p>
+      </div>
+
+      <div class="form-box">
+        <h3><i class="fas fa-envelope"></i> Enviar e-mail</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:12px;">
+          Igual ao Msg privado: envias e vês quem já recebeu. Utilizadores novos → <strong>Enviar aos que faltam</strong>.
+        </p>
+        <div class="form-row">
+          <label>Destino</label>
+          <select id="emailmassa-destino" onchange="document.getElementById('emailmassa-email-wrap').style.display=this.value==='um'?'block':'none'">
+            <option value="todos">Todos os utilizadores</option>
+            <option value="um">Só um e-mail</option>
+          </select>
+        </div>
+        <div class="form-row" id="emailmassa-email-wrap" style="display:none;">
+          <label>E-mail do utilizador</label>
+          <input type="email" id="emailmassa-email" placeholder="email@exemplo.com">
+        </div>
+        <div class="form-row">
+          <label>Assunto</label>
+          <input type="text" id="emailmassa-assunto" placeholder="Ex: Nova actualização no Desafio MOZ" maxlength="120">
+        </div>
+        <div class="form-row">
+          <label>Mensagem</label>
+          <textarea id="emailmassa-texto" rows="6" placeholder="Texto que vai para o Gmail de cada utilizador..."></textarea>
+        </div>
+        <div class="form-row">
+          <label>Link (opcional)</label>
+          <input type="url" id="emailmassa-link" placeholder="https://desafiomoz.pages.dev/login-comunicado.html">
+        </div>
+        <button type="button" class="btn-verde" id="btn-emailmassa-enviar" onclick="enviarEmailMassaAdmin()">📧 Enviar e-mails</button>
+        <p id="emailmassa-status" style="font-size:12px;color:#888;margin-top:10px;"></p>
+      </div>
+
+      <div class="form-box">
+        <h3><i class="fas fa-history"></i> Histórico de e-mails</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:12px;">
+          Vê quem já recebeu e quem ainda não. Reenvia só aos novos.
+        </p>
+        <button type="button" class="btn-verde" style="margin-bottom:12px;" onclick="carregarHistEmailMassa()">🔄 Actualizar</button>
+        <div class="tabela-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Quando</th>
+                <th>Assunto</th>
+                <th>Já receberam</th>
+                <th>Ainda não</th>
+                <th>Acção</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-emailmassa-hist"><tr><td colspan="6" class="vazio">Clica em Actualizar.</td></tr></tbody>
+          </table>
+        </div>
+        <div id="emailmassa-detalhe" style="display:none;margin-top:14px;background:#0d0d12;border:1px solid #2a2a3a;border-radius:12px;padding:14px;">
+          <h3 style="color:#00e676;font-size:14px;margin-bottom:10px;" id="emailmassa-detalhe-titulo">Detalhe</h3>
+          <div class="form-grid">
+            <div>
+              <p style="font-size:12px;color:#00e676;margin-bottom:6px;">✅ Já receberam</p>
+              <div id="emailmassa-lista-sim" style="font-size:11px;color:#ccc;max-height:180px;overflow-y:auto;line-height:1.5;"></div>
+            </div>
+            <div>
+              <p style="font-size:12px;color:#ffc107;margin-bottom:6px;">⏳ Ainda não receberam</p>
+              <div id="emailmassa-lista-nao" style="font-size:11px;color:#ccc;max-height:180px;overflow-y:auto;line-height:1.5;"></div>
+            </div>
+          </div>
+          <button type="button" class="btn-laranja" style="width:100%;padding:12px;margin-top:12px;border-radius:10px;" id="emailmassa-btn-falta" onclick="reenviarEmailMassaFaltam()">📧 Enviar e-mail aos que faltam</button>
+          <p id="emailmassa-reenv-status" style="font-size:12px;color:#888;margin-top:8px;"></p>
+        </div>
+      </div>
+    </div>
+
 
     <div class="painel" id="painel-privado">
       <div class="form-box">
@@ -1651,6 +1773,9 @@ function mostrarAviso(txt) {
       }
       if (nome === 'msg-privado') {
         try { carregarHistMsgPrivado(); } catch (e) {}
+      }
+      if (nome === 'email-massa') {
+        try { carregarConfigEmailMassa(); carregarHistEmailMassa(); } catch (e) {}
       }
       if (nome === 'pedidos-dicas') {
         try { carregarPedidosDicasAdmin(); } catch (e) {}
@@ -5064,109 +5189,71 @@ async function enviarNotifAdmin() {
       var statusEl = document.getElementById('msgpriv-status');
       var btn = document.getElementById('btn-msgpriv-enviar');
       if (!texto) return alert('Escreve a mensagem.');
-      if (link && link.indexOf('http') !== 0) {
-        link = 'https://' + link;
-      }
+      if (link && link.indexOf('http') !== 0) link = 'https://' + link;
 
-      var emails = [];
+      var emails = await listarEmailsUtilizadoresMsgPriv();
       if (dest === 'um') {
         var em = ((document.getElementById('msgpriv-email') || {}).value || '').trim().toLowerCase();
         if (!em || em.indexOf('@') === -1) return alert('Indica um e-mail válido.');
         emails = [em];
-      } else {
-        var users = (typeof todosUsers !== 'undefined' && todosUsers.length) ? todosUsers : [];
-        if (!users.length) {
-          try {
-            var snapU = await db.collection('usuarios').limit(1000).get();
-            snapU.forEach(function (doc) {
-              var d = doc.data() || {};
-              if (d.email) users.push(d);
-            });
-          } catch (e) {
-            return alert('Erro ao listar utilizadores: ' + (e.message || e));
-          }
-        }
-        users.forEach(function (u) {
-          var e = String(u.email || '').trim().toLowerCase();
-          if (e && e.indexOf('@') !== -1) emails.push(e);
-        });
-        // unique
-        var seen = {};
-        emails = emails.filter(function (e) {
-          if (seen[e]) return false;
-          seen[e] = true;
-          return true;
-        });
       }
-
       if (!emails.length) return alert('Nenhum destinatário encontrado.');
       if (dest === 'todos' && !confirm('Enviar mensagem no privado a ' + emails.length + ' utilizadores?')) return;
 
       var ADMIN_EMAIL = 'admin@desafiomoz';
       var ADMIN_NOME = 'Equipa Desafio MOZ';
       var textoFinal = texto;
-      if (link) {
-        textoFinal += '\n\n🔗 ' + linkTxt + ':\n' + link;
-      }
+      if (link) textoFinal += '\n\n🔗 ' + linkTxt + ':\n' + link;
 
       if (btn) { btn.disabled = true; btn.textContent = 'A enviar...'; }
-      if (statusEl) statusEl.textContent = 'A enviar 0/' + emails.length + '...';
+      if (statusEl) statusEl.textContent = 'A preparar...';
 
-      var ok = 0, falhas = 0;
+      var okEmails = [];
+      var falhas = 0;
       try {
-        // histórico global
-        await db.collection('adminMsgPrivado').add({
+        // Cria o registo primeiro (para ir actualizando emailsEnviados)
+        var histRef = await db.collection('adminMsgPrivado').add({
           destino: dest === 'um' ? emails[0] : 'todos',
           total: emails.length,
           texto: texto,
           link: link || '',
           linkTxt: linkTxt,
+          emailsEnviados: [],
           createdAt: new Date().toISOString()
         });
 
         for (var i = 0; i < emails.length; i++) {
           var userEmail = emails[i];
           try {
-            var conversaId = idConversaAdmin(ADMIN_EMAIL, userEmail);
-            var participantes = [ADMIN_EMAIL, userEmail].sort();
-            await db.collection('chatPrivado').add({
-              conversaId: conversaId,
-              participantes: participantes,
-              deEmail: ADMIN_EMAIL,
-              deNome: ADMIN_NOME,
-              texto: textoFinal,
-              link: link || '',
-              createdAt: new Date().toISOString(),
-              tipo: 'admin-broadcast'
-            });
-            await db.collection('chatPrivadoConversas').doc(conversaId).set({
-              ultimaMsg: textoFinal.slice(0, 80),
-              ultimaDeEmail: ADMIN_EMAIL,
-              updatedAt: new Date().toISOString()
-            }, { merge: true });
-            try {
-              await db.collection('notificacoesChat').add({
-                email: userEmail,
-                tipo: 'privado',
-                deNome: ADMIN_NOME,
-                deEmail: ADMIN_EMAIL,
-                texto: texto.slice(0, 120),
-                link: link || '',
-                lida: false,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-              });
-            } catch (eN) {}
-            ok++;
+            await enviarUmaMsgPrivado(ADMIN_EMAIL, ADMIN_NOME, userEmail, textoFinal, link);
+            okEmails.push(userEmail);
           } catch (e1) {
             falhas++;
             console.warn('msgpriv fail', userEmail, e1);
           }
-          if (statusEl && (i % 5 === 0 || i === emails.length - 1)) {
-            statusEl.textContent = 'A enviar ' + (i + 1) + '/' + emails.length + ' (ok: ' + ok + ', falhas: ' + falhas + ')...';
+          // Actualiza lista de quem já recebeu de 10 em 10 (e no fim)
+          if (okEmails.length % 10 === 0 || i === emails.length - 1) {
+            try {
+              await histRef.update({
+                emailsEnviados: okEmails.slice(),
+                totalEnviados: okEmails.length,
+                falhas: falhas
+              });
+            } catch (eU) {}
+          }
+          if (statusEl && (i % 3 === 0 || i === emails.length - 1)) {
+            statusEl.textContent = 'A enviar ' + (i + 1) + '/' + emails.length + ' (ok: ' + okEmails.length + ', falhas: ' + falhas + ')...';
           }
         }
-        if (statusEl) statusEl.textContent = 'Concluído: ' + ok + ' enviadas' + (falhas ? ', ' + falhas + ' falhas' : '') + '.';
-        mostrarAviso('Mensagem privada enviada a ' + ok + ' utilizador(es).');
+        await histRef.update({
+          emailsEnviados: okEmails,
+          totalEnviados: okEmails.length,
+          falhas: falhas,
+          total: emails.length
+        });
+        if (statusEl) statusEl.textContent = 'Concluído: ' + okEmails.length + ' receberam' + (falhas ? ', ' + falhas + ' falhas' : '') + '.';
+        mostrarAviso('Mensagem privada enviada a ' + okEmails.length + ' utilizador(es).');
+        document.getElementById('msgpriv-texto').value = '';
         try { carregarHistMsgPrivado(); } catch (eH) {}
       } catch (e) {
         alert('Erro: ' + (e.message || e));
@@ -5175,42 +5262,558 @@ async function enviarNotifAdmin() {
       if (btn) { btn.disabled = false; btn.textContent = '📨 Enviar no privado'; }
     }
 
+    async function listarEmailsUtilizadoresMsgPriv() {
+      var users = (typeof todosUsers !== 'undefined' && todosUsers.length) ? todosUsers : [];
+      if (!users.length) {
+        var snapU = await db.collection('usuarios').limit(1500).get();
+        snapU.forEach(function (doc) {
+          var d = doc.data() || {};
+          if (d.email) users.push(d);
+        });
+      }
+      var emails = [];
+      var seen = {};
+      users.forEach(function (u) {
+        var e = String(u.email || '').trim().toLowerCase();
+        if (e && e.indexOf('@') !== -1 && !seen[e]) {
+          seen[e] = true;
+          emails.push(e);
+        }
+      });
+      return emails;
+    }
+
+    async function enviarUmaMsgPrivado(adminEmail, adminNome, userEmail, textoFinal, link) {
+      var conversaId = idConversaAdmin(adminEmail, userEmail);
+      var participantes = [adminEmail, userEmail].sort();
+      await db.collection('chatPrivado').add({
+        conversaId: conversaId,
+        participantes: participantes,
+        deEmail: adminEmail,
+        deNome: adminNome,
+        texto: textoFinal,
+        link: link || '',
+        createdAt: new Date().toISOString(),
+        tipo: 'admin-broadcast'
+      });
+      await db.collection('chatPrivadoConversas').doc(conversaId).set({
+        participantes: participantes,
+        nomes: (function () {
+          var n = {};
+          n[adminEmail] = adminNome;
+          n[userEmail] = userEmail.split('@')[0];
+          return n;
+        })(),
+        ultimaMsg: textoFinal.slice(0, 80),
+        ultimaDeEmail: adminEmail,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+      try {
+        await db.collection('notificacoesChat').add({
+          email: userEmail,
+          tipo: 'privado',
+          deNome: adminNome,
+          deEmail: adminEmail,
+          texto: textoFinal.slice(0, 120),
+          link: link || '',
+          lida: false,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      } catch (eN) {}
+    }
+
     async function carregarHistMsgPrivado() {
       var tbody = document.getElementById('tbody-msgpriv-hist');
       if (!tbody) return;
-      tbody.innerHTML = '<tr><td colspan="5" class="vazio">A carregar...</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="6" class="vazio">A carregar...</td></tr>';
       try {
-        var snap = await db.collection('adminMsgPrivado').limit(50).get();
+        var todosEmails = await listarEmailsUtilizadoresMsgPriv();
+        var snap = await db.collection('adminMsgPrivado').limit(40).get();
         var lista = [];
         snap.forEach(function (doc) {
           var d = doc.data() || {};
+          d._id = doc.id;
           lista.push(d);
         });
         lista.sort(function (a, b) {
           return String(b.createdAt || '').localeCompare(String(a.createdAt || ''));
         });
+        window.__msgPrivHist = lista;
+        window.__msgPrivTodosEmails = todosEmails;
+
         if (!lista.length) {
-          tbody.innerHTML = '<tr><td colspan="5" class="vazio">Ainda sem envios.</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="6" class="vazio">Ainda sem envios.</td></tr>';
           return;
         }
         var html = '';
         lista.forEach(function (d, i) {
+          var enviados = (d.emailsEnviados || []).map(function (e) { return String(e).toLowerCase(); });
+          var setEnv = {};
+          enviados.forEach(function (e) { setEnv[e] = true; });
+          var nSim = enviados.length;
+          var nNao = 0;
+          if (d.destino === 'todos' || !d.destino || d.destino === 'todos') {
+            todosEmails.forEach(function (e) { if (!setEnv[e]) nNao++; });
+          } else {
+            // envio a um só
+            nNao = setEnv[String(d.destino).toLowerCase()] ? 0 : 1;
+          }
+          var idSafe = String(d._id).replace(/'/g, "\\'");
           html += '<tr>' +
             '<td>' + (i + 1) + '</td>' +
-            '<td style="font-size:11px;">' + escHtml(String(d.createdAt || '').slice(0, 19)) + '</td>' +
-            '<td>' + escHtml(d.destino || '—') + (d.total ? ' (' + d.total + ')' : '') + '</td>' +
-            '<td style="font-size:12px;max-width:260px;">' + escHtml((d.texto || '').slice(0, 100)) + '</td>' +
-            '<td style="font-size:11px;max-width:140px;word-break:break-all;">' + escHtml(d.link || '—') + '</td>' +
-            '</tr>';
+            '<td style="font-size:11px;white-space:nowrap;">' + escHtml(String(d.createdAt || '').slice(0, 19).replace('T', ' ')) + '</td>' +
+            '<td style="font-size:12px;max-width:220px;">' + escHtml((d.texto || '').slice(0, 90)) +
+            (d.link ? '<br><span style="color:#64b5f6;font-size:10px;">🔗 link</span>' : '') + '</td>' +
+            '<td class="pts-ok"><b>' + nSim + '</b></td>' +
+            '<td class="' + (nNao > 0 ? 'pts-alto' : 'pts-baixo') + '"><b>' + nNao + '</b></td>' +
+            '<td style="white-space:nowrap;">' +
+            '<button type="button" class="btn-azul" onclick="verDetalheMsgPriv(\'' + idSafe + '\')">Ver</button> ' +
+            (nNao > 0
+              ? '<button type="button" class="btn-laranja" onclick="reenviarMsgPrivadoFaltam(\'' + idSafe + '\')">Enviar aos que faltam</button>'
+              : '<span style="font-size:11px;color:#00e676;">Todos ok</span>') +
+            '</td></tr>';
         });
         tbody.innerHTML = html;
       } catch (e) {
-        tbody.innerHTML = '<tr><td colspan="5" class="vazio">Erro: ' + escHtml(e.message || e) + '</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="vazio">Erro: ' + escHtml(e.message || e) + '</td></tr>';
       }
     }
 
+    function verDetalheMsgPriv(id) {
+      var lista = window.__msgPrivHist || [];
+      var d = null;
+      for (var i = 0; i < lista.length; i++) {
+        if (lista[i]._id === id) { d = lista[i]; break; }
+      }
+      if (!d) return alert('Mensagem não encontrada. Actualiza.');
+      window.__msgPrivActualId = id;
+      var box = document.getElementById('msgpriv-detalhe');
+      if (box) box.style.display = 'block';
+      var tit = document.getElementById('msgpriv-detalhe-titulo');
+      if (tit) tit.textContent = 'Mensagem: ' + String(d.texto || '').slice(0, 60) + (String(d.texto || '').length > 60 ? '…' : '');
 
-        async function carregarBonus80() {
+      var enviados = (d.emailsEnviados || []).map(function (e) { return String(e).toLowerCase(); });
+      var setEnv = {};
+      enviados.forEach(function (e) { setEnv[e] = true; });
+      var todos = window.__msgPrivTodosEmails || [];
+      var sim = enviados.slice().sort();
+      var nao = [];
+      todos.forEach(function (e) { if (!setEnv[e]) nao.push(e); });
+      nao.sort();
+
+      var elSim = document.getElementById('msgpriv-lista-sim');
+      var elNao = document.getElementById('msgpriv-lista-nao');
+      if (elSim) {
+        elSim.innerHTML = sim.length
+          ? sim.map(function (e, i) { return (i + 1) + '. ' + escHtml(e); }).join('<br>')
+          : '<span style="color:#888;">Ninguém ainda</span>';
+      }
+      if (elNao) {
+        elNao.innerHTML = nao.length
+          ? nao.map(function (e, i) { return (i + 1) + '. ' + escHtml(e); }).join('<br>')
+          : '<span style="color:#00e676;">Ninguém — todos já receberam</span>';
+      }
+      var btn = document.getElementById('msgpriv-btn-falta');
+      if (btn) {
+        btn.style.display = nao.length ? 'block' : 'none';
+        btn.setAttribute('data-id', id);
+      }
+      if (box) box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    async function reenviarMsgPrivadoFaltam(idOpcional) {
+      var id = idOpcional || window.__msgPrivActualId ||
+        (document.getElementById('msgpriv-btn-falta') && document.getElementById('msgpriv-btn-falta').getAttribute('data-id'));
+      if (!id) return alert('Escolhe uma mensagem no histórico (botão Ver).');
+      var lista = window.__msgPrivHist || [];
+      var d = null;
+      for (var i = 0; i < lista.length; i++) {
+        if (lista[i]._id === id) { d = lista[i]; break; }
+      }
+      if (!d) {
+        // tenta carregar do firestore
+        try {
+          var doc = await db.collection('adminMsgPrivado').doc(id).get();
+          if (!doc.exists) return alert('Mensagem não encontrada.');
+          d = doc.data() || {};
+          d._id = id;
+        } catch (e) {
+          return alert('Erro: ' + (e.message || e));
+        }
+      }
+
+      var enviados = (d.emailsEnviados || []).map(function (e) { return String(e).toLowerCase(); });
+      var setEnv = {};
+      enviados.forEach(function (e) { setEnv[e] = true; });
+      var todos = window.__msgPrivTodosEmails || await listarEmailsUtilizadoresMsgPriv();
+      var faltam = [];
+      todos.forEach(function (e) { if (!setEnv[e]) faltam.push(e); });
+      if (!faltam.length) {
+        alert('Todos os utilizadores actuais já receberam esta mensagem.');
+        return;
+      }
+      if (!confirm('Enviar esta mensagem a ' + faltam.length + ' utilizador(es) que ainda não receberam?')) return;
+
+      var ADMIN_EMAIL = 'admin@desafiomoz';
+      var ADMIN_NOME = 'Equipa Desafio MOZ';
+      var texto = d.texto || '';
+      var link = d.link || '';
+      var linkTxt = d.linkTxt || 'Abrir link';
+      var textoFinal = texto;
+      if (link) textoFinal += '\n\n🔗 ' + linkTxt + ':\n' + link;
+
+      var statusEl = document.getElementById('msgpriv-reenv-status') || document.getElementById('msgpriv-status');
+      var okEmails = enviados.slice();
+      var falhas = 0;
+      if (statusEl) statusEl.textContent = 'A reenviar 0/' + faltam.length + '...';
+
+      for (var j = 0; j < faltam.length; j++) {
+        try {
+          await enviarUmaMsgPrivado(ADMIN_EMAIL, ADMIN_NOME, faltam[j], textoFinal, link);
+          okEmails.push(faltam[j]);
+        } catch (e1) {
+          falhas++;
+          console.warn(e1);
+        }
+        if (statusEl && (j % 3 === 0 || j === faltam.length - 1)) {
+          statusEl.textContent = 'A reenviar ' + (j + 1) + '/' + faltam.length + ' (ok: ' + (okEmails.length - enviados.length) + ')...';
+        }
+        if ((j + 1) % 10 === 0 || j === faltam.length - 1) {
+          try {
+            await db.collection('adminMsgPrivado').doc(id).update({
+              emailsEnviados: okEmails,
+              totalEnviados: okEmails.length
+            });
+          } catch (eU) {}
+        }
+      }
+      try {
+        await db.collection('adminMsgPrivado').doc(id).update({
+          emailsEnviados: okEmails,
+          totalEnviados: okEmails.length,
+          ultimoReenvio: new Date().toISOString()
+        });
+      } catch (eF) {}
+
+      if (statusEl) statusEl.textContent = 'Reenvio concluído. Total que já receberam: ' + okEmails.length + (falhas ? ' (' + falhas + ' falhas)' : '');
+      mostrarAviso('Mensagem reenviada aos que faltavam.');
+      await carregarHistMsgPrivado();
+      verDetalheMsgPriv(id);
+    }
+
+
+    
+    /* ========== E-mail em massa ========== */
+    function carregarConfigEmailMassa() {
+      try {
+        var wh = localStorage.getItem('dmEmailMassaWebhook') || 'https://eo5164eervzi98.m.pipedream.net';
+        var fn = localStorage.getItem('dmEmailMassaFromName') || 'Desafio MOZ';
+        var elW = document.getElementById('emailmassa-webhook');
+        var elN = document.getElementById('emailmassa-from-name');
+        if (elW && !elW.value) elW.value = wh;
+        else if (elW && localStorage.getItem('dmEmailMassaWebhook')) elW.value = localStorage.getItem('dmEmailMassaWebhook');
+        if (elN) elN.value = fn;
+      } catch (e) {}
+    }
+    function guardarConfigEmailMassa() {
+      var wh = ((document.getElementById('emailmassa-webhook') || {}).value || '').trim();
+      var fn = ((document.getElementById('emailmassa-from-name') || {}).value || 'Desafio MOZ').trim() || 'Desafio MOZ';
+      if (!wh || wh.indexOf('http') !== 0) {
+        return alert('Cola um URL de webhook válido (https://...).');
+      }
+      try {
+        localStorage.setItem('dmEmailMassaWebhook', wh);
+        localStorage.setItem('dmEmailMassaFromName', fn);
+      } catch (e) {}
+      var st = document.getElementById('emailmassa-config-status');
+      if (st) st.textContent = 'Configuração guardada neste browser.';
+      mostrarAviso('Webhook de e-mail guardado.');
+    }
+    function getEmailMassaWebhook() {
+      var el = document.getElementById('emailmassa-webhook');
+      var fromInput = el ? (el.value || '').trim() : '';
+      if (fromInput) return fromInput;
+      try { return localStorage.getItem('dmEmailMassaWebhook') || 'https://eo5164eervzi98.m.pipedream.net'; } catch (e) { return 'https://eo5164eervzi98.m.pipedream.net'; }
+    }
+    function getEmailMassaFromName() {
+      var el = document.getElementById('emailmassa-from-name');
+      var v = el ? (el.value || '').trim() : '';
+      if (v) return v;
+      try { return localStorage.getItem('dmEmailMassaFromName') || 'Desafio MOZ'; } catch (e) { return 'Desafio MOZ'; }
+    }
+
+    async function chamarWebhookEmailMassa(payload) {
+      var url = getEmailMassaWebhook();
+      if (!url) throw new Error('Configura primeiro o URL do webhook de e-mail.');
+      var res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      var text = '';
+      try { text = await res.text(); } catch (e) {}
+      if (!res.ok) throw new Error('Webhook respondeu ' + res.status + (text ? ': ' + text.slice(0, 120) : ''));
+      return text;
+    }
+
+    async function enviarEmailMassaAdmin() {
+      var dest = (document.getElementById('emailmassa-destino') || {}).value || 'todos';
+      var assunto = ((document.getElementById('emailmassa-assunto') || {}).value || '').trim().slice(0, 120);
+      var texto = ((document.getElementById('emailmassa-texto') || {}).value || '').trim().slice(0, 4000);
+      var link = ((document.getElementById('emailmassa-link') || {}).value || '').trim();
+      var statusEl = document.getElementById('emailmassa-status');
+      var btn = document.getElementById('btn-emailmassa-enviar');
+      if (!assunto) return alert('Escreve o assunto.');
+      if (!texto) return alert('Escreve a mensagem.');
+      if (!getEmailMassaWebhook()) return alert('Configura e guarda o URL do webhook de e-mail em cima.');
+      if (link && link.indexOf('http') !== 0) link = 'https://' + link;
+
+      var emails = await listarEmailsUtilizadoresMsgPriv();
+      if (dest === 'um') {
+        var em = ((document.getElementById('emailmassa-email') || {}).value || '').trim().toLowerCase();
+        if (!em || em.indexOf('@') === -1) return alert('Indica um e-mail válido.');
+        emails = [em];
+      }
+      if (!emails.length) return alert('Nenhum destinatário.');
+      if (dest === 'todos' && !confirm('Enviar e-mail a ' + emails.length + ' utilizadores?')) return;
+
+      var mapaNome = {};
+      (typeof todosUsers !== 'undefined' ? todosUsers : []).forEach(function (u) {
+        var e = String(u.email || '').toLowerCase();
+        if (e) mapaNome[e] = u.nome || e.split('@')[0];
+      });
+      var recipients = emails.map(function (e) {
+        return { email: e, nome: mapaNome[e] || e.split('@')[0] };
+      });
+
+      if (btn) { btn.disabled = true; btn.textContent = 'A enviar...'; }
+      if (statusEl) statusEl.textContent = 'A enviar via webhook...';
+
+      try {
+        var histRef = await db.collection('adminEmailMassa').add({
+          destino: dest === 'um' ? emails[0] : 'todos',
+          total: emails.length,
+          assunto: assunto,
+          texto: texto,
+          link: link || '',
+          emailsEnviados: [],
+          createdAt: new Date().toISOString()
+        });
+
+        var BATCH = 1;
+        var okEmails = [];
+        var falhas = 0;
+        var fromName = getEmailMassaFromName();
+        for (var i = 0; i < recipients.length; i++) {
+          var r = recipients[i];
+          try {
+            await chamarWebhookEmailMassa({
+              action: 'send_one',
+              fromName: fromName,
+              subject: assunto,
+              body: texto,
+              link: link || '',
+              to: r.email,
+              toName: r.nome,
+              recipients: [r]
+            });
+            okEmails.push(r.email);
+          } catch (e1) {
+            falhas++;
+            console.warn(r.email, e1);
+          }
+          if ((i + 1) % 5 === 0 || i === recipients.length - 1) {
+            try {
+              await histRef.update({
+                emailsEnviados: okEmails.slice(),
+                totalEnviados: okEmails.length,
+                falhas: falhas
+              });
+            } catch (eU) {}
+          }
+          if (statusEl) {
+            statusEl.textContent = 'Progresso: ' + (i + 1) + '/' + recipients.length +
+              ' (ok: ' + okEmails.length + ', falhas: ' + falhas + ')';
+          }
+        }
+        await histRef.update({
+          emailsEnviados: okEmails,
+          totalEnviados: okEmails.length,
+          falhas: falhas
+        });
+        if (statusEl) statusEl.textContent = 'Concluído: ' + okEmails.length + ' e-mails' + (falhas ? ', ' + falhas + ' falhas' : '') + '.';
+        mostrarAviso('E-mails enviados a ' + okEmails.length + ' utilizador(es).');
+        try { document.getElementById('emailmassa-texto').value = ''; } catch (e) {}
+        carregarHistEmailMassa();
+      } catch (e) {
+        alert('Erro: ' + (e.message || e));
+        if (statusEl) statusEl.textContent = 'Erro: ' + (e.message || e);
+      }
+      if (btn) { btn.disabled = false; btn.textContent = '📧 Enviar e-mails'; }
+    }
+
+    async function carregarHistEmailMassa() {
+      var tbody = document.getElementById('tbody-emailmassa-hist');
+      if (!tbody) return;
+      tbody.innerHTML = '<tr><td colspan="6" class="vazio">A carregar...</td></tr>';
+      try {
+        var todosEmails = await listarEmailsUtilizadoresMsgPriv();
+        var snap = await db.collection('adminEmailMassa').limit(40).get();
+        var lista = [];
+        snap.forEach(function (doc) {
+          var d = doc.data() || {};
+          d._id = doc.id;
+          lista.push(d);
+        });
+        lista.sort(function (a, b) {
+          return String(b.createdAt || '').localeCompare(String(a.createdAt || ''));
+        });
+        window.__emailMassaHist = lista;
+        window.__emailMassaTodosEmails = todosEmails;
+        if (!lista.length) {
+          tbody.innerHTML = '<tr><td colspan="6" class="vazio">Ainda sem envios de e-mail.</td></tr>';
+          return;
+        }
+        var html = '';
+        lista.forEach(function (d, i) {
+          var enviados = (d.emailsEnviados || []).map(function (e) { return String(e).toLowerCase(); });
+          var setEnv = {};
+          enviados.forEach(function (e) { setEnv[e] = true; });
+          var nSim = enviados.length;
+          var nNao = 0;
+          todosEmails.forEach(function (e) { if (!setEnv[e]) nNao++; });
+          var idSafe = String(d._id).replace(/'/g, "\\'");
+          html += '<tr>' +
+            '<td>' + (i + 1) + '</td>' +
+            '<td style="font-size:11px;white-space:nowrap;">' + escHtml(String(d.createdAt || '').slice(0, 19).replace('T', ' ')) + '</td>' +
+            '<td style="font-size:12px;max-width:200px;">' + escHtml((d.assunto || '').slice(0, 60)) + '</td>' +
+            '<td class="pts-ok"><b>' + nSim + '</b></td>' +
+            '<td class="' + (nNao > 0 ? 'pts-alto' : 'pts-baixo') + '"><b>' + nNao + '</b></td>' +
+            '<td style="white-space:nowrap;">' +
+            '<button type="button" class="btn-azul" onclick="verDetalheEmailMassa(\'' + idSafe + '\')">Ver</button> ' +
+            (nNao > 0
+              ? '<button type="button" class="btn-laranja" onclick="reenviarEmailMassaFaltam(\'' + idSafe + '\')">Enviar aos que faltam</button>'
+              : '<span style="font-size:11px;color:#00e676;">Todos ok</span>') +
+            '</td></tr>';
+        });
+        tbody.innerHTML = html;
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="6" class="vazio">Erro: ' + escHtml(e.message || e) + '</td></tr>';
+      }
+    }
+
+    function verDetalheEmailMassa(id) {
+      var lista = window.__emailMassaHist || [];
+      var d = null;
+      for (var i = 0; i < lista.length; i++) {
+        if (lista[i]._id === id) { d = lista[i]; break; }
+      }
+      if (!d) return alert('Registo não encontrado. Actualiza.');
+      window.__emailMassaActualId = id;
+      var box = document.getElementById('emailmassa-detalhe');
+      if (box) box.style.display = 'block';
+      var tit = document.getElementById('emailmassa-detalhe-titulo');
+      if (tit) tit.textContent = 'Assunto: ' + (d.assunto || '—');
+
+      var enviados = (d.emailsEnviados || []).map(function (e) { return String(e).toLowerCase(); });
+      var setEnv = {};
+      enviados.forEach(function (e) { setEnv[e] = true; });
+      var todos = window.__emailMassaTodosEmails || [];
+      var sim = enviados.slice().sort();
+      var nao = [];
+      todos.forEach(function (e) { if (!setEnv[e]) nao.push(e); });
+      nao.sort();
+
+      var elSim = document.getElementById('emailmassa-lista-sim');
+      var elNao = document.getElementById('emailmassa-lista-nao');
+      if (elSim) elSim.innerHTML = sim.length ? sim.map(function (e, i) { return (i + 1) + '. ' + escHtml(e); }).join('<br>') : '<span style="color:#888;">Ninguém</span>';
+      if (elNao) elNao.innerHTML = nao.length ? nao.map(function (e, i) { return (i + 1) + '. ' + escHtml(e); }).join('<br>') : '<span style="color:#00e676;">Todos já receberam</span>';
+      var btn = document.getElementById('emailmassa-btn-falta');
+      if (btn) {
+        btn.style.display = nao.length ? 'block' : 'none';
+        btn.setAttribute('data-id', id);
+      }
+      if (box) box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    async function reenviarEmailMassaFaltam(idOpcional) {
+      var id = idOpcional || window.__emailMassaActualId;
+      if (!id) return alert('Escolhe uma mensagem no histórico.');
+      if (!getEmailMassaWebhook()) return alert('Configura o webhook de e-mail.');
+
+      var lista = window.__emailMassaHist || [];
+      var d = null;
+      for (var i = 0; i < lista.length; i++) {
+        if (lista[i]._id === id) { d = lista[i]; break; }
+      }
+      if (!d) {
+        try {
+          var doc = await db.collection('adminEmailMassa').doc(id).get();
+          if (!doc.exists) return alert('Não encontrado.');
+          d = doc.data() || {};
+          d._id = id;
+        } catch (e) { return alert(e.message || e); }
+      }
+
+      var enviados = (d.emailsEnviados || []).map(function (e) { return String(e).toLowerCase(); });
+      var setEnv = {};
+      enviados.forEach(function (e) { setEnv[e] = true; });
+      var todos = window.__emailMassaTodosEmails || await listarEmailsUtilizadoresMsgPriv();
+      var faltam = [];
+      todos.forEach(function (e) { if (!setEnv[e]) faltam.push(e); });
+      if (!faltam.length) return alert('Todos já receberam este e-mail.');
+      if (!confirm('Enviar este e-mail a ' + faltam.length + ' utilizadores que ainda não receberam?')) return;
+
+      var statusEl = document.getElementById('emailmassa-reenv-status') || document.getElementById('emailmassa-status');
+      var mapaNome = {};
+      (typeof todosUsers !== 'undefined' ? todosUsers : []).forEach(function (u) {
+        var e = String(u.email || '').toLowerCase();
+        if (e) mapaNome[e] = u.nome || e.split('@')[0];
+      });
+
+      var okEmails = enviados.slice();
+      var falhas = 0;
+      var fromName = getEmailMassaFromName();
+      if (statusEl) statusEl.textContent = 'A reenviar...';
+
+      for (var i = 0; i < faltam.length; i++) {
+        var em = faltam[i];
+        var nome = mapaNome[em] || em.split('@')[0];
+        try {
+          await chamarWebhookEmailMassa({
+            action: 'send_one',
+            fromName: fromName,
+            subject: d.assunto || '',
+            body: d.texto || '',
+            link: d.link || '',
+            to: em,
+            toName: nome,
+            recipients: [{ email: em, nome: nome }]
+          });
+          okEmails.push(em);
+        } catch (e1) {
+          falhas++;
+          console.warn(em, e1);
+        }
+        if ((i + 1) % 5 === 0 || i === faltam.length - 1) {
+          try {
+            await db.collection('adminEmailMassa').doc(id).update({
+              emailsEnviados: okEmails,
+              totalEnviados: okEmails.length,
+              ultimoReenvio: new Date().toISOString()
+            });
+          } catch (eU) {}
+        }
+        if (statusEl) statusEl.textContent = 'Reenvio: ' + (i + 1) + '/' + faltam.length;
+      }
+      if (statusEl) statusEl.textContent = 'Concluído. Total que receberam: ' + okEmails.length + (falhas ? ' (' + falhas + ' falhas)' : '');
+      mostrarAviso('E-mail reenviado aos que faltavam.');
+      await carregarHistEmailMassa();
+      verDetalheEmailMassa(id);
+    }
+
+
+    async function carregarBonus80() {
       var tSim = document.getElementById('tbody-bonus80-sim');
       var tNao = document.getElementById('tbody-bonus80-nao');
       if (!tSim || !tNao) return;

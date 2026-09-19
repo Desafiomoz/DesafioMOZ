@@ -164,6 +164,30 @@
     }
     .btn-cancel-edit { background: rgba(255,255,255,0.08); color: #ccc; }
     .btn-save-edit { background: linear-gradient(90deg, var(--verde), var(--azul)); color: #04140a; }
+
+    .typing-ind {
+      display: none; align-items: center; gap: 8px;
+      padding: 6px 12px 2px; font-size: 12px; color: var(--suave);
+      min-height: 28px;
+    }
+    .typing-ind.mostrar { display: flex; }
+    .typing-ind .dots {
+      display: inline-flex; gap: 4px; align-items: center;
+      padding: 8px 12px; border-radius: 14px;
+      background: rgba(30,40,70,0.9); border: 1px solid rgba(59,158,255,0.3);
+    }
+    .typing-ind .dots span {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--azul);
+      animation: typingDot 1.2s ease-in-out infinite;
+    }
+    .typing-ind .dots span:nth-child(2) { animation-delay: 0.2s; }
+    .typing-ind .dots span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes typingDot {
+      0%, 60%, 100% { opacity: 0.3; transform: translateY(0); }
+      30% { opacity: 1; transform: translateY(-4px); }
+    }
+    .typing-ind .typing-nome { font-weight: 700; color: var(--verde); }
   </style>
 </head>
 <body>
@@ -178,6 +202,10 @@
       <button type="button" class="btn-voltar-lista" id="btn-voltar">← Voltar à lista</button>
       <p style="font-size:11px;color:#8e9bb8;margin:0 0 8px;text-align:center;">Segura ou toca numa mensagem para responder / editar</p>
       <div id="lista-msgs"></div>
+    </div>
+    <div class="typing-ind" id="typing-ind" aria-live="polite">
+      <div class="dots"><span></span><span></span><span></span></div>
+      <span><span class="typing-nome" id="typing-nome">Alguém</span> está a escrever…</span>
     </div>
     <div class="composer oculto" id="composer">
       <div class="reply-bar" id="reply-bar">
@@ -225,6 +253,10 @@
   var msgMenuId = null;
   var editMsgId = null;
   var ONLINE_MS = 3 * 60 * 1000;
+  var unsubTyping = null;
+  var typingTimer = null;
+  var typingStopTimer = null;
+  var euEstouAEscrever = false;
 
   function esc(s) {
     return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -296,6 +328,61 @@
       });
       if (n) await batch.commit();
     } catch (e) { console.warn('limpeza', e); }
+  }
+
+
+  function mostrarTyping(nome) {
+    var el = document.getElementById('typing-ind');
+    var nm = document.getElementById('typing-nome');
+    if (nm) nm.textContent = nome || 'Alguém';
+    if (el) el.classList.add('mostrar');
+  }
+  function esconderTyping() {
+    var el = document.getElementById('typing-ind');
+    if (el) el.classList.remove('mostrar');
+  }
+  function pararTypingEu() {
+    if (!conversaId || !email || !db) return;
+    euEstouAEscrever = false;
+    if (typingStopTimer) { clearTimeout(typingStopTimer); typingStopTimer = null; }
+    if (typingTimer) { clearTimeout(typingTimer); typingTimer = null; }
+    try {
+      db.collection('chatTyping').doc(conversaId).delete().catch(function () {});
+    } catch (e) {}
+  }
+  function sinalizarTypingEu() {
+    if (!conversaId || !email || !db) return;
+    // throttle: grava no máximo a cada 1.2s
+    if (typingTimer) return;
+    typingTimer = setTimeout(function () { typingTimer = null; }, 1200);
+    euEstouAEscrever = true;
+    try {
+      db.collection('chatTyping').doc(conversaId).set({
+        email: String(email).toLowerCase(),
+        nome: nomeUser || 'Alguém',
+        updatedAt: Date.now(),
+        tipo: 'privado'
+      });
+    } catch (e) {}
+    if (typingStopTimer) clearTimeout(typingStopTimer);
+    typingStopTimer = setTimeout(function () {
+      pararTypingEu();
+    }, 2500);
+  }
+  function ouvirTyping() {
+    if (unsubTyping) { try { unsubTyping(); } catch (e) {} unsubTyping = null; }
+    esconderTyping();
+    if (!conversaId || !db) return;
+    unsubTyping = db.collection('chatTyping').doc(conversaId)
+      .onSnapshot(function (doc) {
+        if (!doc.exists) { esconderTyping(); return; }
+        var d = doc.data() || {};
+        var em = String(d.email || '').toLowerCase();
+        if (!em || em === String(email).toLowerCase()) { esconderTyping(); return; }
+        var t = Number(d.updatedAt) || 0;
+        if (Date.now() - t > 4000) { esconderTyping(); return; }
+        mostrarTyping(soNome(d.nome, em));
+      }, function () { esconderTyping(); });
   }
 
   async function carregarOnline() {
@@ -481,6 +568,7 @@
     document.getElementById('painel-chat').classList.remove('oculto');
     document.getElementById('composer').classList.remove('oculto');
     msgsCache = {};
+    ouvirTyping();
 
     try {
       var nomes = {};
@@ -545,6 +633,7 @@
     if (!texto || !conversaId || !parceiro) return;
     var btn = document.getElementById('btn-enviar');
     btn.disabled = true;
+    pararTypingEu();
     var agora = new Date().toISOString();
     var tempId = 'local_' + Date.now();
     var payload = {
@@ -617,7 +706,15 @@
   document.getElementById('input-msg').addEventListener('keydown', function (e) {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); enviar(); }
   });
+  document.getElementById('input-msg').addEventListener('input', function () {
+    var v = (this.value || '').trim();
+    if (v) sinalizarTypingEu();
+    else pararTypingEu();
+  });
   document.getElementById('btn-voltar').addEventListener('click', function () {
+    pararTypingEu();
+    if (unsubTyping) { try { unsubTyping(); } catch (e) {} unsubTyping = null; }
+    esconderTyping();
     if (unsub) try { unsub(); } catch (e) {}
     conversaId = null; parceiro = null; msgsCache = {};
     document.getElementById('painel-chat').classList.add('oculto');
