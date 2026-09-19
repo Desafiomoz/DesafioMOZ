@@ -495,6 +495,60 @@
     return isNaN(n) || n < 0 ? 0 : n;
   }
 
+  function tempoMsgMs(v) {
+    if (!v) return 0;
+    try {
+      if (v.toDate) return v.toDate().getTime();
+      var t = new Date(v).getTime();
+      return isNaN(t) ? 0 : t;
+    } catch (e) { return 0; }
+  }
+
+  /** Conta mensagens do outro que chegaram depois da última vez que abriste a conversa */
+  async function contarNaoLidasReal(convId, meuEmail, lidoEmIso) {
+    if (!db || !convId) return 0;
+    try {
+      var snap = await db.collection('chatPrivado').where('conversaId', '==', convId).get();
+      var meu = String(meuEmail).toLowerCase();
+      var limite = lidoEmIso ? new Date(lidoEmIso).getTime() : 0;
+      if (lidoEmIso && isNaN(limite)) limite = 0;
+      var n = 0;
+      snap.forEach(function (doc) {
+        var d = doc.data() || {};
+        if (String(d.deEmail || '').toLowerCase() === meu) return;
+        var t = tempoMsgMs(d.createdAt);
+        // Se nunca abriu (sem lidoEm), conta todas as do outro
+        if (!limite || t > limite) n++;
+      });
+      return n;
+    } catch (e) {
+      console.warn('contarNaoLidas', e);
+      return 0;
+    }
+  }
+
+  async function gravarNaoLidasEnvio(convId, meuEmail, parceiroEmail, meta) {
+    var ref = db.collection('chatPrivadoConversas').doc(convId);
+    try {
+      var snap = await ref.get();
+      var data = snap.exists ? (snap.data() || {}) : {};
+      var nl = Object.assign({}, data.naoLidas || {});
+      var eu = String(meuEmail).toLowerCase();
+      var outro = String(parceiroEmail).toLowerCase();
+      nl[outro] = (parseInt(nl[outro], 10) || 0) + 1;
+      nl[eu] = 0;
+      var payload = Object.assign({}, meta || {}, { naoLidas: nl });
+      await ref.set(payload, { merge: true });
+    } catch (e) {
+      console.warn('gravarNaoLidas', e);
+      // fallback mínimo
+      try {
+        await ref.set(meta || {}, { merge: true });
+      } catch (e2) {}
+    }
+  }
+
+
   async function carregarOnline() {
     var host = document.getElementById('painel-lista');
     if (!email) {
@@ -526,23 +580,28 @@
           return String(b.data.updatedAt || '').localeCompare(String(a.data.updatedAt || ''));
         });
         if (convs.length) {
-          var lidos = {};
-          try { lidos = JSON.parse(localStorage.getItem('dmPrivadoLido') || '{}'); } catch (eL) {}
           convHtml += '<p style="font-size:12px;color:#8e9bb8;margin:8px 0;">Conversas recentes</p>';
-          convs.forEach(function (c) {
+          // Conta não lidas a sério (mensagens do outro após a última abertura)
+          var contagens = await Promise.all(convs.map(function (c) {
+            var lidoEmMap = c.data.lidoEm || {};
+            var lidoEmIso = lidoEmMap[String(email).toLowerCase()] || '';
+            var qtdDoc = lerNaoLidas(c.data, email);
+            // Sempre confirma com contagem real se a última msg não é tua
+            var ultimaDe = String(c.data.ultimaDeEmail || '').toLowerCase();
+            if (ultimaDe && ultimaDe === String(email).toLowerCase() && qtdDoc === 0) {
+              return Promise.resolve(0);
+            }
+            return contarNaoLidasReal(c.id, email, lidoEmIso).then(function (n) {
+              // Prefere o maior entre contador guardado e contagem real
+              return Math.max(n, qtdDoc);
+            });
+          }));
+          convs.forEach(function (c, idx) {
             var outros = (c.data.participantes || []).filter(function (x) { return x !== email; });
             var em = outros[0] || '';
             var nm = soNome((c.data.nomes && c.data.nomes[em]) || '', em);
             var upd = String(c.data.updatedAt || '');
-            var ultimaDe = String(c.data.ultimaDeEmail || '').toLowerCase();
-            var qtdNaoLidas = lerNaoLidas(c.data, email);
-            // fallback local se ainda não há contador no Firebase
-            if (!qtdNaoLidas) {
-              var temNova = upd && lidos[c.id] !== upd && ultimaDe && ultimaDe !== email;
-              if (!temNova && upd && lidos[c.id] !== upd && !ultimaDe) temNova = true;
-              if (lidos[c.id] === upd) temNova = false;
-              if (temNova) qtdNaoLidas = 1;
-            }
+            var qtdNaoLidas = contagens[idx] || 0;
             var temNova = qtdNaoLidas > 0;
             convHtml += '<div class="user-card' + (temNova ? ' tem-nova' : '') + '" data-email="' + esc(em) + '" data-nome="' + esc(nm) + '" data-conv="' + esc(c.id) + '" data-upd="' + esc(upd) + '">' +
               '<div class="av">' + esc((nm || '?').charAt(0).toUpperCase()) + '</div>' +
@@ -554,7 +613,7 @@
               '</div>';
           });
         }
-      } catch (e2) {}
+      } catch (e2) { console.warn('convs', e2); }
 
       var html = convHtml;
       html += '<p style="font-size:12px;color:#8e9bb8;margin:12px 0 8px;">Online e disponível</p>';
@@ -773,8 +832,31 @@
       nomes[parceiro.email] = parceiro.nome;
       var snapC = await db.collection('chatPrivadoConversas').doc(conversaId).get();
       var updMark = (snapC.exists && snapC.data().updatedAt) ? snapC.data().updatedAt : new Date().toISOString();
-      var resetNL = { participantes: [email, parceiro.email].sort(), nomes: nomes };
-      resetNL['naoLidas.' + String(email).toLowerCase()] = 0;
+      var agoraLido = new Date().toISOString();
+      var resetNL = {
+        participantes: [String(email).toLowerCase(), String(parceiro.email).toLowerCase()].sort(),
+        nomes: nomes,
+        naoLidas: (function () {
+          // mantém o mapa e zera só o meu
+          return {};
+        })()
+      };
+      // lê actual para não apagar as não-lidas do outro
+      try {
+        var snapNL = await db.collection('chatPrivadoConversas').doc(conversaId).get();
+        var prev = snapNL.exists ? (snapNL.data() || {}) : {};
+        var nl = Object.assign({}, prev.naoLidas || {});
+        nl[String(email).toLowerCase()] = 0;
+        resetNL.naoLidas = nl;
+        var le = Object.assign({}, prev.lidoEm || {});
+        le[String(email).toLowerCase()] = agoraLido;
+        resetNL.lidoEm = le;
+      } catch (eNL) {
+        resetNL.naoLidas = {};
+        resetNL.naoLidas[String(email).toLowerCase()] = 0;
+        resetNL.lidoEm = {};
+        resetNL.lidoEm[String(email).toLowerCase()] = agoraLido;
+      }
       await db.collection('chatPrivadoConversas').doc(conversaId).set(resetNL, { merge: true });
       try {
         var lidos2 = JSON.parse(localStorage.getItem('dmPrivadoLido') || '{}');
@@ -876,23 +958,20 @@
       msgsCache[ref.id] = payload;
       renderMsgs();
       // Actualizações secundárias em paralelo (não atrasam a mensagem)
+      var metaConv = {
+        participantes: [String(email).toLowerCase(), String(parceiro.email).toLowerCase()].sort(),
+        ultimaMsg: texto.slice(0, 80),
+        ultimaDeEmail: String(email).toLowerCase(),
+        updatedAt: agora,
+        nomes: (function () {
+          var n = {};
+          n[String(email).toLowerCase()] = nomeUser;
+          n[String(parceiro.email).toLowerCase()] = parceiro.nome;
+          return n;
+        })()
+      };
       Promise.all([
-        db.collection('chatPrivadoConversas').doc(conversaId).set({
-          participantes: [String(email).toLowerCase(), String(parceiro.email).toLowerCase()].sort(),
-          ultimaMsg: texto.slice(0, 80),
-          ultimaDeEmail: String(email).toLowerCase(),
-          updatedAt: agora,
-          nomes: (function () {
-            var n = {};
-            n[String(email).toLowerCase()] = nomeUser;
-            n[String(parceiro.email).toLowerCase()] = parceiro.nome;
-            return n;
-          })(),
-          // incrementa não lidas do parceiro
-          ['naoLidas.' + String(parceiro.email).toLowerCase()]: firebase.firestore.FieldValue.increment(1),
-          // quem envia fica a 0
-          ['naoLidas.' + String(email).toLowerCase()]: 0
-        }, { merge: true }),
+        gravarNaoLidasEnvio(conversaId, email, parceiro.email, metaConv),
         db.collection('notificacoesChat').add({
           email: String(parceiro.email).toLowerCase(),
           tipo: 'privado',
