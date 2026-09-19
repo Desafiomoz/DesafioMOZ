@@ -239,6 +239,7 @@
     <button class="tab" data-tab="pedidos-dicas" onclick="mudarTab('pedidos-dicas')"><i class="fas fa-reply"></i> Pedidos dicas <span class="badge" id="badge-pedidos-dicas">0</span></button>
     <button class="tab" data-tab="notif-admin" onclick="mudarTab('notif-admin')"><i class="fas fa-bell"></i> Notificações</button>
     <button class="tab" data-tab="bonus80" onclick="mudarTab('bonus80')"><i class="fas fa-gift"></i> Bonus 80</button>
+    <button class="tab" data-tab="msg-privado" onclick="mudarTab('msg-privado')"><i class="fas fa-paper-plane"></i> Msg privado</button>
     <button class="tab" data-tab="privado" onclick="mudarTab('privado')"><i class="fas fa-lock"></i> Privado</button>
   </div>
 
@@ -1340,8 +1341,9 @@
       <div class="form-box">
         <h3><i class="fas fa-reply"></i> Pedidos de explicação (dicas)</h3>
         <p style="font-size:12px;color:#888;margin-bottom:12px;">
-          Quando um utilizador pede mais explicações a um autor de dica (incluindo nomes da comunidade),
-          aparece aqui. Responde <strong>como esse autor</strong> — a mensagem vai para o papo privado do utilizador.
+          Cada <strong>utilizador</strong> tem a sua secção. Vês quem pediu mais informações e <strong>qual a dica</strong>.
+          Respondes como o autor → a mensagem vai ao <strong>papo privado</strong> dele.
+          Se ele responder de novo no privado, actualiza e continua a conversa na mesma secção (Responder de novo).
         </p>
         <button type="button" class="btn-verde" style="margin-bottom:12px;" onclick="carregarPedidosDicasAdmin()">🔄 Actualizar pedidos</button>
         <div class="tabela-wrap">
@@ -1368,8 +1370,12 @@
           <b style="color:#00e676;">Dica que o utilizador leu:</b>
           <div id="resp-dica-texto-dica" style="margin-top:6px;line-height:1.45;">—</div>
         </div>
+        <div style="background:#12121a;border:1px solid #2a2a3a;border-radius:12px;padding:12px;margin-bottom:14px;max-height:280px;overflow-y:auto;">
+          <div style="font-size:12px;color:#00e676;font-weight:700;margin-bottom:8px;">💬 Conversa completa (pedido ↔ respostas)</div>
+          <div id="resp-dica-thread" style="font-size:12px;line-height:1.5;color:#ccc;">A carregar...</div>
+        </div>
         <div class="form-row">
-          <label>Mensagem (vai ao papo privado do utilizador)</label>
+          <label>Nova mensagem (vai ao papo privado do utilizador — podes continuar a conversa)</label>
           <textarea id="resp-dica-texto" rows="4" placeholder="Escreve a resposta no tom do autor da dica..."></textarea>
         </div>
         <input type="hidden" id="resp-dica-pedido-id">
@@ -1377,7 +1383,7 @@
         <input type="hidden" id="resp-dica-autor-email">
         <input type="hidden" id="resp-dica-user-email">
         <button type="button" class="btn-verde" onclick="enviarRespostaDicaAdmin()">Enviar como o autor</button>
-        <button type="button" class="btn-cinza" style="width:100%;margin-top:8px;padding:10px;" onclick="fecharRespostaDica()">Cancelar</button>
+        <button type="button" class="btn-cinza" style="width:100%;margin-top:8px;padding:10px;" onclick="fecharRespostaDica()">Fechar</button>
       </div>
     </div>
     
@@ -1448,7 +1454,53 @@
       </div>
     </div>
 
-<div class="painel" id="painel-privado">
+<!-- MSG PRIVADO EM MASSA -->
+    <div class="painel" id="painel-msg-privado">
+      <div class="form-box">
+        <h3><i class="fas fa-paper-plane"></i> Enviar mensagem no papo privado</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:12px;">
+          A mensagem chega no <strong>papo privado</strong> de cada utilizador (como se viesse da Equipa Desafio MOZ).
+          Podes incluir um <strong>link</strong> — o utilizador abre no navegador. Envia para <strong>todos</strong> ou só para um e-mail.
+        </p>
+        <div class="form-row">
+          <label>Destino</label>
+          <select id="msgpriv-destino" onchange="document.getElementById('msgpriv-email-wrap').style.display=this.value==='um'?'block':'none'">
+            <option value="todos">Todos os utilizadores</option>
+            <option value="um">Só um e-mail</option>
+          </select>
+        </div>
+        <div class="form-row" id="msgpriv-email-wrap" style="display:none;">
+          <label>E-mail do utilizador</label>
+          <input type="email" id="msgpriv-email" placeholder="email@exemplo.com">
+        </div>
+        <div class="form-row">
+          <label>Mensagem</label>
+          <textarea id="msgpriv-texto" rows="5" placeholder="Escreve a mensagem que todos vão ver no privado..."></textarea>
+        </div>
+        <div class="form-row">
+          <label>Link (opcional — abre no navegador)</label>
+          <input type="url" id="msgpriv-link" placeholder="https://desafiomoz.pages.dev/roleta.html">
+        </div>
+        <div class="form-row">
+          <label>Texto do link (se houver link)</label>
+          <input type="text" id="msgpriv-link-txt" placeholder="Ex: Abrir roleta" value="Abrir link">
+        </div>
+        <button type="button" class="btn-verde" id="btn-msgpriv-enviar" onclick="enviarMsgPrivadoAdmin()">📨 Enviar no privado</button>
+        <p id="msgpriv-status" style="font-size:12px;color:#888;margin-top:10px;"></p>
+      </div>
+      <div class="form-box">
+        <h3><i class="fas fa-history"></i> Últimos envios (histórico)</h3>
+        <button type="button" class="btn-verde" style="margin-bottom:12px;" onclick="carregarHistMsgPrivado()">🔄 Actualizar</button>
+        <div class="tabela-wrap">
+          <table>
+            <thead><tr><th>#</th><th>Quando</th><th>Destino</th><th>Mensagem</th><th>Link</th></tr></thead>
+            <tbody id="tbody-msgpriv-hist"><tr><td colspan="5" class="vazio">Clica em Actualizar.</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="painel" id="painel-privado">
       <div class="form-box">
         <h3><i class="fas fa-trash"></i> Limpar mensagens privadas</h3>
         <p style="font-size:12px;color:#888;margin-bottom:12px;">Apaga mensagens da coleção chatPrivado. Podes limpar tudo ou só de um e-mail.</p>
@@ -1596,6 +1648,12 @@ function mostrarAviso(txt) {
       }
       if (nome === 'notif-admin') {
         try { carregarNotifAdminHist(); carregarAtrasadosNotif(); } catch (e) {}
+      }
+      if (nome === 'msg-privado') {
+        try { carregarHistMsgPrivado(); } catch (e) {}
+      }
+      if (nome === 'pedidos-dicas') {
+        try { carregarPedidosDicasAdmin(); } catch (e) {}
       }
 
       try {
@@ -4529,6 +4587,7 @@ async function enviarNotifAdmin() {
       document.getElementById('resp-dica-texto').value = '';
       document.getElementById('caixa-resposta-dica').style.display = 'block';
       document.getElementById('caixa-resposta-dica').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      try { carregarThreadDicaAdmin(d.conversaId || ''); } catch (eT) {}
     }
 
     function fecharRespostaDica() {
@@ -4577,9 +4636,10 @@ async function enviarNotifAdmin() {
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
           });
         } catch (eN) {}
-        fecharRespostaDica();
+        document.getElementById('resp-dica-texto').value = '';
+        try { await carregarThreadDicaAdmin(conversaId); } catch (eT) {}
         carregarPedidosDicasAdmin();
-        mostrarAviso('Resposta enviada como ' + autor + ' para o papo privado.');
+        mostrarAviso('Resposta enviada como ' + autor + ' — podes continuar a conversa abaixo.');
       } catch (e) {
         alert('Erro ao enviar: ' + (e.message || e));
       }
@@ -4947,7 +5007,210 @@ async function enviarNotifAdmin() {
     })();
 
 
-    async function carregarBonus80() {
+
+    /* ========== Msg privado em massa + thread pedidos dicas ========== */
+    function idConversaAdmin(a, b) {
+      var x = String(a || '').toLowerCase().trim();
+      var y = String(b || '').toLowerCase().trim();
+      return x < y ? x + '__' + y : y + '__' + x;
+    }
+
+    async function carregarThreadDicaAdmin(conversaId) {
+      var el = document.getElementById('resp-dica-thread');
+      if (!el) return;
+      if (!conversaId) {
+        el.innerHTML = '<span style="color:#888;">Sem conversa associada.</span>';
+        return;
+      }
+      el.innerHTML = 'A carregar conversa...';
+      try {
+        var snap = await db.collection('chatPrivado')
+          .where('conversaId', '==', conversaId)
+          .limit(100)
+          .get();
+        var lista = [];
+        snap.forEach(function (doc) {
+          var d = doc.data() || {};
+          lista.push(d);
+        });
+        lista.sort(function (a, b) {
+          return String(a.createdAt || '').localeCompare(String(b.createdAt || ''));
+        });
+        if (!lista.length) {
+          el.innerHTML = '<span style="color:#888;">Ainda não há mensagens nesta conversa. A tua resposta será a primeira.</span>';
+          return;
+        }
+        var html = '';
+        lista.forEach(function (d) {
+          var quando = String(d.createdAt || '').slice(0, 19).replace('T', ' ');
+          var quem = escHtml(d.deNome || d.deEmail || '?');
+          var txt = escHtml(d.texto || '');
+          html += '<div style="margin-bottom:10px;padding:8px 10px;background:#0d0d12;border-radius:8px;border-left:3px solid #00c853;">' +
+            '<div style="font-size:10px;color:#888;margin-bottom:4px;"><b style="color:#00e676;">' + quem + '</b> · ' + escHtml(quando) + '</div>' +
+            '<div style="white-space:pre-wrap;">' + txt + '</div></div>';
+        });
+        el.innerHTML = html;
+        el.scrollTop = el.scrollHeight;
+      } catch (e) {
+        el.innerHTML = '<span style="color:#ff6b6b;">Erro ao carregar: ' + escHtml(e.message || e) + '</span>';
+      }
+    }
+
+    async function enviarMsgPrivadoAdmin() {
+      var dest = (document.getElementById('msgpriv-destino') || {}).value || 'todos';
+      var texto = ((document.getElementById('msgpriv-texto') || {}).value || '').trim().slice(0, 800);
+      var link = ((document.getElementById('msgpriv-link') || {}).value || '').trim();
+      var linkTxt = ((document.getElementById('msgpriv-link-txt') || {}).value || 'Abrir link').trim() || 'Abrir link';
+      var statusEl = document.getElementById('msgpriv-status');
+      var btn = document.getElementById('btn-msgpriv-enviar');
+      if (!texto) return alert('Escreve a mensagem.');
+      if (link && link.indexOf('http') !== 0) {
+        link = 'https://' + link;
+      }
+
+      var emails = [];
+      if (dest === 'um') {
+        var em = ((document.getElementById('msgpriv-email') || {}).value || '').trim().toLowerCase();
+        if (!em || em.indexOf('@') === -1) return alert('Indica um e-mail válido.');
+        emails = [em];
+      } else {
+        var users = (typeof todosUsers !== 'undefined' && todosUsers.length) ? todosUsers : [];
+        if (!users.length) {
+          try {
+            var snapU = await db.collection('usuarios').limit(1000).get();
+            snapU.forEach(function (doc) {
+              var d = doc.data() || {};
+              if (d.email) users.push(d);
+            });
+          } catch (e) {
+            return alert('Erro ao listar utilizadores: ' + (e.message || e));
+          }
+        }
+        users.forEach(function (u) {
+          var e = String(u.email || '').trim().toLowerCase();
+          if (e && e.indexOf('@') !== -1) emails.push(e);
+        });
+        // unique
+        var seen = {};
+        emails = emails.filter(function (e) {
+          if (seen[e]) return false;
+          seen[e] = true;
+          return true;
+        });
+      }
+
+      if (!emails.length) return alert('Nenhum destinatário encontrado.');
+      if (dest === 'todos' && !confirm('Enviar mensagem no privado a ' + emails.length + ' utilizadores?')) return;
+
+      var ADMIN_EMAIL = 'admin@desafiomoz';
+      var ADMIN_NOME = 'Equipa Desafio MOZ';
+      var textoFinal = texto;
+      if (link) {
+        textoFinal += '\n\n🔗 ' + linkTxt + ':\n' + link;
+      }
+
+      if (btn) { btn.disabled = true; btn.textContent = 'A enviar...'; }
+      if (statusEl) statusEl.textContent = 'A enviar 0/' + emails.length + '...';
+
+      var ok = 0, falhas = 0;
+      try {
+        // histórico global
+        await db.collection('adminMsgPrivado').add({
+          destino: dest === 'um' ? emails[0] : 'todos',
+          total: emails.length,
+          texto: texto,
+          link: link || '',
+          linkTxt: linkTxt,
+          createdAt: new Date().toISOString()
+        });
+
+        for (var i = 0; i < emails.length; i++) {
+          var userEmail = emails[i];
+          try {
+            var conversaId = idConversaAdmin(ADMIN_EMAIL, userEmail);
+            var participantes = [ADMIN_EMAIL, userEmail].sort();
+            await db.collection('chatPrivado').add({
+              conversaId: conversaId,
+              participantes: participantes,
+              deEmail: ADMIN_EMAIL,
+              deNome: ADMIN_NOME,
+              texto: textoFinal,
+              link: link || '',
+              createdAt: new Date().toISOString(),
+              tipo: 'admin-broadcast'
+            });
+            await db.collection('chatPrivadoConversas').doc(conversaId).set({
+              ultimaMsg: textoFinal.slice(0, 80),
+              ultimaDeEmail: ADMIN_EMAIL,
+              updatedAt: new Date().toISOString()
+            }, { merge: true });
+            try {
+              await db.collection('notificacoesChat').add({
+                email: userEmail,
+                tipo: 'privado',
+                deNome: ADMIN_NOME,
+                deEmail: ADMIN_EMAIL,
+                texto: texto.slice(0, 120),
+                link: link || '',
+                lida: false,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+              });
+            } catch (eN) {}
+            ok++;
+          } catch (e1) {
+            falhas++;
+            console.warn('msgpriv fail', userEmail, e1);
+          }
+          if (statusEl && (i % 5 === 0 || i === emails.length - 1)) {
+            statusEl.textContent = 'A enviar ' + (i + 1) + '/' + emails.length + ' (ok: ' + ok + ', falhas: ' + falhas + ')...';
+          }
+        }
+        if (statusEl) statusEl.textContent = 'Concluído: ' + ok + ' enviadas' + (falhas ? ', ' + falhas + ' falhas' : '') + '.';
+        mostrarAviso('Mensagem privada enviada a ' + ok + ' utilizador(es).');
+        try { carregarHistMsgPrivado(); } catch (eH) {}
+      } catch (e) {
+        alert('Erro: ' + (e.message || e));
+        if (statusEl) statusEl.textContent = 'Erro.';
+      }
+      if (btn) { btn.disabled = false; btn.textContent = '📨 Enviar no privado'; }
+    }
+
+    async function carregarHistMsgPrivado() {
+      var tbody = document.getElementById('tbody-msgpriv-hist');
+      if (!tbody) return;
+      tbody.innerHTML = '<tr><td colspan="5" class="vazio">A carregar...</td></tr>';
+      try {
+        var snap = await db.collection('adminMsgPrivado').limit(50).get();
+        var lista = [];
+        snap.forEach(function (doc) {
+          var d = doc.data() || {};
+          lista.push(d);
+        });
+        lista.sort(function (a, b) {
+          return String(b.createdAt || '').localeCompare(String(a.createdAt || ''));
+        });
+        if (!lista.length) {
+          tbody.innerHTML = '<tr><td colspan="5" class="vazio">Ainda sem envios.</td></tr>';
+          return;
+        }
+        var html = '';
+        lista.forEach(function (d, i) {
+          html += '<tr>' +
+            '<td>' + (i + 1) + '</td>' +
+            '<td style="font-size:11px;">' + escHtml(String(d.createdAt || '').slice(0, 19)) + '</td>' +
+            '<td>' + escHtml(d.destino || '—') + (d.total ? ' (' + d.total + ')' : '') + '</td>' +
+            '<td style="font-size:12px;max-width:260px;">' + escHtml((d.texto || '').slice(0, 100)) + '</td>' +
+            '<td style="font-size:11px;max-width:140px;word-break:break-all;">' + escHtml(d.link || '—') + '</td>' +
+            '</tr>';
+        });
+        tbody.innerHTML = html;
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="5" class="vazio">Erro: ' + escHtml(e.message || e) + '</td></tr>';
+      }
+    }
+
+
+        async function carregarBonus80() {
       var tSim = document.getElementById('tbody-bonus80-sim');
       var tNao = document.getElementById('tbody-bonus80-nao');
       if (!tSim || !tNao) return;

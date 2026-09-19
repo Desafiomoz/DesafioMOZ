@@ -69,6 +69,11 @@
     }
     .msg.minha { align-self: flex-end; margin-left: auto; background: linear-gradient(145deg, rgba(20,60,50,0.98), rgba(18,40,55,0.98)); border: 1px solid rgba(34,255,153,0.35); }
     .msg.outra { background: linear-gradient(145deg, rgba(30,40,70,0.95), rgba(24,28,48,0.98)); border: 1px solid rgba(59,158,255,0.35); }
+    .msg a.msg-link {
+      color: #7dd3fc; text-decoration: underline;
+      word-break: break-all; font-weight: 700;
+    }
+    .msg a.msg-link:active { color: var(--verde); }
     .msg.selecionada { outline: 2px solid rgba(34,255,153,0.5); }
     .msg-hora { font-size: 10px; color: var(--suave); margin-top: 4px; text-align: right; }
     .msg-quote {
@@ -224,6 +229,27 @@
   function esc(s) {
     return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
+  /** Escapa texto e transforma URLs em links clicáveis (abre noutro separador). */
+  function formatTextoComLinks(s) {
+    var raw = String(s || '');
+    var parts = raw.split(/(https?:\/\/[^\s]+|www\.[^\s]+)/gi);
+    var out = '';
+    for (var i = 0; i < parts.length; i++) {
+      var part = parts[i];
+      if (!part) continue;
+      if (/^(https?:\/\/|www\.)/i.test(part)) {
+        var href = part;
+        var trail = '';
+        var m = href.match(/([.,;:!?)]+)$/);
+        if (m) { trail = m[1]; href = href.slice(0, -trail.length); }
+        if (/^www\./i.test(href)) href = 'https://' + href;
+        out += '<a href="' + esc(href) + '" target="_blank" rel="noopener noreferrer" class="msg-link">' + esc(href) + '</a>' + esc(trail);
+      } else {
+        out += esc(part).replace(/\n/g, '<br>');
+      }
+    }
+    return out;
+  }
   function toast(t) {
     var el = document.getElementById('toast');
     el.textContent = t;
@@ -367,9 +393,13 @@
         quote = '<div class="msg-quote"><div class="q-nome">' + esc(soNome(d.replyNome, '')) + '</div>' +
           '<div class="q-txt">' + esc(d.replyTexto || '') + '</div></div>';
       }
+      var linkExtra = '';
+      if (d.link && String(d.link).indexOf('http') === 0) {
+        linkExtra = '<div style="margin-top:8px;"><a class="msg-link" href="' + esc(d.link) + '" target="_blank" rel="noopener noreferrer">🔗 Abrir link</a></div>';
+      }
       html += '<div class="msg ' + (minha ? 'minha' : 'outra') + '" data-id="' + esc(id) + '">' +
         quote +
-        '<div>' + esc(d.texto) + (d.editado ? ' <span style="font-size:10px;color:#8e9bb8">(editado)</span>' : '') +
+        '<div>' + formatTextoComLinks(d.texto) + linkExtra + (d.editado ? ' <span style="font-size:10px;color:#8e9bb8">(editado)</span>' : '') +
         (d._local ? ' <span style="font-size:10px;color:#8e9bb8">…</span>' : '') + '</div>' +
         '<div class="msg-hora">' + esc(formatHora(d.createdAt)) + '</div></div>';
     });
