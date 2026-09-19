@@ -435,6 +435,24 @@
     }
     .toast-chat.mostrar { opacity: 1; transform: translateX(-50%) translateY(0); }
 
+    .btn-nova-msg {
+      display: none; position: fixed; left: 50%; transform: translateX(-50%);
+      bottom: 100px; z-index: 40;
+      padding: 10px 16px; border-radius: 99px; border: none;
+      font-family: 'Sora', sans-serif; font-weight: 800; font-size: 12.5px;
+      color: #04140a; cursor: pointer;
+      background: linear-gradient(90deg, #22FF99, #a855f7);
+      box-shadow: 0 8px 28px rgba(34,255,153,0.4), 0 0 20px rgba(168,85,247,0.3);
+      animation: pulseNova 1.5s ease-in-out infinite;
+      white-space: nowrap;
+    }
+    .btn-nova-msg.mostrar { display: inline-flex; align-items: center; gap: 8px; }
+    @keyframes pulseNova {
+      0%,100% { transform: translateX(-50%) scale(1); }
+      50% { transform: translateX(-50%) scale(1.04); }
+    }
+    .shell-lista-wrap { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; }
+
     .typing-ind {
       display: none; align-items: center; gap: 8px;
       padding: 4px 14px 6px; font-size: 12px; color: var(--suave);
@@ -484,7 +502,8 @@
       </div>
     </div>
 
-        <div class="typing-ind" id="typing-ind" aria-live="polite">
+        <button type="button" class="btn-nova-msg" id="btn-nova-msg">↓ Nova mensagem</button>
+    <div class="typing-ind" id="typing-ind" aria-live="polite">
       <div class="dots"><span></span><span></span><span></span></div>
       <span id="typing-txt"><span class="typing-nome" id="typing-nome">Alguém</span> está a escrever…</span>
     </div>
@@ -569,6 +588,9 @@
   var typingTimer = null;
   var typingStopTimer = null;
   var TYPING_DOC = 'grupal';
+  var forcarScrollBaixo = false;
+  var ultimoMsgIdVisto = null;
+  var ignorarPrimeiroSnap = true;
 
   function mesAtualId() {
     var d = new Date();
@@ -736,7 +758,7 @@
     }
     var emailLow = email.toLowerCase();
     var html = '';
-    var nearBottom = (lista.scrollHeight - lista.scrollTop - lista.clientHeight) < 80;
+    var nearBottom = (lista.scrollHeight - lista.scrollTop - lista.clientHeight) < 140;
     items.forEach(function (item) {
       var d = item.data;
       var minha = String(d.email || '').toLowerCase() === emailLow;
@@ -756,8 +778,31 @@
     });
     lista.innerHTML = html;
     ligarGestosMsgs();
-    if (nearBottom || items.length) {
-      lista.scrollTop = lista.scrollHeight;
+
+    var lastId = items.length ? items[items.length - 1].id : null;
+    var lastData = lastId && msgsCache[lastId] ? msgsCache[lastId] : (items.length ? items[items.length - 1].data : null);
+    var lastMinha = lastData && String(lastData.email || '').toLowerCase() === String(email || '').toLowerCase();
+    var eNova = lastId && lastId !== ultimoMsgIdVisto && String(lastId).indexOf('local_') !== 0;
+
+    function mostrarBtnNova(sim) {
+      var b = document.getElementById('btn-nova-msg');
+      if (!b) return;
+      if (sim) b.classList.add('mostrar'); else b.classList.remove('mostrar');
+    }
+
+    if (forcarScrollBaixo || nearBottom || lastMinha || ignorarPrimeiroSnap) {
+      requestAnimationFrame(function () {
+        lista.scrollTop = lista.scrollHeight;
+        requestAnimationFrame(function () {
+          lista.scrollTop = lista.scrollHeight;
+        });
+      });
+      forcarScrollBaixo = false;
+      ignorarPrimeiroSnap = false;
+      if (lastId) ultimoMsgIdVisto = lastId;
+      mostrarBtnNova(false);
+    } else if (eNova && !lastMinha) {
+      mostrarBtnNova(true);
     }
   }
 
@@ -1065,6 +1110,7 @@
       payload.replyTexto = (replyAlvo.texto || '').slice(0, 200);
       payload.replyEmail = replyAlvo.email || '';
     }
+    forcarScrollBaixo = true;
     msgsCache[tempId] = payload;
     renderLista();
     ta.value = '';
@@ -1111,7 +1157,8 @@
       toast('Falha ao enviar. Verifica as regras do Firebase.');
     } finally {
       btn.disabled = false;
-      ta.focus();
+      try { ta.blur(); } catch (e) {}
+      try { if (document.activeElement) document.activeElement.blur(); } catch (e2) {}
     }
   }
 
@@ -1130,6 +1177,40 @@
     }
   });
   document.getElementById('btn-enviar').addEventListener('click', enviar);
+
+  var btnNovaG = document.getElementById('btn-nova-msg');
+  if (btnNovaG) {
+    btnNovaG.addEventListener('click', function () {
+      var lista = document.getElementById('lista-msgs');
+      if (lista) lista.scrollTop = lista.scrollHeight;
+      btnNovaG.classList.remove('mostrar');
+      var items = Object.keys(msgsCache);
+      if (items.length) {
+        items.sort(function (a, b) {
+          var ta = msgsCache[a].createdAt || '';
+          var tb = msgsCache[b].createdAt || '';
+          return String(ta).localeCompare(String(tb));
+        });
+        ultimoMsgIdVisto = items[items.length - 1];
+      }
+    });
+  }
+  (function () {
+    var lista = document.getElementById('lista-msgs');
+    if (!lista) return;
+    lista.addEventListener('scroll', function () {
+      if ((lista.scrollHeight - lista.scrollTop - lista.clientHeight) < 100) {
+        var b = document.getElementById('btn-nova-msg');
+        if (b) b.classList.remove('mostrar');
+        var items = Object.keys(msgsCache);
+        items.sort(function (a, b) {
+          return String(msgsCache[a].createdAt || '').localeCompare(String(msgsCache[b].createdAt || ''));
+        });
+        if (items.length) ultimoMsgIdVisto = items[items.length - 1];
+      }
+    }, { passive: true });
+  })();
+
 
   document.getElementById('sheet-fundo').addEventListener('click', fecharMenuMsg);
   document.getElementById('sheet-cancelar').addEventListener('click', fecharMenuMsg);

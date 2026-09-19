@@ -165,6 +165,24 @@
     .btn-cancel-edit { background: rgba(255,255,255,0.08); color: #ccc; }
     .btn-save-edit { background: linear-gradient(90deg, var(--verde), var(--azul)); color: #04140a; }
 
+    .btn-nova-msg {
+      display: none; position: absolute; left: 50%; transform: translateX(-50%);
+      bottom: 12px; z-index: 40;
+      padding: 10px 16px; border-radius: 99px; border: none;
+      font-family: 'Sora', sans-serif; font-weight: 800; font-size: 12.5px;
+      color: #04140a; cursor: pointer;
+      background: linear-gradient(90deg, #22FF99, #3b9eff);
+      box-shadow: 0 8px 28px rgba(34,255,153,0.45), 0 0 20px rgba(59,158,255,0.25);
+      animation: pulseNova 1.5s ease-in-out infinite;
+      white-space: nowrap;
+    }
+    .btn-nova-msg.mostrar { display: inline-flex; align-items: center; gap: 8px; }
+    @keyframes pulseNova {
+      0%,100% { transform: translateX(-50%) scale(1); }
+      50% { transform: translateX(-50%) scale(1.04); }
+    }
+    #painel-chat { position: relative; }
+
     .typing-ind {
       display: none; align-items: center; gap: 8px;
       padding: 6px 12px 2px; font-size: 12px; color: var(--suave);
@@ -188,6 +206,34 @@
       30% { opacity: 1; transform: translateY(-4px); }
     }
     .typing-ind .typing-nome { font-weight: 700; color: var(--verde); }
+
+    #painel-chat {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    #lista-msgs {
+      flex: 1 0 auto;
+      min-height: min-content;
+      padding-bottom: 56px;
+    }
+    #painel-chat .btn-nova-msg {
+      position: sticky;
+      bottom: 12px;
+      margin: 0 auto 8px;
+      left: auto;
+      transform: none;
+      align-self: center;
+    }
+    #painel-chat .btn-nova-msg.mostrar {
+      display: inline-flex;
+    }
+    @keyframes pulseNova {
+      0%,100% { transform: scale(1); }
+      50% { transform: scale(1.04); }
+    }
   </style>
 </head>
 <body>
@@ -202,6 +248,7 @@
       <button type="button" class="btn-voltar-lista" id="btn-voltar">← Voltar à lista</button>
       <p style="font-size:11px;color:#8e9bb8;margin:0 0 8px;text-align:center;">Segura ou toca numa mensagem para responder / editar</p>
       <div id="lista-msgs"></div>
+      <button type="button" class="btn-nova-msg" id="btn-nova-msg">↓ Nova mensagem</button>
     </div>
     <div class="typing-ind" id="typing-ind" aria-live="polite">
       <div class="dots"><span></span><span></span><span></span></div>
@@ -257,6 +304,9 @@
   var typingTimer = null;
   var typingStopTimer = null;
   var euEstouAEscrever = false;
+  var forcarScrollBaixo = false;
+  var ultimoMsgIdVisto = null;
+  var ignorarPrimeiroSnap = true;
 
   function esc(s) {
     return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -463,16 +513,65 @@
     }
   }
 
+
+  function msgTimeMs(v) {
+    if (!v) return 0;
+    try {
+      if (v.toDate) return v.toDate().getTime();
+      if (typeof v === 'number') return v;
+      var t = new Date(v).getTime();
+      return isNaN(t) ? 0 : t;
+    } catch (e) { return 0; }
+  }
+  function ordenarIdsMsgs(ids) {
+    return ids.slice().sort(function (a, b) {
+      var da = msgsCache[a] || {};
+      var db = msgsCache[b] || {};
+      var ta = msgTimeMs(da.createdAt);
+      var tb = msgTimeMs(db.createdAt);
+      if (ta !== tb) return ta - tb;
+      // local_ always after same-time server if needed; prefer stable id
+      return String(a).localeCompare(String(b));
+    });
+  }
+  function getScrollEl() {
+    // No privado o overflow está no painel, não na lista
+    return document.getElementById('painel-chat') || document.getElementById('lista-msgs');
+  }
+  function estaNoFundo(el) {
+    el = el || getScrollEl();
+    if (!el) return true;
+    return (el.scrollHeight - el.scrollTop - el.clientHeight) < 120;
+  }
+  function scrollParaFundo(force) {
+    var el = getScrollEl();
+    if (!el) return;
+    // duplo rAF garante layout já medido após innerHTML
+    requestAnimationFrame(function () {
+      el.scrollTop = el.scrollHeight;
+      requestAnimationFrame(function () {
+        el.scrollTop = el.scrollHeight;
+      });
+    });
+    if (force !== false) mostrarBtnNovaMsg(false);
+  }
+  function mostrarBtnNovaMsg(sim) {
+    var b = document.getElementById('btn-nova-msg');
+    if (!b) return;
+    if (sim) b.classList.add('mostrar');
+    else b.classList.remove('mostrar');
+  }
+  function irParaUltimaMsg() {
+    scrollParaFundo(true);
+    var ids = ordenarIdsMsgs(Object.keys(msgsCache));
+    if (ids.length) ultimoMsgIdVisto = ids[ids.length - 1];
+  }
+
   function renderMsgs() {
     var lista = document.getElementById('lista-msgs');
-    var ids = Object.keys(msgsCache);
-    ids.sort(function (a, b) {
-      var ta = msgsCache[a].createdAt || '';
-      var tb = msgsCache[b].createdAt || '';
-      if (ta && ta.toDate) try { ta = ta.toDate().toISOString(); } catch (e) {}
-      if (tb && tb.toDate) try { tb = tb.toDate().toISOString(); } catch (e) {}
-      return String(ta).localeCompare(String(tb));
-    });
+    var scrollEl = getScrollEl();
+    var noFundo = estaNoFundo(scrollEl);
+    var ids = ordenarIdsMsgs(Object.keys(msgsCache));
     var html = '';
     ids.forEach(function (id) {
       var d = msgsCache[id];
@@ -493,7 +592,23 @@
         '<div class="msg-hora">' + esc(formatHora(d.createdAt)) + '</div></div>';
     });
     lista.innerHTML = html || '<div class="vazio">Ainda sem mensagens. Diz olá!</div>';
-    lista.scrollTop = lista.scrollHeight;
+
+    // Última mensagem
+    var lastId = ids.length ? ids[ids.length - 1] : null;
+    var lastData = lastId ? msgsCache[lastId] : null;
+    var lastMinha = lastData && String(lastData.deEmail || '').toLowerCase() === String(email).toLowerCase();
+    var eNova = lastId && lastId !== ultimoMsgIdVisto && String(lastId).indexOf('local_') !== 0;
+
+    if (forcarScrollBaixo || noFundo || lastMinha || ignorarPrimeiroSnap) {
+      scrollParaFundo(true);
+      forcarScrollBaixo = false;
+      ignorarPrimeiroSnap = false;
+      if (lastId) ultimoMsgIdVisto = lastId;
+    } else if (eNova && !lastMinha) {
+      // Está a ler em cima — avisa para ir à última
+      mostrarBtnNovaMsg(true);
+    }
+
     lista.querySelectorAll('.msg').forEach(function (el) {
       var id = el.getAttribute('data-id');
       var timer = null;
@@ -570,6 +685,10 @@
     document.getElementById('painel-chat').classList.remove('oculto');
     document.getElementById('composer').classList.remove('oculto');
     msgsCache = {};
+    ignorarPrimeiroSnap = true;
+    forcarScrollBaixo = true;
+    ultimoMsgIdVisto = null;
+    mostrarBtnNovaMsg(false);
     ouvirTyping();
 
     try {
@@ -652,6 +771,7 @@
       payload.replyTexto = (replyAlvo.texto || '').slice(0, 200);
       payload.replyId = replyAlvo.id;
     }
+    forcarScrollBaixo = true;
     msgsCache[tempId] = payload;
     renderMsgs();
     ta.value = '';
@@ -712,11 +832,27 @@
       toast('Falha ao enviar');
     } finally {
       btn.disabled = false;
-      ta.focus();
+      // Fecha o teclado até o utilizador tocar de novo no campo
+      try { ta.blur(); } catch (e) {}
+      try { document.activeElement && document.activeElement.blur(); } catch (e2) {}
     }
   }
 
   document.getElementById('btn-enviar').addEventListener('click', enviar);
+  var btnNova = document.getElementById('btn-nova-msg');
+  if (btnNova) btnNova.addEventListener('click', irParaUltimaMsg);
+  (function () {
+    var el = getScrollEl();
+    if (!el) return;
+    el.addEventListener('scroll', function () {
+      if (estaNoFundo(el)) {
+        mostrarBtnNovaMsg(false);
+        var ids = ordenarIdsMsgs(Object.keys(msgsCache));
+        if (ids.length) ultimoMsgIdVisto = ids[ids.length - 1];
+      }
+    }, { passive: true });
+  })();
+
   document.getElementById('input-msg').addEventListener('keydown', function (e) {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); enviar(); }
   });
