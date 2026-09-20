@@ -109,6 +109,70 @@
         .dado-item span { color: var(--texto-claro); }
         .dado-item strong { color: #eee; text-align: right; word-break: break-all; }
 
+        .dm-atalhos {
+            margin-top: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .dm-atalho {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            border-radius: 14px;
+            text-decoration: none;
+            color: #fff;
+            background: rgba(12,16,28,0.95);
+            border: 1px solid rgba(255,255,255,0.08);
+            transition: transform .15s, box-shadow .2s;
+            position: relative;
+            overflow: hidden;
+        }
+        .dm-atalho:active { transform: scale(0.98); }
+        .dm-atalho .ico {
+            width: 42px; height: 42px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px; flex-shrink: 0;
+        }
+        .dm-atalho.msg .ico {
+            background: linear-gradient(135deg, #ff3b5c, #ff8a5c);
+            box-shadow: 0 0 16px rgba(255,59,92,0.45);
+        }
+        .dm-atalho.dica .ico {
+            background: linear-gradient(135deg, #a855f7, #22FF99);
+            box-shadow: 0 0 16px rgba(34,255,153,0.35);
+        }
+        .dm-atalho .txt { flex: 1; min-width: 0; }
+        .dm-atalho .txt strong { display: block; font-size: 14px; font-weight: 800; }
+        .dm-atalho .txt span { font-size: 12px; color: #A8B0C8; }
+        .dm-atalho .badge-n {
+            display: none;
+            min-width: 24px; height: 24px; padding: 0 7px;
+            border-radius: 99px;
+            background: #ff1744;
+            color: #fff;
+            font-size: 12px; font-weight: 900;
+            align-items: center; justify-content: center;
+            box-shadow: 0 0 14px rgba(255,23,68,0.75), 0 0 28px rgba(255,23,68,0.4);
+            animation: dmBadgePulse 1.2s ease-in-out infinite;
+        }
+        .dm-atalho .badge-n.on { display: inline-flex; }
+        .dm-atalho.tem-nova {
+            border-color: rgba(255,23,68,0.65);
+            box-shadow: 0 0 22px rgba(255,23,68,0.35);
+            animation: dmCardGlow 1.6s ease-in-out infinite;
+        }
+        .dm-atalho.tem-nova strong { color: #ff6b81; }
+        @keyframes dmBadgePulse {
+            0%,100% { transform: scale(1); box-shadow: 0 0 12px rgba(255,23,68,0.7); }
+            50% { transform: scale(1.12); box-shadow: 0 0 22px rgba(255,23,68,0.95); }
+        }
+        @keyframes dmCardGlow {
+            0%,100% { box-shadow: 0 0 14px rgba(255,23,68,0.25); }
+            50% { box-shadow: 0 0 28px rgba(255,23,68,0.5); }
+        }
+
         .sec-titulo {
             font-size: 16px;
             margin-bottom: 12px;
@@ -259,6 +323,24 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
     <div class="dado-item"><span>Nome:</span> <strong id="mostrar-nome">—</strong></div>
     <div class="dado-item"><span>Telemóvel:</span> <strong id="mostrar-tel">—</strong></div>
     <div class="dado-item"><span>E-mail:</span> <strong id="mostrar-email">—</strong></div>
+    <div class="dm-atalhos">
+        <a href="chat-privado.html" class="dm-atalho msg" id="atalho-msg">
+            <div class="ico"><i class="fas fa-comments"></i></div>
+            <div class="txt">
+                <strong>Mensagens privadas</strong>
+                <span id="atalho-msg-sub">Ver conversas recentes</span>
+            </div>
+            <span class="badge-n" id="badge-msg">0</span>
+        </a>
+        <a href="chat-dicas.html" class="dm-atalho dica" id="atalho-dica">
+            <div class="ico"><i class="fas fa-lightbulb"></i></div>
+            <div class="txt">
+                <strong>Dicas dos veteranos</strong>
+                <span id="atalho-dica-sub">Como sacar mais rápido</span>
+            </div>
+            <span class="badge-n" id="badge-dica">0</span>
+        </a>
+    </div>
 </div>
 
 <div class="sec-titulo"><i class="fas fa-calendar-day"></i> Desafios do Dia</div>
@@ -818,7 +900,7 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
 <script>
   window.__DM_NOTIF__ = { mencao: true, idle: true, idleSegundos: 40, idleMaxDia: 2 };
 </script>
-<script src="notificacoes-chat.js?v=10"></script>
+<script src="notificacoes-chat.js?v=11"></script>
 
 
 <script>
@@ -999,6 +1081,157 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
   }
 
   setTimeout(mostrar, 5000);
+})();
+</script>
+
+
+<script>
+/* Badges: mensagens privadas não lidas + dicas novas */
+(function () {
+  function emailUser() {
+    try {
+      var e = (localStorage.getItem('emailUtilizador') || localStorage.getItem('email') || '').trim().toLowerCase();
+      return e.indexOf('@') !== -1 ? e : '';
+    } catch (e) { return ''; }
+  }
+
+  function setBadge(idBadge, idAtalho, idSub, n, textoZero, textoN) {
+    var b = document.getElementById(idBadge);
+    var a = document.getElementById(idAtalho);
+    var s = document.getElementById(idSub);
+    n = parseInt(n, 10) || 0;
+    if (b) {
+      b.textContent = n > 99 ? '99+' : String(n);
+      if (n > 0) b.classList.add('on');
+      else b.classList.remove('on');
+    }
+    if (a) {
+      if (n > 0) a.classList.add('tem-nova');
+      else a.classList.remove('tem-nova');
+    }
+    if (s) s.textContent = n > 0 ? textoN.replace('%n', String(n)) : textoZero;
+  }
+
+  async function contarMsgsPrivadas(db, email) {
+    if (!db || !email) return 0;
+    try {
+      var snap = await db.collection('chatPrivadoConversas')
+        .where('participantes', 'array-contains', email)
+        .limit(40)
+        .get();
+      var total = 0;
+      var promises = [];
+      snap.forEach(function (doc) {
+        var d = doc.data() || {};
+        var nl = d.naoLidas || {};
+        var q = parseInt(nl[email], 10) || 0;
+        if (q > 0) {
+          total += q;
+          return;
+        }
+        // Contagem real se última msg não é minha
+        var ultimaDe = String(d.ultimaDeEmail || '').toLowerCase();
+        if (ultimaDe && ultimaDe !== email) {
+          var lidoEm = (d.lidoEm && d.lidoEm[email]) || '';
+          promises.push(
+            db.collection('chatPrivado').where('conversaId', '==', doc.id).get().then(function (ms) {
+              var n = 0;
+              var limite = lidoEm ? new Date(lidoEm).getTime() : 0;
+              ms.forEach(function (m) {
+                var x = m.data() || {};
+                if (String(x.deEmail || '').toLowerCase() === email) return;
+                var t = 0;
+                try {
+                  if (x.createdAt && x.createdAt.toDate) t = x.createdAt.toDate().getTime();
+                  else t = new Date(x.createdAt).getTime();
+                } catch (e) {}
+                if (!limite || t > limite) n++;
+              });
+              return n;
+            }).catch(function () { return 0; })
+          );
+        }
+      });
+      if (promises.length) {
+        var extras = await Promise.all(promises);
+        extras.forEach(function (n) { total += n; });
+      }
+      return total;
+    } catch (e) {
+      console.warn('badge msg', e);
+      return 0;
+    }
+  }
+
+  async function contarDicasNovas(db) {
+    try {
+      var visto = localStorage.getItem('dmDicasVistoEm') || '';
+      var nunca = !visto && localStorage.getItem('dmDicaPaginaVisitada') !== '1';
+      var snap = await db.collection('chatDicas').limit(60).get();
+      var n = 0;
+      var limite = visto ? new Date(visto).getTime() : 0;
+      snap.forEach(function (doc) {
+        var d = doc.data() || {};
+        if (d.ativa === false) return;
+        var t = 0;
+        try { t = new Date(d.createdAt).getTime(); } catch (e) {}
+        if (nunca) n++;
+        else if (limite && t > limite) n++;
+        else if (!limite) n++; // nunca abriu — mostra todas activas (limitado visualmente)
+      });
+      if (nunca && n === 0) n = 1; // pelo menos avisa para ir ver
+      if (nunca && n > 6) n = 6;
+      return n;
+    } catch (e) {
+      console.warn('badge dica', e);
+      try {
+        if (localStorage.getItem('dmDicaPaginaVisitada') !== '1') return 1;
+      } catch (e2) {}
+      return 0;
+    }
+  }
+
+  async function actualizar() {
+    var email = emailUser();
+    if (!window.db) {
+      setTimeout(actualizar, 800);
+      return;
+    }
+    var db = window.db;
+    var nMsg = 0;
+    var nDica = 0;
+    try {
+      if (email) nMsg = await contarMsgsPrivadas(db, email);
+    } catch (e) {}
+    try {
+      nDica = await contarDicasNovas(db);
+    } catch (e) {}
+
+    setBadge(
+      'badge-msg', 'atalho-msg', 'atalho-msg-sub',
+      nMsg,
+      'Ver conversas recentes',
+      '%n mensagem(ns) por ler — toca aqui'
+    );
+    setBadge(
+      'badge-dica', 'atalho-dica', 'atalho-dica-sub',
+      nDica,
+      'Como sacar mais rápido',
+      nDica === 1 && localStorage.getItem('dmDicaPaginaVisitada') !== '1'
+        ? 'Há dicas novas para ti — toca aqui'
+        : '%n dica(s) nova(s) — toca aqui'
+    );
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function () { setTimeout(actualizar, 400); });
+  } else {
+    setTimeout(actualizar, 400);
+  }
+  // Actualiza quando volta à página
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden) setTimeout(actualizar, 300);
+  });
 })();
 </script>
 

@@ -236,6 +236,7 @@
     <button class="tab" data-tab="origem" onclick="mudarTab('origem')"><i class="fas fa-pie-chart"></i> Origem pts</button>
     <button class="tab" data-tab="chat" onclick="mudarTab('chat')"><i class="fas fa-comments"></i> Chat</button>
     <button class="tab" data-tab="dicas" onclick="mudarTab('dicas')"><i class="fas fa-lightbulb"></i> Dicas</button>
+    <button class="tab" data-tab="pub-dicas" onclick="mudarTab('pub-dicas')"><i class="fas fa-pen"></i> Publicar dica</button>
     <button class="tab" data-tab="pedidos-dicas" onclick="mudarTab('pedidos-dicas')"><i class="fas fa-reply"></i> Pedidos dicas <span class="badge" id="badge-pedidos-dicas">0</span></button>
     <button class="tab" data-tab="notif-admin" onclick="mudarTab('notif-admin')"><i class="fas fa-bell"></i> Notificações</button>
     <button class="tab" data-tab="bonus80" onclick="mudarTab('bonus80')"><i class="fas fa-gift"></i> Bonus 80</button>
@@ -1338,7 +1339,45 @@
         </div>
       </div>
     </div>
-    <div class="painel" id="painel-pedidos-dicas">
+    
+    <!-- PUBLICAR DICA (admin → chat-dicas) -->
+    <div class="painel" id="painel-pub-dicas">
+      <div class="form-box">
+        <h3><i class="fas fa-pen"></i> Publicar dica no chat de dicas</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:12px;">
+          A dica aparece <strong>no topo</strong> da página de dicas.
+          Os utilizadores podem pedir mais explicações ao autor (pedidos de dicas / privado).
+          Podes usar um nome fictício (ex.: Mario João).
+        </p>
+        <div class="form-row">
+          <label>Nome do escritor da dica</label>
+          <input type="text" id="pubdica-nome" placeholder="Ex: Mario João" maxlength="40">
+        </div>
+        <div class="form-row">
+          <label>Texto da dica</label>
+          <textarea id="pubdica-texto" rows="5" maxlength="400" placeholder="Escreve a dica útil para os novatos..."></textarea>
+        </div>
+        <button type="button" class="btn-verde" id="btn-pubdica" onclick="publicarDicaAdmin()">💡 Publicar no chat de dicas</button>
+        <div id="pubdica-status" style="font-size:12px;color:#888;margin-top:10px;"></div>
+      </div>
+      <div class="form-box">
+        <h3><i class="fas fa-list"></i> Últimas dicas publicadas</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:10px;">Apagar remove da página de dicas. As dicas clássicas fixas no código não estão aqui.</p>
+        <div class="busca"><input type="text" id="busca-pubdica" placeholder="Filtrar..." oninput="filtrarPubDicas()"></div>
+        <div class="tabela-wrap">
+          <table>
+            <thead>
+              <tr><th>#</th><th>Autor</th><th>Dica</th><th>Quando</th><th>Acção</th></tr>
+            </thead>
+            <tbody id="tbody-pub-dicas">
+              <tr><td colspan="5" class="vazio">Abre este separador para carregar.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+<div class="painel" id="painel-pedidos-dicas">
       <div class="form-box">
         <h3><i class="fas fa-reply"></i> Pedidos de explicação (dicas)</h3>
         <p style="font-size:12px;color:#888;margin-bottom:12px;">
@@ -1779,6 +1818,9 @@ function mostrarAviso(txt) {
       }
       if (nome === 'pedidos-dicas') {
         try { carregarPedidosDicasAdmin(); } catch (e) {}
+      }
+      if (nome === 'pub-dicas') {
+        try { carregarPubDicasAdmin(); } catch (e) {}
       }
 
       try {
@@ -5936,6 +5978,140 @@ async function enviarNotifAdmin() {
     function creditarBonus80Manual() {
       var email = (document.getElementById('bonus80-email') && document.getElementById('bonus80-email').value || '').trim();
       creditarBonus80Email(email);
+    }
+
+
+
+    function slugAutorDica(nome) {
+      return String(nome || 'membro').toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, '').slice(0, 40) || 'membro';
+    }
+    function emailDicaAutorAdmin(nome) {
+      return 'dica.' + slugAutorDica(nome) + '@desafiomoz.internal';
+    }
+
+    async function publicarDicaAdmin() {
+      var nomeAutor = ((document.getElementById('pubdica-nome') || {}).value || '').trim().slice(0, 40);
+      var texto = ((document.getElementById('pubdica-texto') || {}).value || '').trim().slice(0, 400);
+      var st = document.getElementById('pubdica-status');
+      var btn = document.getElementById('btn-pubdica');
+      if (!nomeAutor) return alert('Indica o nome do escritor da dica.');
+      if (texto.length < 10) return alert('A dica precisa de pelo menos 10 caracteres.');
+      if (btn) { btn.disabled = true; btn.textContent = 'A publicar...'; }
+      if (st) st.textContent = 'A gravar...';
+      try {
+        await db.collection('chatDicas').add({
+          texto: texto,
+          nome: nomeAutor,
+          email: 'admin@desafiomoz.internal',
+          emailAutor: emailDicaAutorAdmin(nomeAutor),
+          viaAdmin: true,
+          createdAt: new Date().toISOString(),
+          ativa: true,
+          dias: 3650
+        });
+        try {
+          await db.collection('notificacoesChat').add({
+            email: '_broadcast_dica_',
+            tipo: 'dica',
+            deNome: nomeAutor,
+            deEmail: emailDicaAutorAdmin(nomeAutor),
+            texto: texto.slice(0, 80),
+            lida: false,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+        } catch (eN) {}
+        if (st) st.textContent = 'Publicada! Aparece no topo do chat de dicas.';
+        try { document.getElementById('pubdica-texto').value = ''; } catch (e) {}
+        if (typeof mostrarAviso === 'function') mostrarAviso('Dica de ' + nomeAutor + ' publicada no topo.');
+        carregarPubDicasAdmin();
+      } catch (e) {
+        alert('Erro: ' + (e.message || e));
+        if (st) st.textContent = 'Erro: ' + (e.message || e);
+      }
+      if (btn) { btn.disabled = false; btn.textContent = '💡 Publicar no chat de dicas'; }
+    }
+
+    async function carregarPubDicasAdmin() {
+      var tbody = document.getElementById('tbody-pub-dicas');
+      if (!tbody) return;
+      tbody.innerHTML = '<tr><td colspan="5" class="vazio">A carregar...</td></tr>';
+      try {
+        var snap = await db.collection('chatDicas').orderBy('createdAt', 'desc').limit(80).get();
+        var lista = [];
+        snap.forEach(function (doc) {
+          var d = doc.data() || {};
+          d._id = doc.id;
+          lista.push(d);
+        });
+        if (!lista.length) {
+          tbody.innerHTML = '<tr><td colspan="5" class="vazio">Ainda sem dicas no Firebase.</td></tr>';
+          return;
+        }
+        var html = '';
+        lista.forEach(function (d, i) {
+          if (d.ativa === false) return;
+          var idSafe = String(d._id).replace(/'/g, "\\'");
+          html += '<tr data-busca-pd="' + escHtml((d.nome || '') + ' ' + (d.texto || '')).toLowerCase() + '">' +
+            '<td>' + (i + 1) + '</td>' +
+            '<td>' + escHtml(d.nome || '—') + (d.viaAdmin ? ' <span class="status-tag status-ativo">admin</span>' : '') + '</td>' +
+            '<td style="max-width:280px;font-size:12px;">' + escHtml((d.texto || '').slice(0, 120)) + '</td>' +
+            '<td style="font-size:11px;white-space:nowrap;">' + escHtml(String(d.createdAt || '').slice(0, 19).replace('T', ' ')) + '</td>' +
+            '<td><button type="button" class="btn-vermelho" onclick="apagarDicaAdmin(\'' + idSafe + '\')">Apagar</button></td>' +
+            '</tr>';
+        });
+        tbody.innerHTML = html || '<tr><td colspan="5" class="vazio">Nenhuma dica activa.</td></tr>';
+      } catch (e) {
+        // sem índice
+        try {
+          var snap2 = await db.collection('chatDicas').limit(80).get();
+          var arr = [];
+          snap2.forEach(function (doc) {
+            var d = doc.data() || {};
+            d._id = doc.id;
+            arr.push(d);
+          });
+          arr.sort(function (a, b) { return String(b.createdAt || '').localeCompare(String(a.createdAt || '')); });
+          var html2 = '';
+          arr.forEach(function (d, i) {
+            if (d.ativa === false) return;
+            var idSafe = String(d._id).replace(/'/g, "\\'");
+            html2 += '<tr data-busca-pd="' + escHtml((d.nome || '') + ' ' + (d.texto || '')).toLowerCase() + '">' +
+              '<td>' + (i + 1) + '</td>' +
+              '<td>' + escHtml(d.nome || '—') + '</td>' +
+              '<td style="max-width:280px;font-size:12px;">' + escHtml((d.texto || '').slice(0, 120)) + '</td>' +
+              '<td style="font-size:11px;">' + escHtml(String(d.createdAt || '').slice(0, 19).replace('T', ' ')) + '</td>' +
+              '<td><button type="button" class="btn-vermelho" onclick="apagarDicaAdmin(\'' + idSafe + '\')">Apagar</button></td></tr>';
+          });
+          tbody.innerHTML = html2 || '<tr><td colspan="5" class="vazio">Sem dicas.</td></tr>';
+        } catch (e2) {
+          tbody.innerHTML = '<tr><td colspan="5" class="vazio">Erro: ' + escHtml(e.message || e) + '</td></tr>';
+        }
+      }
+    }
+
+    function filtrarPubDicas() {
+      var q = (document.getElementById('busca-pubdica') && document.getElementById('busca-pubdica').value || '').trim().toLowerCase();
+      var tb = document.getElementById('tbody-pub-dicas');
+      if (!tb) return;
+      tb.querySelectorAll('tr[data-busca-pd]').forEach(function (tr) {
+        tr.style.display = (!q || (tr.getAttribute('data-busca-pd') || '').indexOf(q) !== -1) ? '' : 'none';
+      });
+    }
+
+    async function apagarDicaAdmin(id) {
+      if (!id) return;
+      if (!confirm('Apagar esta dica da página de dicas?')) return;
+      try {
+        await db.collection('chatDicas').doc(id).update({ ativa: false });
+      } catch (e) {
+        try { await db.collection('chatDicas').doc(id).delete(); } catch (e2) {
+          return alert('Erro: ' + (e2.message || e2));
+        }
+      }
+      if (typeof mostrarAviso === 'function') mostrarAviso('Dica apagada.');
+      carregarPubDicasAdmin();
     }
 
 

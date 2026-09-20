@@ -262,7 +262,7 @@
       (podeApagar && id ? '<button type="button" class="btn-apagar" data-id="' + esc(id) + '">Apagar</button>' : '') +
       '<div class="autor">' + esc(autor) + '</div>' +
       '<div class="txt">' + esc(d.texto) + '</div>' +
-      '<div class="meta">Dica da comunidade · sem prazo de validade</div>' +
+      '<div class="meta">' + (d.viaAdmin ? '📢 Publicada pela equipa · ' : '') + 'sem prazo de validade</div>' +
       '<button type="button" class="btn-pedir" data-autor="' + esc(autor) + '" data-email-autor="' + esc(emAutor) + '" data-texto-dica="' + esc((d.texto || '').slice(0, 280)) + '">' +
       '💬 Quero mais explicações com ' + esc(autor) + '</button>' +
       '</div>';
@@ -349,16 +349,21 @@
     db.collection('chatDicas').orderBy('createdAt', 'desc').limit(80).get().then(function (snap) {
       var agora = Date.now();
       var html = '';
-      // Dicas fixas da comunidade (sempre no topo)
-      DICAS_COMUNIDADE.forEach(function (d) {
-        html += htmlDica(d, null, null, false);
-      });
+      // Novas dicas (Firebase) SEMPRE no topo — a mais recente primeiro
+      var temFirebase = false;
       snap.forEach(function (doc) {
         var d = doc.data() || {};
         if (d.ativa === false) return;
-        // Sem expiração automática — só o admin apaga
+        temFirebase = true;
         html += htmlDica(d, doc.id, null, isAdmin);
       });
+      // Dicas fixas da comunidade ficam abaixo das novas
+      if (DICAS_COMUNIDADE.length) {
+        html += '<p style="font-size:12px;color:#8e9bb8;margin:16px 0 10px;font-weight:700;">📌 Dicas clássicas da comunidade</p>';
+        DICAS_COMUNIDADE.forEach(function (d) {
+          html += htmlDica(d, null, null, false);
+        });
+      }
       host.innerHTML = html || '<div class="vazio">Ainda não há dicas activas. Sê o primeiro a ajudar os novatos!</div>';
       ligarBotoesPedir(host);
       if (isAdmin) {
@@ -378,13 +383,16 @@
         var arr = [];
         snap.forEach(function (doc) { arr.push({ id: doc.id, d: doc.data() }); });
         arr.sort(function (a, b) { return String(b.d.createdAt || '').localeCompare(String(a.d.createdAt || '')); });
-        var agora = Date.now(), html = '';
-        DICAS_COMUNIDADE.forEach(function (d) { html += htmlDica(d, null, null, false); });
+        var html = '';
         arr.forEach(function (x) {
           var d = x.d || {};
           if (d.ativa === false) return;
           html += htmlDica(d, x.id, null, isAdmin);
         });
+        if (DICAS_COMUNIDADE.length) {
+          html += '<p style="font-size:12px;color:#8e9bb8;margin:16px 0 10px;font-weight:700;">📌 Dicas clássicas da comunidade</p>';
+          DICAS_COMUNIDADE.forEach(function (d) { html += htmlDica(d, null, null, false); });
+        }
         host.innerHTML = html || '<div class="vazio">Sem dicas ainda.</div>';
         ligarBotoesPedir(host);
         if (isAdmin) {
@@ -445,6 +453,11 @@
     }
   });
 
+
+  try {
+    localStorage.setItem('dmDicaPaginaVisitada', '1');
+    localStorage.setItem('dmDicasVistoEm', new Date().toISOString());
+  } catch (e) {}
   carregar();
 })();
   </script>
