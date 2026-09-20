@@ -332,6 +332,119 @@
   var ultimoMsgIdVisto = null;
   var ignorarPrimeiroSnap = true;
 
+  /* === Limite diário do chat (protege quota Firebase) === */
+  var CHAT_QUOTA_READS = 40000;
+  var CHAT_QUOTA_WRITES = 15000;
+  var chatQuotaBloqueado = false;
+
+  function diaQuotaId() {
+    var d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+
+  function mostrarChatIndisponivel(motivo) {
+    chatQuotaBloqueado = true;
+    var shell = document.querySelector('.shell') || document.body;
+    var box = document.getElementById('dm-chat-quota-block');
+    if (!box) {
+      box = document.createElement('div');
+      box.id = 'dm-chat-quota-block';
+      box.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(6,8,14,0.96);';
+      box.innerHTML =
+        '<div style="max-width:360px;width:100%;text-align:center;padding:28px 20px;border-radius:22px;' +
+        'background:linear-gradient(160deg,rgba(40,28,70,0.98),rgba(14,18,32,0.99));' +
+        'border:2px solid rgba(255,201,77,0.45);box-shadow:0 0 40px rgba(255,201,77,0.2)">' +
+        '<div style="font-size:42px;margin-bottom:12px;">⏳</div>' +
+        '<h2 style="font-family:Sora,sans-serif;font-size:18px;font-weight:800;color:#ffc94d;margin:0 0 10px;">Chat indisponível no momento</h2>' +
+        '<p style="font-size:14px;color:#d5dbe8;line-height:1.5;margin:0 0 8px;">Atingimos o limite diário de utilização do bate-papo para proteger o site.</p>' +
+        '<p style="font-size:13px;color:#8e9bb8;line-height:1.45;margin:0 0 18px;">' + (motivo || 'Volta amanhã — o chat reabre automaticamente.') + '</p>' +
+        '<a href="chat.html" style="display:inline-block;padding:12px 20px;border-radius:14px;font-weight:800;text-decoration:none;color:#04140a;background:linear-gradient(90deg,#22FF99,#3b9eff);">← Voltar às salas</a>' +
+        '</div>';
+      document.body.appendChild(box);
+    }
+    box.style.display = 'flex';
+    try {
+      var composer = document.getElementById('composer');
+      if (composer) composer.style.display = 'none';
+      var lista = document.getElementById('painel-lista') || document.getElementById('lista-msgs');
+      if (lista) lista.style.pointerEvents = 'none';
+    } catch (e) {}
+  }
+
+  async function verificarQuotaChat() {
+    if (!db) return true;
+    try {
+      var ref = db.collection('sistema').doc('chatQuota');
+      var snap = await ref.get();
+      var dia = diaQuotaId();
+      var d = snap.exists ? (snap.data() || {}) : {};
+      if (d.dia !== dia) {
+        await ref.set({ dia: dia, reads: 0, writes: 0, updatedAt: new Date().toISOString() }, { merge: true });
+        return true;
+      }
+      var r = parseInt(d.reads, 10) || 0;
+      var w = parseInt(d.writes, 10) || 0;
+      if (r >= CHAT_QUOTA_READS || w >= CHAT_QUOTA_WRITES) {
+        mostrarChatIndisponivel(
+          'Leituras: ' + r + '/' + CHAT_QUOTA_READS + ' · Escritas: ' + w + '/' + CHAT_QUOTA_WRITES +
+          '. Volta amanhã — o chat reabre automaticamente.'
+        );
+        return false;
+      }
+      return true;
+    } catch (e) {
+      console.warn('quota check', e);
+      return true; // se falhar a verificação, não bloqueia o utilizador
+    }
+  }
+
+  async function incrementarQuotaChat(reads, writes) {
+    if (!db || chatQuotaBloqueado) return;
+    reads = parseInt(reads, 10) || 0;
+    writes = parseInt(writes, 10) || 0;
+    if (reads <= 0 && writes <= 0) return;
+    try {
+      var ref = db.collection('sistema').doc('chatQuota');
+      var dia = diaQuotaId();
+      await db.runTransaction(async function (tx) {
+        var snap = await tx.get(ref);
+        var d = snap.exists ? (snap.data() || {}) : {};
+        if (d.dia !== dia) {
+          tx.set(ref, { dia: dia, reads: reads, writes: writes, updatedAt: new Date().toISOString() }, { merge: true });
+          return;
+        }
+        var nr = (parseInt(d.reads, 10) || 0) + reads;
+        var nw = (parseInt(d.writes, 10) || 0) + writes;
+        tx.set(ref, { dia: dia, reads: nr, writes: nw, updatedAt: new Date().toISOString() }, { merge: true });
+        if (nr >= CHAT_QUOTA_READS || nw >= CHAT_QUOTA_WRITES) {
+          chatQuotaBloqueado = true;
+        }
+      });
+      if (chatQuotaBloqueado) {
+        mostrarChatIndisponivel('Limite diário atingido. Volta amanhã.');
+      }
+    } catch (e) {
+      // fallback sem transaction
+      try {
+        var ref2 = db.collection('sistema').doc('chatQuota');
+        var s2 = await ref2.get();
+        var d2 = s2.exists ? (s2.data() || {}) : {};
+        var dia2 = diaQuotaId();
+        if (d2.dia !== dia2) {
+          await ref2.set({ dia: dia2, reads: reads, writes: writes, updatedAt: new Date().toISOString() }, { merge: true });
+        } else {
+          await ref2.set({
+            dia: dia2,
+            reads: (parseInt(d2.reads, 10) || 0) + reads,
+            writes: (parseInt(d2.writes, 10) || 0) + writes,
+            updatedAt: new Date().toISOString()
+          }, { merge: true });
+        }
+      } catch (e2) { console.warn('quota inc', e2); }
+    }
+  }
+
+
   function esc(s) {
     return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
@@ -870,6 +983,11 @@
     unsub = db.collection('chatPrivado')
       .where('conversaId', '==', conversaId)
       .onSnapshot({ includeMetadataChanges: true }, function (snap) {
+        try {
+          var nDocs = snap.size || 0;
+          if (nDocs > 0) incrementarQuotaChat(nDocs, 0);
+          if (chatQuotaBloqueado) return;
+        } catch (eQ) {}
         var vindos = {};
         snap.forEach(function (doc) {
           var d = doc.data() || {};
@@ -906,6 +1024,7 @@
   }
 
   async function enviar() {
+    if (chatQuotaBloqueado) { toast('Chat indisponível — volta amanhã.'); return; }
     var ta = document.getElementById('input-msg');
     var texto = (ta.value || '').trim().slice(0, 500);
     if (!texto || !conversaId || !parceiro) return;
@@ -970,6 +1089,7 @@
           return n;
         })()
       };
+      incrementarQuotaChat(0, 3); // msg + conversa + notificação
       Promise.all([
         gravarNaoLidasEnvio(conversaId, email, parceiro.email, metaConv),
         db.collection('notificacoesChat').add({
@@ -1122,18 +1242,21 @@
     } catch (e) {}
   }
 
-  limparAntigas().then(function () {
-    if (com && email) {
-      abrirChat(com, nomeUrl || soNome('', com));
-    } else {
-      carregarOnline();
-    }
+  verificarQuotaChat().then(function (ok) {
+    if (!ok) return;
+    limparAntigas().then(function () {
+      if (com && email) {
+        abrirChat(com, nomeUrl || soNome('', com));
+      } else {
+        carregarOnline();
+      }
+    });
   });
 })();
   </script>
   <script>window.__DM_PRESENCA__ = { pagina: 'chat-privado', jogando: null };</script>
   <script src="presenca.js?v=1"></script>
   <script>window.__DM_NOTIF__ = { mencao: true, idle: false };</script>
-  <script src="notificacoes-chat.js?v=6"></script>
+  <script src="notificacoes-chat.js?v=11"></script>
 </body>
 </html>
