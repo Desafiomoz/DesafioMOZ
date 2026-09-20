@@ -784,6 +784,52 @@
     return base + rnd;
   }
 
+  
+  /** Garante prémios em falta: cada 1000 contados = 1600 pts (200 MT) na carteira */
+  async function verificarPremiosInfluencer(docRef, data) {
+    try {
+      var total = Number(data.influencerConvidados || 0);
+      var premios = Number(data.influencerPremios || 0);
+      var devidos = Math.floor(total / 1000);
+      var faltam = devidos - premios;
+      if (faltam <= 0) return data;
+      var pts = faltam * 1600;
+      var ptsAtuais = Number(data.pontos || 0);
+      await docRef.update({
+        influencerPremios: premios + faltam,
+        pontos: ptsAtuais + pts,
+        ultimoPremioInfluencer: {
+          em: new Date().toISOString(),
+          ciclos: faltam,
+          pontos: pts,
+          contagem: total,
+          mt: faltam * 200,
+          recuperacao: true
+        },
+        ultimaAtualizacao: new Date().toISOString()
+      });
+      try {
+        await db.collection('historicoPontos').add({
+          email: String(data.email || email || '').toLowerCase(),
+          pontos: pts,
+          origem: 'influencer',
+          detalhe: 'Prémio influencer (automático): ' + (faltam * 200) + ' MT — ' + total + ' convites',
+          createdAt: new Date().toISOString()
+        });
+      } catch (eH) {}
+      var again = await docRef.get();
+      var novo = again.data() || data;
+      try {
+        localStorage.setItem('pontosUtilizador', String(novo.pontos || 0));
+      } catch (eL) {}
+      toast('🎉 +' + (faltam * 200) + ' MT na carteira! (' + pts + ' pontos)');
+      return novo;
+    } catch (e) {
+      console.warn('verificarPremios', e);
+      return data;
+    }
+  }
+
   function actualizarUI(data) {
     var total = Number(data.influencerConvidados || 0);
     var reais = Number(data.influencerConvidadosReais != null ? data.influencerConvidadosReais : total);
@@ -900,6 +946,8 @@
       // recarregar
       var again = await userRef.get();
       userDoc = again.data() || userDoc;
+      // Prémios em falta (ex.: 1000, 2000…) → pontos na carteira automaticamente
+      userDoc = await verificarPremiosInfluencer(userRef, userDoc);
       actualizarUI(userDoc);
       await carregarRanking();
     } catch (e) {

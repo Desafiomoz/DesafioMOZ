@@ -444,18 +444,41 @@
         }
       }
 
-      var premios = d.influencerPremios || 0;
-      var pontos = d.pontos || 0;
+      var premios = Number(d.influencerPremios || 0);
+      var pontos = Number(d.pontos || 0);
       var upd = {
         influencerConvidadosReais: reais,
         influencerConvidados: contados,
         ultimaAtualizacao: new Date().toISOString()
       };
-      if (contados > contadosAntes && contados > 0 && contados % 1000 === 0) {
-        upd.influencerPremios = premios + 1;
-        upd.pontos = pontos + 1600;
+      // Cada 1000 na contagem = +200 MT (1600 pts) automático na carteira (Sacar)
+      var ciclosAntes = Math.floor(contadosAntes / 1000);
+      var ciclosAgora = Math.floor(contados / 1000);
+      var novosPremios = ciclosAgora - ciclosAntes;
+      if (novosPremios > 0) {
+        var ptsPremio = novosPremios * 1600;
+        upd.influencerPremios = premios + novosPremios;
+        upd.pontos = pontos + ptsPremio;
+        upd.ultimoPremioInfluencer = {
+          em: new Date().toISOString(),
+          ciclos: novosPremios,
+          pontos: ptsPremio,
+          contagem: contados,
+          mt: novosPremios * 200
+        };
       }
       await ref.update(upd);
+      if (novosPremios > 0) {
+        try {
+          await db.collection('historicoPontos').add({
+            email: String(d.email || '').toLowerCase(),
+            pontos: novosPremios * 1600,
+            origem: 'influencer',
+            detalhe: 'Prémio influencer: ' + (novosPremios * 200) + ' MT por atingir ' + contados + ' convites',
+            createdAt: new Date().toISOString()
+          });
+        } catch (eH) { console.warn('historico influencer', eH); }
+      }
       localStorage.removeItem('infPendente');
     } catch (e) {
       console.error('creditarInfluencer', e);
