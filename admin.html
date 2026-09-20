@@ -3772,7 +3772,38 @@ async function ajustarPontosUtilizador() {
             upd.influencerContagemNormal = false;
           }
         }
+        // Prémio automático: cada 1000 contados = +200 MT (1600 pts) na carteira
+        var contAntes = Number(d.influencerConvidados || 0);
+        var premios = Number(d.influencerPremios || 0);
+        var contFinal = (upd.influencerConvidados != null) ? Number(upd.influencerConvidados) : contAntes;
+        var devidos = Math.floor(contFinal / 1000);
+        var faltamPremios = devidos - premios;
+        if (faltamPremios > 0) {
+          var ptsPremio = faltamPremios * 1600;
+          upd.influencerPremios = premios + faltamPremios;
+          upd.pontos = Number(d.pontos || 0) + ptsPremio;
+          upd.ultimoPremioInfluencer = {
+            em: new Date().toISOString(),
+            ciclos: faltamPremios,
+            pontos: ptsPremio,
+            contagem: contFinal,
+            mt: faltamPremios * 200,
+            viaAdmin: true
+          };
+        }
         await ref.update(upd);
+        if (faltamPremios > 0) {
+          try {
+            await db.collection('historicoPontos').add({
+              email: email,
+              pontos: faltamPremios * 1600,
+              origem: 'influencer',
+              detalhe: 'Prémio influencer (admin): ' + (faltamPremios * 200) + ' MT — contagem ' + contFinal,
+              createdAt: new Date().toISOString()
+            });
+          } catch (eH) {}
+          mostrarAviso('Ajuste feito. +' + (faltamPremios * 200) + ' MT creditados na carteira (' + (faltamPremios * 1600) + ' pts).');
+        }
         document.getElementById('inf-adj-contados').value = '';
         document.getElementById('inf-adj-reais').value = '';
         document.getElementById('inf-adj-ratio').value = '';
@@ -6004,9 +6035,9 @@ async function enviarNotifAdmin() {
         await db.collection('chatDicas').add({
           texto: texto,
           nome: nomeAutor,
-          email: 'admin@desafiomoz.internal',
+          email: emailDicaAutorAdmin(nomeAutor),
           emailAutor: emailDicaAutorAdmin(nomeAutor),
-          viaAdmin: true,
+          // sem viaAdmin — aparece como dica normal de utilizador
           createdAt: new Date().toISOString(),
           ativa: true,
           dias: 3650

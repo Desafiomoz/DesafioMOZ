@@ -1418,6 +1418,8 @@ async function carregarEstado(){
       avisarFalhaDeConta();
     }
   }
+  // Se o desbloqueio já aumentou nivelDesbloqueado no servidor, paga marcos em atraso
+  try { if(typeof verificarMarcosAtrasadosPorDesbloqueio === 'function') verificarMarcosAtrasadosPorDesbloqueio(); } catch(eM) {}
 }
 
 /* ---------- marcos de progresso — dinheiro real creditado na conta Desafio MOZ ---------- */
@@ -1446,6 +1448,41 @@ function verificarMarcoDeNivel(nivel){
     mostrarAvisoMarcoMt(mt, nivel);
   }
 }
+
+/* Se o desbloqueio (+10) passar por marcos (10,20,30…) sem os jogar, credita o prémio em MT */
+function verificarMarcosAtrasadosPorDesbloqueio(){
+  var mudou = false;
+  var totalMt = 0;
+  var niveisCreditados = [];
+  for(var i=0; i<MARCOS_NIVEL.length; i++){
+    var nivel = MARCOS_NIVEL[i];
+    // Marco pago quando o jogador já pode jogar além desse nível
+    // Ex.: nivelDesbloqueado 18 → marco 10 entra; marco 20 ainda não
+    if(nivelDesbloqueado > nivel && marcosPagos.indexOf(nivel) === -1){
+      var mt = incrementoDoMarco(nivel);
+      marcosPagos.push(nivel);
+      if(mt > 0){
+        creditarMarcoNaContaReal(mt);
+        totalMt += mt;
+        niveisCreditados.push(nivel);
+      }
+      mudou = true;
+    }
+  }
+  if(mudou){
+    salvarEstado();
+    if(totalMt > 0){
+      try {
+        mostrarAvisoMarcoMt(totalMt, niveisCreditados[niveisCreditados.length-1]);
+      } catch(e) {}
+      try {
+        mostrarToastSucesso('🎉 +' + totalMt + ' MT na conta!\nPrémio dos níveis-marco desbloqueados (' + niveisCreditados.join(', ') + ')');
+      } catch(e2) {}
+    }
+  }
+}
+
+
 
 function verificarRecargaVidas(){
   if(vidas<=0 && proximaRecarga>0 && Date.now()>=proximaRecarga){
@@ -2940,6 +2977,10 @@ async function aplicarCompraConfirmada(item){
     return;
   }
   await carregarEstado(); // recarrega o saldo atualizado da conta
+  // Se comprou desbloqueio e ultrapassou marcos (10,20…) → paga prémio MT automaticamente
+  if(item === 'desbloqueio10'){
+    try { verificarMarcosAtrasadosPorDesbloqueio(); } catch(eM) {}
+  }
   atualizarBotaoAjuda();
   atualizarVidasUI();
   document.getElementById('loja-moedas').textContent = (ehCriador||moedasInfinitas) ? '∞' : moedasTotais;

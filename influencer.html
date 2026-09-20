@@ -887,7 +887,7 @@
     try {
       var snap = await db.collection('usuarios')
         .orderBy('influencerConvidados', 'desc')
-        .limit(30)
+        .limit(5)
         .get();
       var html = '';
       var i = 0;

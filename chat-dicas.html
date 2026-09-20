@@ -226,6 +226,91 @@
   /* Duração por defeito para utilizadores normais (dias) */
   var DURACAO_PADRAO = 7;
 
+  /* Limite diário chat dicas (protege quota Firebase) */
+  var CHAT_QUOTA_READS = 40000;
+  var CHAT_QUOTA_WRITES = 15000;
+  var chatQuotaBloqueado = false;
+
+  function diaQuotaId() {
+    var d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+
+  function mostrarChatIndisponivel(motivo) {
+    chatQuotaBloqueado = true;
+    var box = document.getElementById('dm-chat-quota-block');
+    if (!box) {
+      box = document.createElement('div');
+      box.id = 'dm-chat-quota-block';
+      box.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(6,8,14,0.96);';
+      box.innerHTML =
+        '<div style="max-width:360px;width:100%;text-align:center;padding:28px 20px;border-radius:22px;' +
+        'background:linear-gradient(160deg,rgba(40,28,70,0.98),rgba(14,18,32,0.99));' +
+        'border:2px solid rgba(255,201,77,0.45);box-shadow:0 0 40px rgba(255,201,77,0.2)">' +
+        '<div style="font-size:42px;margin-bottom:12px;">⏳</div>' +
+        '<h2 style="font-family:Sora,sans-serif;font-size:18px;font-weight:800;color:#ffc94d;margin:0 0 10px;">Chat de dicas indisponível</h2>' +
+        '<p style="font-size:14px;color:#d5dbe8;line-height:1.5;margin:0 0 8px;">Atingimos o limite diário de utilização para proteger o site.</p>' +
+        '<p style="font-size:13px;color:#8e9bb8;line-height:1.45;margin:0 0 18px;">' + (motivo || 'Volta amanhã — reabre automaticamente.') + '</p>' +
+        '<a href="chat.html" style="display:inline-block;padding:12px 20px;border-radius:14px;font-weight:800;text-decoration:none;color:#04140a;background:linear-gradient(90deg,#22FF99,#3b9eff);">← Voltar às salas</a>' +
+        '</div>';
+      document.body.appendChild(box);
+    }
+    box.style.display = 'flex';
+    try {
+      var c = document.querySelector('.composer');
+      if (c) c.style.display = 'none';
+    } catch (e) {}
+  }
+
+  async function verificarQuotaChat() {
+    if (!db) return true;
+    try {
+      var ref = db.collection('sistema').doc('chatQuota');
+      var snap = await ref.get();
+      var dia = diaQuotaId();
+      var d = snap.exists ? (snap.data() || {}) : {};
+      if (d.dia !== dia) {
+        await ref.set({ dia: dia, reads: 0, writes: 0, updatedAt: new Date().toISOString() }, { merge: true });
+        return true;
+      }
+      var r = parseInt(d.reads, 10) || 0;
+      var w = parseInt(d.writes, 10) || 0;
+      if (r >= CHAT_QUOTA_READS || w >= CHAT_QUOTA_WRITES) {
+        mostrarChatIndisponivel('Leituras: ' + r + '/' + CHAT_QUOTA_READS + ' · Escritas: ' + w + '/' + CHAT_QUOTA_WRITES + '. Volta amanhã.');
+        return false;
+      }
+      return true;
+    } catch (e) {
+      console.warn('quota', e);
+      return true;
+    }
+  }
+
+  async function incrementarQuotaChat(reads, writes) {
+    if (!db || chatQuotaBloqueado) return;
+    reads = parseInt(reads, 10) || 0;
+    writes = parseInt(writes, 10) || 0;
+    if (reads <= 0 && writes <= 0) return;
+    try {
+      var ref = db.collection('sistema').doc('chatQuota');
+      var dia = diaQuotaId();
+      var s = await ref.get();
+      var d = s.exists ? (s.data() || {}) : {};
+      if (d.dia !== dia) {
+        await ref.set({ dia: dia, reads: reads, writes: writes, updatedAt: new Date().toISOString() }, { merge: true });
+      } else {
+        var nr = (parseInt(d.reads, 10) || 0) + reads;
+        var nw = (parseInt(d.writes, 10) || 0) + writes;
+        await ref.set({ dia: dia, reads: nr, writes: nw, updatedAt: new Date().toISOString() }, { merge: true });
+        if (nr >= CHAT_QUOTA_READS || nw >= CHAT_QUOTA_WRITES) {
+          chatQuotaBloqueado = true;
+          mostrarChatIndisponivel('Limite diário atingido. Volta amanhã.');
+        }
+      }
+    } catch (e) { console.warn('quota inc', e); }
+  }
+
+
   function esc(s) {
     return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
@@ -262,7 +347,7 @@
       (podeApagar && id ? '<button type="button" class="btn-apagar" data-id="' + esc(id) + '">Apagar</button>' : '') +
       '<div class="autor">' + esc(autor) + '</div>' +
       '<div class="txt">' + esc(d.texto) + '</div>' +
-      '<div class="meta">' + (d.viaAdmin ? '📢 Publicada pela equipa · ' : '') + 'sem prazo de validade</div>' +
+      '<div class="meta">Dica da comunidade</div>' +
       '<button type="button" class="btn-pedir" data-autor="' + esc(autor) + '" data-email-autor="' + esc(emAutor) + '" data-texto-dica="' + esc((d.texto || '').slice(0, 280)) + '">' +
       '💬 Quero mais explicações com ' + esc(autor) + '</button>' +
       '</div>';
@@ -344,9 +429,11 @@
   }
 
   function carregar() {
+    if (chatQuotaBloqueado) return;
     var host = document.getElementById('lista');
     host.innerHTML = '<div class="vazio">A carregar dicas...</div>';
-    db.collection('chatDicas').orderBy('createdAt', 'desc').limit(80).get().then(function (snap) {
+    db.collection('chatDicas').orderBy('createdAt', 'desc').limit(40).get().then(function (snap) {
+      try { incrementarQuotaChat(snap.size || 1, 0); } catch (eQ) {}
       var agora = Date.now();
       var html = '';
       // Novas dicas (Firebase) SEMPRE no topo — a mais recente primeiro
@@ -422,6 +509,7 @@
     var btn = document.getElementById('btn-pub');
     btn.disabled = true;
     try {
+      if (chatQuotaBloqueado) { alert('Chat de dicas indisponível — volta amanhã.'); return; }
       await db.collection('chatDicas').add({
         texto: texto,
         nome: nome,
@@ -431,6 +519,7 @@
         ativa: true,
         dias: dias
       });
+      incrementarQuotaChat(0, 2);
       try {
         await db.collection('notificacoesChat').add({
           email: '_broadcast_dica_',
@@ -458,7 +547,9 @@
     localStorage.setItem('dmDicaPaginaVisitada', '1');
     localStorage.setItem('dmDicasVistoEm', new Date().toISOString());
   } catch (e) {}
-  carregar();
+  verificarQuotaChat().then(function (ok) {
+    if (ok) carregar();
+  });
 })();
   </script>
   <script>window.__DM_PRESENCA__ = { pagina: 'chat-dicas', jogando: null };</script>
