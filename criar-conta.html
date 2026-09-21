@@ -382,6 +382,13 @@
           <button type="button" class="btn-olho" onclick="toggleSenha('senha-cadastro', this)"><i class="fas fa-eye"></i></button>
         </div>
       </div>
+      <div class="grupo-input" style="margin-top:4px;margin-bottom:10px;">
+        <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;color:var(--suave);font-weight:500;font-size:13px;line-height:1.4;">
+          <input type="checkbox" id="aceito-termos" style="width:18px;height:18px;margin-top:2px;flex-shrink:0;accent-color:#00c853;">
+          <span>Li e aceito os <a href="termos.html" target="_blank" rel="noopener" style="color:var(--verde-vivo);font-weight:700;text-decoration:underline;">Termos de Uso</a>.
+          Sei que há jogos com compras opcionais em dinheiro real e que <strong style="color:var(--texto);">não sou obrigado a comprar</strong> — há outras formas de ganhar sem pagar.</span>
+        </label>
+      </div>
       <button type="submit" class="btn-principal" id="btn-cadastro">Criar a minha conta</button>
     </form>
 
@@ -551,6 +558,14 @@
   // ENTRAR / CADASTRAR COM GOOGLE — cria o utilizador em "usuarios" se ainda não existir
   async function entrarComGoogle() {
     try {
+      // Se está no formulário de cadastro, exige termos
+      var formCad = document.getElementById('form-cadastro');
+      if (formCad && formCad.classList.contains('ativo')) {
+        var aceitoG = document.getElementById('aceito-termos');
+        if (!aceitoG || !aceitoG.checked) {
+          return mostrarAviso('⚠️ Aceite os Termos de Uso antes de se registar (incluindo com Google).');
+        }
+      }
       var provider = new firebase.auth.GoogleAuthProvider();
       var resultado = await authGoogle.signInWithPopup(provider);
       var googleUser = resultado.user;
@@ -678,6 +693,8 @@
     var btn = document.getElementById('btn-cadastro');
     if (!nome || !telemovel || !email || !senha) return mostrarAviso('⚠️ Preencha todos os campos!');
     if (senha.length < 6) return mostrarAviso('⚠️ Senha deve ter pelo menos 6 caracteres!');
+    var aceito = document.getElementById('aceito-termos');
+    if (!aceito || !aceito.checked) return mostrarAviso('⚠️ Tem de aceitar os Termos de Uso para criar conta. Se não concordar, pode sair sem se registar.');
     btn.disabled = true;
     btn.textContent = 'A processar...';
     mostrarAviso('⏳ A processar...', 'sucesso');
