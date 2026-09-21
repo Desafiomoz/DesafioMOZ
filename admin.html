@@ -243,6 +243,7 @@
     <button class="tab" data-tab="msg-privado" onclick="mudarTab('msg-privado')"><i class="fas fa-paper-plane"></i> Msg privado</button>
     <button class="tab" data-tab="email-massa" onclick="mudarTab('email-massa')"><i class="fas fa-envelope"></i> E-mail em massa</button>
     <button class="tab" data-tab="senhas" onclick="mudarTab('senhas')"><i class="fas fa-key"></i> Senhas <span class="badge" id="badge-senhas">0</span></button>
+    <button class="tab" data-tab="termos" onclick="mudarTab('termos')"><i class="fas fa-file-contract"></i> Termos</button>
     <button class="tab" data-tab="privado" onclick="mudarTab('privado')"><i class="fas fa-lock"></i> Privado</button>
   </div>
 
@@ -1664,7 +1665,40 @@
 
     
     <!-- PEDIDOS DE SENHA -->
-    <div class="painel" id="painel-senhas">
+    
+    <!-- TERMOS DE USO -->
+    <div class="painel" id="painel-termos">
+      <div class="form-box">
+        <h3><i class="fas fa-file-contract"></i> Aceite dos Termos de Uso</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:12px;">
+          Utilizadores que aceitaram os Termos (no cadastro ou no login) e a <strong>data e hora</strong> do aceite.
+          Contas antigas sem aceite são obrigadas a aceitar no próximo login (ou a sair).
+        </p>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px;">
+          <div class="resumo-card" style="min-width:100px;"><div class="num" id="termos-total-sim">0</div><div class="lbl">Já aceitaram</div></div>
+          <div class="resumo-card" style="min-width:100px;"><div class="num" id="termos-total-nao" style="color:#ffc107;">0</div><div class="lbl">Ainda não</div></div>
+        </div>
+        <div class="busca"><input type="text" id="busca-termos" placeholder="Filtrar por nome ou e-mail..." oninput="filtrarTermosAdmin()"></div>
+        <div class="tabela-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Nome</th>
+                <th>E-mail</th>
+                <th>Estado</th>
+                <th>Dia e hora do aceite</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-termos">
+              <tr><td colspan="5" class="vazio">A carregar...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+<div class="painel" id="painel-senhas">
       <div class="form-box">
         <h3><i class="fas fa-key"></i> Pedidos de nova senha</h3>
         <p style="font-size:12px;color:#888;margin-bottom:12px;">
@@ -1856,6 +1890,9 @@ function mostrarAviso(txt) {
       }
       if (nome === 'senhas') {
         try { carregarPedidosSenhaAdmin(); } catch (e) {}
+      }
+      if (nome === 'termos') {
+        try { carregarTermosAdmin(); } catch (e) {}
       }
 
       try {
@@ -6299,6 +6336,71 @@ async function enviarNotifAdmin() {
       }
     }
 
+
+    
+    async function carregarTermosAdmin() {
+      var tbody = document.getElementById('tbody-termos');
+      if (!tbody) return;
+      tbody.innerHTML = '<tr><td colspan="5" class="vazio">A carregar...</td></tr>';
+      try {
+        var users = (typeof todosUsers !== 'undefined' && todosUsers.length) ? todosUsers.slice() : [];
+        if (!users.length) {
+          var snap = await db.collection('usuarios').limit(1000).get();
+          snap.forEach(function (doc) {
+            var d = doc.data() || {};
+            d._id = doc.id;
+            users.push(d);
+          });
+        }
+        var sim = 0, nao = 0;
+        users.forEach(function (u) {
+          if (u.aceitouTermos === true) sim++;
+          else nao++;
+        });
+        var elS = document.getElementById('termos-total-sim');
+        var elN = document.getElementById('termos-total-nao');
+        if (elS) elS.textContent = sim;
+        if (elN) elN.textContent = nao;
+        users.sort(function (a, b) {
+          var ta = a.aceitouTermos === true ? 1 : 0;
+          var tb = b.aceitouTermos === true ? 1 : 0;
+          if (tb !== ta) return tb - ta;
+          return String(b.aceitouTermosEm || '').localeCompare(String(a.aceitouTermosEm || ''));
+        });
+        if (!users.length) {
+          tbody.innerHTML = '<tr><td colspan="5" class="vazio">Sem utilizadores.</td></tr>';
+          return;
+        }
+        var html = '';
+        users.forEach(function (u, i) {
+          var ok = u.aceitouTermos === true;
+          var quando = '—';
+          if (ok && u.aceitouTermosEm) {
+            quando = String(u.aceitouTermosEm).slice(0, 19).replace('T', ' ');
+          }
+          html += '<tr data-busca-termos="' + escHtml((u.nome || '') + ' ' + (u.email || '')).toLowerCase() + '">' +
+            '<td>' + (i + 1) + '</td>' +
+            '<td>' + escHtml(u.nome || '—') + '</td>' +
+            '<td>' + escHtml(u.email || '—') + '</td>' +
+            '<td>' + (ok
+              ? '<span class="status-tag status-pago">Aceite</span>'
+              : '<span class="status-tag status-pendente">Pendente</span>') + '</td>' +
+            '<td style="font-size:12px;white-space:nowrap;">' + escHtml(quando) + '</td>' +
+            '</tr>';
+        });
+        tbody.innerHTML = html;
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="5" class="vazio">Erro: ' + escHtml(e.message || e) + '</td></tr>';
+      }
+    }
+    function filtrarTermosAdmin() {
+      var q = (document.getElementById('busca-termos') && document.getElementById('busca-termos').value || '').trim().toLowerCase();
+      var tb = document.getElementById('tbody-termos');
+      if (!tb) return;
+      tb.querySelectorAll('tr[data-busca-termos]').forEach(function (tr) {
+        tr.style.display = (!q || (tr.getAttribute('data-busca-termos') || '').indexOf(q) !== -1) ? '' : 'none';
+      });
+    }
 
     // carregarTudo() agora é chamado pelo onAuthStateChanged, após login confirmado.
   </script>

@@ -593,7 +593,9 @@
           pesquisaHabitosCompleta: false,
           codigoIndicacao: meuCodigo,
           criadoEm: new Date().toISOString(),
-          dataCadastro: new Date().toISOString()
+          dataCadastro: new Date().toISOString(),
+          aceitouTermos: true,
+          aceitouTermosEm: new Date().toISOString()
         };
         var infG = (localStorage.getItem('infPendente') || '').trim().toUpperCase();
         if (infG) dadosNovo.indicadoPorInfluencer = infG;
@@ -616,10 +618,16 @@
       localStorage.setItem('pesquisaHabitosCompleta', usuario.pesquisaHabitosCompleta ? 'true' : 'false');
       if (usuario.codigoIndicacao) localStorage.setItem('codigoIndicacao', usuario.codigoIndicacao);
 
-      mostrarAviso('✅ Entrando com Google...', 'sucesso');
-      setTimeout(function () {
-        window.location.href = googleFoiNovo ? 'desafios.html?nova=1' : 'desafios.html';
-      }, 1000);
+      if (googleFoiNovo || usuario.aceitouTermos === true) {
+        mostrarAviso('✅ Entrando com Google...', 'sucesso');
+        setTimeout(function () {
+          window.location.href = googleFoiNovo ? 'desafios.html?nova=1' : 'desafios.html';
+        }, 1000);
+      } else {
+        window.__docLoginRef = procura.docs[0].ref;
+        window.__usuarioLogin = usuario;
+        mostrarModalTermosPendentes();
+      }
     } catch (erro) {
       console.error(erro);
       if (erro.code === 'auth/popup-closed-by-user') return;
@@ -673,8 +681,16 @@
       localStorage.setItem('pesquisaOpiniaoCompleta', usuario.pesquisaOpiniaoCompleta ? 'true' : 'false');
       localStorage.setItem('pesquisaHabitosCompleta', usuario.pesquisaHabitosCompleta ? 'true' : 'false');
       if (usuario.codigoIndicacao) localStorage.setItem('codigoIndicacao', usuario.codigoIndicacao);
-      mostrarAviso('✅ Entrando...', 'sucesso');
-      setTimeout(function () { window.location.href = 'desafios.html'; }, 1000);
+      window.__docLoginRef = procura.docs[0].ref;
+      window.__usuarioLogin = usuario;
+      if (usuario.aceitouTermos === true) {
+        mostrarAviso('✅ Entrando...', 'sucesso');
+        setTimeout(function () { window.location.href = 'desafios.html'; }, 1000);
+      } else {
+        btn.disabled = false;
+        btn.textContent = 'Entrar';
+        mostrarModalTermosPendentes();
+      }
     } catch (erro) {
       console.error(erro);
       mostrarAviso(mensagemPermissao(erro));
@@ -719,7 +735,9 @@
         pesquisaOpiniaoCompleta: false,
         pesquisaHabitosCompleta: false,
         codigoIndicacao: meuCodigo, totalConvidados: 0, pontosIndicacao: 0,
-        dataCadastro: new Date().toISOString()
+        dataCadastro: new Date().toISOString(),
+        aceitouTermos: true,
+        aceitouTermosEm: new Date().toISOString()
       };
       if (refCodigo) dadosNovo.indicadoPor = refCodigo;
       if (infCodigo) dadosNovo.indicadoPorInfluencer = infCodigo;
@@ -772,5 +790,74 @@
     }
   });
 </script>
+
+<!-- Modal termos para contas antigas -->
+<div id="modal-termos" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.82);align-items:center;justify-content:center;padding:18px;">
+  <div style="background:#12161f;border:1px solid rgba(0,200,83,0.35);border-radius:18px;padding:22px 18px;max-width:400px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,0.5);">
+    <h2 style="font-size:17px;margin-bottom:10px;color:#22ff99;">📋 Termos de Uso actualizados</h2>
+    <p style="font-size:13.5px;color:#8e9bb8;line-height:1.5;margin-bottom:12px;">
+      Para continuar a usar o Desafio MOZ, tens de aceitar os Termos de Uso.
+      Lá explicamos que há jogos com <b style="color:#f4f6fb;">compras opcionais</b> em dinheiro real,
+      que <b style="color:#f4f6fb;">não és obrigado a comprar</b> e que há outras formas de ganhar sem pagar.
+    </p>
+    <p style="font-size:13px;margin-bottom:14px;">
+      <a href="termos.html" target="_blank" rel="noopener" style="color:#22ff99;font-weight:700;">Ler Termos de Uso completos ↗</a>
+    </p>
+    <label style="display:flex;gap:10px;align-items:flex-start;font-size:13px;color:#c8d0e0;margin-bottom:16px;cursor:pointer;">
+      <input type="checkbox" id="modal-aceito-termos" style="width:18px;height:18px;margin-top:2px;accent-color:#00c853;flex-shrink:0;">
+      <span>Li e aceito os Termos de Uso. Se não concordar, posso sair sem continuar.</span>
+    </label>
+    <button type="button" id="btn-aceitar-termos-login" onclick="aceitarTermosEEntrar()"
+      style="width:100%;padding:14px;border:none;border-radius:12px;font-weight:800;font-size:14px;cursor:pointer;background:linear-gradient(90deg,#00c853,#22ff99);color:#04140a;margin-bottom:10px;">
+      Aceitar e continuar
+    </button>
+    <button type="button" onclick="recusarTermosSair()"
+      style="width:100%;padding:12px;border:1.5px solid rgba(255,255,255,0.15);border-radius:12px;font-weight:600;font-size:13px;cursor:pointer;background:transparent;color:#8e9bb8;">
+      Não aceito — sair
+    </button>
+  </div>
+</div>
+<script>
+function mostrarModalTermosPendentes() {
+  var m = document.getElementById('modal-termos');
+  if (m) m.style.display = 'flex';
+}
+function recusarTermosSair() {
+  try {
+    localStorage.removeItem('emailUtilizador');
+    localStorage.removeItem('nomeUtilizador');
+    localStorage.removeItem('pontosUtilizador');
+  } catch (e) {}
+  var m = document.getElementById('modal-termos');
+  if (m) m.style.display = 'none';
+  mostrarAviso('Não aceitaste os Termos. Podes sair ou voltar quando quiseres.');
+}
+async function aceitarTermosEEntrar() {
+  var ck = document.getElementById('modal-aceito-termos');
+  if (!ck || !ck.checked) {
+    alert('Marca a caixa para aceitar os Termos, ou clica em "Não aceito — sair".');
+    return;
+  }
+  var btn = document.getElementById('btn-aceitar-termos-login');
+  if (btn) { btn.disabled = true; btn.textContent = 'A gravar...'; }
+  try {
+    var ref = window.__docLoginRef;
+    if (ref) {
+      await ref.update({
+        aceitouTermos: true,
+        aceitouTermosEm: new Date().toISOString()
+      });
+    }
+    var m = document.getElementById('modal-termos');
+    if (m) m.style.display = 'none';
+    mostrarAviso('✅ Termos aceites. A entrar...', 'sucesso');
+    setTimeout(function () { window.location.href = 'desafios.html'; }, 900);
+  } catch (e) {
+    alert('Erro ao gravar: ' + (e.message || e));
+    if (btn) { btn.disabled = false; btn.textContent = 'Aceitar e continuar'; }
+  }
+}
+</script>
 </body>
+
 </html>
