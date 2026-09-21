@@ -20,26 +20,34 @@ const LIVRES = [
   '/manifest.json'
 ];
 
-let cache = { t: 0, v: null };
+let cache = { t: 0, v: null };   // v = última configuração lida com sucesso
 
 async function lerConfig() {
   if (cache.v && Date.now() - cache.t < 10000) return cache.v;
-  let v = { ativo: false, titulo: '', mensagem: '', emailsLivres: [] };
   try {
     const r = await fetch(CFG_URL);
     if (r.ok) {
       const f = (await r.json()).fields || {};
       const arr = (f.emailsLivres && f.emailsLivres.arrayValue && f.emailsLivres.arrayValue.values) || [];
-      v = {
+      const v = {
         ativo: !!(f.ativo && f.ativo.booleanValue),
         titulo: (f.titulo && f.titulo.stringValue) || '',
         mensagem: (f.mensagem && f.mensagem.stringValue) || '',
         emailsLivres: arr.map(x => String(x.stringValue || '').toLowerCase()).filter(Boolean)
       };
+      cache = { t: Date.now(), v };
+      return v;
     }
-  } catch (e) { /* se falhar, o site fica aberto */ }
-  cache = { t: Date.now(), v };
-  return v;
+    // Ainda não existe configuração (404) ou regra não publicada (403): site aberto
+    if (r.status === 404 || r.status === 403) {
+      const v = { ativo: false, titulo: '', mensagem: '', emailsLivres: [] };
+      cache = { t: Date.now(), v };
+      return v;
+    }
+  } catch (e) { /* falha de rede: cai para o último estado conhecido */ }
+  // Erro temporário: mantém o último estado conhecido (não abre o site por engano)
+  if (cache.v) return cache.v;
+  return { ativo: true, titulo: '', mensagem: '', emailsLivres: [] };
 }
 
 async function sha(txt) {

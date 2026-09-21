@@ -16,7 +16,7 @@ export async function onRequest(context) {
   const cab = { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' };
   const email = (new URL(context.request.url).searchParams.get('email') || '').trim().toLowerCase();
 
-  let ativo = false, lista = [];
+  let ativo = true, lista = [], lido = false;
   try {
     const r = await fetch(CFG_URL);
     if (r.ok) {
@@ -24,9 +24,12 @@ export async function onRequest(context) {
       ativo = !!(f.ativo && f.ativo.booleanValue);
       const arr = (f.emailsLivres && f.emailsLivres.arrayValue && f.emailsLivres.arrayValue.values) || [];
       lista = arr.map(x => String(x.stringValue || '').toLowerCase()).filter(Boolean);
-    }
+      lido = true;
+    } else if (r.status === 404) { ativo = false; lido = true; }
   } catch (e) {}
 
+  // Só diz "aberto" quando a leitura correu bem E o admin reabriu o site
+  if (!lido) return new Response(JSON.stringify({ erro: true }), { headers: cab });
   if (!ativo) return new Response(JSON.stringify({ aberto: true }), { headers: cab });
   if (!email || !lista.includes(email)) return new Response(JSON.stringify({ ok: false }), { headers: cab });
 
