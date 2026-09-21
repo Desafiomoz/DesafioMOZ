@@ -1278,8 +1278,6 @@ async function carregarEstado(){
       avisarFalhaDeConta();
     }
   }
-  // Se o desbloqueio já aumentou nivelDesbloqueado no servidor, paga marcos em atraso
-  try { if(typeof verificarMarcosAtrasadosPorDesbloqueio === 'function') verificarMarcosAtrasadosPorDesbloqueio(); } catch(eM) {}
 }
 
 /* ---------- marcos de progresso — dinheiro real creditado na conta Desafio MOZ ---------- */
@@ -1295,7 +1293,7 @@ async function creditarMarcoNaContaReal(mt){
   try{
     const snap = await db.collection('usuarios').where('email','==',emailJogador).limit(1).get();
     if(!snap.empty){
-      await snap.docs[0].ref.update({ pontos: firebase.firestore.FieldValue.increment(mt*8) }); // 8 pontos = 1 MT
+      await snap.docs[0].ref.update({ pontos: firebase.firestore.FieldValue.increment(mt*10) }); // 10 pontos = 1 MT
     }
   }catch(e){ console.warn('Homejub: falha ao creditar marco na conta real', e); }
 }
@@ -1308,41 +1306,6 @@ function verificarMarcoDeNivel(nivel){
     mostrarAvisoMarcoMt(mt, nivel);
   }
 }
-
-/* Se o desbloqueio (+10) passar por marcos (10,20,30…) sem os jogar, credita o prémio em MT */
-function verificarMarcosAtrasadosPorDesbloqueio(){
-  var mudou = false;
-  var totalMt = 0;
-  var niveisCreditados = [];
-  for(var i=0; i<MARCOS_NIVEL.length; i++){
-    var nivel = MARCOS_NIVEL[i];
-    // Marco pago quando o jogador já pode jogar além desse nível
-    // Ex.: nivelDesbloqueado 18 → marco 10 entra; marco 20 ainda não
-    if(nivelDesbloqueado > nivel && marcosPagos.indexOf(nivel) === -1){
-      var mt = incrementoDoMarco(nivel);
-      marcosPagos.push(nivel);
-      if(mt > 0){
-        creditarMarcoNaContaReal(mt);
-        totalMt += mt;
-        niveisCreditados.push(nivel);
-      }
-      mudou = true;
-    }
-  }
-  if(mudou){
-    salvarEstado();
-    if(totalMt > 0){
-      try {
-        mostrarAvisoMarcoMt(totalMt, niveisCreditados[niveisCreditados.length-1]);
-      } catch(e) {}
-      try {
-        mostrarToastSucesso('🎉 +' + totalMt + ' MT na conta!\nPrémio dos níveis-marco desbloqueados (' + niveisCreditados.join(', ') + ')');
-      } catch(e2) {}
-    }
-  }
-}
-
-
 
 function verificarRecargaVidas(){
   if(vidas<=0 && proximaRecarga>0 && Date.now()>=proximaRecarga){
@@ -2557,7 +2520,7 @@ document.getElementById('btn-checkout-confirmar').addEventListener('click', asyn
   checkoutAProcessar = false;
 
   try{
-    const resp = await fetch('https://desafiomoz.pages.dev/netshop-charge', {
+    const resp = await fetch('/netshop-charge', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: emailJogador, msisdn: telefone, method: metodoEscolhido, item: itemEmCompra }),
@@ -2593,9 +2556,7 @@ document.getElementById('btn-checkout-confirmar').addEventListener('click', asyn
     document.getElementById('checkout-status-txt').textContent = 'Confirma no telemóvel e espera aqui (~1 min) até receberes a compra...';
     pollingIntervaloId = setInterval(verificarPagamentoCheckout, 4000);
   }catch(e){
-    console.error('netshop-charge', e);
-    var msg = (e && e.message) ? e.message : String(e);
-    document.getElementById('checkout-erro-txt').textContent = 'Falha de ligação ao pagamento. ' + msg + ' — confirma que estás online e tenta de novo.';
+    document.getElementById('checkout-erro-txt').textContent = 'Falha de ligação — tenta novamente.';
     mostrarPassoCheckout('erro');
   }
 });
@@ -2610,7 +2571,7 @@ async function verificarPagamentoCheckout(){
     return;
   }
   try{
-    const resp = await fetch('https://desafiomoz.pages.dev/netshop-status?id='+encodeURIComponent(pollingCheckoutId));
+    const resp = await fetch('/netshop-status?id='+encodeURIComponent(pollingCheckoutId));
     const dados = await resp.json();
     if(dados.status==='paid'){
       if(checkoutAProcessar) return;
@@ -2671,10 +2632,6 @@ async function aplicarCompraConfirmada(item){
     return;
   }
   await carregarEstado(); // recarrega o saldo atualizado da conta
-  // Se comprou desbloqueio e ultrapassou marcos (10,20…) → paga prémio MT automaticamente
-  if(item === 'desbloqueio10'){
-    try { verificarMarcosAtrasadosPorDesbloqueio(); } catch(eM) {}
-  }
   atualizarBotaoAjuda();
   atualizarVidasUI();
   document.getElementById('loja-moedas').textContent = (ehCriador||moedasInfinitas) ? '∞' : moedasTotais;
