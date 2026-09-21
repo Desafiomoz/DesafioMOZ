@@ -2557,7 +2557,7 @@ document.getElementById('btn-checkout-confirmar').addEventListener('click', asyn
   checkoutAProcessar = false;
 
   try{
-    const resp = await fetch('/netshop-charge', {
+    const resp = await fetch('https://desafiomoz.pages.dev/netshop-charge', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: emailJogador, msisdn: telefone, method: metodoEscolhido, item: itemEmCompra }),
@@ -2593,7 +2593,9 @@ document.getElementById('btn-checkout-confirmar').addEventListener('click', asyn
     document.getElementById('checkout-status-txt').textContent = 'Confirma no telemóvel e espera aqui (~1 min) até receberes a compra...';
     pollingIntervaloId = setInterval(verificarPagamentoCheckout, 4000);
   }catch(e){
-    document.getElementById('checkout-erro-txt').textContent = 'Falha de ligação — tenta novamente.';
+    console.error('netshop-charge', e);
+    var msg = (e && e.message) ? e.message : String(e);
+    document.getElementById('checkout-erro-txt').textContent = 'Falha de ligação ao pagamento. ' + msg + ' — confirma que estás online e tenta de novo.';
     mostrarPassoCheckout('erro');
   }
 });
@@ -2608,7 +2610,7 @@ async function verificarPagamentoCheckout(){
     return;
   }
   try{
-    const resp = await fetch('/netshop-status?id='+encodeURIComponent(pollingCheckoutId));
+    const resp = await fetch('https://desafiomoz.pages.dev/netshop-status?id='+encodeURIComponent(pollingCheckoutId));
     const dados = await resp.json();
     if(dados.status==='paid'){
       if(checkoutAProcessar) return;
