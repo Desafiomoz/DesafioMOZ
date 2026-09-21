@@ -242,6 +242,7 @@
     <button class="tab" data-tab="bonus80" onclick="mudarTab('bonus80')"><i class="fas fa-gift"></i> Bonus 80</button>
     <button class="tab" data-tab="msg-privado" onclick="mudarTab('msg-privado')"><i class="fas fa-paper-plane"></i> Msg privado</button>
     <button class="tab" data-tab="email-massa" onclick="mudarTab('email-massa')"><i class="fas fa-envelope"></i> E-mail em massa</button>
+    <button class="tab" data-tab="senhas" onclick="mudarTab('senhas')"><i class="fas fa-key"></i> Senhas <span class="badge" id="badge-senhas">0</span></button>
     <button class="tab" data-tab="privado" onclick="mudarTab('privado')"><i class="fas fa-lock"></i> Privado</button>
   </div>
 
@@ -1661,7 +1662,38 @@
     </div>
 
 
-    <div class="painel" id="painel-privado">
+    
+    <!-- PEDIDOS DE SENHA -->
+    <div class="painel" id="painel-senhas">
+      <div class="form-box">
+        <h3><i class="fas fa-key"></i> Pedidos de nova senha</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:12px;">
+          Histórico de recuperações. A senha <strong>muda na hora</strong> quando o utilizador envia o formulário
+          (<strong>recuperar-senha.html</strong>). Aqui só vês o registo (automático = já aplicado).
+          Pedidos antigos “pendentes” ainda podes <strong>Aplicar</strong> ou <strong>Recusar</strong>.
+        </p>
+        <div class="busca"><input type="text" id="busca-senhas" placeholder="Filtrar por e-mail ou nome..." oninput="filtrarSenhasAdmin()"></div>
+        <div class="tabela-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Nome</th>
+                <th>E-mail</th>
+                <th>Pedido em</th>
+                <th>Estado</th>
+                <th>Acções</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-senhas">
+              <tr><td colspan="6" class="vazio">A carregar...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+<div class="painel" id="painel-privado">
       <div class="form-box">
         <h3><i class="fas fa-trash"></i> Limpar mensagens privadas</h3>
         <p style="font-size:12px;color:#888;margin-bottom:12px;">Apaga mensagens da coleção chatPrivado. Podes limpar tudo ou só de um e-mail.</p>
@@ -1821,6 +1853,9 @@ function mostrarAviso(txt) {
       }
       if (nome === 'pub-dicas') {
         try { carregarPubDicasAdmin(); } catch (e) {}
+      }
+      if (nome === 'senhas') {
+        try { carregarPedidosSenhaAdmin(); } catch (e) {}
       }
 
       try {
@@ -6143,6 +6178,125 @@ async function enviarNotifAdmin() {
       }
       if (typeof mostrarAviso === 'function') mostrarAviso('Dica apagada.');
       carregarPubDicasAdmin();
+    }
+
+
+    
+
+    async function carregarPedidosSenhaAdmin() {
+      var tbody = document.getElementById('tbody-senhas');
+      if (!tbody) return;
+      tbody.innerHTML = '<tr><td colspan="6" class="vazio">A carregar...</td></tr>';
+      try {
+        var snap;
+        try {
+          snap = await db.collection('pedidosSenha').orderBy('createdAt', 'desc').limit(100).get();
+        } catch (eOrd) {
+          snap = await db.collection('pedidosSenha').limit(100).get();
+        }
+        var lista = [];
+        snap.forEach(function (doc) {
+          var d = doc.data() || {};
+          d._id = doc.id;
+          lista.push(d);
+        });
+        lista.sort(function (a, b) {
+          return String(b.createdAt || '').localeCompare(String(a.createdAt || ''));
+        });
+        var pendentes = lista.filter(function (x) { return x.status === 'pendente'; }).length;
+        var badge = document.getElementById('badge-senhas');
+        if (badge) {
+          if (pendentes > 0) {
+            badge.style.display = 'inline';
+            badge.textContent = String(pendentes);
+          } else {
+            badge.style.display = 'none';
+          }
+        }
+        if (!lista.length) {
+          tbody.innerHTML = '<tr><td colspan="6" class="vazio">Nenhum pedido de senha ainda.</td></tr>';
+          return;
+        }
+        var html = '';
+        lista.forEach(function (d, i) {
+          var st = d.status || 'pendente';
+          var stClass = st === 'aplicado' ? 'status-pago' : (st === 'recusado' ? 'status-recusado' : 'status-pendente');
+          var stTxt = st === 'aplicado' ? 'Aplicado' : (st === 'recusado' ? 'Recusado' : 'Pendente');
+          var idSafe = String(d._id).replace(/'/g, "\\'");
+          var acoes = '';
+          if (st === 'pendente') {
+            acoes =
+              '<button type="button" class="btn-pagar btn-acao" onclick="aplicarPedidoSenha(\'' + idSafe + '\')">Aplicar</button> ' +
+              '<button type="button" class="btn-recusar btn-acao" onclick="recusarPedidoSenha(\'' + idSafe + '\')">Recusar</button>';
+          } else {
+            acoes = '<span style="color:#888;font-size:11px;">—</span>';
+          }
+          html += '<tr data-busca-senha="' + escHtml((d.nome || '') + ' ' + (d.email || '')).toLowerCase() + '">' +
+            '<td>' + (i + 1) + '</td>' +
+            '<td>' + escHtml(d.nome || '—') + '</td>' +
+            '<td>' + escHtml(d.email || '—') + '</td>' +
+            '<td style="font-size:11px;white-space:nowrap;">' + escHtml(String(d.createdAt || '').slice(0, 19).replace('T', ' ')) + '</td>' +
+            '<td><span class="status-tag ' + stClass + '">' + stTxt + '</span></td>' +
+            '<td style="white-space:nowrap;">' + acoes + '</td>' +
+            '</tr>';
+        });
+        tbody.innerHTML = html;
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="6" class="vazio">Erro: ' + escHtml(e.message || e) + '</td></tr>';
+      }
+    }
+
+    function filtrarSenhasAdmin() {
+      var q = (document.getElementById('busca-senhas') && document.getElementById('busca-senhas').value || '').trim().toLowerCase();
+      var tb = document.getElementById('tbody-senhas');
+      if (!tb) return;
+      tb.querySelectorAll('tr[data-busca-senha]').forEach(function (tr) {
+        tr.style.display = (!q || (tr.getAttribute('data-busca-senha') || '').indexOf(q) !== -1) ? '' : 'none';
+      });
+    }
+
+    async function aplicarPedidoSenha(id) {
+      if (!id) return;
+      if (!confirm('Aplicar a nova senha pedida a esta conta?')) return;
+      try {
+        var pref = db.collection('pedidosSenha').doc(id);
+        var pdoc = await pref.get();
+        if (!pdoc.exists) return alert('Pedido não encontrado.');
+        var p = pdoc.data() || {};
+        if (p.status !== 'pendente') return alert('Este pedido já foi tratado.');
+        var email = String(p.email || '').toLowerCase();
+        var hash = p.novaSenhaHash;
+        if (!email || !hash) return alert('Pedido incompleto.');
+        var snap = await db.collection('usuarios').where('email', '==', email).limit(1).get();
+        if (snap.empty) return alert('Utilizador não encontrado: ' + email);
+        await snap.docs[0].ref.update({
+          senha: hash,
+          ultimaAtualizacao: new Date().toISOString()
+        });
+        await pref.update({
+          status: 'aplicado',
+          aplicadoEm: new Date().toISOString()
+        });
+        mostrarAviso('Senha aplicada para ' + email + '. Já pode entrar com a nova senha.');
+        carregarPedidosSenhaAdmin();
+      } catch (e) {
+        alert('Erro: ' + (e.message || e));
+      }
+    }
+
+    async function recusarPedidoSenha(id) {
+      if (!id) return;
+      if (!confirm('Recusar este pedido de senha?')) return;
+      try {
+        await db.collection('pedidosSenha').doc(id).update({
+          status: 'recusado',
+          recusadoEm: new Date().toISOString()
+        });
+        mostrarAviso('Pedido recusado.');
+        carregarPedidosSenhaAdmin();
+      } catch (e) {
+        alert('Erro: ' + (e.message || e));
+      }
     }
 
 

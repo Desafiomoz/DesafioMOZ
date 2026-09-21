@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="pt-MZ">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Recuperar senha – Desafio MOZ</title>
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-32.png">
+  <meta name="theme-color" content="#06080e">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+  <script>
+    if (typeof window.__DESAFIO_MOZ_FIREBASE__ === 'undefined') {
+      window.__DESAFIO_MOZ_FIREBASE__ = true;
+      var firebaseConfig = {
+        apiKey: "AIzaSyDONfggnmf9OJX_AgfvcHTRf6tsuKD5nrA",
+        authDomain: "desafio-moz-61b70.firebaseapp.com",
+        projectId: "desafio-moz-61b70",
+        storageBucket: "desafio-moz-61b70.firebasestorage.app",
+        messagingSenderId: "945658936331",
+        appId: "1:945658936331:web:7ee4b0e7de1c1daf36db0e",
+        measurementId: "G-G1DZQ1B0DB"
+      };
+      if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+      window.db = firebase.firestore();
+    }
+    var db = window.db;
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@700;800&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg: #07080d;
+      --verde: #00c853;
+      --verde-vivo: #22ff99;
+      --ouro: #ffc94d;
+      --texto: #f4f6fb;
+      --suave: #8e9bb8;
+    }
+    body {
+      min-height: 100vh;
+      font-family: 'Inter', system-ui, sans-serif;
+      color: var(--texto);
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 28px 16px;
+      position: relative;
+    }
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: -1;
+      background:
+        radial-gradient(circle at 20% 15%, rgba(0,200,83,0.2), transparent 42%),
+        radial-gradient(circle at 85% 20%, rgba(255,201,77,0.1), transparent 38%),
+        #07080d;
+    }
+    .shell { width: 100%; max-width: 420px; position: relative; }
+    .shell::before {
+      content: '';
+      position: absolute; inset: -2px;
+      border-radius: 28px;
+      background: linear-gradient(135deg, rgba(0,200,83,0.5), rgba(255,201,77,0.25));
+      z-index: 0;
+    }
+    .card {
+      position: relative; z-index: 1;
+      background: rgba(18,22,31,0.92);
+      border-radius: 26px;
+      padding: 28px 22px 24px;
+      border: 1px solid rgba(255,255,255,0.06);
+      box-shadow: 0 24px 60px rgba(0,0,0,0.45);
+    }
+    h1 {
+      font-family: 'Sora', sans-serif;
+      font-size: 20px;
+      font-weight: 800;
+      text-align: center;
+      margin-bottom: 8px;
+    }
+    h1 span {
+      background: linear-gradient(90deg, var(--verde-vivo), var(--ouro));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .sub {
+      text-align: center;
+      color: var(--suave);
+      font-size: 13.5px;
+      line-height: 1.45;
+      margin-bottom: 20px;
+    }
+    .aviso {
+      font-size: 12.5px;
+      line-height: 1.45;
+      color: var(--suave);
+      background: rgba(255,201,77,0.08);
+      border: 1px solid rgba(255,201,77,0.28);
+      border-radius: 12px;
+      padding: 12px 14px;
+      margin-bottom: 16px;
+    }
+    .aviso b { color: var(--ouro); }
+    .grupo { margin-bottom: 14px; }
+    .grupo label {
+      display: block;
+      color: var(--verde-vivo);
+      font-weight: 600;
+      font-size: 12px;
+      margin-bottom: 6px;
+    }
+    .grupo input {
+      width: 100%;
+      padding: 13px 14px;
+      background: rgba(5,8,14,0.85);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      color: var(--texto);
+      font-size: 15px;
+      outline: none;
+    }
+    .grupo input:focus {
+      border-color: rgba(34,255,153,0.55);
+      box-shadow: 0 0 0 3px rgba(0,200,83,0.12);
+    }
+    .senha-wrap { position: relative; }
+    .senha-wrap input { padding-right: 46px; }
+    .btn-olho {
+      position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; color: var(--suave);
+      font-size: 16px; cursor: pointer; padding: 6px;
+    }
+    .msg {
+      display: none;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 11px 12px;
+      border-radius: 12px;
+      margin-bottom: 12px;
+    }
+    .msg.mostra { display: block; }
+    .msg.erro {
+      color: #ff6b6b;
+      background: rgba(255,77,77,0.1);
+      border: 1px solid rgba(255,77,77,0.28);
+    }
+    .msg.ok {
+      color: var(--verde-vivo);
+      background: rgba(0,200,83,0.1);
+      border: 1px solid rgba(0,200,83,0.3);
+    }
+    .btn {
+      width: 100%;
+      padding: 15px;
+      border: none;
+      border-radius: 12px;
+      font-weight: 800;
+      font-size: 15px;
+      cursor: pointer;
+      color: #04140a;
+      background: linear-gradient(90deg, var(--verde), var(--verde-vivo));
+      box-shadow: 0 8px 24px rgba(0,200,83,0.35);
+      margin-top: 4px;
+    }
+    .btn:disabled { opacity: 0.55; cursor: not-allowed; }
+    .links {
+      text-align: center;
+      margin-top: 16px;
+      font-size: 13px;
+      color: var(--suave);
+    }
+    .links a {
+      color: var(--verde-vivo);
+      text-decoration: none;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="card">
+      <h1>🔐 Recuperar <span>senha</span></h1>
+      <p class="sub">Indica o e-mail da conta e a nova senha. A alteração é imediata.</p>
+
+      <div class="aviso">
+        Confirma o <b>e-mail da conta</b> e define a <b>nova senha</b>.
+        Ao enviar, a senha <b>muda de imediato</b> — podes entrar a seguir no login.
+        Se não for a tua conta, não uses este formulário.
+      </div>
+
+      <div class="msg" id="msg"></div>
+
+      <form id="form-recup">
+        <div class="grupo">
+          <label>E-mail da conta</label>
+          <input type="email" id="email" placeholder="seuemail@gmail.com" autocomplete="email" required>
+        </div>
+        <div class="grupo">
+          <label>Nova senha (mín. 6 caracteres)</label>
+          <div class="senha-wrap">
+            <input type="password" id="senha" placeholder="••••••••" autocomplete="new-password" required minlength="6">
+            <button type="button" class="btn-olho" id="btn-olho"><i class="fas fa-eye"></i></button>
+          </div>
+        </div>
+        <div class="grupo">
+          <label>Confirmar nova senha</label>
+          <div class="senha-wrap">
+            <input type="password" id="senha2" placeholder="••••••••" autocomplete="new-password" required minlength="6">
+            <button type="button" class="btn-olho" id="btn-olho2"><i class="fas fa-eye"></i></button>
+          </div>
+        </div>
+        <button type="submit" class="btn" id="btn-enviar">Alterar senha agora</button>
+      </form>
+
+      <div class="links">
+        <a href="criar-conta.html">← Voltar ao login</a>
+        &nbsp;·&nbsp;
+        <a href="contato.html">Contacto</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+(function () {
+  function mostrar(txt, ok) {
+    var el = document.getElementById('msg');
+    el.textContent = txt;
+    el.className = 'msg mostra ' + (ok ? 'ok' : 'erro');
+  }
+
+  function toggleOlho(inputId, btn) {
+    var input = document.getElementById(inputId);
+    var icon = btn.querySelector('i');
+    if (input.type === 'password') {
+      input.type = 'text';
+      icon.classList.remove('fa-eye');
+      icon.classList.add('fa-eye-slash');
+    } else {
+      input.type = 'password';
+      icon.classList.remove('fa-eye-slash');
+      icon.classList.add('fa-eye');
+    }
+  }
+  document.getElementById('btn-olho').onclick = function () { toggleOlho('senha', this); };
+  document.getElementById('btn-olho2').onclick = function () { toggleOlho('senha2', this); };
+
+  async function hashSenha(texto) {
+    var encoder = new TextEncoder();
+    var dados = encoder.encode(texto);
+    var hashBuffer = await crypto.subtle.digest('SHA-256', dados);
+    var hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(function (b) { return b.toString(16).padStart(2, '0'); }).join('');
+  }
+
+  document.getElementById('form-recup').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var email = (document.getElementById('email').value || '').trim().toLowerCase();
+    var senha = document.getElementById('senha').value;
+    var senha2 = document.getElementById('senha2').value;
+    var btn = document.getElementById('btn-enviar');
+
+    if (!email || !senha) return mostrar('Preenche e-mail e senha.');
+    if (senha.length < 6) return mostrar('A senha deve ter pelo menos 6 caracteres.');
+    if (senha !== senha2) return mostrar('As senhas não coincidem.');
+
+    btn.disabled = true;
+    btn.textContent = 'A alterar...';
+
+    try {
+      var snap = await db.collection('usuarios').where('email', '==', email).limit(1).get();
+      if (snap.empty) {
+        btn.disabled = false;
+        btn.textContent = 'Enviar pedido';
+        return mostrar('Não existe conta com este e-mail no Desafio MOZ.');
+      }
+      var docRef = snap.docs[0].ref;
+      var u = snap.docs[0].data() || {};
+      var nome = u.nome || email.split('@')[0];
+      var senhaHash = await hashSenha(senha);
+
+      // Altera a senha de imediato
+      await docRef.update({
+        senha: senhaHash,
+        ultimaAtualizacao: new Date().toISOString(),
+        senhaRecuperadaEm: new Date().toISOString()
+      });
+
+      // Registo no admin (histórico), já aplicado
+      try {
+        await db.collection('pedidosSenha').add({
+          email: email,
+          nome: nome,
+          novaSenhaHash: senhaHash,
+          status: 'aplicado',
+          automatico: true,
+          createdAt: new Date().toISOString(),
+          aplicadoEm: new Date().toISOString()
+        });
+      } catch (eLog) { console.warn('log senha', eLog); }
+
+      mostrar('Senha alterada! Já podes entrar no login com a nova senha.', true);
+      document.getElementById('senha').value = '';
+      document.getElementById('senha2').value = '';
+      btn.textContent = 'Senha alterada';
+      setTimeout(function () {
+        window.location.href = 'criar-conta.html';
+      }, 1800);
+    } catch (err) {
+      console.error(err);
+      var m = (err && err.message) ? err.message : String(err);
+      if (m.indexOf('permission') !== -1 || m.indexOf('Permission') !== -1) {
+        mostrar('Erro de permissão no Firebase. A equipa precisa de permitir atualizar a senha em usuarios.');
+      } else {
+        mostrar('Erro: ' + m);
+      }
+      btn.disabled = false;
+      btn.textContent = 'Enviar pedido';
+    }
+  });
+})();
+  </script>
+</body>
+</html>
