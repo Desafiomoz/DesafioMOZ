@@ -244,6 +244,7 @@
     <button class="tab" data-tab="email-massa" onclick="mudarTab('email-massa')"><i class="fas fa-envelope"></i> E-mail em massa</button>
     <button class="tab" data-tab="senhas" onclick="mudarTab('senhas')"><i class="fas fa-key"></i> Senhas <span class="badge" id="badge-senhas">0</span></button>
     <button class="tab" data-tab="termos" onclick="mudarTab('termos')"><i class="fas fa-file-contract"></i> Termos</button>
+    <button class="tab" data-tab="manutencao" onclick="mudarTab('manutencao'); manAbrirAba()"><i class="fas fa-tools"></i> Manutenção <span class="badge" id="badge-manutencao">ON</span></button>
     <button class="tab" data-tab="privado" onclick="mudarTab('privado')"><i class="fas fa-lock"></i> Privado</button>
   </div>
 
@@ -1749,6 +1750,78 @@
             <tbody id="tbody-privado"><tr><td colspan="5" class="vazio">Clica em Actualizar.</td></tr></tbody>
           </table>
         </div>
+      </div>
+    </div>
+
+    <!-- MANUTENÇÃO DO SITE -->
+    <div class="painel" id="painel-manutencao">
+      <style>
+        @property --manang { syntax: '<angle>'; initial-value: 0deg; inherits: true; }
+        .man-aura { position: relative; border-radius: 22px; padding: 3px; margin: 26px auto 8px; max-width: 380px; animation: manGira 9s linear infinite; }
+        .man-aura::before { content: ""; position: absolute; inset: -20px; border-radius: 40px; z-index: 0; filter: blur(26px); opacity: .5;
+          background: conic-gradient(from var(--manang), #00e676, #7c4dff, #ffca28, #00b8d4, #00e676); }
+        .man-aura::after { content: ""; position: absolute; inset: 0; border-radius: 22px; z-index: 0;
+          background: conic-gradient(from var(--manang), #00e676, #7c4dff, #ffca28, #00b8d4, #00e676); }
+        @keyframes manGira { to { --manang: 360deg; } }
+        .man-miolo { position: relative; z-index: 1; background: linear-gradient(180deg, #141033, #0c0a24); border-radius: 20px; padding: 24px 18px; text-align: center; }
+        .man-ico { width: 64px; height: 64px; margin: 0 auto 10px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 30px;
+          background: radial-gradient(circle, #2a1f6b, #150f3d 70%); box-shadow: 0 0 0 2px rgba(0,230,118,.5), 0 0 26px 6px rgba(124,77,255,.55); }
+        .man-miolo h4 { font-size: 20px; color: #fff; margin-bottom: 8px; }
+        .man-miolo p { font-size: 14px; line-height: 1.5; color: #dcd8ff; white-space: pre-line; word-wrap: break-word; }
+        .man-estado { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 12px; font-size: 14px; font-weight: 700; margin-bottom: 14px; }
+        .man-estado.aberto { background: rgba(0,200,83,.12); border: 1px solid #00c853; color: #00e676; }
+        .man-estado.fechado { background: rgba(198,40,40,.15); border: 1px solid #c62828; color: #ff8a80; }
+        .man-chip { display: inline-flex; align-items: center; gap: 8px; background: #1d1d2b; border: 1px solid #00c853; color: #00e676; border-radius: 20px; padding: 6px 10px 6px 12px; font-size: 12px; margin: 0 6px 6px 0; }
+        .man-chip button { background: none; border: none; color: #ff8a80; cursor: pointer; font-size: 14px; padding: 0; }
+        .man-res { max-height: 220px; overflow-y: auto; border: 1px solid #2a2a3a; border-radius: 10px; margin-top: 6px; }
+        .man-res div { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 12px; font-size: 12px; border-bottom: 1px solid #22222f; cursor: pointer; }
+        .man-res div:hover { background: #1d1d2b; }
+        @media (prefers-reduced-motion: reduce) { .man-aura { animation: none; } }
+      </style>
+
+      <div class="form-box">
+        <h3><i class="fas fa-tools"></i> Manutenção do site</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:12px;">
+          Fecha o site para todos os utilizadores até tu decidires reabrir. Eles veem o aviso que escreveres aqui.
+          Os utilizadores que escolheres continuam a usar o site normalmente. Esta página (admin) nunca fecha.
+        </p>
+        <div class="man-estado aberto" id="man-estado">🟢 Site aberto</div>
+
+        <div class="form-row">
+          <label>Título do aviso</label>
+          <input type="text" id="man-titulo" maxlength="80" placeholder="Ex.: Estamos a melhorar o Desafio MOZ" oninput="manPreview()">
+        </div>
+        <div class="form-row">
+          <label>Mensagem para os utilizadores</label>
+          <textarea id="man-mensagem" rows="4" maxlength="600" placeholder="Ex.: Estamos a resolver uma falha nos pagamentos. Voltamos hoje ainda!" oninput="manPreview()"></textarea>
+        </div>
+
+        <div class="man-aura"><div class="man-miolo">
+          <div class="man-ico">🛠️</div>
+          <h4 id="man-prev-titulo">Estamos em manutenção</h4>
+          <p id="man-prev-msg">Voltamos em breve.</p>
+        </div></div>
+        <p style="font-size:11px;color:#666;text-align:center;margin-bottom:16px;">Pré-visualização do que os utilizadores vão ver</p>
+      </div>
+
+      <div class="form-box">
+        <h3><i class="fas fa-user-check"></i> Quem continua com acesso</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:10px;">Procura um utilizador e toca para o adicionar, ou escreve um e-mail à mão.</p>
+        <div id="man-chips" style="margin-bottom:8px;"></div>
+        <div class="busca" style="margin-bottom:0;"><input type="text" id="man-busca" placeholder="Procurar por nome ou e-mail..." oninput="manBuscarUser()"></div>
+        <div class="man-res" id="man-res" style="display:none;"></div>
+        <div class="form-grid" style="margin-top:10px;">
+          <input type="email" id="man-email-manual" placeholder="Ou escreve um e-mail">
+          <button type="button" class="btn-verde" onclick="manAdicionarManual()">➕ Adicionar e-mail</button>
+        </div>
+      </div>
+
+      <div class="form-box">
+        <button type="button" class="btn-vermelho" id="man-btn-fechar" style="width:100%;padding:14px;border-radius:10px;font-size:15px;margin:0 0 10px;" onclick="manGravar(true)">🔒 Fechar site e enviar aviso</button>
+        <button type="button" class="btn-verde" id="man-btn-abrir" style="width:100%;margin-bottom:10px;" onclick="manGravar(false)">🔓 Reabrir o site para todos</button>
+        <button type="button" id="man-btn-rascunho" style="width:100%;padding:11px;border-radius:10px;border:1px solid #2a2a3a;background:#15151f;color:#ccc;font-size:13px;cursor:pointer;" onclick="manGravar(null)">💾 Guardar mensagem e lista (sem mudar o estado do site)</button>
+        <p id="man-msg" style="font-size:12px;color:#888;margin-top:10px;text-align:center;"></p>
+        <p style="font-size:11px;color:#666;margin-top:6px;text-align:center;">As mudanças chegam aos utilizadores em até ~10 segundos.</p>
       </div>
     </div>
 
@@ -6400,6 +6473,140 @@ async function enviarNotifAdmin() {
       tb.querySelectorAll('tr[data-busca-termos]').forEach(function (tr) {
         tr.style.display = (!q || (tr.getAttribute('data-busca-termos') || '').indexOf(q) !== -1) ? '' : 'none';
       });
+    }
+
+
+    // ===== MANUTENÇÃO DO SITE (coleção config, doc manutencao) =====
+    var manEmails = [];
+    var manAtivo = false;
+    var manCarregado = false;
+
+    function manRef() { return db.collection('config').doc('manutencao'); }
+    function manNorm(e) { return String(e || '').trim().toLowerCase(); }
+    function manSet(txt, cor) {
+      var el = document.getElementById('man-msg');
+      if (el) { el.textContent = txt || ''; el.style.color = cor || '#888'; }
+    }
+
+    function manAbrirAba() {
+      if (!manCarregado) carregarManutencao();
+    }
+
+    async function carregarManutencao() {
+      manSet('A carregar...');
+      try {
+        var snap = await manRef().get();
+        var d = snap.exists ? (snap.data() || {}) : {};
+        manAtivo = d.ativo === true;
+        manEmails = Array.isArray(d.emailsLivres) ? d.emailsLivres.map(manNorm).filter(Boolean) : [];
+        document.getElementById('man-titulo').value = d.titulo || '';
+        document.getElementById('man-mensagem').value = d.mensagem || '';
+        manCarregado = true;
+        manRenderEstado(); manRenderChips(); manPreview();
+        manSet('');
+      } catch (e) {
+        manSet('Erro ao carregar: ' + (e.message || e) + ' — confirma a regra Firebase da coleção config.', '#ff8a80');
+      }
+    }
+
+    function manRenderEstado() {
+      var el = document.getElementById('man-estado');
+      var bF = document.getElementById('man-btn-fechar');
+      var bA = document.getElementById('man-btn-abrir');
+      var badge = document.getElementById('badge-manutencao');
+      if (el) {
+        el.className = 'man-estado ' + (manAtivo ? 'fechado' : 'aberto');
+        el.textContent = manAtivo ? '🔴 Site FECHADO — os utilizadores veem o aviso' : '🟢 Site aberto';
+      }
+      if (bF) bF.textContent = manAtivo ? '📣 Atualizar aviso (site continua fechado)' : '🔒 Fechar site e enviar aviso';
+      if (bA) bA.style.display = manAtivo ? '' : 'none';
+      if (badge) badge.style.display = manAtivo ? 'inline-block' : 'none';
+    }
+
+    function manPreview() {
+      var t = (document.getElementById('man-titulo').value || '').trim() || 'Estamos em manutenção';
+      var m = (document.getElementById('man-mensagem').value || '').trim() || 'Voltamos em breve.';
+      document.getElementById('man-prev-titulo').textContent = t;
+      document.getElementById('man-prev-msg').textContent = m;
+    }
+
+    function manRenderChips() {
+      var box = document.getElementById('man-chips');
+      if (!box) return;
+      if (!manEmails.length) {
+        box.innerHTML = '<span style="font-size:12px;color:#888;">Ninguém escolhido — só o admin continua com acesso.</span>';
+        return;
+      }
+      box.innerHTML = manEmails.map(function (e, i) {
+        return '<span class="man-chip">' + escHtml(e) + '<button type="button" onclick="manRemover(' + i + ')">✕</button></span>';
+      }).join('');
+    }
+
+    function manAdicionar(email) {
+      email = manNorm(email);
+      if (!email || email.indexOf('@') === -1) { manSet('E-mail inválido.', '#ff8a80'); return; }
+      if (manEmails.indexOf(email) === -1) manEmails.push(email);
+      manRenderChips();
+      manSet('Lista alterada — carrega em Guardar/Fechar para aplicar.', '#ffc107');
+    }
+    function manRemover(i) {
+      manEmails.splice(i, 1);
+      manRenderChips();
+      manSet('Lista alterada — carrega em Guardar/Fechar para aplicar.', '#ffc107');
+    }
+    function manAdicionarManual() {
+      var inp = document.getElementById('man-email-manual');
+      manAdicionar(inp.value);
+      inp.value = '';
+    }
+
+    function manBuscarUser() {
+      var q = manNorm(document.getElementById('man-busca').value);
+      var res = document.getElementById('man-res');
+      if (q.length < 2) { res.style.display = 'none'; res.innerHTML = ''; return; }
+      var lista = (typeof todosUsers !== 'undefined' ? todosUsers : []).filter(function (u) {
+        return ((u.nome || '') + ' ' + (u.email || u._id || '')).toLowerCase().indexOf(q) !== -1;
+      }).slice(0, 12);
+      if (!lista.length) { res.style.display = 'block'; res.innerHTML = '<div style="color:#888;cursor:default;">Nenhum utilizador encontrado.</div>'; return; }
+      res.style.display = 'block';
+      res.innerHTML = lista.map(function (u) {
+        var em = manNorm(u.email || u._id);
+        return '<div data-em="' + escHtml(em) + '"><span>' + escHtml(u.nome || '—') + ' · ' + escHtml(em) + '</span><span style="color:#00e676;">➕</span></div>';
+      }).join('');
+      res.querySelectorAll('div[data-em]').forEach(function (d) {
+        d.onclick = function () {
+          manAdicionar(d.getAttribute('data-em'));
+          document.getElementById('man-busca').value = '';
+          res.style.display = 'none';
+        };
+      });
+    }
+
+    // ativo: true = fechar/atualizar aviso | false = reabrir | null = só guardar
+    async function manGravar(ativo) {
+      var titulo = (document.getElementById('man-titulo').value || '').trim();
+      var mensagem = (document.getElementById('man-mensagem').value || '').trim();
+      if (ativo === true) {
+        if (!mensagem) { alert('Escreve a mensagem do aviso antes de fechar o site.'); return; }
+        if (!manAtivo && !confirm('Fechar o site agora? Todos os utilizadores (menos os escolhidos) vão ver o aviso.')) return;
+      }
+      if (ativo === false && !confirm('Reabrir o site para todos os utilizadores?')) return;
+      var novoEstado = (ativo === null) ? manAtivo : ativo;
+      manSet('A guardar...');
+      try {
+        await manRef().set({
+          ativo: novoEstado,
+          titulo: titulo,
+          mensagem: mensagem,
+          emailsLivres: manEmails.slice(),
+          atualizadoEm: new Date().toISOString()
+        }, { merge: true });
+        manAtivo = novoEstado;
+        manRenderEstado();
+        manSet(ativo === true ? '✅ Aviso enviado. O site está fechado.' : ativo === false ? '✅ Site reaberto para todos.' : '✅ Guardado.', '#00e676');
+      } catch (e) {
+        manSet('❌ Erro ao guardar: ' + (e.message || e) + ' — confirma a regra Firebase da coleção config.', '#ff8a80');
+      }
     }
 
     // carregarTudo() agora é chamado pelo onAuthStateChanged, após login confirmado.
