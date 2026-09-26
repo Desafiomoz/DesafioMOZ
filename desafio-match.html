@@ -1278,6 +1278,8 @@ async function carregarEstado(){
       avisarFalhaDeConta();
     }
   }
+  // Recuperação: se o nível já passou marcos (ex. comprou desbloqueio) e ainda não recebeu MT
+  try { await verificarMarcosAtrasadosPorDesbloqueio(); } catch(e) {}
 }
 
 /* ---------- marcos de progresso — dinheiro real creditado na conta Desafio MOZ ---------- */
@@ -1306,6 +1308,43 @@ function verificarMarcoDeNivel(nivel){
     mostrarAvisoMarcoMt(mt, nivel);
   }
 }
+
+/** Quando compras desbloqueio +10 (ou o nível sobe sem jogar cada marco),
+ *  credita na conta real os marcos já ultrapassados que ainda não foram pagos.
+ *  Ex.: no nível 8 compras +10 → nivelDesbloqueado=18 → marco 10 é pago agora.
+ */
+async function verificarMarcosAtrasadosPorDesbloqueio(){
+  if(!emailJogador) return;
+  let totalMt = 0;
+  const novos = [];
+  for(const nivel of MARCOS_NIVEL){
+    // Já "passou" este marco se o próximo nível jogável está além dele
+    if(nivel < nivelDesbloqueado && !marcosPagos.includes(nivel)){
+      const mt = incrementoDoMarco(nivel);
+      if(mt <= 0) continue;
+      marcosPagos.push(nivel);
+      novos.push({ nivel, mt });
+      totalMt += mt;
+      try { await creditarMarcoNaContaReal(mt); } catch(e) {}
+    }
+  }
+  if(novos.length === 0) return;
+  try { salvarEstado(); } catch(e) {}
+  // Aviso com aura — um por marco, ou resumo se forem vários
+  if(novos.length === 1){
+    try { mostrarAvisoMarcoMt(novos[0].mt, novos[0].nivel); } catch(e) {
+      try { mostrarToastSucesso('🎉 +' + novos[0].mt + ' MT na conta!\nMarco nível ' + novos[0].nivel); } catch(e2) {}
+    }
+  } else {
+    try {
+      mostrarAvisoMarcoMt(totalMt, novos[novos.length-1].nivel);
+    } catch(e) {
+      try { mostrarToastSucesso('🎉 +' + totalMt + ' MT na conta!\nMarcos recuperados após desbloqueio'); } catch(e2) {}
+    }
+  }
+}
+
+
 
 function verificarRecargaVidas(){
   if(vidas<=0 && proximaRecarga>0 && Date.now()>=proximaRecarga){
@@ -2632,6 +2671,10 @@ async function aplicarCompraConfirmada(item){
     return;
   }
   await carregarEstado(); // recarrega o saldo atualizado da conta
+  // Desbloqueio +10: pagar marcos (10,20,…) já ultrapassados sem ter jogado cada nível
+  if(item === 'desbloqueio10'){
+    try { await verificarMarcosAtrasadosPorDesbloqueio(); } catch(e) { console.warn('marcos desbloqueio', e); }
+  }
   atualizarBotaoAjuda();
   atualizarVidasUI();
   document.getElementById('loja-moedas').textContent = (ehCriador||moedasInfinitas) ? '∞' : moedasTotais;
