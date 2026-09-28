@@ -429,6 +429,11 @@
         localStorage.removeItem('infPendente');
         return;
       }
+      // Link bloqueado após meta 1000 — não conta novos convites até o admin liberar
+      if (d.influencerLinkBloqueado === true) {
+        localStorage.removeItem('infPendente');
+        return;
+      }
 
       var reaisAntes = Number(d.influencerConvidadosReais != null ? d.influencerConvidadosReais : (d.influencerConvidados || 0));
       var contadosAntes = Number(d.influencerConvidados || 0);
@@ -466,6 +471,9 @@
         var ptsPremio = novosPremios * 1600;
         upd.influencerPremios = premios + novosPremios;
         upd.pontos = pontos + ptsPremio;
+        upd.influencerLinkBloqueado = true;
+        upd.influencerLinkBloqueadoEm = new Date().toISOString();
+        upd.influencerLinkBloqueadoMotivo = 'Atingiu meta de ' + contados + ' convites — aguarda liberação do admin';
         upd.ultimoPremioInfluencer = {
           em: new Date().toISOString(),
           ciclos: novosPremios,

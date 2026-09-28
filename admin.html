@@ -845,6 +845,60 @@
 
     <!-- HOMEJUB / JOGO -->
     <div class="painel" id="painel-homejub">
+
+      <div class="form-box" style="border:1px solid rgba(0,200,83,0.4);">
+        <h3><i class="fas fa-sliders-h"></i> Controlo total Homejub (nível, moedas, vidas, infinitos)</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:12px;">
+          Define o estado exacto do jogo (online ou APK — mesma conta Firebase).<br>Podes <b>aumentar ou diminuir</b> moedas, vidas, ajudas e nível (ex.: pôr <code>0</code> moedas ou <code>1</code> vida).<br>Desligar infinitos: escolhe “Desligar” e aplica — o jogador volta a usar só o número normal.
+        </p>
+        <div class="form-grid">
+          <div class="form-row">
+            <label>E-mail do jogador</label>
+            <input type="email" id="hj-ctrl-email" placeholder="email@exemplo.com">
+          </div>
+          <div class="form-row">
+            <label>Nível desbloqueado (1–300)</label>
+            <input type="number" id="hj-ctrl-nivel" min="1" max="300" placeholder="Ex: 8">
+          </div>
+          <div class="form-row">
+            <label>Moedas (número)</label>
+            <input type="number" id="hj-ctrl-moedas" min="0" placeholder="Ex: 50">
+          </div>
+          <div class="form-row">
+            <label>Vidas (0–5)</label>
+            <input type="number" id="hj-ctrl-vidas" min="0" max="99" placeholder="Ex: 3">
+          </div>
+          <div class="form-row">
+            <label>Ajudas</label>
+            <input type="number" id="hj-ctrl-ajudas" min="0" placeholder="Ex: 2">
+          </div>
+          <div class="form-row">
+            <label>Jogadas extra</label>
+            <input type="number" id="hj-ctrl-jogadas" min="0" placeholder="Ex: 0">
+          </div>
+        </div>
+        <div class="form-grid" style="margin-top:8px;">
+          <div class="form-row">
+            <label>Moedas infinitas</label>
+            <select id="hj-ctrl-moedas-inf">
+              <option value="">— não alterar —</option>
+              <option value="false">Desligar (sem infinito)</option>
+              <option value="true">Ligar infinito</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <label>Ajudas infinitas</label>
+            <select id="hj-ctrl-ajudas-inf">
+              <option value="">— não alterar —</option>
+              <option value="false">Desligar</option>
+              <option value="true">Ligar</option>
+            </select>
+          </div>
+        </div>
+        <button type="button" class="btn-verde" style="margin-top:10px;" onclick="aplicarControloHomejub()">⚡ Aplicar alterações Homejub</button>
+        <button type="button" class="btn-laranja" style="margin-top:8px;width:100%;" onclick="carregarUmHomejub()">🔍 Carregar dados deste e-mail nos campos</button>
+      </div>
+
       <div class="form-box">
         <h3><i class="fas fa-gamepad"></i> Progresso no Homejub</h3>
         <p style="font-size:12px;color:#888;margin-bottom:12px;">
@@ -888,6 +942,22 @@
 
     <!-- INFLUENCER (ofertas / programa) -->
     <div class="painel" id="painel-influencer">
+
+      <div class="form-box" style="border:1px solid rgba(255,201,77,0.35);">
+        <h3><i class="fas fa-link"></i> Links de influencer bloqueados (após 1000)</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:10px;">
+          Quando atingem 1000 e recebem 200 MT, o link fica bloqueado. Clica em <b>Liberar</b> para o utilizador voltar a partilhar.
+          Também: se um convidado <b>sacar</b>, o influencer recebe +50 MT automaticamente.
+        </p>
+        <button type="button" class="btn-cinza" style="margin-bottom:10px;" onclick="carregarLinksBloqueadosInf()">🔄 Atualizar</button>
+        <div class="tabela-wrap">
+          <table>
+            <thead><tr><th>#</th><th>Nome</th><th>E-mail</th><th>Convites</th><th>Prémios</th><th>Desde</th><th>Acção</th></tr></thead>
+            <tbody id="tbody-inf-links-blk"><tr><td colspan="7" class="vazio">Clica em Atualizar.</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
       <div class="form-box">
         <h3><i class="fas fa-star"></i> Programa Influencer</h3>
         <p style="font-size:12px;color:#888;margin-bottom:12px;">
@@ -2449,7 +2519,7 @@ function mostrarAviso(txt) {
         if (nome === 'missoes') try { renderHorariosMissaoAdmin(); } catch (eH) {}
         if (nome === 'visitantes') try { carregarVisitantes(); } catch (eV) {}
         if (nome === 'homejub') try { carregarHomejub(); } catch (eH) {}
-        if (nome === 'influencer') try { renderInfluencerAdmin(); } catch (eI) {}
+        if (nome === 'influencer') { try { renderInfluencerAdmin(); } catch (eI) {} try { carregarLinksBloqueadosInf(); } catch (eL) {} try { carregarBonusSaquePendentes(); } catch (eB) {} }
         if (nome === 'chat') try { carregarChatAdmin(); } catch (eC) {}
         if (nome === 'online') try { renderOnlineAdmin(); } catch (eO) {}
         if (nome === 'actividade') try { renderActividadeAdmin(); } catch (eA) {}
@@ -2645,12 +2715,103 @@ function mostrarAviso(txt) {
           '<td>' + ajudasTxt + '</td>' +
           '<td class="pts-ok">' + (r.mt || 0) + ' MT</td>' +
           '<td>' + (r.nCompras || 0) + '</td>' +
-          '<td><button type="button" class="btn-vermelho" onclick="apagarProgressoHomejub(\'' + emailEsc + '\')">🗑️ Apagar progresso</button></td>' +
+          '<td style="white-space:nowrap;">' +
+            '<button type="button" class="btn-azul" onclick="preencherCtrlHomejub(\'' + emailEsc + '\')">✏️ Editar</button> ' +
+            '<button type="button" class="btn-vermelho" onclick="apagarProgressoHomejub(\'' + emailEsc + '\')">🗑️</button>' +
+          '</td>' +
           '</tr>';
       });
       tbody.innerHTML = html;
     }
 
+
+    
+    async function preencherCtrlHomejub(email) {
+      email = String(email || '').trim().toLowerCase();
+      document.getElementById('hj-ctrl-email').value = email;
+      await carregarUmHomejub();
+      try { document.getElementById('hj-ctrl-email').scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) {}
+    }
+
+    async function carregarUmHomejub() {
+      var email = (document.getElementById('hj-ctrl-email').value || '').trim().toLowerCase();
+      if (!email) return alert('Indica o e-mail.');
+      try {
+        var snap = await db.collection('jogoEstado').doc(email).get();
+        if (!snap.exists) {
+          var snap2 = await db.collection('jogoEstado').doc(String(email).toLowerCase()).get();
+          if (!snap2.exists) return alert('Sem progresso Homejub para este e-mail.');
+          snap = snap2;
+        }
+        var d = snap.data() || {};
+        document.getElementById('hj-ctrl-nivel').value = d.nivelDesbloqueado != null ? d.nivelDesbloqueado : (d.nivel || 1);
+        // O jogo usa moedasTotais e ajudasDisponiveis (não "moedas" / "ajudas")
+        document.getElementById('hj-ctrl-moedas').value = (typeof d.moedasTotais === 'number' ? d.moedasTotais : (d.moedas != null ? d.moedas : 0));
+        document.getElementById('hj-ctrl-vidas').value = typeof d.vidas === 'number' ? d.vidas : 5;
+        document.getElementById('hj-ctrl-ajudas').value = (typeof d.ajudasDisponiveis === 'number' ? d.ajudasDisponiveis : (d.ajudas != null ? d.ajudas : 0));
+        document.getElementById('hj-ctrl-jogadas').value = d.jogadasExtraArmazenadas != null ? d.jogadasExtraArmazenadas : (d.jogadasExtra || 0);
+        document.getElementById('hj-ctrl-moedas-inf').value = d.moedasInfinitas === true ? 'true' : (d.moedasInfinitas === false ? 'false' : '');
+        document.getElementById('hj-ctrl-ajudas-inf').value = d.ajudasInfinitas === true ? 'true' : (d.ajudasInfinitas === false ? 'false' : '');
+        if (typeof mostrarAviso === 'function') mostrarAviso('Dados carregados: ' + email);
+      } catch (e) {
+        alert('Erro: ' + (e.message || e));
+      }
+    }
+
+    async function aplicarControloHomejub() {
+      var email = (document.getElementById('hj-ctrl-email').value || '').trim().toLowerCase();
+      if (!email || email.indexOf('@') === -1) return alert('E-mail inválido.');
+      var updates = { ultimaAtualizacao: new Date().toISOString() };
+      var nivel = document.getElementById('hj-ctrl-nivel').value;
+      var moedas = document.getElementById('hj-ctrl-moedas').value;
+      var vidas = document.getElementById('hj-ctrl-vidas').value;
+      var ajudas = document.getElementById('hj-ctrl-ajudas').value;
+      var jogadas = document.getElementById('hj-ctrl-jogadas').value;
+      var mi = document.getElementById('hj-ctrl-moedas-inf').value;
+      var ai = document.getElementById('hj-ctrl-ajudas-inf').value;
+      if (nivel !== '') updates.nivelDesbloqueado = Math.max(1, Math.min(300, parseInt(nivel, 10) || 1));
+      // Campos REAIS do jogo (desafio-match / homejub-app)
+      if (moedas !== '') updates.moedasTotais = Math.max(0, parseInt(moedas, 10) || 0);
+      if (vidas !== '') updates.vidas = Math.max(0, parseInt(vidas, 10) || 0);
+      if (ajudas !== '') updates.ajudasDisponiveis = Math.max(0, parseInt(ajudas, 10) || 0);
+      if (jogadas !== '') updates.jogadasExtraArmazenadas = Math.max(0, parseInt(jogadas, 10) || 0);
+      if (mi === 'true') updates.moedasInfinitas = true;
+      if (mi === 'false') updates.moedasInfinitas = false;
+      if (ai === 'true') updates.ajudasInfinitas = true;
+      if (ai === 'false') updates.ajudasInfinitas = false;
+      if (Object.keys(updates).length <= 1) return alert('Preenche pelo menos um campo para alterar.');
+      if (!confirm('Aplicar estas alterações a ' + email + '?\n' + JSON.stringify(updates, null, 2))) return;
+      try {
+        var ref = db.collection('jogoEstado').doc(email);
+        // Se o doc existir com outro casing, actualiza esse
+        var snap = await ref.get();
+        if (!snap.exists) {
+          try {
+            var q = await db.collection('jogoEstado').where(firebase.firestore.FieldPath.documentId(), '>=', '').limit(500).get();
+            // fallback: procura por email no campo se existir
+          } catch (eQ) {}
+          // tenta variações
+          var alt = (document.getElementById('hj-ctrl-email').value || '').trim();
+          if (alt && alt !== email) {
+            var s2 = await db.collection('jogoEstado').doc(alt).get();
+            if (s2.exists) ref = s2.ref;
+          }
+        }
+        await ref.set(updates, { merge: true });
+        // força também no id lower-case (padrão do jogo)
+        if (ref.id !== email) {
+          await db.collection('jogoEstado').doc(email).set(updates, { merge: true });
+        }
+        if (typeof mostrarAviso === 'function') {
+          mostrarAviso('Homejub actualizado: ' + email +
+            (updates.moedasTotais != null ? ' · ' + updates.moedasTotais + ' moedas' : '') +
+            (updates.vidas != null ? ' · ' + updates.vidas + ' vidas' : ''));
+        }
+        carregarHomejub();
+      } catch (e) {
+        alert('Erro: ' + (e.message || e) + '\nConfirma regra: allow update em jogoEstado para admin autenticado.');
+      }
+    }
 
     async function apagarProgressoHomejub(email) {
       email = String(email || '').trim();
@@ -3413,6 +3574,11 @@ function mostrarAviso(txt) {
         var data = snap.data();
         var statusAnterior = data.status || 'pendente';
         await ref.update({ status: novoStatus, dataProcessamento: new Date().toISOString() });
+
+        // Se PAGAR: bónus +50 MT ao influencer que trouxe este utilizador
+        if (novoStatus === 'pago' && statusAnterior === 'pendente' && data.email) {
+          try { await creditarBonusSaqueInfluencer(data.email); } catch (eInf) { console.warn(eInf); }
+        }
 
         // Os pontos já foram descontados no pedido.
         // Se RECUSAR: devolve os pontos à conta do utilizador.
@@ -7592,6 +7758,213 @@ async function carregarBonus100() {
       }
     }
 
+
+    
+    async function carregarLinksBloqueadosInf() {
+      var tbody = document.getElementById('tbody-inf-links-blk');
+      if (!tbody) return;
+      tbody.innerHTML = '<tr><td colspan="7" class="vazio">A carregar...</td></tr>';
+      try {
+        var lista = [];
+        try {
+          var snap = await db.collection('usuarios').where('influencerLinkBloqueado', '==', true).limit(100).get();
+          snap.forEach(function (doc) {
+            var d = doc.data() || {};
+            d._id = doc.id;
+            lista.push(d);
+          });
+        } catch (e1) {
+          (todosUsers || []).forEach(function (u) {
+            if (u.influencerLinkBloqueado === true) lista.push(u);
+          });
+        }
+        if (!lista.length) {
+          tbody.innerHTML = '<tr><td colspan="7" class="vazio">Nenhum link bloqueado.</td></tr>';
+          return;
+        }
+        var html = '';
+        lista.forEach(function (u, i) {
+          var em = String(u.email || '').toLowerCase();
+          var emSafe = em.replace(/'/g, "\\'");
+          html += '<tr>' +
+            '<td>' + (i + 1) + '</td>' +
+            '<td>' + escHtml(u.nome || '—') + '</td>' +
+            '<td>' + escHtml(em) + '</td>' +
+            '<td>' + (u.influencerConvidados || 0) + '</td>' +
+            '<td>' + (u.influencerPremios || 0) + '</td>' +
+            '<td style="font-size:11px;">' + escHtml(String(u.influencerLinkBloqueadoEm || '').slice(0, 19).replace('T', ' ')) + '</td>' +
+            '<td><button type="button" class="btn-verde" style="width:auto;padding:6px 10px;font-size:11px;" onclick="liberarLinkInfluencer(\'' + emSafe + '\')">🔓 Liberar link</button></td>' +
+            '</tr>';
+        });
+        tbody.innerHTML = html;
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="7" class="vazio">Erro: ' + escHtml(e.message || e) + '</td></tr>';
+      }
+    }
+
+    async function liberarLinkInfluencer(email) {
+      email = String(email || '').trim().toLowerCase();
+      if (!email) return;
+      if (!confirm('Liberar o link de influencer de ' + email + '?')) return;
+      try {
+        var snap = await db.collection('usuarios').where('email', '==', email).limit(1).get();
+        if (snap.empty) return alert('Utilizador não encontrado.');
+        await snap.docs[0].ref.set({
+          influencerLinkBloqueado: false,
+          influencerLinkLiberadoEm: new Date().toISOString(),
+          ultimaAtualizacao: new Date().toISOString()
+        }, { merge: true });
+        if (typeof mostrarAviso === 'function') mostrarAviso('Link liberado: ' + email);
+        carregarLinksBloqueadosInf();
+      } catch (e) {
+        alert('Erro: ' + (e.message || e));
+      }
+    }
+
+    /** Cria pedido pendente de +50 MT (admin tem de aprovar) quando convidado saca */
+    async function creditarBonusSaqueInfluencer(emailSacou) {
+      try {
+        emailSacou = String(emailSacou || '').trim().toLowerCase();
+        if (!emailSacou) return;
+        var snap = await db.collection('usuarios').where('email', '==', emailSacou).limit(1).get();
+        if (snap.empty) return;
+        var u = snap.docs[0].data() || {};
+        var cod = String(u.indicadoPorInfluencer || '').trim();
+        if (!cod) return;
+        var infSnap = await db.collection('usuarios').where('codigoInfluencer', '==', cod).limit(1).get();
+        if (infSnap.empty) return;
+        var inf = infSnap.docs[0].data() || {};
+        var infEmail = String(inf.email || '').toLowerCase();
+        // evita duplicar pedidos
+        var exist = await db.collection('bonusSaqueInfluencer')
+          .where('emailConvidado', '==', emailSacou)
+          .limit(5).get();
+        var ja = false;
+        exist.forEach(function (doc) {
+          var x = doc.data() || {};
+          if (x.status === 'pendente' || x.status === 'pago') ja = true;
+        });
+        if (ja) return;
+        await db.collection('bonusSaqueInfluencer').add({
+          emailConvidado: emailSacou,
+          nomeConvidado: u.nome || '',
+          codigoInfluencer: cod,
+          emailInfluencer: infEmail,
+          nomeInfluencer: inf.nome || '',
+          mt: 50,
+          pontos: 400,
+          status: 'pendente',
+          createdAt: new Date().toISOString()
+        });
+        if (typeof mostrarAviso === 'function') {
+          mostrarAviso('Pedido +50 MT criado (pendente) para influencer ' + (inf.nome || cod));
+        }
+        try { carregarBonusSaquePendentes(); } catch (eC) {}
+      } catch (e) {
+        console.warn('bonus saque influencer', e);
+      }
+    }
+
+    async function carregarBonusSaquePendentes() {
+      var tbody = document.getElementById('tbody-bonus-saque-inf');
+      if (!tbody) return;
+      tbody.innerHTML = '<tr><td colspan="7" class="vazio">A carregar...</td></tr>';
+      try {
+        var snap;
+        try {
+          snap = await db.collection('bonusSaqueInfluencer').orderBy('createdAt', 'desc').limit(100).get();
+        } catch (e1) {
+          snap = await db.collection('bonusSaqueInfluencer').limit(100).get();
+        }
+        var lista = [];
+        snap.forEach(function (doc) {
+          var d = doc.data() || {};
+          d._id = doc.id;
+          lista.push(d);
+        });
+        lista.sort(function (a, b) {
+          return String(b.createdAt || '').localeCompare(String(a.createdAt || ''));
+        });
+        if (!lista.length) {
+          tbody.innerHTML = '<tr><td colspan="7" class="vazio">Nenhum pedido de bónus 50 MT.</td></tr>';
+          return;
+        }
+        var html = '';
+        lista.forEach(function (d, i) {
+          var st = d.status || 'pendente';
+          var cls = st === 'pago' ? 'status-pago' : (st === 'recusado' ? 'status-recusado' : 'status-pendente');
+          var idSafe = String(d._id).replace(/'/g, "\'");
+          var acoes = st === 'pendente'
+            ? '<button type="button" class="btn-verde" style="width:auto;padding:5px 10px;font-size:11px;" onclick="aprovarBonusSaqueInf(\'' + idSafe + '\')">✅ Dar 50 MT</button> ' +
+              '<button type="button" class="btn-vermelho" onclick="recusarBonusSaqueInf(\'' + idSafe + '\')">Recusar</button>'
+            : '—';
+          html += '<tr>' +
+            '<td>' + (i + 1) + '</td>' +
+            '<td><strong>' + escHtml(d.nomeInfluencer || '—') + '</strong><br><small style="color:#888">' + escHtml(d.emailInfluencer || '') + '</small></td>' +
+            '<td><strong>' + escHtml(d.nomeConvidado || '—') + '</strong><br><small style="color:#888">' + escHtml(d.emailConvidado || '') + '</small></td>' +
+            '<td>' + escHtml(d.codigoInfluencer || '—') + '</td>' +
+            '<td>50 MT</td>' +
+            '<td><span class="status-tag ' + cls + '">' + st + '</span></td>' +
+            '<td style="white-space:nowrap;">' + acoes + '</td>' +
+            '</tr>';
+        });
+        tbody.innerHTML = html;
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="7" class="vazio">Erro: ' + escHtml(e.message || e) + '</td></tr>';
+      }
+    }
+
+    async function aprovarBonusSaqueInf(id) {
+      if (!confirm('Confirmar e entregar +50 MT (400 pts) ao influencer?')) return;
+      try {
+        var ref = db.collection('bonusSaqueInfluencer').doc(id);
+        var snap = await ref.get();
+        if (!snap.exists) return alert('Pedido não encontrado.');
+        var d = snap.data() || {};
+        if (d.status === 'pago') return alert('Já foi pago.');
+        var emailInf = String(d.emailInfluencer || '').toLowerCase();
+        var uSnap = await db.collection('usuarios').where('email', '==', emailInf).limit(1).get();
+        if (uSnap.empty) return alert('Influencer não encontrado: ' + emailInf);
+        var u = uSnap.docs[0].data() || {};
+        var pts = Number(d.pontos) || 400;
+        await uSnap.docs[0].ref.update({
+          pontos: (Number(u.pontos) || 0) + pts,
+          influencerBonusSaques: (Number(u.influencerBonusSaques) || 0) + 1,
+          ultimaAtualizacao: new Date().toISOString()
+        });
+        await ref.update({
+          status: 'pago',
+          pagoEm: new Date().toISOString()
+        });
+        try {
+          await db.collection('historicoPontos').add({
+            email: emailInf,
+            pontos: pts,
+            origem: 'influencer_saque',
+            detalhe: 'Bónus +50 MT aprovado: convidado ' + (d.emailConvidado || '') + ' sacou',
+            createdAt: new Date().toISOString()
+          });
+        } catch (eH) {}
+        if (typeof mostrarAviso === 'function') mostrarAviso('+50 MT entregues a ' + emailInf);
+        carregarBonusSaquePendentes();
+      } catch (e) {
+        alert('Erro: ' + (e.message || e));
+      }
+    }
+
+    async function recusarBonusSaqueInf(id) {
+      if (!confirm('Recusar este bónus de 50 MT?')) return;
+      try {
+        await db.collection('bonusSaqueInfluencer').doc(id).update({
+          status: 'recusado',
+          recusadoEm: new Date().toISOString()
+        });
+        if (typeof mostrarAviso === 'function') mostrarAviso('Bónus recusado.');
+        carregarBonusSaquePendentes();
+      } catch (e) {
+        alert('Erro: ' + (e.message || e));
+      }
+    }
 
     // carregarTudo() agora é chamado pelo onAuthStateChanged, após login confirmado.
   </script>
