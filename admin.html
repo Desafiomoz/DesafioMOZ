@@ -240,6 +240,7 @@
     <button class="tab" data-tab="pedidos-dicas" onclick="mudarTab('pedidos-dicas')"><i class="fas fa-reply"></i> Pedidos dicas <span class="badge" id="badge-pedidos-dicas">0</span></button>
     <button class="tab" data-tab="notif-admin" onclick="mudarTab('notif-admin')"><i class="fas fa-bell"></i> Notificações</button>
     <button class="tab" data-tab="bonus80" onclick="mudarTab('bonus80')"><i class="fas fa-gift"></i> Bonus 80</button>
+    <button class="tab" data-tab="bonus100" onclick="mudarTab('bonus100')"><i class="fas fa-gift"></i> Bonus 100</button>
     <button class="tab" data-tab="msg-privado" onclick="mudarTab('msg-privado')"><i class="fas fa-paper-plane"></i> Msg privado</button>
     <button class="tab" data-tab="email-massa" onclick="mudarTab('email-massa')"><i class="fas fa-envelope"></i> E-mail em massa</button>
     <button class="tab" data-tab="senhas" onclick="mudarTab('senhas')"><i class="fas fa-key"></i> Senhas <span class="badge" id="badge-senhas">0</span></button>
@@ -1700,6 +1701,275 @@
       </div>
     </div>
 
+
+<div class="painel" id="painel-bonus100">
+      <div class="form-box">
+        <h3><i class="fas fa-gift"></i> Bonus 100 pontos — Comunicado do Papo</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:12px;">
+          Lista de quem já recebeu os <strong>100 pontos</strong> do comunicado.
+          Podes creditar manualmente a quem ainda não recebeu (entra na lista a seguir).
+          Cada conta só pode receber <strong>uma vez</strong>.
+        </p>
+        <div class="form-grid">
+          <div class="form-row">
+            <label>E-mail para creditar manualmente</label>
+            <input type="email" id="bonus100-email" placeholder="email@exemplo.com">
+          </div>
+          <div class="form-row" style="display:flex;align-items:flex-end;">
+            <button type="button" class="btn-verde" style="width:100%;" onclick="creditarBonus100Manual()">🎁 Dar 100 pts a este e-mail</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="resumo" style="margin-bottom:14px;">
+        <div class="resumo-card"><div class="num" id="bonus100-total-sim">0</div><div class="lbl">Já receberam</div></div>
+        <div class="resumo-card"><div class="num" id="bonus100-total-nao">0</div><div class="lbl">Ainda não</div></div>
+      </div>
+
+      <div class="busca">
+        <input type="text" id="busca-bonus100" placeholder="Pesquisar nome ou e-mail..." oninput="filtrarBonus100()">
+      </div>
+
+      <h3 style="color:#00e676;font-size:14px;margin:12px 0 8px;">✅ Já receberam os 100 pontos</h3>
+      <div class="tabela-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Nome</th>
+              <th>E-mail</th>
+              <th>Pontos agora</th>
+              <th>Recebeu em</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-bonus100-sim">
+            <tr><td colspan="5" class="vazio">A carregar...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 style="color:#ffc107;font-size:14px;margin:20px 0 8px;">⏳ Ainda não receberam</h3>
+      <p style="font-size:12px;color:#888;margin-bottom:8px;">Podes creditar com o botão acima ou o utilizador reclama em comunicado-papo.html</p>
+      <div class="tabela-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Nome</th>
+              <th>E-mail</th>
+              <th>Pontos</th>
+              <th>Acção</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-bonus100-nao">
+            <tr><td colspan="5" class="vazio">A carregar...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+<!-- MSG PRIVADO EM MASSA -->
+    <div class="painel" id="painel-msg-privado">
+      <div class="form-box">
+        <h3><i class="fas fa-paper-plane"></i> Enviar mensagem no papo privado</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:12px;">
+          A mensagem chega no <strong>papo privado</strong> de cada utilizador (como se viesse da Equipa Desafio MOZ).
+          Podes incluir um <strong>link</strong> — o utilizador abre no navegador. Envia para <strong>todos</strong> ou só para um e-mail.
+        </p>
+        <div class="form-row">
+          <label>Destino</label>
+          <select id="msgpriv-destino" onchange="document.getElementById('msgpriv-email-wrap').style.display=this.value==='um'?'block':'none'">
+            <option value="todos">Todos os utilizadores</option>
+            <option value="um">Só um e-mail</option>
+          </select>
+        </div>
+        <div class="form-row" id="msgpriv-email-wrap" style="display:none;">
+          <label>E-mail do utilizador</label>
+          <input type="email" id="msgpriv-email" placeholder="email@exemplo.com">
+        </div>
+        <div class="form-row">
+          <label>Mensagem</label>
+          <textarea id="msgpriv-texto" rows="5" placeholder="Escreve a mensagem que todos vão ver no privado..."></textarea>
+        </div>
+        <div class="form-row">
+          <label>Link (opcional — abre no navegador)</label>
+          <input type="url" id="msgpriv-link" placeholder="https://desafiomoz.pages.dev/roleta.html">
+        </div>
+        <div class="form-row">
+          <label>Texto do link (se houver link)</label>
+          <input type="text" id="msgpriv-link-txt" placeholder="Ex: Abrir roleta" value="Abrir link">
+        </div>
+        <button type="button" class="btn-verde" id="btn-msgpriv-enviar" onclick="enviarMsgPrivadoAdmin()">📨 Enviar no privado</button>
+        <p id="msgpriv-status" style="font-size:12px;color:#888;margin-top:10px;"></p>
+      </div>
+      <div class="form-box">
+        <h3><i class="fas fa-history"></i> Mensagens enviadas (histórico)</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:12px;">
+          Cada mensagem mostra quantos <strong>já receberam</strong> e quantos <strong>ainda não</strong> (ex.: utilizadores novos).
+          Clica em <strong>Enviar aos que faltam</strong> para mandar a mesma mensagem só a quem ainda não recebeu.
+        </p>
+        <button type="button" class="btn-verde" style="margin-bottom:12px;" onclick="carregarHistMsgPrivado()">🔄 Actualizar</button>
+        <div class="tabela-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Quando</th>
+                <th>Mensagem</th>
+                <th>Já receberam</th>
+                <th>Ainda não</th>
+                <th>Acção</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-msgpriv-hist"><tr><td colspan="6" class="vazio">Clica em Actualizar.</td></tr></tbody>
+          </table>
+        </div>
+        <div id="msgpriv-detalhe" style="display:none;margin-top:14px;background:#0d0d12;border:1px solid #2a2a3a;border-radius:12px;padding:14px;">
+          <h3 style="color:#00e676;font-size:14px;margin-bottom:10px;" id="msgpriv-detalhe-titulo">Detalhe</h3>
+          <div class="form-grid">
+            <div>
+              <p style="font-size:12px;color:#00e676;margin-bottom:6px;">✅ Já receberam</p>
+              <div id="msgpriv-lista-sim" style="font-size:11px;color:#ccc;max-height:180px;overflow-y:auto;line-height:1.5;"></div>
+            </div>
+            <div>
+              <p style="font-size:12px;color:#ffc107;margin-bottom:6px;">⏳ Ainda não receberam</p>
+              <div id="msgpriv-lista-nao" style="font-size:11px;color:#ccc;max-height:180px;overflow-y:auto;line-height:1.5;"></div>
+            </div>
+          </div>
+          <button type="button" class="btn-laranja" style="width:100%;padding:12px;margin-top:12px;border-radius:10px;" id="msgpriv-btn-falta" onclick="reenviarMsgPrivadoFaltam()">📨 Enviar aos que faltam</button>
+          <p id="msgpriv-reenv-status" style="font-size:12px;color:#888;margin-top:8px;"></p>
+        </div>
+      </div>
+    </div>
+
+    
+    <!-- E-MAIL EM MASSA -->
+    <div class="painel" id="painel-email-massa">
+      <div class="form-box">
+        <h3><i class="fas fa-cog"></i> Configuração do envio de e-mail</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:12px;">
+          O site envia o pedido para o <strong>webhook</strong> (Pipedream + Gmail).
+          Cola o URL uma vez e guarda. Depois podes enviar para todos ou só para um.
+        </p>
+        <div class="form-row">
+          <label>URL do webhook de e-mail (Pipedream)</label>
+          <input type="url" id="emailmassa-webhook" placeholder="https://xxxx.m.pipedream.net" value="https://eo5164eervzi98.m.pipedream.net">
+        </div>
+        <div class="form-row">
+          <label>Nome do remetente</label>
+          <input type="text" id="emailmassa-from-name" placeholder="Desafio MOZ" value="Desafio MOZ">
+        </div>
+        <button type="button" class="btn-verde" onclick="guardarConfigEmailMassa()">💾 Guardar configuração</button>
+        <p id="emailmassa-config-status" style="font-size:12px;color:#888;margin-top:8px;"></p>
+      </div>
+
+      <div class="form-box">
+        <h3><i class="fas fa-envelope"></i> Enviar e-mail</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:12px;">
+          Igual ao Msg privado: envias e vês quem já recebeu. Utilizadores novos → <strong>Enviar aos que faltam</strong>.
+        </p>
+        <div class="form-row">
+          <label>Destino</label>
+          <select id="emailmassa-destino" onchange="document.getElementById('emailmassa-email-wrap').style.display=this.value==='um'?'block':'none'">
+            <option value="todos">Todos os utilizadores</option>
+            <option value="um">Só um e-mail</option>
+          </select>
+        </div>
+        <div class="form-row" id="emailmassa-email-wrap" style="display:none;">
+          <label>E-mail do utilizador</label>
+          <input type="email" id="emailmassa-email" placeholder="email@exemplo.com">
+        </div>
+        <div class="form-row">
+          <label>Assunto</label>
+          <input type="text" id="emailmassa-assunto" placeholder="Ex: Nova actualização no Desafio MOZ" maxlength="120">
+        </div>
+        <div class="form-row">
+          <label>Mensagem</label>
+          <textarea id="emailmassa-texto" rows="6" placeholder="Texto que vai para o Gmail de cada utilizador..."></textarea>
+        </div>
+        <div class="form-row">
+          <label>Link (opcional)</label>
+          <input type="url" id="emailmassa-link" placeholder="https://desafiomoz.pages.dev/login-comunicado.html">
+        </div>
+        <button type="button" class="btn-verde" id="btn-emailmassa-enviar" onclick="enviarEmailMassaAdmin()">📧 Enviar e-mails</button>
+        <p id="emailmassa-status" style="font-size:12px;color:#888;margin-top:10px;"></p>
+      </div>
+
+      <div class="form-box">
+        <h3><i class="fas fa-history"></i> Histórico de e-mails</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:12px;">
+          Vê quem já recebeu e quem ainda não. Reenvia só aos novos.
+        </p>
+        <button type="button" class="btn-verde" style="margin-bottom:12px;" onclick="carregarHistEmailMassa()">🔄 Actualizar</button>
+        <div class="tabela-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Quando</th>
+                <th>Assunto</th>
+                <th>Já receberam</th>
+                <th>Ainda não</th>
+                <th>Acção</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-emailmassa-hist"><tr><td colspan="6" class="vazio">Clica em Actualizar.</td></tr></tbody>
+          </table>
+        </div>
+        <div id="emailmassa-detalhe" style="display:none;margin-top:14px;background:#0d0d12;border:1px solid #2a2a3a;border-radius:12px;padding:14px;">
+          <h3 style="color:#00e676;font-size:14px;margin-bottom:10px;" id="emailmassa-detalhe-titulo">Detalhe</h3>
+          <div class="form-grid">
+            <div>
+              <p style="font-size:12px;color:#00e676;margin-bottom:6px;">✅ Já receberam</p>
+              <div id="emailmassa-lista-sim" style="font-size:11px;color:#ccc;max-height:180px;overflow-y:auto;line-height:1.5;"></div>
+            </div>
+            <div>
+              <p style="font-size:12px;color:#ffc107;margin-bottom:6px;">⏳ Ainda não receberam</p>
+              <div id="emailmassa-lista-nao" style="font-size:11px;color:#ccc;max-height:180px;overflow-y:auto;line-height:1.5;"></div>
+            </div>
+          </div>
+          <button type="button" class="btn-laranja" style="width:100%;padding:12px;margin-top:12px;border-radius:10px;" id="emailmassa-btn-falta" onclick="reenviarEmailMassaFaltam()">📧 Enviar e-mail aos que faltam</button>
+          <p id="emailmassa-reenv-status" style="font-size:12px;color:#888;margin-top:8px;"></p>
+        </div>
+      </div>
+    </div>
+
+
+    
+    <!-- PEDIDOS DE SENHA -->
+    
+    <!-- TERMOS DE USO -->
+    <div class="painel" id="painel-termos">
+      <div class="form-box">
+        <h3><i class="fas fa-file-contract"></i> Aceite dos Termos de Uso</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:12px;">
+          Utilizadores que aceitaram os Termos (no cadastro ou no login) e a <strong>data e hora</strong> do aceite.
+          Contas antigas sem aceite são obrigadas a aceitar no próximo login (ou a sair).
+        </p>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px;">
+          <div class="resumo-card" style="min-width:100px;"><div class="num" id="termos-total-sim">0</div><div class="lbl">Já aceitaram</div></div>
+          <div class="resumo-card" style="min-width:100px;"><div class="num" id="termos-total-nao" style="color:#ffc107;">0</div><div class="lbl">Ainda não</div></div>
+        </div>
+        <div class="busca"><input type="text" id="busca-termos" placeholder="Filtrar por nome ou e-mail..." oninput="filtrarTermosAdmin()"></div>
+        <div class="tabela-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Nome</th>
+                <th>E-mail</th>
+                <th>Estado</th>
+                <th>Dia e hora do aceite</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-termos">
+              <tr><td colspan="5" class="vazio">A carregar...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
 <div class="painel" id="painel-senhas">
       <div class="form-box">
         <h3><i class="fas fa-key"></i> Pedidos de nova senha</h3>
@@ -2132,8 +2402,14 @@ function mostrarAviso(txt) {
     }
 
     function mudarTab(nome) {
+      if (nome === 'bonus100') {
+        try { carregarBonus100(); } catch (e) {}
+      }
       if (nome === 'bonus80') {
         try { carregarBonus80(); } catch (e) {}
+      }
+      if (nome === 'bonus100') {
+        try { carregarBonus100(); } catch (e) {}
       }
       if (nome === 'notif-admin') {
         try { carregarNotifAdminHist(); carregarAtrasadosNotif(); } catch (e) {}
@@ -6307,6 +6583,88 @@ async function enviarNotifAdmin() {
       });
     }
 
+async function carregarBonus100() {
+      var tSim = document.getElementById('tbody-bonus100-sim');
+      var tNao = document.getElementById('tbody-bonus100-nao');
+      if (!tSim || !tNao) return;
+      tSim.innerHTML = '<tr><td colspan="5" class="vazio">A carregar...</td></tr>';
+      tNao.innerHTML = '<tr><td colspan="5" class="vazio">A carregar...</td></tr>';
+      try {
+        var users = (typeof todosUsers !== 'undefined' && todosUsers.length) ? todosUsers.slice() : [];
+        if (!users.length) {
+          var snap = await db.collection('usuarios').limit(800).get();
+          snap.forEach(function (doc) {
+            var d = doc.data() || {};
+            d._id = doc.id;
+            users.push(d);
+          });
+        }
+        var sim = [], nao = [];
+        users.forEach(function (u) {
+          if (u.bonusPapo100 === true) sim.push(u);
+          else nao.push(u);
+        });
+        sim.sort(function (a, b) {
+          return String(b.bonusPapo100Em || '').localeCompare(String(a.bonusPapo100Em || ''));
+        });
+        nao.sort(function (a, b) {
+          return String(a.nome || '').localeCompare(String(b.nome || ''));
+        });
+        var elS = document.getElementById('bonus100-total-sim');
+        var elN = document.getElementById('bonus100-total-nao');
+        if (elS) elS.textContent = sim.length;
+        if (elN) elN.textContent = nao.length;
+
+        if (!sim.length) {
+          tSim.innerHTML = '<tr><td colspan="5" class="vazio">Ninguém recebeu ainda.</td></tr>';
+        } else {
+          var hs = '';
+          sim.forEach(function (u, i) {
+            var quando = u.bonusPapo100Em ? String(u.bonusPapo100Em).slice(0, 19).replace('T', ' ') : '—';
+            hs += '<tr data-busca-b100="' + escHtml((u.nome || '') + ' ' + (u.email || '')).toLowerCase() + '">' +
+              '<td>' + (i + 1) + '</td>' +
+              '<td>' + escHtml(u.nome || '—') + '</td>' +
+              '<td>' + escHtml(u.email || '—') + '</td>' +
+              '<td class="pts-ok">' + (u.pontos || 0) + '</td>' +
+              '<td style="font-size:11px;">' + escHtml(quando) + '</td>' +
+              '</tr>';
+          });
+          tSim.innerHTML = hs;
+        }
+
+        if (!nao.length) {
+          tNao.innerHTML = '<tr><td colspan="5" class="vazio">Todos já receberam.</td></tr>';
+        } else {
+          var hn = '';
+          nao.forEach(function (u, i) {
+            var em = (u.email || '').replace(/'/g, "\\'");
+            hn += '<tr data-busca-b100="' + escHtml((u.nome || '') + ' ' + (u.email || '')).toLowerCase() + '">' +
+              '<td>' + (i + 1) + '</td>' +
+              '<td>' + escHtml(u.nome || '—') + '</td>' +
+              '<td>' + escHtml(u.email || '—') + '</td>' +
+              '<td class="pts-baixo">' + (u.pontos || 0) + '</td>' +
+              '<td><button type="button" class="btn-laranja" onclick="creditarBonus100Email(\'' + em + '\')">+100</button></td>' +
+              '</tr>';
+          });
+          tNao.innerHTML = hn;
+        }
+      } catch (e) {
+        tSim.innerHTML = '<tr><td colspan="5" class="vazio">Erro: ' + escHtml(e.message || e) + '</td></tr>';
+        tNao.innerHTML = '<tr><td colspan="5" class="vazio">Erro</td></tr>';
+      }
+    }
+
+    function filtrarBonus100() {
+      var q = (document.getElementById('busca-bonus100') && document.getElementById('busca-bonus100').value || '').trim().toLowerCase();
+      ['tbody-bonus100-sim', 'tbody-bonus100-nao'].forEach(function (id) {
+        var tb = document.getElementById(id);
+        if (!tb) return;
+        tb.querySelectorAll('tr[data-busca-b100]').forEach(function (tr) {
+          tr.style.display = (!q || (tr.getAttribute('data-busca-b100') || '').indexOf(q) !== -1) ? '' : 'none';
+        });
+      });
+    }
+
     async function creditarBonus80Email(email) {
       email = String(email || '').trim().toLowerCase();
       if (!email) return;
@@ -6349,6 +6707,49 @@ async function enviarNotifAdmin() {
       var email = (document.getElementById('bonus80-email') && document.getElementById('bonus80-email').value || '').trim();
       creditarBonus80Email(email);
     }
+
+    async function creditarBonus100Email(email) {
+      email = String(email || '').trim().toLowerCase();
+      if (!email) return;
+      if (!confirm('Dar 100 pontos a ' + email + '? (só se ainda não tiver recebido)')) return;
+      try {
+        var snap = await db.collection('usuarios').where('email', '==', email).limit(1).get();
+        if (snap.empty) return alert('Utilizador não encontrado.');
+        var doc = snap.docs[0];
+        var d = doc.data() || {};
+        if (d.bonusPapo100 === true) {
+          alert('Esta conta já recebeu os 100 pontos.');
+          return;
+        }
+        var novos = (Number(d.pontos) || 0) + 100;
+        await doc.ref.update({
+          pontos: novos,
+          bonusPapo100: true,
+          bonusPapo100Em: new Date().toISOString(),
+          bonusPapo100Via: 'admin',
+          ultimaAtualizacao: new Date().toISOString()
+        });
+        if (typeof todosUsers !== 'undefined') {
+          todosUsers.forEach(function (u) {
+            if ((u.email || '').toLowerCase() === email) {
+              u.pontos = novos;
+              u.bonusPapo100 = true;
+              u.bonusPapo100Em = new Date().toISOString();
+            }
+          });
+        }
+        mostrarAviso('+100 pontos creditados a ' + email);
+        carregarBonus100();
+      } catch (e) {
+        alert('Erro: ' + (e.message || e));
+      }
+    }
+
+    function creditarBonus100Manual() {
+      var email = (document.getElementById('bonus100-email') && document.getElementById('bonus100-email').value || '').trim();
+      creditarBonus100Email(email);
+    }
+
 
 
 
