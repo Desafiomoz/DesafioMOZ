@@ -244,6 +244,7 @@
     <button class="tab" data-tab="email-massa" onclick="mudarTab('email-massa')"><i class="fas fa-envelope"></i> E-mail em massa</button>
     <button class="tab" data-tab="senhas" onclick="mudarTab('senhas')"><i class="fas fa-key"></i> Senhas <span class="badge" id="badge-senhas">0</span></button>
     <button class="tab" data-tab="termos" onclick="mudarTab('termos')"><i class="fas fa-file-contract"></i> Termos</button>
+    <button class="tab" data-tab="pag-manual" onclick="mudarTab('pag-manual'); carregarPagManualHist()"><i class="fas fa-hand-holding-usd"></i> Pag. manual</button>
     <button class="tab" data-tab="manutencao" onclick="mudarTab('manutencao'); manAbrirAba()"><i class="fas fa-tools"></i> Manutenção <span class="badge" id="badge-manutencao">ON</span></button>
     <button class="tab" data-tab="privado" onclick="mudarTab('privado')"><i class="fas fa-lock"></i> Privado</button>
   </div>
@@ -1754,6 +1755,194 @@
     </div>
 
     <!-- MANUTENÇÃO DO SITE -->
+    
+    <!-- PAGAMENTO MANUAL e-Mola -->
+    <div class="painel" id="painel-pag-manual">
+      <div class="form-box" style="border:1px solid rgba(0,200,83,0.35);">
+        <h3><i class="fas fa-hand-holding-usd"></i> Pagamento manual (e-Mola)</h3>
+        <p style="font-size:13px;color:#ccc;margin-bottom:10px;line-height:1.45;">
+          Número e-Mola: <strong style="color:#00e676;font-size:16px;">869517893</strong>. M-Pesa automático está <strong>indisponível</strong>.<br>
+          O jogador paga na e-Mola, cola o <strong>ID da transacção</strong> no jogo e recebe automaticamente (cada ID só uma vez).<br>
+          Abaixo podes ver IDs usados e, se precisares, entregar manualmente.
+        </p>
+      </div>
+
+      <div class="form-box">
+        <h3><i class="fas fa-gamepad"></i> Homejub — entregar item da loja</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:12px;">
+          Coloca o e-mail do jogador (o mesmo que ele pôs no ID da transacção e-Mola), escolhe o item e clica em Entregar.
+        </p>
+        <div class="form-grid">
+          <div class="form-row">
+            <label>E-mail / ID do utilizador</label>
+            <input type="text" id="pm-hj-email" placeholder="email@exemplo.com">
+          </div>
+          <div class="form-row">
+            <label>Item da loja</label>
+            <select id="pm-hj-item">
+              <option value="moedas30">30 moedas — 2 MT</option>
+              <option value="moedas70">70 moedas — 4 MT</option>
+              <option value="ajudas20">20 ajudas — 2 MT</option>
+              <option value="jogadas10">10 jogadas extra — 2 MT</option>
+              <option value="jogadasOferta20">20 jogadas (nível actual / extra) — 2 MT</option>
+              <option value="bonus">Bónus (6 vidas + 70 🪙 + 6 ajudas + 10 jogadas) — 5 MT</option>
+              <option value="bonus2">Bónus grande (8 vidas + 100 🪙 + 20 ajudas + 20 jogadas) — 10 MT</option>
+              <option value="desbloqueio10">+10 níveis desbloqueados — 15 MT</option>
+              <option value="ajudasInfinitas">Ajudas infinitas — 50 MT</option>
+              <option value="moedasInfinitas">Moedas infinitas — 100 MT</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <label>Nota (opcional — ref. e-Mola)</label>
+          <input type="text" id="pm-hj-nota" placeholder="Ex: ref e-Mola ou valor visto no SMS">
+        </div>
+        <button type="button" class="btn-verde" onclick="entregarHomejubManual()">✅ Entregar compra Homejub</button>
+        <div id="pm-hj-msg" style="margin-top:10px;font-size:13px;color:#888;"></div>
+      </div>
+
+      <div class="form-box">
+        <h3><i class="fas fa-dharmachakra"></i> Roleta — entregar giros</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:12px;">
+          Após o pagamento em e-Mola, coloca o e-mail e quantos giros (ou meticais pagos — converte automaticamente).
+        </p>
+        <div class="form-grid">
+          <div class="form-row">
+            <label>E-mail / ID do utilizador</label>
+            <input type="text" id="pm-rt-email" placeholder="email@exemplo.com">
+          </div>
+          <div class="form-row">
+            <label>Giros a entregar</label>
+            <input type="number" id="pm-rt-giros" min="1" step="1" placeholder="Ex: 15">
+          </div>
+        </div>
+        <div class="form-grid">
+          <div class="form-row">
+            <label>OU meticais pagos (opcional)</label>
+            <input type="number" id="pm-rt-mt" min="2" step="1" placeholder="Ex: 2 → 15 giros">
+          </div>
+          <div class="form-row">
+            <label>Nota (opcional)</label>
+            <input type="text" id="pm-rt-nota" placeholder="Ref. e-Mola">
+          </div>
+        </div>
+        <p style="font-size:11px;color:#666;margin-bottom:10px;">Se preencheres MT e deixares giros vazio: 2 MT → 15 giros · 5 MT → 40 · 10 MT → 85 (mesma lógica da loja da roleta).</p>
+        <button type="button" class="btn-verde" onclick="entregarRoletaManual()">✅ Entregar giros Roleta</button>
+        <div id="pm-rt-msg" style="margin-top:10px;font-size:13px;color:#888;"></div>
+      </div>
+
+
+      <div class="form-box">
+        <h3><i class="fas fa-inbox"></i> Pedidos «Já paguei» (pendentes)</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:10px;">Utilizadores que tocaram em «Já paguei» no jogo. Confirma no e-Mola e entrega acima.</p>
+        <button type="button" class="btn-cinza" style="margin-bottom:10px;" onclick="carregarPedidosManuaisPendentes()">🔄 Atualizar lista</button>
+        <div class="tabela-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Jogo</th>
+                <th>E-mail</th>
+                <th>Item / Giros</th>
+                <th>Data</th>
+                <th>Acção</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-pedidos-manuais">
+              <tr><td colspan="6" class="vazio">Clica em Atualizar.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+
+      <div class="form-box" style="border:1px solid rgba(255,193,7,0.35);">
+        <h3><i class="fas fa-fingerprint"></i> Compras nos jogos (IDs e-Mola)</h3>
+        <p style="font-size:12px;color:#ccc;margin-bottom:10px;line-height:1.45;">
+          Quem pagou no jogo e o <strong>ID da transacção</strong> usado. Cada ID só funciona uma vez.<br>
+          <strong>Confirma</strong> o ID quando verificares o pagamento real. Enquanto não confirmares, fica em <em>pendentes</em>.
+          Se for <strong>falso</strong>, bloqueia o utilizador.
+        </p>
+        <button type="button" class="btn-cinza" style="margin-bottom:12px;" onclick="carregarEmolaIdsUsados()">🔄 Atualizar listas</button>
+
+        <h3 style="color:#ffc107;font-size:14px;margin:6px 0 8px;"><i class="fas fa-hourglass-half"></i> Pendentes — à espera da tua confirmação <span class="badge" id="badge-emola-pend" style="display:none;background:#ffc107;color:#000;">0</span></h3>
+        <div class="busca"><input type="text" id="busca-emola-pend" placeholder="Filtrar pendentes (ID ou e-mail)..." oninput="filtrarEmolaPend()"></div>
+        <div class="tabela-wrap" style="margin-bottom:18px;">
+          <table>
+            <thead>
+              <tr><th>#</th><th>ID transacção</th><th>E-mail</th><th>Jogo</th><th>Item</th><th>Data</th><th>Acção</th></tr>
+            </thead>
+            <tbody id="tbody-emola-pend"><tr><td colspan="7" class="vazio">Clica em Atualizar listas.</td></tr></tbody>
+          </table>
+        </div>
+
+        <h3 style="color:#00e676;font-size:14px;margin:6px 0 8px;"><i class="fas fa-check-circle"></i> Confirmados por ti</h3>
+        <div class="busca"><input type="text" id="busca-emola-ok" placeholder="Filtrar confirmados (ID ou e-mail)..." oninput="filtrarEmolaOk()"></div>
+        <div class="tabela-wrap">
+          <table>
+            <thead>
+              <tr><th>#</th><th>ID transacção</th><th>E-mail</th><th>Jogo</th><th>Item</th><th>Data</th><th>Confirmado em</th><th>Acção</th></tr>
+            </thead>
+            <tbody id="tbody-emola-ok"><tr><td colspan="8" class="vazio">Ainda nenhum ID confirmado.</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="form-box" style="border:1px solid rgba(255,107,107,0.4);">
+        <h3><i class="fas fa-ban"></i> Utilizadores bloqueados nos jogos</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:10px;">
+          Bloqueados não entram em Online / Homejub / Roleta. Mensagem: contactar agente
+          <a href="https://wa.link/64y9y2" target="_blank" style="color:#00e676;">WhatsApp</a>
+          com captura do pagamento. Conta pode ser apagada em 2 dias se não regularizar.
+        </p>
+        <div class="form-grid">
+          <div class="form-row">
+            <label>Bloquear e-mail manualmente</label>
+            <input type="email" id="blk-jogos-email" placeholder="email@exemplo.com">
+          </div>
+          <div class="form-row">
+            <label>Motivo (opcional)</label>
+            <input type="text" id="blk-jogos-motivo" placeholder="Ex: ID e-Mola falso">
+          </div>
+        </div>
+        <button type="button" class="btn-vermelho" style="width:100%;padding:10px;border-radius:10px;margin-bottom:12px;" onclick="bloquearJogosEmailManual()">🚫 Bloquear jogos deste e-mail</button>
+        <button type="button" class="btn-cinza" style="margin-bottom:10px;" onclick="carregarBloqueadosJogos()">🔄 Atualizar bloqueados</button>
+        <div class="tabela-wrap">
+          <table>
+            <thead>
+              <tr><th>#</th><th>Nome</th><th>E-mail</th><th>Motivo</th><th>Desde</th><th>Acção</th></tr>
+            </thead>
+            <tbody id="tbody-bloqueados-jogos"><tr><td colspan="6" class="vazio">Nenhum bloqueado.</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="form-box">
+        <h3><i class="fas fa-history"></i> Histórico de entregas manuais</h3>
+        <div class="busca">
+          <input type="text" id="pm-busca" placeholder="Filtrar por e-mail..." oninput="filtrarPagManualHist()">
+        </div>
+        <div class="tabela-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Jogo</th>
+                <th>E-mail</th>
+                <th>Item / Giros</th>
+                <th>ID e-Mola</th>
+                <th>Data</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-pag-manual">
+              <tr><td colspan="6" class="vazio">Ainda sem entregas.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+
     <div class="painel" id="painel-manutencao">
       <style>
         @property --manang { syntax: '<angle>'; initial-value: 0deg; inherits: true; }
@@ -1966,6 +2155,11 @@ function mostrarAviso(txt) {
       }
       if (nome === 'termos') {
         try { carregarTermosAdmin(); } catch (e) {}
+      }
+      if (nome === 'pag-manual') {
+        try { carregarPagManualHist(); } catch (e) {}
+        try { carregarEmolaIdsUsados(); } catch (e) {}
+        try { carregarBloqueadosJogos(); } catch (e) {}
       }
 
       try {
@@ -6608,6 +6802,395 @@ async function enviarNotifAdmin() {
         manSet('❌ Erro ao guardar: ' + (e.message || e) + ' — confirma a regra Firebase da coleção config.', '#ff8a80');
       }
     }
+
+
+    /* ===== Pagamento manual e-Mola + bloqueio de jogos ===== */
+    var ITENS_HJ_CREDITO = {
+      moedas30: { moedasTotais: 30 },
+      moedas70: { moedasTotais: 70 },
+      ajudas20: { ajudasDisponiveis: 20 },
+      jogadas10: { jogadasExtraArmazenadas: 10 },
+      jogadasOferta20: { jogadasExtraArmazenadas: 20 },
+      bonus: { vidas: 6, moedasTotais: 70, ajudasDisponiveis: 6, jogadasExtraArmazenadas: 10 },
+      bonus2: { vidas: 8, moedasTotais: 100, ajudasDisponiveis: 20, jogadasExtraArmazenadas: 20 },
+      desbloqueio10: { nivelDesbloqueadoDelta: 10 },
+      ajudasInfinitas: { ajudasInfinitas: true },
+      moedasInfinitas: { moedasInfinitas: true }
+    };
+
+    async function encontrarUserRefPorEmail(email) {
+      email = String(email || '').trim().toLowerCase();
+      if (!email) return null;
+      var snap = await db.collection('usuarios').where('email', '==', email).limit(1).get();
+      if (!snap.empty) return snap.docs[0].ref;
+      // fallback: doc id = email
+      var d = await db.collection('usuarios').doc(email).get();
+      if (d.exists) return d.ref;
+      return null;
+    }
+
+    async function carregarEmolaIdsUsados() {
+      var tPend = document.getElementById('tbody-emola-pend');
+      var tOk = document.getElementById('tbody-emola-ok');
+      var badge = document.getElementById('badge-emola-pend');
+      if (tPend) tPend.innerHTML = '<tr><td colspan="7" class="vazio">A carregar...</td></tr>';
+      if (tOk) tOk.innerHTML = '<tr><td colspan="8" class="vazio">A carregar...</td></tr>';
+      try {
+        var snap;
+        try {
+          snap = await db.collection('emolaTransacoes').orderBy('createdAt', 'desc').limit(250).get();
+        } catch (e1) {
+          snap = await db.collection('emolaTransacoes').limit(250).get();
+        }
+        var lista = [];
+        snap.forEach(function (doc) {
+          var d = doc.data() || {};
+          d._id = doc.id;
+          lista.push(d);
+        });
+        lista.sort(function (a, b) {
+          return String(b.createdAt || '').localeCompare(String(a.createdAt || ''));
+        });
+        var pend = lista.filter(function (d) { return d.confirmadoAdmin !== true; });
+        var ok = lista.filter(function (d) { return d.confirmadoAdmin === true; });
+
+        if (badge) {
+          if (pend.length > 0) {
+            badge.style.display = 'inline';
+            badge.textContent = String(pend.length);
+          } else {
+            badge.style.display = 'none';
+          }
+        }
+
+        function linhaPend(d, i) {
+          var em = String(d.email || '').toLowerCase();
+          var emSafe = em.replace(/'/g, "\'");
+          var idTx = String(d._id || '');
+          var idSafe = idTx.replace(/'/g, "\'");
+          return '<tr data-busca-emola-pend="' + escHtml((em + ' ' + idTx + ' ' + (d.item || '') + ' ' + (d.jogo || '')).toLowerCase()) + '">' +
+            '<td>' + (i + 1) + '</td>' +
+            '<td style="font-family:monospace;font-size:11px;color:#ffcf4d;">' + escHtml(idTx) + '</td>' +
+            '<td>' + escHtml(em || '—') + '</td>' +
+            '<td>' + escHtml(d.jogo || '—') + '</td>' +
+            '<td style="font-size:12px;">' + escHtml(d.descricao || d.item || '—') + (d.mt ? ' <span style="color:#888;">(' + d.mt + ' MT)</span>' : '') + '</td>' +
+            '<td style="font-size:11px;white-space:nowrap;">' + escHtml(String(d.createdAt || '').slice(0, 19).replace('T', ' ')) + '</td>' +
+            '<td style="white-space:nowrap;">' +
+              '<button type="button" class="btn-verde" style="width:auto;padding:5px 10px;font-size:11px;margin:2px;" onclick="confirmarEmolaId(\'' + idSafe + '\')">✅ Confirmar</button> ' +
+              (em ? '<button type="button" class="btn-vermelho" onclick="bloquearJogosEmail(\'' + emSafe + '\',\'ID e-Mola suspeito: ' + idSafe + '\')">🚫 Bloquear</button>' : '') +
+            '</td></tr>';
+        }
+
+        function linhaOk(d, i) {
+          var em = String(d.email || '').toLowerCase();
+          var emSafe = em.replace(/'/g, "\'");
+          var idTx = String(d._id || '');
+          var idSafe = idTx.replace(/'/g, "\'");
+          return '<tr data-busca-emola-ok="' + escHtml((em + ' ' + idTx + ' ' + (d.item || '') + ' ' + (d.jogo || '')).toLowerCase()) + '">' +
+            '<td>' + (i + 1) + '</td>' +
+            '<td style="font-family:monospace;font-size:11px;color:#00e676;">' + escHtml(idTx) + '</td>' +
+            '<td>' + escHtml(em || '—') + '</td>' +
+            '<td>' + escHtml(d.jogo || '—') + '</td>' +
+            '<td style="font-size:12px;">' + escHtml(d.descricao || d.item || '—') + (d.mt ? ' <span style="color:#888;">(' + d.mt + ' MT)</span>' : '') + '</td>' +
+            '<td style="font-size:11px;white-space:nowrap;">' + escHtml(String(d.createdAt || '').slice(0, 19).replace('T', ' ')) + '</td>' +
+            '<td style="font-size:11px;white-space:nowrap;">' + escHtml(String(d.confirmadoEm || '').slice(0, 19).replace('T', ' ') || '—') + '</td>' +
+            '<td style="white-space:nowrap;">' +
+              '<button type="button" class="btn-laranja" style="width:auto;padding:5px 8px;font-size:11px;" onclick="desconfirmarEmolaId(\'' + idSafe + '\')">↩ Pendente</button> ' +
+              (em ? '<button type="button" class="btn-vermelho" onclick="bloquearJogosEmail(\'' + emSafe + '\',\'ID e-Mola suspeito: ' + idSafe + '\')">🚫</button>' : '') +
+            '</td></tr>';
+        }
+
+        if (tPend) {
+          if (!pend.length) tPend.innerHTML = '<tr><td colspan="7" class="vazio">Nenhum ID pendente — tudo confirmado ou ainda sem compras.</td></tr>';
+          else tPend.innerHTML = pend.map(linhaPend).join('');
+        }
+        if (tOk) {
+          if (!ok.length) tOk.innerHTML = '<tr><td colspan="8" class="vazio">Ainda nenhum ID confirmado por ti.</td></tr>';
+          else tOk.innerHTML = ok.map(linhaOk).join('');
+        }
+      } catch (e) {
+        if (tPend) tPend.innerHTML = '<tr><td colspan="7" class="vazio">Erro: ' + escHtml(e.message || e) + '</td></tr>';
+        if (tOk) tOk.innerHTML = '<tr><td colspan="8" class="vazio">Erro</td></tr>';
+      }
+    }
+
+    function filtrarEmolaPend() {
+      var q = (document.getElementById('busca-emola-pend') && document.getElementById('busca-emola-pend').value || '').trim().toLowerCase();
+      var tb = document.getElementById('tbody-emola-pend');
+      if (!tb) return;
+      tb.querySelectorAll('tr[data-busca-emola-pend]').forEach(function (tr) {
+        tr.style.display = (!q || (tr.getAttribute('data-busca-emola-pend') || '').indexOf(q) !== -1) ? '' : 'none';
+      });
+    }
+
+    function filtrarEmolaOk() {
+      var q = (document.getElementById('busca-emola-ok') && document.getElementById('busca-emola-ok').value || '').trim().toLowerCase();
+      var tb = document.getElementById('tbody-emola-ok');
+      if (!tb) return;
+      tb.querySelectorAll('tr[data-busca-emola-ok]').forEach(function (tr) {
+        tr.style.display = (!q || (tr.getAttribute('data-busca-emola-ok') || '').indexOf(q) !== -1) ? '' : 'none';
+      });
+    }
+
+    // compat filtro antigo (se algum botão ainda chamar)
+    function filtrarEmolaIds() {
+      filtrarEmolaPend();
+      filtrarEmolaOk();
+    }
+
+    async function confirmarEmolaId(txId) {
+      txId = String(txId || '').trim();
+      if (!txId) return;
+      if (!confirm('Confirmar que este ID e-Mola é válido?\n' + txId)) return;
+      try {
+        await db.collection('emolaTransacoes').doc(txId).set({
+          confirmadoAdmin: true,
+          confirmadoEm: new Date().toISOString()
+        }, { merge: true });
+        if (typeof mostrarAviso === 'function') mostrarAviso('ID confirmado: ' + txId);
+        carregarEmolaIdsUsados();
+      } catch (e) {
+        alert('Erro: ' + (e.message || e));
+      }
+    }
+
+    async function desconfirmarEmolaId(txId) {
+      txId = String(txId || '').trim();
+      if (!txId) return;
+      if (!confirm('Voltar a pôr este ID como pendente?\n' + txId)) return;
+      try {
+        await db.collection('emolaTransacoes').doc(txId).set({
+          confirmadoAdmin: false,
+          confirmadoEm: firebase.firestore.FieldValue.delete()
+        }, { merge: true });
+        if (typeof mostrarAviso === 'function') mostrarAviso('ID voltou a pendentes: ' + txId);
+        carregarEmolaIdsUsados();
+      } catch (e) {
+        alert('Erro: ' + (e.message || e));
+      }
+    }
+
+    async function carregarPagManualHist() {
+      var tbody = document.getElementById('tbody-pag-manual');
+      if (!tbody) return;
+      tbody.innerHTML = '<tr><td colspan="6" class="vazio">A carregar...</td></tr>';
+      try {
+        var snap;
+        try {
+          snap = await db.collection('pagamentosManuais').orderBy('createdAt', 'desc').limit(150).get();
+        } catch (e1) {
+          snap = await db.collection('pagamentosManuais').limit(150).get();
+        }
+        var lista = [];
+        snap.forEach(function (doc) {
+          var d = doc.data() || {};
+          d._id = doc.id;
+          lista.push(d);
+        });
+        lista.sort(function (a, b) {
+          return String(b.createdAt || '').localeCompare(String(a.createdAt || ''));
+        });
+        if (!lista.length) {
+          tbody.innerHTML = '<tr><td colspan="6" class="vazio">Ainda sem entregas manuais.</td></tr>';
+          return;
+        }
+        var html = '';
+        lista.forEach(function (d, i) {
+          html += '<tr data-busca-pm="' + escHtml((d.email || '') + ' ' + (d.item || '') + ' ' + (d.txid || '')).toLowerCase() + '">' +
+            '<td>' + (i + 1) + '</td>' +
+            '<td>' + escHtml(d.jogo || '—') + '</td>' +
+            '<td>' + escHtml(d.email || '—') + '</td>' +
+            '<td style="font-size:12px;">' + escHtml(d.descricao || d.item || (d.giros ? (d.giros + ' giros') : '—')) + '</td>' +
+            '<td style="font-family:monospace;font-size:11px;">' + escHtml(d.txid || d.nota || '—') + '</td>' +
+            '<td style="font-size:11px;white-space:nowrap;">' + escHtml(String(d.createdAt || '').slice(0, 19).replace('T', ' ')) + '</td>' +
+            '</tr>';
+        });
+        tbody.innerHTML = html;
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="6" class="vazio">Erro: ' + escHtml(e.message || e) + '</td></tr>';
+      }
+    }
+
+    function filtrarPagManualHist() {
+      var q = (document.getElementById('pm-busca') && document.getElementById('pm-busca').value || '').trim().toLowerCase();
+      var tb = document.getElementById('tbody-pag-manual');
+      if (!tb) return;
+      tb.querySelectorAll('tr[data-busca-pm]').forEach(function (tr) {
+        tr.style.display = (!q || (tr.getAttribute('data-busca-pm') || '').indexOf(q) !== -1) ? '' : 'none';
+      });
+    }
+
+    async function entregarHomejubManual() {
+      var email = (document.getElementById('pm-hj-email').value || '').trim().toLowerCase();
+      var item = document.getElementById('pm-hj-item').value;
+      var nota = (document.getElementById('pm-hj-nota').value || '').trim();
+      if (!email || email.indexOf('@') === -1) return alert('E-mail inválido.');
+      if (!item) return alert('Escolhe o item.');
+      if (!confirm('Entregar "' + item + '" a ' + email + '?')) return;
+      try {
+        var ref = db.collection('jogoEstado').doc(email);
+        var def = ITENS_HJ_CREDITO[item] || {};
+        var updates = { ultimaAtualizacao: new Date().toISOString() };
+        Object.keys(def).forEach(function (k) {
+          if (k === 'nivelDesbloqueadoDelta') {
+            // handled below with get
+          } else if (typeof def[k] === 'boolean') {
+            updates[k] = def[k];
+          } else if (typeof def[k] === 'number') {
+            updates[k] = firebase.firestore.FieldValue.increment(def[k]);
+          }
+        });
+        if (def.nivelDesbloqueadoDelta) {
+          var snap = await ref.get();
+          var cur = snap.exists ? (snap.data().nivelDesbloqueado || 1) : 1;
+          updates.nivelDesbloqueado = Math.min(300, cur + def.nivelDesbloqueadoDelta);
+        }
+        await ref.set(updates, { merge: true });
+        await db.collection('pagamentosManuais').add({
+          email: email,
+          jogo: 'homejub',
+          item: item,
+          descricao: item,
+          nota: nota,
+          via: 'admin',
+          createdAt: new Date().toISOString()
+        });
+        if (typeof mostrarAviso === 'function') mostrarAviso('Homejub: item entregue a ' + email);
+        carregarPagManualHist();
+      } catch (e) {
+        alert('Erro: ' + (e.message || e));
+      }
+    }
+
+    async function entregarRoletaManual() {
+      var email = (document.getElementById('pm-rt-email').value || '').trim().toLowerCase();
+      var giros = parseInt(document.getElementById('pm-rt-giros').value, 10) || 0;
+      var nota = (document.getElementById('pm-rt-nota') && document.getElementById('pm-rt-nota').value || '').trim();
+      if (!email || email.indexOf('@') === -1) return alert('E-mail inválido.');
+      if (giros < 1) return alert('Quantidade de giros inválida.');
+      if (!confirm('Entregar ' + giros + ' giros a ' + email + '?')) return;
+      try {
+        var ref = db.collection('usuarios').where('email', '==', email).limit(1);
+        var snap = await ref.get();
+        if (snap.empty) {
+          // try jogoEstado / roleta field on usuarios by doc
+          var uref = await encontrarUserRefPorEmail(email);
+          if (!uref) return alert('Utilizador não encontrado.');
+          await uref.update({
+            roletaGiros: firebase.firestore.FieldValue.increment(giros),
+            ultimaAtualizacao: new Date().toISOString()
+          });
+        } else {
+          await snap.docs[0].ref.update({
+            roletaGiros: firebase.firestore.FieldValue.increment(giros),
+            ultimaAtualizacao: new Date().toISOString()
+          });
+        }
+        await db.collection('pagamentosManuais').add({
+          email: email,
+          jogo: 'roleta',
+          giros: giros,
+          item: giros + ' giros',
+          nota: nota,
+          via: 'admin',
+          createdAt: new Date().toISOString()
+        });
+        if (typeof mostrarAviso === 'function') mostrarAviso('Roleta: ' + giros + ' giros para ' + email);
+        carregarPagManualHist();
+      } catch (e) {
+        alert('Erro: ' + (e.message || e));
+      }
+    }
+
+    async function bloquearJogosEmail(email, motivo) {
+      email = String(email || '').trim().toLowerCase();
+      if (!email) return;
+      motivo = motivo || 'ID de transacção e-Mola falso / abuso';
+      if (!confirm('Bloquear jogos para ' + email + '?\nO utilizador deixa de entrar em Online/Homejub/Roleta.')) return;
+      try {
+        var uref = await encontrarUserRefPorEmail(email);
+        if (!uref) return alert('Utilizador não encontrado: ' + email);
+        await uref.set({
+          jogosBloqueado: true,
+          jogosBloqueadoEm: new Date().toISOString(),
+          jogosBloqueadoMotivo: motivo,
+          ultimaAtualizacao: new Date().toISOString()
+        }, { merge: true });
+        if (typeof mostrarAviso === 'function') mostrarAviso('Jogos bloqueados para ' + email);
+        carregarBloqueadosJogos();
+      } catch (e) {
+        alert('Erro: ' + (e.message || e));
+      }
+    }
+
+    function bloquearJogosEmailManual() {
+      var email = (document.getElementById('blk-jogos-email').value || '').trim();
+      var motivo = (document.getElementById('blk-jogos-motivo').value || '').trim() || 'Bloqueio manual (admin)';
+      bloquearJogosEmail(email, motivo);
+    }
+
+    async function desbloquearJogosEmail(email) {
+      email = String(email || '').trim().toLowerCase();
+      if (!email) return;
+      if (!confirm('Desbloquear jogos para ' + email + '?')) return;
+      try {
+        var uref = await encontrarUserRefPorEmail(email);
+        if (!uref) return alert('Utilizador não encontrado.');
+        await uref.set({
+          jogosBloqueado: false,
+          jogosBloqueadoEm: firebase.firestore.FieldValue.delete(),
+          jogosBloqueadoMotivo: firebase.firestore.FieldValue.delete(),
+          ultimaAtualizacao: new Date().toISOString()
+        }, { merge: true });
+        if (typeof mostrarAviso === 'function') mostrarAviso('Jogos desbloqueados: ' + email);
+        carregarBloqueadosJogos();
+      } catch (e) {
+        alert('Erro: ' + (e.message || e));
+      }
+    }
+
+    async function carregarBloqueadosJogos() {
+      var tbody = document.getElementById('tbody-bloqueados-jogos');
+      if (!tbody) return;
+      tbody.innerHTML = '<tr><td colspan="6" class="vazio">A carregar...</td></tr>';
+      try {
+        var lista = [];
+        try {
+          var snap = await db.collection('usuarios').where('jogosBloqueado', '==', true).limit(200).get();
+          snap.forEach(function (doc) {
+            var d = doc.data() || {};
+            d._id = doc.id;
+            lista.push(d);
+          });
+        } catch (e1) {
+          // fallback: from todosUsers
+          (todosUsers || []).forEach(function (u) {
+            if (u.jogosBloqueado === true) lista.push(u);
+          });
+        }
+        if (!lista.length) {
+          tbody.innerHTML = '<tr><td colspan="6" class="vazio">Nenhum utilizador bloqueado nos jogos.</td></tr>';
+          return;
+        }
+        var html = '';
+        lista.forEach(function (u, i) {
+          var em = String(u.email || u._id || '').toLowerCase();
+          var emSafe = em.replace(/'/g, "\\'");
+          html += '<tr>' +
+            '<td>' + (i + 1) + '</td>' +
+            '<td>' + escHtml(u.nome || '—') + '</td>' +
+            '<td>' + escHtml(em) + '</td>' +
+            '<td style="font-size:12px;">' + escHtml(u.jogosBloqueadoMotivo || '—') + '</td>' +
+            '<td style="font-size:11px;">' + escHtml(String(u.jogosBloqueadoEm || '').slice(0, 19).replace('T', ' ')) + '</td>' +
+            '<td><button type="button" class="btn-verde" style="width:auto;padding:6px 10px;font-size:11px;" onclick="desbloquearJogosEmail(\'' + emSafe + '\')">✅ Desbloquear</button></td>' +
+            '</tr>';
+        });
+        tbody.innerHTML = html;
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="6" class="vazio">Erro: ' + escHtml(e.message || e) + '</td></tr>';
+      }
+    }
+
 
     // carregarTudo() agora é chamado pelo onAuthStateChanged, após login confirmado.
   </script>

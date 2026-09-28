@@ -410,6 +410,31 @@
   #toast.mostrar{transform:translateX(-50%) translateY(0);}
 
   canvas{touch-action:none;}
+
+  .pay-metodos{display:flex;gap:10px;margin:12px 0;width:100%;}
+  .pay-metodo{flex:1;position:relative;border-radius:16px;padding:12px 8px;border:2px solid rgba(255,255,255,0.12);background:rgba(17,21,29,0.95);text-align:center;}
+  .pay-metodo.ativo{border-color:var(--verde);box-shadow:0 0 18px rgba(34,255,153,0.3);}
+  .pay-metodo.indisponivel{opacity:0.55;filter:grayscale(0.35);}
+  .pay-metodo img{width:48px;height:48px;object-fit:contain;border-radius:10px;background:#fff;padding:3px;}
+  .pay-metodo .pm-nome{font-size:12px;font-weight:800;margin-top:6px;color:#fff;}
+  .pay-metodo .pm-tag{position:absolute;top:5px;right:5px;font-size:9px;font-weight:800;padding:2px 6px;border-radius:99px;}
+  .pay-metodo.indisponivel .pm-tag{background:#c62828;color:#fff;}
+  .pay-metodo:not(.indisponivel) .pm-tag{background:var(--verde);color:#04140a;}
+  .pay-emola-box{text-align:left;font-size:12.5px;line-height:1.5;color:#c5cdd8;background:rgba(34,255,153,0.08);border:1px solid rgba(34,255,153,0.35);border-radius:14px;padding:12px;margin:8px 0;}
+  .pay-emola-box .num-emola{font-size:20px;font-weight:900;color:var(--ouro);display:block;margin:4px 0 8px;letter-spacing:1px;}
+  .pay-txid{width:100%;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,0.12);background:var(--painel-2);color:#fff;font-size:14px;font-weight:700;text-align:center;margin-top:6px;}
+  .pay-txid:focus{outline:none;border-color:var(--verde);}
+
+
+.btn-copiar-num{
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  margin-top:6px;padding:8px 14px;border-radius:12px;border:none;cursor:pointer;
+  font-family:inherit;font-weight:800;font-size:12.5px;
+  background:linear-gradient(90deg,#3b9eff,#2ee6a0);color:#06080e;
+}
+.btn-copiar-num:active{opacity:0.85;transform:scale(0.98);}
+.num-emola-wrap{text-align:center;margin:6px 0 10px;}
+
 </style>
 </head>
 <body>
@@ -419,6 +444,7 @@
   <div class="titulo-topo">
     <h1>Roleta da Sorte</h1>
     <span>Gira e ganha pontos, meticais e mais giros</span>
+    <div id="roleta-conta-email" style="font-size:11px;margin-top:3px;font-weight:700;color:#22FF99;word-break:break-all;"></div>
   </div>
 </div>
 
@@ -591,22 +617,74 @@
 </div>
 
 
-<!-- Checkout M-Pesa Roleta -->
+<!-- Checkout e-Mola Roleta -->
 <div id="overlay-checkout-roleta" role="dialog" aria-modal="true">
   <div class="ck-caixa">
     <div class="ck-icone">📱</div>
-    <h2>Pagar com M-Pesa</h2>
+    <h2>Pagamento</h2>
     <p class="ck-desc" id="ck-descricao">Compra de giros</p>
 
     <div class="ck-passo ativo" id="ck-passo-form">
-      <label class="ck-label" for="ck-telefone">Número M-Pesa</label>
-      <input class="ck-input" id="ck-telefone" type="tel" inputmode="tel" placeholder="+25884XXXXXXX" autocomplete="tel">
-      <div class="ck-hint">Formato: +258 seguido de 9 dígitos</div>
+      <div class="pay-metodos">
+        <div class="pay-metodo indisponivel">
+          <span class="pm-tag">Indisponível</span>
+          <img src="https://i.supaimg.com/9447b725-0914-4700-9681-fccbd9cb5399/5d4993e5-cf0e-44b5-b26f-0e42592e548c.png" alt="M-Pesa">
+          <div class="pm-nome">M-Pesa</div>
+          <div style="font-size:9px;color:#ff8a80;margin-top:2px;">Automático · off</div>
+        </div>
+        <div class="pay-metodo ativo">
+          <span class="pm-tag">Manual</span>
+          <img src="https://i.supaimg.com/9447b725-0914-4700-9681-fccbd9cb5399/5cbfa80f-ae69-4b47-a4ac-25495bf0e896.png" alt="e-Mola">
+          <div class="pm-nome">e-Mola</div>
+          <div style="font-size:9px;color:#22FF99;margin-top:2px;">Manual · activo</div>
+        </div>
+      </div>
+      <div class="pay-emola-box">
+        <div style="margin-bottom:10px;padding:8px 10px;border-radius:10px;background:rgba(255,107,107,0.12);border:1px solid rgba(255,107,107,0.35);font-size:12px;color:#ffb4b4;line-height:1.45;">
+          <strong style="color:#ff6b6b;">⚠️ Aviso:</strong> Quem colocar <strong>ID de transacção falso</strong> terá a <strong>conta apagada</strong> no Desafio MOZ.
+        </div>
+        <div style="font-size:12px;color:#8a93a6;margin-bottom:8px;line-height:1.4;">
+          <b>M-Pesa</b> = pagamento <b>automático</b> (indisponível agora).<br>
+          <b style="color:#22FF99;">e-Mola</b> = pagamento <b>manual</b> (activo).
+        </div>
+        <strong style="color:#22FF99;">1.</strong> Envia o pagamento (valor exacto) para e-Mola:
+        <div class="num-emola-wrap">
+          <span class="num-emola" id="num-emola-txt">869517893</span>
+          <button type="button" class="btn-copiar-num" id="btn-copiar-emola" onclick="copiarNumeroEmola()">📋 Copiar número</button>
+        </div>
+        <strong style="color:#22FF99;">2.</strong> Depois de pagar, copia o <b>ID da transacção</b> (ex: PP260927.0652.q29322)<br>
+        <strong style="color:#22FF99;">3.</strong> Cola o ID aqui e confirma para receber os giros.
+      </div>
+      <div class="ck-hint" id="ck-email-hint" style="text-align:center;"></div>
+      <input type="text" class="pay-txid" id="ck-txid" placeholder="Cola aqui o ID da transacção e-Mola" autocomplete="off">
       <div class="ck-btns">
-        <button type="button" class="ck-btn primario" id="ck-confirmar">Confirmar e pagar</button>
+        <button type="button" class="ck-btn primario" id="ck-confirmar">Confirmar e receber giros</button>
         <button type="button" class="ck-btn secundario" id="ck-cancelar">Cancelar</button>
       </div>
     </div>
+
+    <div class="ck-passo" id="ck-passo-aguardar">
+      <div class="ck-aguardar-ico">⏳</div>
+      <p class="ck-status" id="ck-status-txt">A validar o ID…</p>
+    </div>
+
+    <div class="ck-passo" id="ck-passo-sucesso">
+      <div class="ck-sucesso-ico">✅</div>
+      <p class="ck-status" id="ck-sucesso-txt" style="color:var(--verde);font-weight:800">Giros entregues!</p>
+      <button type="button" class="ck-btn verde" id="ck-fechar-ok">Continuar</button>
+    </div>
+
+    <div class="ck-passo" id="ck-passo-erro">
+      <div class="ck-erro-ico">❌</div>
+      <p class="ck-status" id="ck-erro-txt">ID inválido ou já usado.</p>
+      <div class="ck-btns">
+        <button type="button" class="ck-btn primario" id="ck-tentar-de-novo">Tentar de novo</button>
+        <button type="button" class="ck-btn secundario" id="ck-fechar-erro">Fechar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 
     <div class="ck-passo" id="ck-passo-aguardar">
       <div class="ck-aguardar-ico">⏳</div>
@@ -864,6 +942,8 @@ async function carregarContaFirebase(){
       var nome = d.nome || localStorage.getItem('nomeUtilizador') || localStorage.getItem('nome') || EMAIL_UTILIZADOR.split('@')[0];
       var elTopo = document.querySelector('.titulo-topo span');
       if(elTopo) elTopo.textContent = 'Conta: ' + nome + ' · Gira e ganha';
+      var elEmail = document.getElementById('roleta-conta-email');
+      if(elEmail) elEmail.textContent = EMAIL_UTILIZADOR || '';
     } catch(e1){}
     if(d.roletaUltimoGiroGratis) estado.ultimoGiroGratis = d.roletaUltimoGiroGratis;
     // histórico local complementa (NÃO sobrescrever giros do servidor com local antigo)
@@ -1200,31 +1280,49 @@ function ckFechar(){
   document.getElementById('overlay-checkout-roleta').classList.remove('ativo');
 }
 
+
+function copiarNumeroEmola(){
+  var num = '869517893';
+  function ok(){
+    try {
+      var b = document.getElementById('btn-copiar-emola');
+      if(b){ var old = b.textContent; b.textContent = '✅ Copiado!'; setTimeout(function(){ b.textContent = old || '📋 Copiar número'; }, 1600); }
+    } catch(e){}
+    try { if(typeof mostrarToast === 'function') mostrarToast('Número copiado: ' + num); } catch(e){}
+    try { if(typeof mostrarToastSucesso === 'function') mostrarToastSucesso('📋 Número copiado!\n' + num); } catch(e){}
+  }
+  try {
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(num).then(ok).catch(function(){
+        var ta = document.createElement('textarea');
+        ta.value = num; document.body.appendChild(ta); ta.select();
+        try { document.execCommand('copy'); } catch(e){}
+        document.body.removeChild(ta); ok();
+      });
+    } else {
+      var ta = document.createElement('textarea');
+      ta.value = num; document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); } catch(e){}
+      document.body.removeChild(ta); ok();
+    }
+  } catch(e){ ok(); }
+}
+
 function iniciarPagamentoMetical(valorMT, giros){
-  valorMT = Number(valorMT) || 0;
-  giros = Number(giros) || 0;
-  if(valorMT < 2){
-    mostrarToast('Mínimo de compra: 2 meticais.');
-    return;
-  }
-  if(giros <= 0){
-    mostrarToast('Valor inválido.');
-    return;
-  }
   var email = (localStorage.getItem('emailUtilizador') || EMAIL_UTILIZADOR || '').trim().toLowerCase();
-  if(!email || email.indexOf('@') < 0){
-    mostrarToast('Entra na conta Desafio MOZ para pagar.');
+  if(!email){
+    mostrarToast('Entra na tua conta Desafio MOZ para comprar giros.');
     return;
   }
-  ckPendente = { valorMT: valorMT, giros: giros, email: email, item: itemRoletaParaMT(valorMT) };
+  ckPendente = { valorMT: valorMT, giros: giros, email: email, item: 'giros_' + valorMT + 'mt' };
   document.getElementById('ck-descricao').innerHTML =
     'Vais receber <b>' + giros + ' giros</b> por <b>' + valorMT + ' MT</b>';
-  var guardado = '';
-  try { guardado = localStorage.getItem('telUtilizador') || localStorage.getItem('msisdnRoleta') || ''; } catch(e){}
-  document.getElementById('ck-telefone').value = guardado || '+258';
+  var hint = document.getElementById('ck-email-hint');
+  if(hint) hint.innerHTML = 'Conta: <b style="color:#22FF99">' + email + '</b>';
+  var tx = document.getElementById('ck-txid');
+  if(tx) tx.value = '';
   ckMostrarPasso('form');
   document.getElementById('overlay-checkout-roleta').classList.add('ativo');
-  setTimeout(function(){ document.getElementById('ck-telefone').focus(); }, 200);
 }
 
 function ckNormalizarTel(n){
@@ -1247,74 +1345,53 @@ document.getElementById('overlay-checkout-roleta').addEventListener('click', fun
 
 document.getElementById('ck-confirmar').addEventListener('click', async function(){
   if(!ckPendente) return;
-  var tel = ckNormalizarTel(document.getElementById('ck-telefone').value);
-  if(!/^\+258\d{9}$/.test(tel)){
-    mostrarToast('Número inválido. Usa +258XXXXXXXXX');
+  var txRaw = (document.getElementById('ck-txid') && document.getElementById('ck-txid').value) || '';
+  var txId = String(txRaw).trim().replace(/\s+/g, '').toUpperCase();
+  if(!/^PP[A-Z0-9.\-]{5,40}$/i.test(txId)){
+    mostrarToast('Cola o ID completo da transacção e-Mola (ex: PP260927.0652.q29322)');
     return;
   }
-  try { localStorage.setItem('msisdnRoleta', tel); } catch(e){}
-
   ckMostrarPasso('aguardar');
-  document.getElementById('ck-status-txt').textContent = 'A criar o pedido de pagamento…';
-  ckAProcessar = false;
-  ckTentativas = 0;
-
+  document.getElementById('ck-status-txt').textContent = 'A verificar se este ID ainda não foi usado…';
   try {
-    var resp = await fetch('/netshop-charge', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+    if (typeof db === 'undefined' || !db) throw new Error('Sem ligação ao Firebase');
+    var txRef = db.collection('emolaTransacoes').doc(txId);
+    await db.runTransaction(async function(tr){
+      var snap = await tr.get(txRef);
+      if(snap.exists) throw new Error('Este ID de transacção já foi usado. Cada ID só funciona uma vez.');
+      tr.set(txRef, {
         email: ckPendente.email,
-        msisdn: tel,
-        method: 'mpesa',
-        item: ckPendente.item,
+        item: ckPendente.item || 'giros',
+        jogo: 'roleta',
         giros: ckPendente.giros,
-        amountMT: ckPendente.valorMT
-      })
+        mt: ckPendente.valorMT,
+        createdAt: new Date().toISOString()
+      });
     });
-    var data = await resp.json().catch(function(){ return {}; });
-    if(!resp.ok || !data.id){
-      document.getElementById('ck-erro-txt').textContent = data.erro || ('Erro na cobrança (' + resp.status + ')');
-      ckMostrarPasso('erro');
-      return;
-    }
-    ckChargeId = data.id;
-    // grava pedidos no Firebase (ajuda o webhook), se existir db
-    if (typeof db !== 'undefined' && db && data.reference) {
-      try {
-        await db.collection('pedidosPorRef').doc(String(data.reference)).set({
-          email: ckPendente.email,
-          item: ckPendente.item,
-          giros: ckPendente.giros,
-          mt: ckPendente.valorMT,
-          jogo: 'roleta',
-          chargeId: data.id,
-          createdAt: new Date()
-        });
-      } catch (e) { console.error('pedidosPorRef', e); }
-    }
-    if (typeof db !== 'undefined' && db) {
-      try {
-        await db.collection('pedidosLoja').doc(String(data.id)).set({
-          email: ckPendente.email,
-          item: ckPendente.item,
-          giros: ckPendente.giros,
-          mt: ckPendente.valorMT,
-          jogo: 'roleta',
-          createdAt: new Date()
-        });
-      } catch (e) { console.error('pedidosLoja', e); }
-    }
-    document.getElementById('ck-status-txt').textContent =
-      'Confirma no telemóvel M-Pesa e espera aqui (~1 min)…';
-    if(ckPollingId) clearInterval(ckPollingId);
-    ckPollingId = setInterval(ckVerificarPagamento, 2500);
+    await creditarGirosMetical(ckPendente.valorMT, ckPendente.giros);
+    try {
+      await db.collection('pagamentosManuais').add({
+        jogo: 'roleta',
+        email: ckPendente.email,
+        item: 'giros',
+        label: ckPendente.giros + ' giros',
+        giros: ckPendente.giros,
+        mt: ckPendente.valorMT,
+        txId: txId,
+        status: 'entregue',
+        createdAt: new Date().toISOString()
+      });
+    } catch(eLog){}
+    document.getElementById('ck-sucesso-txt').textContent = '✅ +' + ckPendente.giros + ' giros na tua conta!';
+    ckMostrarPasso('sucesso');
   } catch(e){
-    console.error(e);
-    document.getElementById('ck-erro-txt').textContent = 'Falha de ligação — tenta novamente.';
+    var msg = (e && e.message) ? e.message : String(e);
+    if(/already exists|ALREADY_EXISTS/i.test(msg)) msg = 'Este ID de transacção já foi usado. Cada ID só funciona uma vez.';
+    document.getElementById('ck-erro-txt').textContent = msg;
     ckMostrarPasso('erro');
   }
 });
+
 
 function ckJaCreditadoLocal(chargeId){
   try {

@@ -463,5 +463,151 @@
 
 <script>window.__DM_PRESENCA__ = { pagina: 'online', jogando: null };</script>
 <script src="presenca.js?v=1"></script>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+<script>
+(function () {
+  if (typeof window.__DESAFIO_MOZ_FIREBASE__ === 'undefined') {
+    window.__DESAFIO_MOZ_FIREBASE__ = true;
+    var firebaseConfig = {
+      apiKey: "AIzaSyDONfggnmf9OJX_AgfvcHTRf6tsuKD5nrA",
+      authDomain: "desafio-moz-61b70.firebaseapp.com",
+      projectId: "desafio-moz-61b70",
+      storageBucket: "desafio-moz-61b70.firebasestorage.app",
+      messagingSenderId: "945658936331",
+      appId: "1:945658936331:web:7ee4b0e7de1c1daf36db0e",
+      measurementId: "G-G1DZQ1B0DB"
+    };
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    window.db = firebase.firestore();
+  }
+  var db = window.db;
+  var jogosBloqueado = false;
+
+  function emailAtual() {
+    try {
+      return String(
+        localStorage.getItem('emailUtilizador') ||
+        localStorage.getItem('userEmail') ||
+        localStorage.getItem('dm_email') ||
+        sessionStorage.getItem('emailUtilizador') || ''
+      ).trim().toLowerCase();
+    } catch (e) { return ''; }
+  }
+
+  async function verificarBloqueio() {
+    var email = emailAtual();
+    if (!email || !db) return false;
+    try {
+      var snap = await db.collection('usuarios').where('email', '==', email).limit(1).get();
+      if (!snap.empty) {
+        jogosBloqueado = snap.docs[0].data().jogosBloqueado === true;
+        return jogosBloqueado;
+      }
+      var doc = await db.collection('usuarios').doc(email).get();
+      if (doc.exists) {
+        jogosBloqueado = doc.data().jogosBloqueado === true;
+        return jogosBloqueado;
+      }
+    } catch (e) { console.warn('bloqueio jogos', e); }
+    return false;
+  }
+
+  function mostrarAvisoBloqueio() {
+    var modal = document.getElementById('modal-jogos-bloqueado');
+    if (modal) {
+      modal.classList.add('ativo');
+      return;
+    }
+    // fallback
+    alert('Os teus jogos estão bloqueados. Contacta o agente no WhatsApp: https://wa.link/64y9y2 e envia a captura do pagamento. Sem regularização a conta pode ser apagada em 2 dias.');
+  }
+
+  function fecharAvisoBloqueio() {
+    var modal = document.getElementById('modal-jogos-bloqueado');
+    if (modal) modal.classList.remove('ativo');
+  }
+
+  // Modal HTML
+  var style = document.createElement('style');
+  style.textContent =
+    '#modal-jogos-bloqueado{display:none;position:fixed;inset:0;z-index:3000;background:rgba(6,8,14,.88);align-items:center;justify-content:center;padding:18px;backdrop-filter:blur(6px)}' +
+    '#modal-jogos-bloqueado.ativo{display:flex}' +
+    '#modal-jogos-bloqueado .cx{max-width:380px;width:100%;background:linear-gradient(165deg,#1a1220,#0e1118);border:2px solid rgba(255,107,107,.55);border-radius:22px;padding:22px 18px;text-align:center;box-shadow:0 0 40px rgba(255,107,107,.25)}' +
+    '#modal-jogos-bloqueado h2{font-size:18px;font-weight:800;color:#ff8a80;margin:8px 0 10px}' +
+    '#modal-jogos-bloqueado p{font-size:13.5px;color:#c8d0e0;line-height:1.5;margin:0 0 10px}' +
+    '#modal-jogos-bloqueado a.wa{display:inline-flex;align-items:center;justify-content:center;gap:8px;margin:8px 0 4px;padding:12px 18px;border-radius:14px;background:linear-gradient(90deg,#25D366,#128C7E);color:#fff;font-weight:800;text-decoration:none;font-size:14px}' +
+    '#modal-jogos-bloqueado .fechar{margin-top:12px;background:transparent;border:none;color:#99a;font-weight:600;cursor:pointer;padding:8px;width:100%}';
+  document.head.appendChild(style);
+
+  var md = document.createElement('div');
+  md.id = 'modal-jogos-bloqueado';
+  md.setAttribute('role', 'dialog');
+  md.innerHTML =
+    '<div class="cx">' +
+      '<div style="font-size:40px">🚫</div>' +
+      '<h2>Jogos bloqueados</h2>' +
+      '<p><strong>Abuso de confiança do Desafio MOZ.</strong></p>' +
+      '<p>Detectámos uso indevido de ID de pagamento nos jogos. Para desbloquear:</p>' +
+      '<p>1. Envia o pagamento correcto<br>2. Copia a captura de ecrã do pagamento<br>3. Contacta o agente no WhatsApp e envia a captura</p>' +
+      '<a class="wa" href="https://wa.link/64y9y2" target="_blank" rel="noopener">💬 Contactar agente WhatsApp</a>' +
+      '<p style="font-size:12px;color:#ff8a80;margin-top:12px">Se não regularizares, a conta pode ser <strong>apagada em 2 dias</strong>.</p>' +
+      '<button type="button" class="fechar" id="btn-fechar-bloqueio">Fechar</button>' +
+    '</div>';
+  document.body.appendChild(md);
+  document.getElementById('btn-fechar-bloqueio').onclick = fecharAvisoBloqueio;
+  md.addEventListener('click', function (e) { if (e.target === md) fecharAvisoBloqueio(); });
+
+  function interceptar(el, handler) {
+    if (!el) return;
+    el.addEventListener('click', function (e) {
+      if (jogosBloqueado) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        mostrarAvisoBloqueio();
+        return false;
+      }
+      if (handler) handler(e);
+    }, true);
+  }
+
+  // Esperar DOM + verificar bloqueio
+  function arrancar() {
+    verificarBloqueio().then(function () {
+      interceptar(document.getElementById('btn-homejub'));
+      interceptar(document.getElementById('btn-roleta'));
+      interceptar(document.getElementById('btn-jogar-online'));
+      interceptar(document.getElementById('btn-baixar-apk'));
+      // Menu Online no rodapé (já estamos em online, mas reforça)
+      document.querySelectorAll('.menu-baixo a').forEach(function (a) {
+        var href = (a.getAttribute('href') || '').toLowerCase();
+        if (href.indexOf('online') !== -1 || href.indexOf('roleta') !== -1 || href.indexOf('desafio-match') !== -1 || href.indexOf('homejub') !== -1) {
+          interceptar(a);
+        }
+      });
+    });
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', arrancar);
+  else arrancar();
+
+  // Re-check when opening Homejub modal path - patch original abrir
+  var btnAbrir = document.getElementById('btn-homejub');
+  if (btnAbrir) {
+    btnAbrir.addEventListener('click', function (e) {
+      if (jogosBloqueado) {
+        e.preventDefault();
+        e.stopPropagation();
+        mostrarAvisoBloqueio();
+        var modal = document.getElementById('modal-homejub');
+        if (modal) modal.classList.remove('ativo');
+      }
+    }, true);
+  }
+})();
+</script>
+
 </body>
 </html>

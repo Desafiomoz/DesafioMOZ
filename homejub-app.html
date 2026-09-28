@@ -803,17 +803,71 @@ canvas{ touch-action:none; display:block; }
   display:flex; align-items:center; justify-content:center;
 }
 .btn-mute.muted{ opacity:0.65; }
+
+#overlay-checkout{
+  z-index:70;
+  background:rgba(4,6,12,0.96) !important;
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  padding:16px 12px;
+  overflow-y:auto;
+}
+#overlay-checkout .ck-card{
+  width:100%; max-width:380px; margin:0 auto;
+  background:linear-gradient(165deg,#151b24 0%,#0e1118 100%);
+  border:1px solid rgba(46,230,160,0.28);
+  border-radius:22px; padding:20px 16px 18px;
+  box-shadow:0 0 40px rgba(0,0,0,0.55);
+}
+#overlay-checkout h2{
+  font-family:'Sora',sans-serif; font-size:22px !important; font-weight:800;
+  color:#fff !important; text-shadow:0 0 18px rgba(46,230,160,0.45);
+  margin:0 0 6px; background:none !important; -webkit-text-fill-color:#fff !important;
+}
+.pay-metodos{display:flex;gap:10px;margin:12px 0;width:100%;}
+.pay-metodo{
+  flex:1;position:relative;border-radius:16px;padding:14px 10px;border:2px solid rgba(255,255,255,0.12);
+  background:rgba(18,22,31,0.95);text-align:center;
+}
+.pay-metodo.ativo{border-color:#2ee6a0;box-shadow:0 0 18px rgba(46,230,160,0.35);}
+.pay-metodo.indisponivel{opacity:0.55;filter:grayscale(0.4);}
+.pay-metodo img{width:52px;height:52px;object-fit:contain;border-radius:10px;background:#fff;padding:4px;}
+.pay-metodo .pm-nome{font-size:12px;font-weight:800;margin-top:8px;color:#f4f6fb;}
+.pay-metodo .pm-tag{position:absolute;top:6px;right:6px;font-size:9px;font-weight:800;padding:2px 6px;border-radius:99px;}
+.pay-metodo.indisponivel .pm-tag{background:#c62828;color:#fff;}
+.pay-metodo:not(.indisponivel) .pm-tag{background:#2ee6a0;color:#06120f;}
+.pay-emola-box{
+  width:100%;text-align:left;font-size:13px;line-height:1.5;color:#c5cdd8;
+  background:rgba(46,230,160,0.08);border:1px solid rgba(46,230,160,0.35);border-radius:14px;padding:12px 14px;margin:8px 0;
+}
+.pay-emola-box .num-emola{font-size:22px;font-weight:900;color:#ffcf4d;letter-spacing:1px;display:block;margin:4px 0 8px;}
+.pay-txid{
+  width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,0.12);
+  background:#0a0d14;color:#fff;font-size:14px;font-weight:700;margin-top:8px;text-align:center;
+}
+.pay-txid:focus{outline:none;border-color:#2ee6a0;}
+
+
+.btn-copiar-num{
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  margin-top:6px;padding:8px 14px;border-radius:12px;border:none;cursor:pointer;
+  font-family:inherit;font-weight:800;font-size:12.5px;
+  background:linear-gradient(90deg,#3b9eff,#2ee6a0);color:#06080e;
+}
+.btn-copiar-num:active{opacity:0.85;transform:scale(0.98);}
+.num-emola-wrap{text-align:center;margin:6px 0 10px;}
+
 </style>
 </head>
 <body>
 
 <!-- ===== CAPA / ECRÃ DE ABERTURA ===== -->
 
-<audio id="audio-mapa" loop preload="auto" playsinline webkit-playsinline src="https://desafiomoz.pages.dev/sons/mapa.mp3"></audio>
-<audio id="audio-loja" loop preload="auto" playsinline webkit-playsinline src="https://desafiomoz.pages.dev/sons/loja.mp3"></audio>
-<audio id="audio-jogo" loop preload="auto" playsinline webkit-playsinline src="https://desafiomoz.pages.dev/sons/jogo.mp3"></audio>
-<audio id="sfx-match" preload="auto" playsinline webkit-playsinline src="https://desafiomoz.pages.dev/sons/match.mp3"></audio>
-<audio id="sfx-derrota" preload="auto" playsinline webkit-playsinline src="https://desafiomoz.pages.dev/sons/derrota.mp3"></audio>
+<audio id="audio-mapa" loop preload="auto" playsinline webkit-playsinline src="sons/mapa.mp3"></audio>
+<audio id="audio-loja" loop preload="auto" playsinline webkit-playsinline src="sons/loja.mp3"></audio>
+<audio id="audio-jogo" loop preload="auto" playsinline webkit-playsinline src="sons/jogo.mp3"></audio>
+<audio id="sfx-match" preload="auto" playsinline webkit-playsinline src="sons/match.mp3"></audio>
+<audio id="sfx-derrota" preload="auto" playsinline webkit-playsinline src="sons/derrota.mp3"></audio>
 <button type="button" class="btn-mute" id="btn-mute" title="Som">🔊</button>
 
 
@@ -1073,7 +1127,7 @@ canvas{ touch-action:none; display:block; }
           <button class="loja-btn" id="btn-mt-moedas70" data-item="moedas70">4 MT</button>
         </div>
       </div>
-      <div class="loja-aviso">Pagamento seguro por M-Pesa. Após pagar, espera até 1 minuto no ecrã para receberes a compra.</div>
+      <div class="loja-aviso">Pagamento por e-Mola (manual). Envia o valor, copia o ID da transacção e cola no ecrã para receberes na hora.</div>
     </div>
   </div>
   <div class="loja-rodape">
@@ -1148,35 +1202,64 @@ canvas{ touch-action:none; display:block; }
 </div>
 
 <div class="overlay" id="overlay-checkout">
-  <div id="checkout-passo-form">
+  <div class="ck-card">
+  <div id="checkout-passo-form" style="display:flex;flex-direction:column;align-items:center;gap:8px;width:100%;">
     <h2>💳 Pagamento</h2>
-    <div class="resumo" id="checkout-descricao">Item</div>
-    <input type="tel" id="checkout-telefone" placeholder="+258 84 123 4567" class="checkout-input">
-    <div class="checkout-metodos">
-      <button class="checkout-metodo ativo" data-metodo="mpesa">M-Pesa</button>
+    <div class="resumo" id="checkout-descricao" style="color:#ffcf4d;font-weight:700;">Item</div>
+    <div class="pay-metodos">
+      <div class="pay-metodo indisponivel">
+        <span class="pm-tag">Indisponível</span>
+        <img src="https://i.supaimg.com/9447b725-0914-4700-9681-fccbd9cb5399/5d4993e5-cf0e-44b5-b26f-0e42592e548c.png" alt="M-Pesa">
+        <div class="pm-nome">M-Pesa</div>
+        <div style="font-size:9px;color:#ff8a80;margin-top:2px;">Automático · off</div>
+      </div>
+      <div class="pay-metodo ativo">
+        <span class="pm-tag">Manual</span>
+        <img src="https://i.supaimg.com/9447b725-0914-4700-9681-fccbd9cb5399/5cbfa80f-ae69-4b47-a4ac-25495bf0e896.png" alt="e-Mola">
+        <div class="pm-nome">e-Mola</div>
+        <div style="font-size:9px;color:#2ee6a0;margin-top:2px;">Manual · activo</div>
+      </div>
     </div>
-    <button class="btn" id="btn-checkout-confirmar" style="margin-top:14px;">Pagar agora</button>
-    <button class="btn-voltar-mapa" id="btn-checkout-cancelar" style="margin-top:8px;">Cancelar</button>
+    <div id="pay-painel-emola" class="pay-emola-box">
+      <div style="margin-bottom:10px;padding:8px 10px;border-radius:10px;background:rgba(255,107,107,0.12);border:1px solid rgba(255,107,107,0.35);font-size:12px;color:#ffb4b4;line-height:1.45;">
+        <strong style="color:#ff6b6b;">⚠️ Aviso:</strong> Quem colocar <strong>ID de transacção falso</strong> terá a <strong>conta apagada</strong> no Desafio MOZ.
+      </div>
+      <div style="font-size:12px;color:#8e9bb8;margin-bottom:8px;line-height:1.4;">
+        <b>M-Pesa</b> = pagamento <b>automático</b> (indisponível agora).<br>
+        <b style="color:#2ee6a0;">e-Mola</b> = pagamento <b>manual</b> (activo).
+      </div>
+      <strong style="color:#2ee6a0;">1.</strong> Envia o pagamento (valor exacto) para e-Mola:
+      <div class="num-emola-wrap">
+        <span class="num-emola" id="num-emola-txt">869517893</span>
+        <button type="button" class="btn-copiar-num" id="btn-copiar-emola" onclick="copiarNumeroEmola()">📋 Copiar número</button>
+      </div>
+      <strong style="color:#2ee6a0;">2.</strong> Depois de pagar, copia o <strong>ID da transacção</strong> que a e-Mola mostra<br>
+      <span style="font-size:11px;color:#8e9bb8;">Exemplo: PP260927.0652.q29322</span><br>
+      <strong style="color:#2ee6a0;">3.</strong> Cola o ID aqui e toca em <strong>Confirmar e receber</strong>.
+    </div>
+    <div class="resumo" id="checkout-email-hint" style="font-size:12px;color:#8e9bb8;"></div>
+    <input type="text" class="pay-txid" id="checkout-txid" placeholder="Cola aqui o ID da transacção e-Mola" autocomplete="off" autocapitalize="characters">
+    <button class="btn" id="btn-checkout-confirmar" style="margin-top:10px;width:100%;">Confirmar e receber</button>
+    <button class="btn-voltar-mapa" id="btn-checkout-cancelar" style="margin-top:4px;">Cancelar</button>
   </div>
-  <div id="checkout-passo-aguardar" style="display:none;">
-    <h2>📲 Confirma no teu telemóvel</h2>
-    <div class="resumo">Vais receber um pedido de confirmação do pagamento. Aprova-o com o teu PIN.</div>
-    <div class="checkout-spinner"></div>
-    <div class="resumo" id="checkout-status-txt" style="font-size:12px; margin-top:6px;">A aguardar confirmação...</div>
-    <button class="btn-voltar-mapa" id="btn-checkout-desistir" style="margin-top:14px;">Cancelar</button>
+  <div id="checkout-passo-aguardar" style="display:none;flex-direction:column;align-items:center;gap:10px;width:100%;">
+    <h2>⏳ A validar…</h2>
+    <div class="resumo" id="checkout-status-txt">A verificar o ID da transacção…</div>
   </div>
-  <div id="checkout-passo-sucesso" style="display:none;">
-    <h2>✅ Pagamento confirmado!</h2>
+  <div id="checkout-passo-sucesso" style="display:none;flex-direction:column;align-items:center;gap:10px;width:100%;">
+    <h2>✅ Compra entregue!</h2>
     <div class="resumo" id="checkout-sucesso-txt">A tua compra já está na tua conta.</div>
     <button class="btn" id="btn-checkout-fechar">Fechar</button>
   </div>
-  <div id="checkout-passo-erro" style="display:none;">
+  <div id="checkout-passo-erro" style="display:none;flex-direction:column;align-items:center;gap:10px;width:100%;">
     <h2>😕 Não foi possível</h2>
-    <div class="resumo" id="checkout-erro-txt">O pagamento não foi confirmado.</div>
+    <div class="resumo" id="checkout-erro-txt">ID inválido ou já usado.</div>
     <button class="btn" id="btn-checkout-tentar-de-novo">Tentar novamente</button>
     <button class="btn-voltar-mapa" id="btn-checkout-erro-fechar" style="margin-top:8px;">Fechar</button>
   </div>
+  </div>
 </div>
+
 
 <div class="toast" id="toast"></div>
 <div class="toast-especial" id="toast-especial" aria-live="polite"></div>
@@ -1243,48 +1326,40 @@ function pararMusicasFundo(){
   });
 }
 
+var _audioCtx = null;
+function garantirAudioContext(){
+  try {
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if(!AC) return null;
+    if(!_audioCtx) _audioCtx = new AC();
+    if(_audioCtx.state === 'suspended'){
+      try { _audioCtx.resume(); } catch(e) {}
+    }
+    return _audioCtx;
+  } catch(e) { return null; }
+}
+
 function tocarArea(area){
   try {
     areaMusicaActual = area;
     pararMusicasFundo();
     if(!area || !audioDesbloqueado || audioMutado) return;
+    garantirAudioContext();
     var id = area === 'mapa' ? 'audio-mapa' : (area === 'loja' ? 'audio-loja' : (area === 'jogo' ? 'audio-jogo' : null));
     var vol = area === 'mapa' ? VOL_MAPA : (area === 'loja' ? VOL_LOJA : VOL_JOGO);
     var a = id ? elAudio(id) : null;
     if(!a) return;
-    try {
-      // Caminho relativo funciona no site e no APK (pasta www/sons)
-      var rel = a.getAttribute('src');
-      if(rel && rel.indexOf('sons/') === 0){
-        // mantém relativo — Capacitor/WebView resolve a partir do index
-        if(!a.src || a.error || a.networkState === 3){
-          a.setAttribute('src', rel);
-          a.load();
-        }
-      }
-    } catch(eLoad) {}
     a.volume = vol;
     a.muted = false;
     var p = a.play();
-    if(p && p.catch){
-      p.catch(function(err){
-        console.warn('Homejub áudio falhou:', id, err && err.message);
-        // Segunda tentativa no mesmo gesto (alguns browsers Android)
-        try {
-          a.load();
-          a.volume = vol;
-          a.play().catch(function(){});
-        } catch(e2) {}
-      });
-    }
+    if(p && p.catch) p.catch(function(){});
   } catch(e) {}
 }
 
 function desbloquearAudio(){
   try {
-    // Só marca como permitido. O play real tem de ser no MESMO toque (tocarArea),
-    // senão o browser bloqueia e um pause() assíncrono corta a música.
     audioDesbloqueado = true;
+    garantirAudioContext();
     aplicarMuteGeral();
   } catch(e) { audioDesbloqueado = true; }
 }
@@ -1292,9 +1367,9 @@ function desbloquearAudio(){
 function tocarSfx(id){
   try {
     if(audioMutado || !audioDesbloqueado) return;
+    garantirAudioContext();
     var a = elAudio(id);
     if(!a) return;
-    // clona para permitir vários sons em simultâneo (combo x2, x3...)
     var s = a.cloneNode(true);
     s.volume = VOL_SFX;
     s.muted = false;
@@ -1314,6 +1389,7 @@ function tocarSfxVezes(id, vezes){
     }
   } catch(e) {}
 }
+
 
 (function initMuteBtn(){
   var b = elAudio('btn-mute');
@@ -2376,6 +2452,7 @@ async function aplicarSessaoJogador(email, dadosUser){
 }
 
 async function submeterLogin(){
+  try { desbloquearAudio(); } catch(e) {}
   var email = (document.getElementById('login-email').value||'').trim().toLowerCase();
   var senha = document.getElementById('login-senha').value||'';
   var btn = document.getElementById('btn-login-submit');
@@ -2494,18 +2571,21 @@ function animarCapa(){
 });
 
 document.getElementById('btn-capa-jogar').addEventListener('click', async ()=>{
+  // CRÍTICO no APK: play() tem de ser no mesmo instante do toque, ANTES de qualquer await
+  try { desbloquearAudio(); } catch(e) {}
+  try { tocarArea('mapa'); } catch(e) {}
+
   const btnJogar = document.getElementById('btn-capa-jogar');
   if(!estadoPronto){
     btnJogar.textContent = 'A carregar a tua conta...';
     btnJogar.disabled = true;
-    await promessaEstado;
+    try { await promessaEstado; } catch(e) {}
     btnJogar.disabled = false;
     btnJogar.textContent = 'Jogar';
   }
-  try { desbloquearAudio(); } catch(e) {}
   document.getElementById('tela-abertura').style.display = 'none';
   entrarNoMapa();
-  // Reforça a música do mapa no mesmo toque do utilizador
+  // reforça música (já desbloqueada no toque)
   try { tocarArea('mapa'); } catch(e) {}
 });
 
@@ -2789,6 +2869,69 @@ function avancarTutorial(){
 }
 
 /* ---------- checkout de pagamento real (NetShop) ---------- */
+
+/* ---------- e-Mola pagamento manual ---------- */
+const PRECOS_ITEM_MT = {
+  moedas30: 2, moedas70: 4, ajudas20: 2, jogadas10: 2, jogadasOferta20: 2,
+  bonus: 5, bonus2: 10, desbloqueio10: 15, ajudasInfinitas: 50, moedasInfinitas: 100
+};
+const CREDITO_ITEM = {
+  moedas30: { credito: { moedasTotais: 30 } },
+  moedas70: { credito: { moedasTotais: 70 } },
+  ajudas20: { credito: { ajudasDisponiveis: 20 } },
+  jogadas10: { credito: { jogadasExtraArmazenadas: 10 } },
+  jogadasOferta20: { credito: { jogadasExtraArmazenadas: 20 } },
+  bonus: { vidas: 6, credito: { moedasTotais: 70, ajudasDisponiveis: 6, jogadasExtraArmazenadas: 10 } },
+  bonus2: { vidas: 8, credito: { moedasTotais: 100, ajudasDisponiveis: 20, jogadasExtraArmazenadas: 20 } },
+  desbloqueio10: { credito: { nivelDesbloqueado: 10 } },
+  ajudasInfinitas: { flag: 'ajudasInfinitas' },
+  moedasInfinitas: { flag: 'moedasInfinitas' }
+};
+
+function copiarNumeroEmola(){
+  var num = '869517893';
+  function ok(){
+    try {
+      var b = document.getElementById('btn-copiar-emola');
+      if(b){ var old = b.textContent; b.textContent = '✅ Copiado!'; setTimeout(function(){ b.textContent = old || '📋 Copiar número'; }, 1600); }
+    } catch(e){}
+    try { if(typeof mostrarToast === 'function') mostrarToast('Número copiado: ' + num); } catch(e){}
+    try { if(typeof mostrarToastSucesso === 'function') mostrarToastSucesso('📋 Número copiado!\n' + num); } catch(e){}
+  }
+  try {
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(num).then(ok).catch(function(){
+        var ta = document.createElement('textarea');
+        ta.value = num; document.body.appendChild(ta); ta.select();
+        try { document.execCommand('copy'); } catch(e){}
+        document.body.removeChild(ta); ok();
+      });
+    } else {
+      var ta = document.createElement('textarea');
+      ta.value = num; document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); } catch(e){}
+      document.body.removeChild(ta); ok();
+    }
+  } catch(e){ ok(); }
+}
+
+function normalizarTxId(id){ return String(id || '').trim().replace(/\s+/g, '').toUpperCase(); }
+function txIdPareceValido(id){ return /^PP[A-Z0-9.\-]{5,40}$/i.test(id); }
+async function creditarItemHomejubLocal(item, email){
+  var def = CREDITO_ITEM[item];
+  if(!def || !db || !email) throw new Error('Item ou conta inválida');
+  var jogoRef = db.collection('jogoEstado').doc(email);
+  var updates = { ultimaAtualizacao: new Date().toISOString() };
+  if(def.credito){
+    Object.keys(def.credito).forEach(function(k){
+      updates[k] = firebase.firestore.FieldValue.increment(Number(def.credito[k]) || 0);
+    });
+  }
+  if(def.vidas != null){ updates.vidas = def.vidas; updates.proximaRecarga = 0; }
+  if(def.flag) updates[def.flag] = true;
+  await jogoRef.set(updates, { merge: true });
+}
+
 const DESCRICOES_ITEM = {
   moedas30: '30 moedas — 2 MT',
   moedas70: '70 moedas — 4 MT',
@@ -2810,103 +2953,128 @@ let pollingTentativas = 0;
 let ofertaJogadasJaAplicada = false; // evita +20 duas vezes (polling duplo)
 let checkoutAProcessar = false;
 
+
 function mostrarPassoCheckout(passo){
-  ['form','aguardar','sucesso','erro'].forEach(p=>{
-    document.getElementById('checkout-passo-'+p).style.display = (p===passo) ? 'flex' : 'none';
+  ['form','aguardar','sucesso','erro'].forEach(function(p){
+    var el = document.getElementById('checkout-passo-'+p);
+    if(!el) return;
+    el.style.display = (p === passo) ? 'flex' : 'none';
   });
 }
-
+function fecharCheckout(){
+  try {
+    document.getElementById('overlay-checkout').classList.remove('ativo');
+  } catch(e){}
+}
 function abrirCheckout(item){
   itemEmCompra = item;
-  document.getElementById('checkout-descricao').textContent = DESCRICOES_ITEM[item] || item;
-  document.getElementById('checkout-telefone').value = '';
-  metodoEscolhido = 'mpesa';
-  document.querySelectorAll('.checkout-metodo').forEach(b=>b.classList.toggle('ativo', b.dataset.metodo==='mpesa'));
-  document.getElementById('btn-checkout-tentar-de-novo').style.display = '';
+  var desc = document.getElementById('checkout-descricao');
+  if(desc) desc.textContent = DESCRICOES_ITEM[item] || item;
+  var hint = document.getElementById('checkout-email-hint');
+  if(hint){
+    hint.innerHTML = emailJogador
+      ? 'Conta: <strong style="color:#2ee6a0;">' + emailJogador + '</strong>'
+      : 'Faz login no site para comprar.';
+  }
+  var tx = document.getElementById('checkout-txid');
+  if(tx) tx.value = '';
   mostrarPassoCheckout('form');
   document.getElementById('overlay-checkout').classList.add('ativo');
 }
-function fecharCheckout(){
-  pararPolling();
-  document.getElementById('overlay-checkout').classList.remove('ativo');
-}
-function pararPolling(){
-  if(pollingIntervaloId){ clearInterval(pollingIntervaloId); pollingIntervaloId = null; }
-}
 
-document.querySelectorAll('.checkout-metodo').forEach(btn=>{
-  btn.addEventListener('click', ()=>{
-    metodoEscolhido = btn.dataset.metodo;
-    document.querySelectorAll('.checkout-metodo').forEach(b=>b.classList.toggle('ativo', b===btn));
-  });
-});
 
 document.getElementById('btn-checkout-cancelar').addEventListener('click', fecharCheckout);
-document.getElementById('btn-checkout-desistir').addEventListener('click', fecharCheckout);
-document.getElementById('btn-checkout-fechar').addEventListener('click', ()=>{
+document.getElementById('btn-checkout-fechar').addEventListener('click', function(){
   fecharCheckout();
-  entrarNoMapa();
+  try { entrarNoMapa(); } catch(e){}
 });
 document.getElementById('btn-checkout-erro-fechar').addEventListener('click', fecharCheckout);
-document.getElementById('btn-checkout-tentar-de-novo').addEventListener('click', ()=>{
+document.getElementById('btn-checkout-tentar-de-novo').addEventListener('click', function(){
   mostrarPassoCheckout('form');
 });
 
-document.getElementById('btn-checkout-confirmar').addEventListener('click', async ()=>{
-  const telefone = document.getElementById('checkout-telefone').value.trim();
-  if(!/^\+258\d{9}$/.test(telefone)){
-    mostrarToastAviso('⚠️ Número inválido!\nUsa o formato +258841234567');
-    return;
-  }
+document.getElementById('btn-checkout-confirmar').addEventListener('click', async function(){
   if(!emailJogador){
     mostrarToastAviso('⚠️ Sessão necessária!\nInicia sessão no site para comprar');
     return;
   }
+  var txId = normalizarTxId(document.getElementById('checkout-txid').value);
+  if(!txIdPareceValido(txId)){
+    mostrarToastAviso('⚠️ ID inválido!\nCola o ID completo da transacção e-Mola\nEx: PP260927.0652.q29322');
+    return;
+  }
+  if(!itemEmCompra){
+    mostrarToastAviso('Escolhe primeiro o item na loja.');
+    return;
+  }
   mostrarPassoCheckout('aguardar');
-  document.getElementById('checkout-status-txt').textContent = 'A criar o pedido de pagamento...';
-  checkoutAProcessar = false;
-
+  document.getElementById('checkout-status-txt').textContent = 'A verificar se este ID ainda não foi usado…';
   try{
-    const resp = await fetch('/netshop-charge', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: emailJogador, msisdn: telefone, method: metodoEscolhido, item: itemEmCompra }),
+    if(!window.db) throw new Error('Sem ligação ao Firebase');
+    var txRef = db.collection('emolaTransacoes').doc(txId);
+    await db.runTransaction(async function(tr){
+      var snap = await tr.get(txRef);
+      if(snap.exists) throw new Error('Este ID de transacção já foi usado. Cada ID só funciona uma vez.');
+      tr.set(txRef, {
+        email: String(emailJogador).toLowerCase(),
+        item: itemEmCompra,
+        jogo: 'homejub',
+        mt: PRECOS_ITEM_MT[itemEmCompra] || 0,
+        descricao: DESCRICOES_ITEM[itemEmCompra] || itemEmCompra,
+        createdAt: new Date().toISOString()
+      });
     });
-    const dados = await resp.json();
-    if(!resp.ok || !dados.id){
-      document.getElementById('checkout-erro-txt').textContent = dados.erro || 'Não foi possível iniciar o pagamento.';
-      mostrarPassoCheckout('erro');
-      return;
-    }
-    pollingCheckoutId = dados.id;
-    pollingTentativas = 0;
-    // Liga reference → email para a Pipedream (não depende dos ids ch_/UUID da NetShop)
-    if (dados.reference && emailJogador && window.db) {
+    if(itemEmCompra === 'jogadasOferta20'){
+      if(!ofertaJogadasJaAplicada){
+        ofertaJogadasJaAplicada = true;
+        jogadasRestantes = Math.max(0, jogadasRestantes) + 20;
+        try { atualizarHud(); } catch(e){}
+      }
+      await creditarItemHomejubLocal('jogadasOferta20', String(emailJogador).toLowerCase());
       try {
-        await db.collection('pedidosPorRef').doc(String(dados.reference)).set({
-          email: emailJogador,
-          item: itemEmCompra,
-          chargeId: dados.id,
-          createdAt: new Date()
-        });
-      } catch (e) { console.error('pedidosPorRef', e); }
-    }
-    if (emailJogador && window.db) {
+        document.getElementById('overlay-oferta-jogadas').classList.remove('ativo');
+        bloqueado = false;
+      } catch(e){}
+      document.getElementById('checkout-sucesso-txt').textContent = '🎯 +20 jogadas creditadas!';
+    } else {
+      await creditarItemHomejubLocal(itemEmCompra, String(emailJogador).toLowerCase());
+      if(itemEmCompra === 'desbloqueio10'){
+        try { await carregarEstado(); if(typeof verificarMarcosAtrasadosPorDesbloqueio==='function') await verificarMarcosAtrasadosPorDesbloqueio(); } catch(e){}
+      } else {
+        try { await carregarEstado(); } catch(e){}
+      }
       try {
-        await db.collection('pedidosLoja').doc(String(dados.id)).set({
-          email: emailJogador,
-          item: itemEmCompra,
-          createdAt: new Date()
-        });
-      } catch (e) { console.error('pedidosLoja', e); }
+        atualizarBotaoAjuda(); atualizarVidasUI();
+        var el1 = document.getElementById('loja-moedas');
+        var el2 = document.getElementById('mapa-moedas');
+        var txt = (ehCriador||moedasInfinitas) ? '∞' : moedasTotais;
+        if(el1) el1.textContent = txt;
+        if(el2) el2.textContent = txt;
+      } catch(e){}
+      document.getElementById('checkout-sucesso-txt').textContent = mensagemSucessoCompra(itemEmCompra);
     }
-    document.getElementById('checkout-status-txt').textContent = 'Confirma no telemóvel e espera aqui (~1 min) até receberes a compra...';
-    pollingIntervaloId = setInterval(verificarPagamentoCheckout, 4000);
+    try {
+      await db.collection('pagamentosManuais').add({
+        jogo: 'homejub',
+        email: String(emailJogador).toLowerCase(),
+        item: itemEmCompra,
+        label: DESCRICOES_ITEM[itemEmCompra] || itemEmCompra,
+        mt: PRECOS_ITEM_MT[itemEmCompra] || 0,
+        txId: txId,
+        status: 'entregue',
+        createdAt: new Date().toISOString()
+      });
+    } catch(eLog){}
+    mostrarPassoCheckout('sucesso');
   }catch(e){
-    document.getElementById('checkout-erro-txt').textContent = 'Falha de ligação — tenta novamente.';
+    var msg = (e && e.message) ? e.message : String(e);
+    if(/already exists|ALREADY_EXISTS/i.test(msg)) msg = 'Este ID de transacção já foi usado. Cada ID só funciona uma vez.';
+    document.getElementById('checkout-erro-txt').textContent = msg;
     mostrarPassoCheckout('erro');
   }
 });
+
+
 
 async function verificarPagamentoCheckout(){
   if(checkoutAProcessar) return;
