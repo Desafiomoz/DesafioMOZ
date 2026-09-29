@@ -259,7 +259,8 @@
       <div class="card">
         <h2><i class="fas fa-tasks"></i> Progresso da missão</h2>
         <div class="progresso"><div class="progresso-bar" id="barra"></div></div>
-        <div class="progresso-txt" id="progresso-txt">0 / 12 etapas</div>
+        <div class="progresso-txt" id="progresso-txt">0 / 10 perguntas</div>
+        <p class="aviso-mini">Por agora a missão é só as perguntas — sem anúncios.</p>
       </div>
 
       <!-- PERGUNTAS -->
@@ -383,12 +384,12 @@
             <div class="opcao" onclick="sel(10,this,'Convidar')">Convidar amigos</div>
             <div class="opcao" onclick="sel(10,this,'Aprender')">Aprender e divertir-me</div>
           </div>
-          <button class="btn" id="btn-fim-perguntas" onclick="avancarQ(10)">Concluir perguntas</button>
+          <button class="btn" id="btn-fim-perguntas" onclick="avancarQ(10)">Concluir e receber +100 pts</button>
         </div>
       </div>
 
       <!-- ANÚNCIOS (código do Admin: interativo + rewarded) -->
-      <div class="card" id="card-anuncios" style="display:none;">
+      <div class="card" id="card-anuncios" style="display:none !important;" data-desativado="1">
         <h2><i class="fas fa-play-circle"></i> Anúncios da missão</h2>
         <p style="font-size:13px;color:#aaa;margin-bottom:14px;">
           Assista os anúncios configurados no Admin (interativo / rewarded). Só conta se o anúncio carregar de verdade.
@@ -544,11 +545,11 @@
     }
 
     function atualizarProgresso() {
-      var total = 12; // 10 perguntas + 2 anúncios
-      var feito = perguntasFeitas + anunciosVistos;
+      var total = 10; // só perguntas (anúncios desativados por agora)
+      var feito = perguntasFeitas;
       var pct = Math.min(100, (feito / total) * 100);
       document.getElementById('barra').style.width = pct + '%';
-      document.getElementById('progresso-txt').textContent = feito + ' / ' + total + ' etapas';
+      document.getElementById('progresso-txt').textContent = feito + ' / ' + total + ' perguntas';
     }
 
     function sel(num, el, valor) {
@@ -570,10 +571,16 @@
         document.getElementById('qpasso' + num).classList.remove('ativo');
         document.getElementById('qpasso' + (num + 1)).classList.add('ativo');
       } else {
+        // Sem anúncios por agora — conclui a missão após as 10 perguntas
         document.getElementById('card-perguntas').style.display = 'none';
-        document.getElementById('card-anuncios').style.display = 'block';
+        var cardAd = document.getElementById('card-anuncios');
+        if (cardAd) cardAd.style.display = 'none';
         atualizarProgresso();
-        guardarProgressoMissao();
+        guardarProgressoMissao().then(function () {
+          finalizarMissao();
+        }).catch(function () {
+          finalizarMissao();
+        });
       }
     }
 
@@ -785,7 +792,7 @@
         document.getElementById('card-anuncios').style.display = 'none';
         document.getElementById('card-sucesso').style.display = 'block';
         document.getElementById('barra').style.width = '100%';
-        document.getElementById('progresso-txt').textContent = '12 / 12 etapas';
+        document.getElementById('progresso-txt').textContent = '10 / 10 perguntas';
         jaCompletouEstaSemana = true;
       } catch (e) {
         alert('Erro ao guardar: ' + (e.message || e));
@@ -842,10 +849,16 @@
     }
 
     function retomarAnunciosMissao() {
+      // Anúncios desativados — se já fez as perguntas, finaliza
+      if (perguntasFeitas >= 10) {
+        finalizarMissao();
+        return;
+      }
       document.getElementById('zona-missao').style.display = 'block';
       document.getElementById('card-previsoes').style.display = 'none';
-      document.getElementById('card-perguntas').style.display = 'none';
-      document.getElementById('card-anuncios').style.display = 'block';
+      document.getElementById('card-perguntas').style.display = 'block';
+      var cardAd = document.getElementById('card-anuncios');
+      if (cardAd) cardAd.style.display = 'none';
       // Marcar ads já vistos
       for (var i = 1; i <= anunciosVistos; i++) {
         var box = document.getElementById('ad' + i);
@@ -909,24 +922,14 @@
       document.getElementById('card-previsoes').style.display = 'none';
       document.getElementById('status-banner').className = 'status-banner status-ok';
       document.getElementById('status-banner').textContent =
-        '🏆 Foi o PRIMEIRO a encontrar! Complete as 10 perguntas e os anúncios para ganhar +100 pts.';
+        '🏆 Foi o PRIMEIRO a encontrar! Complete as 10 perguntas para ganhar +100 pts.';
       document.getElementById('zona-acao').innerHTML = '';
       // Retomar se já tinha progresso
       if (perguntasFeitas >= 10) {
         document.getElementById('card-perguntas').style.display = 'none';
-        document.getElementById('card-anuncios').style.display = 'block';
-        for (var i = 1; i <= anunciosVistos; i++) {
-          var box = document.getElementById('ad' + i);
-          if (box) {
-            box.classList.add('ad-done');
-            var b = box.querySelector('button');
-            if (b) { b.disabled = true; b.textContent = '✅ Visto'; }
-          }
-        }
-        if (anunciosVistos < TOTAL_ANUNCIOS_MISSAO) {
-          var next = document.getElementById('btn-ad' + (anunciosVistos + 1));
-          if (next) { next.disabled = false; next.textContent = 'Ver anúncio'; }
-        }
+        var cardAd = document.getElementById('card-anuncios');
+        if (cardAd) cardAd.style.display = 'none';
+        finalizarMissao();
       } else if (perguntasFeitas > 0) {
         for (var q = 1; q <= 10; q++) {
           var el = document.getElementById('qpasso' + q);
@@ -1022,19 +1025,20 @@
           document.getElementById('zona-acao').innerHTML = '';
         } else if (souODono && !jaCompletouEstaSemana) {
           document.getElementById('status-banner').className = 'status-banner status-ok';
-          if (perguntasFeitas >= 10 && anunciosVistos < TOTAL_ANUNCIOS_MISSAO) {
+          if (perguntasFeitas >= 10) {
+            // Já terminou perguntas — se ainda não recebeu pontos, finaliza
             document.getElementById('status-banner').textContent =
-              '🏆 Já respondeu às perguntas. Falta ver os anúncios. Pode voltar quando houver anúncio disponível.';
-            document.getElementById('zona-acao').innerHTML =
-              '<button class="btn" type="button" onclick="retomarAnunciosMissao()">Continuar anúncios</button>';
+              '🏆 Já respondeu às 10 perguntas. A confirmar a recompensa...';
+            document.getElementById('zona-acao').innerHTML = '';
+            finalizarMissao();
           } else if (perguntasFeitas > 0 && perguntasFeitas < 10) {
             document.getElementById('status-banner').textContent =
-              '🏆 Missão em curso. Continue as perguntas e depois os anúncios (+100 pts).';
+              '🏆 Missão em curso. Continue as 10 perguntas para ganhar +100 pts.';
             document.getElementById('zona-acao').innerHTML =
               '<button class="btn" type="button" onclick="iniciarMissaoEncontrada()">Continuar missão</button>';
           } else {
             document.getElementById('status-banner').textContent =
-              '🏆 É o primeiro desta semana! Complete perguntas + anúncios para +100 pts.';
+              '🏆 É o primeiro desta semana! Complete as 10 perguntas para +100 pts.';
             document.getElementById('zona-acao').innerHTML =
               '<button class="btn" type="button" onclick="iniciarMissaoEncontrada()">Continuar missão</button>';
           }
