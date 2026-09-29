@@ -490,15 +490,15 @@
         <div class="badge-vivo"><span class="dot"></span> Ao vivo</div>
       </div>
       <div class="aviso-mes" id="aviso-mes">
-        As mensagens deste <b>mês</b> ficam aqui para leres à vontade.
-        No início de cada mês o histórico é limpo e a sala recomeça a zero.
+        As mensagens de <b>hoje</b> ficam aqui para leres à vontade.
+        Todos os dias, à meia-noite, o histórico é apagado e a sala recomeça a zero.
       </div>
     </div>
 
     <div class="lista-msgs" id="lista-msgs">
       <div class="vazio-chat" id="vazio-chat">
         <i class="fas fa-comments"></i>
-        Ainda não há mensagens este mês.<br>Sê o primeiro a escrever!
+        Ainda não há mensagens hoje.<br>Sê o primeiro a escrever!
       </div>
     </div>
 
@@ -705,14 +705,15 @@
   var ultimoMsgIdVisto = null;
   var ignorarPrimeiroSnap = true;
 
+  // O chat agora recomeça a zero todos os dias (o campo continua a chamar-se "mes" por compatibilidade)
   function mesAtualId() {
     var d = new Date();
-    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
   }
 
   function inicioDoMes() {
     var d = new Date();
-    return new Date(d.getFullYear(), d.getMonth(), 1, 0, 0, 0, 0);
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
   }
 
   function toast(txt) {
@@ -782,26 +783,30 @@
     limpandoMes = true;
     try {
       var mesId = mesAtualId();
-      // Preferência: apagar por campo mes (sem índice composto)
-      var snap = await db.collection('chatMensagens').limit(400).get();
-      if (snap.empty) return;
-      var batch = db.batch();
-      var n = 0;
       var inicioMs = inicioDoMes().getTime();
-      snap.forEach(function (doc) {
-        var d = doc.data() || {};
-        var antigo = false;
-        if (d.mes && String(d.mes) !== mesId) antigo = true;
-        else {
-          var tms = getTimeMs(d.createdAt);
-          if (tms && tms < inicioMs) antigo = true;
-        }
-        if (antigo) {
-          batch.delete(doc.ref);
-          n++;
-        }
-      });
-      if (n) await batch.commit();
+      // Repete algumas rodadas: cada uma apaga até 400 mensagens de dias anteriores
+      for (var rodada = 0; rodada < 6; rodada++) {
+        // Preferência: apagar por campo mes (sem índice composto)
+        var snap = await db.collection('chatMensagens').limit(400).get();
+        if (snap.empty) break;
+        var batch = db.batch();
+        var n = 0;
+        snap.forEach(function (doc) {
+          var d = doc.data() || {};
+          var antigo = false;
+          if (d.mes && String(d.mes) !== mesId) antigo = true;
+          else {
+            var tms = getTimeMs(d.createdAt);
+            if (tms && tms < inicioMs) antigo = true;
+          }
+          if (antigo) {
+            batch.delete(doc.ref);
+            n++;
+          }
+        });
+        if (!n) break;
+        await batch.commit();
+      }
     } catch (e) {
       console.warn('limpeza mensal chat', e);
     } finally {
@@ -866,7 +871,7 @@
     var lista = document.getElementById('lista-msgs');
     var items = listaOrdenada();
     if (!items.length) {
-      lista.innerHTML = '<div class="vazio-chat" id="vazio-chat"><i class="fas fa-comments"></i>Ainda não há mensagens este mês.<br>Sê o primeiro a escrever!</div>';
+      lista.innerHTML = '<div class="vazio-chat" id="vazio-chat"><i class="fas fa-comments"></i>Ainda não há mensagens hoje.<br>Sê o primeiro a escrever!</div>';
       return;
     }
     var emailLow = email.toLowerCase();
@@ -1471,11 +1476,10 @@
   }
   arrancarChat();
 
-  var mesNomes = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
   var agora = new Date();
   document.getElementById('aviso-mes').innerHTML =
-    'Mensagens de <b>' + mesNomes[agora.getMonth()] + ' ' + agora.getFullYear() + '</b> — podes reler à vontade. ' +
-    'No próximo mês o histórico é apagado e a sala recomeça a zero.';
+    'Mensagens de <b>hoje (' + String(agora.getDate()).padStart(2, '0') + '/' + String(agora.getMonth() + 1).padStart(2, '0') + '/' + agora.getFullYear() + ')</b> — podes reler à vontade. ' +
+    'Todos os dias, à meia-noite, o histórico é apagado e a sala recomeça a zero.';
 })();
   </script>
 </body>
