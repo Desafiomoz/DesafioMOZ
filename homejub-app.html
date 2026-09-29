@@ -1234,10 +1234,11 @@ canvas{ touch-action:none; display:block; }
         <button type="button" class="btn-copiar-num" id="btn-copiar-emola" onclick="copiarNumeroEmola()">📋 Copiar número</button>
       </div>
       <strong style="color:#2ee6a0;">2.</strong> Depois de pagar, copia o <strong>ID da transacção</strong> que a e-Mola mostra<br>
-      <span style="font-size:11px;color:#8e9bb8;">Exemplo: PP260927.0652.q29322</span><br>
-      <strong style="color:#2ee6a0;">3.</strong> Cola o ID aqui e toca em <strong>Confirmar e receber</strong>.
+      <span style="font-size:11px;color:#8e9bb8;">Exemplo: PP260927.0652.q29322</span><br><div style="text-align:center;margin:6px 0 8px;"><img src="https://i.supaimg.com/9447b725-0914-4700-9681-fccbd9cb5399/0d27ef0d-69cb-43f4-8572-95a618184de5.jpg" alt="Exemplo de onde copiar o ID da transacção" style="width:120px;max-width:45%;height:auto;border-radius:8px;border:1px solid rgba(255,255,255,0.15);"><div style="font-size:10px;color:#8e9bb8;margin-top:2px;">Assim: copia o ID da mensagem</div></div>
+      <strong style="color:#2ee6a0;">3.</strong> Escreve o <strong>número com que pagaste</strong>, cola o ID aqui e toca em <strong>Confirmar e receber</strong>.
     </div>
     <div class="resumo" id="checkout-email-hint" style="font-size:12px;color:#8e9bb8;"></div>
+    <input type="tel" inputmode="numeric" class="pay-txid" id="checkout-tel" placeholder="Número com que enviaste o dinheiro (ex: 84 123 4567)" autocomplete="tel">
     <input type="text" class="pay-txid" id="checkout-txid" placeholder="Cola aqui o ID da transacção e-Mola" autocomplete="off" autocapitalize="characters">
     <button class="btn" id="btn-checkout-confirmar" style="margin-top:10px;width:100%;">Confirmar e receber</button>
     <button class="btn-voltar-mapa" id="btn-checkout-cancelar" style="margin-top:4px;">Cancelar</button>
@@ -2932,6 +2933,22 @@ async function creditarItemHomejubLocal(item, email){
   await jogoRef.set(updates, { merge: true });
 }
 
+function snapshotHj(){
+  return {
+    nivelDesbloqueado: Number(nivelDesbloqueado) || 1,
+    nivelAtual: Number(nivelAtual) || 1,
+    moedasTotais: Number(moedasTotais) || 0,
+    vidas: Number(vidas) || 0,
+    proximaRecarga: Number(proximaRecarga) || 0,
+    ajudasDisponiveis: Number(ajudasDisponiveis) || 0,
+    jogadasExtraArmazenadas: Number(jogadasExtraArmazenadas) || 0,
+    jogadasRestantes: Number(jogadasRestantes) || 0,
+    moedasInfinitas: !!moedasInfinitas,
+    ajudasInfinitas: !!ajudasInfinitas,
+    marcosPagos: Array.isArray(marcosPagos) ? marcosPagos.slice() : []
+  };
+}
+
 const DESCRICOES_ITEM = {
   moedas30: '30 moedas — 2 MT',
   moedas70: '70 moedas — 4 MT',
@@ -2978,6 +2995,8 @@ function abrirCheckout(item){
   }
   var tx = document.getElementById('checkout-txid');
   if(tx) tx.value = '';
+  var telEl = document.getElementById('checkout-tel');
+  if(telEl) telEl.value = '';
   mostrarPassoCheckout('form');
   document.getElementById('overlay-checkout').classList.add('ativo');
 }
@@ -3003,10 +3022,17 @@ document.getElementById('btn-checkout-confirmar').addEventListener('click', asyn
     mostrarToastAviso('⚠️ ID inválido!\nCola o ID completo da transacção e-Mola\nEx: PP260927.0652.q29322');
     return;
   }
+  var telDig = String(document.getElementById('checkout-tel').value||'').replace(/\D/g,'');
+  if(telDig.length===12 && telDig.indexOf('258')===0) telDig = telDig.slice(3);
+  if(!/^8\d{8}$/.test(telDig)){
+    mostrarToastAviso('⚠️ Número inválido!\\nEscreve o número com que enviaste o dinheiro\\nEx: 841234567');
+    return;
+  }
   if(!itemEmCompra){
     mostrarToastAviso('Escolhe primeiro o item na loja.');
     return;
   }
+  var antesHj = snapshotHj();
   mostrarPassoCheckout('aguardar');
   document.getElementById('checkout-status-txt').textContent = 'A verificar se este ID ainda não foi usado…';
   try{
@@ -3017,6 +3043,7 @@ document.getElementById('btn-checkout-confirmar').addEventListener('click', asyn
       if(snap.exists) throw new Error('Este ID de transacção já foi usado. Cada ID só funciona uma vez.');
       tr.set(txRef, {
         email: String(emailJogador).toLowerCase(),
+        telefone: telDig,
         item: itemEmCompra,
         jogo: 'homejub',
         mt: PRECOS_ITEM_MT[itemEmCompra] || 0,
@@ -3061,6 +3088,9 @@ document.getElementById('btn-checkout-confirmar').addEventListener('click', asyn
         label: DESCRICOES_ITEM[itemEmCompra] || itemEmCompra,
         mt: PRECOS_ITEM_MT[itemEmCompra] || 0,
         txId: txId,
+        telefone: telDig,
+        antes: antesHj,
+        depois: snapshotHj(),
         status: 'entregue',
         createdAt: new Date().toISOString()
       });

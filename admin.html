@@ -246,6 +246,8 @@
     <button class="tab" data-tab="senhas" onclick="mudarTab('senhas')"><i class="fas fa-key"></i> Senhas <span class="badge" id="badge-senhas">0</span></button>
     <button class="tab" data-tab="termos" onclick="mudarTab('termos')"><i class="fas fa-file-contract"></i> Termos</button>
     <button class="tab" data-tab="pag-manual" onclick="mudarTab('pag-manual'); carregarPagManualHist()"><i class="fas fa-hand-holding-usd"></i> Pag. manual</button>
+    <button class="tab" data-tab="hj-compras" onclick="mudarTab('hj-compras'); carregarHjCompras()"><i class="fas fa-undo-alt"></i> Homejub compras</button>
+    <button class="tab" data-tab="rt-compras" onclick="mudarTab('rt-compras'); carregarRtCompras()"><i class="fas fa-undo-alt"></i> Roleta compras</button>
     <button class="tab" data-tab="manutencao" onclick="mudarTab('manutencao'); manAbrirAba()"><i class="fas fa-tools"></i> Manutenção <span class="badge" id="badge-manutencao">ON</span></button>
     <button class="tab" data-tab="privado" onclick="mudarTab('privado')"><i class="fas fa-lock"></i> Privado</button>
   </div>
@@ -2206,24 +2208,24 @@
         <button type="button" class="btn-cinza" style="margin-bottom:12px;" onclick="carregarEmolaIdsUsados()">🔄 Atualizar listas</button>
 
         <h3 style="color:#ffc107;font-size:14px;margin:6px 0 8px;"><i class="fas fa-hourglass-half"></i> Pendentes — à espera da tua confirmação <span class="badge" id="badge-emola-pend" style="display:none;background:#ffc107;color:#000;">0</span></h3>
-        <div class="busca"><input type="text" id="busca-emola-pend" placeholder="Filtrar pendentes (ID ou e-mail)..." oninput="filtrarEmolaPend()"></div>
+        <div class="busca"><input type="text" id="busca-emola-pend" placeholder="Filtrar pendentes (ID, e-mail ou telefone)..." oninput="filtrarEmolaPend()"></div>
         <div class="tabela-wrap" style="margin-bottom:18px;">
           <table>
             <thead>
-              <tr><th>#</th><th>ID transacção</th><th>E-mail</th><th>Jogo</th><th>Item</th><th>Data</th><th>Acção</th></tr>
+              <tr><th>#</th><th>ID transacção</th><th>E-mail</th><th>Telefone</th><th>Jogo</th><th>Item</th><th>Data</th><th>Acção</th></tr>
             </thead>
-            <tbody id="tbody-emola-pend"><tr><td colspan="7" class="vazio">Clica em Atualizar listas.</td></tr></tbody>
+            <tbody id="tbody-emola-pend"><tr><td colspan="8" class="vazio">Clica em Atualizar listas.</td></tr></tbody>
           </table>
         </div>
 
         <h3 style="color:#00e676;font-size:14px;margin:6px 0 8px;"><i class="fas fa-check-circle"></i> Confirmados por ti</h3>
-        <div class="busca"><input type="text" id="busca-emola-ok" placeholder="Filtrar confirmados (ID ou e-mail)..." oninput="filtrarEmolaOk()"></div>
+        <div class="busca"><input type="text" id="busca-emola-ok" placeholder="Filtrar confirmados (ID, e-mail ou telefone)..." oninput="filtrarEmolaOk()"></div>
         <div class="tabela-wrap">
           <table>
             <thead>
-              <tr><th>#</th><th>ID transacção</th><th>E-mail</th><th>Jogo</th><th>Item</th><th>Data</th><th>Confirmado em</th><th>Acção</th></tr>
+              <tr><th>#</th><th>ID transacção</th><th>E-mail</th><th>Telefone</th><th>Jogo</th><th>Item</th><th>Data</th><th>Confirmado em</th><th>Acção</th></tr>
             </thead>
-            <tbody id="tbody-emola-ok"><tr><td colspan="8" class="vazio">Ainda nenhum ID confirmado.</td></tr></tbody>
+            <tbody id="tbody-emola-ok"><tr><td colspan="9" class="vazio">Ainda nenhum ID confirmado.</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -2282,6 +2284,48 @@
       </div>
     </div>
 
+
+    <div class="painel" id="painel-hj-compras">
+      <div class="form-box" style="border:1px solid rgba(46,230,160,0.35);">
+        <h3><i class="fas fa-undo-alt"></i> Homejub — compras com ID e-Mola (antes / depois)</h3>
+        <p style="font-size:12px;color:#ccc;margin-bottom:10px;line-height:1.45;">
+          Cada linha mostra o estado do jogador <strong>antes</strong> e <strong>depois</strong> da compra.
+          Se o ID for falso, clica em <strong>Voltar</strong> e a conta dele volta ao estado de antes da compra (nível desbloqueado, moedas, vidas, ajudas e jogadas extra).
+          Só aparecem compras feitas depois desta actualização.
+        </p>
+        <button type="button" class="btn-cinza" style="margin-bottom:12px;" onclick="carregarHjCompras()">🔄 Atualizar</button>
+        <div class="busca"><input type="text" id="hj-busca" placeholder="Filtrar (e-mail, telefone ou ID)..." oninput="filtrarHjCompras()"></div>
+        <div class="tabela-wrap">
+          <table>
+            <thead>
+              <tr><th>#</th><th>Jogador</th><th>ID e-Mola</th><th>Compra</th><th>ANTES</th><th>DEPOIS</th><th>Data</th><th>Acção</th></tr>
+            </thead>
+            <tbody id="tbody-hj-compras"><tr><td colspan="8" class="vazio">Clica em Atualizar.</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="painel" id="painel-rt-compras">
+      <div class="form-box" style="border:1px solid rgba(255,201,77,0.4);">
+        <h3><i class="fas fa-undo-alt"></i> Roleta — compras com ID e-Mola (antes / agora)</h3>
+        <p style="font-size:12px;color:#ccc;margin-bottom:10px;line-height:1.45;">
+          <strong>ANTES</strong> = a conta do jogador no momento da compra. <strong>GANHOU DEPOIS</strong> = o que a roleta lhe deu desde a compra (pontos, MT e giros).
+          Se o ID for falso, clica em <strong>Voltar</strong>: os ganhos e os giros da roleta desde a compra são retirados e os pontos gastos na roleta são devolvidos.
+          Pontos ganhos noutras tarefas do site <strong>não</strong> são mexidos. Só aparecem compras feitas depois desta actualização.
+        </p>
+        <button type="button" class="btn-cinza" style="margin-bottom:12px;" onclick="carregarRtCompras()">🔄 Atualizar</button>
+        <div class="busca"><input type="text" id="rt-busca" placeholder="Filtrar (e-mail, telefone ou ID)..." oninput="filtrarRtCompras()"></div>
+        <div class="tabela-wrap">
+          <table>
+            <thead>
+              <tr><th>#</th><th>Jogador</th><th>ID e-Mola</th><th>Compra</th><th>ANTES</th><th>GANHOU DEPOIS</th><th>Data</th><th>Acção</th></tr>
+            </thead>
+            <tbody id="tbody-rt-compras"><tr><td colspan="8" class="vazio">Clica em Atualizar.</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
 
     <div class="painel" id="painel-manutencao">
       <style>
@@ -7400,8 +7444,8 @@ async function carregarBonus100() {
       var tPend = document.getElementById('tbody-emola-pend');
       var tOk = document.getElementById('tbody-emola-ok');
       var badge = document.getElementById('badge-emola-pend');
-      if (tPend) tPend.innerHTML = '<tr><td colspan="7" class="vazio">A carregar...</td></tr>';
-      if (tOk) tOk.innerHTML = '<tr><td colspan="8" class="vazio">A carregar...</td></tr>';
+      if (tPend) tPend.innerHTML = '<tr><td colspan="8" class="vazio">A carregar...</td></tr>';
+      if (tOk) tOk.innerHTML = '<tr><td colspan="9" class="vazio">A carregar...</td></tr>';
       try {
         var snap;
         try {
@@ -7435,10 +7479,11 @@ async function carregarBonus100() {
           var emSafe = em.replace(/'/g, "\'");
           var idTx = String(d._id || '');
           var idSafe = idTx.replace(/'/g, "\'");
-          return '<tr data-busca-emola-pend="' + escHtml((em + ' ' + idTx + ' ' + (d.item || '') + ' ' + (d.jogo || '')).toLowerCase()) + '">' +
+          return '<tr data-busca-emola-pend="' + escHtml((em + ' ' + (d.telefone || '') + ' ' + idTx + ' ' + (d.item || '') + ' ' + (d.jogo || '')).toLowerCase()) + '">' +
             '<td>' + (i + 1) + '</td>' +
             '<td style="font-family:monospace;font-size:11px;color:#ffcf4d;">' + escHtml(idTx) + '</td>' +
             '<td>' + escHtml(em || '—') + '</td>' +
+            '<td style="font-family:monospace;font-size:12px;">' + escHtml(d.telefone || '—') + '</td>' +
             '<td>' + escHtml(d.jogo || '—') + '</td>' +
             '<td style="font-size:12px;">' + escHtml(d.descricao || d.item || '—') + (d.mt ? ' <span style="color:#888;">(' + d.mt + ' MT)</span>' : '') + '</td>' +
             '<td style="font-size:11px;white-space:nowrap;">' + escHtml(String(d.createdAt || '').slice(0, 19).replace('T', ' ')) + '</td>' +
@@ -7453,10 +7498,11 @@ async function carregarBonus100() {
           var emSafe = em.replace(/'/g, "\'");
           var idTx = String(d._id || '');
           var idSafe = idTx.replace(/'/g, "\'");
-          return '<tr data-busca-emola-ok="' + escHtml((em + ' ' + idTx + ' ' + (d.item || '') + ' ' + (d.jogo || '')).toLowerCase()) + '">' +
+          return '<tr data-busca-emola-ok="' + escHtml((em + ' ' + (d.telefone || '') + ' ' + idTx + ' ' + (d.item || '') + ' ' + (d.jogo || '')).toLowerCase()) + '">' +
             '<td>' + (i + 1) + '</td>' +
             '<td style="font-family:monospace;font-size:11px;color:#00e676;">' + escHtml(idTx) + '</td>' +
             '<td>' + escHtml(em || '—') + '</td>' +
+            '<td style="font-family:monospace;font-size:12px;">' + escHtml(d.telefone || '—') + '</td>' +
             '<td>' + escHtml(d.jogo || '—') + '</td>' +
             '<td style="font-size:12px;">' + escHtml(d.descricao || d.item || '—') + (d.mt ? ' <span style="color:#888;">(' + d.mt + ' MT)</span>' : '') + '</td>' +
             '<td style="font-size:11px;white-space:nowrap;">' + escHtml(String(d.createdAt || '').slice(0, 19).replace('T', ' ')) + '</td>' +
@@ -7468,16 +7514,16 @@ async function carregarBonus100() {
         }
 
         if (tPend) {
-          if (!pend.length) tPend.innerHTML = '<tr><td colspan="7" class="vazio">Nenhum ID pendente — tudo confirmado ou ainda sem compras.</td></tr>';
+          if (!pend.length) tPend.innerHTML = '<tr><td colspan="8" class="vazio">Nenhum ID pendente — tudo confirmado ou ainda sem compras.</td></tr>';
           else tPend.innerHTML = pend.map(linhaPend).join('');
         }
         if (tOk) {
-          if (!ok.length) tOk.innerHTML = '<tr><td colspan="8" class="vazio">Ainda nenhum ID confirmado por ti.</td></tr>';
+          if (!ok.length) tOk.innerHTML = '<tr><td colspan="9" class="vazio">Ainda nenhum ID confirmado por ti.</td></tr>';
           else tOk.innerHTML = ok.map(linhaOk).join('');
         }
       } catch (e) {
-        if (tPend) tPend.innerHTML = '<tr><td colspan="7" class="vazio">Erro: ' + escHtml(e.message || e) + '</td></tr>';
-        if (tOk) tOk.innerHTML = '<tr><td colspan="8" class="vazio">Erro</td></tr>';
+        if (tPend) tPend.innerHTML = '<tr><td colspan="8" class="vazio">Erro: ' + escHtml(e.message || e) + '</td></tr>';
+        if (tOk) tOk.innerHTML = '<tr><td colspan="9" class="vazio">Erro</td></tr>';
       }
     }
 
@@ -7534,6 +7580,263 @@ async function carregarBonus100() {
         carregarEmolaIdsUsados();
       } catch (e) {
         alert('Erro: ' + (e.message || e));
+      }
+    }
+
+
+    /* ===== Homejub: compras com antes/depois e botão Voltar ===== */
+    var hjComprasCache = {};
+    function hjResumoEstado(a) {
+      if (!a) return '—';
+      var inf = function (flag, v) { return flag ? '∞' : v; };
+      return '<div style="font-size:11px;line-height:1.5;white-space:nowrap;">' +
+        '🗺️ Nível desbloq.: <b>' + escHtml(a.nivelDesbloqueado) + '</b> (a jogar: ' + escHtml(a.nivelAtual) + ')<br>' +
+        '🪙 Moedas: <b>' + escHtml(inf(a.moedasInfinitas, a.moedasTotais)) + '</b><br>' +
+        '❤️ Vidas: <b>' + escHtml(a.vidas) + '</b><br>' +
+        '💡 Ajudas: <b>' + escHtml(inf(a.ajudasInfinitas, a.ajudasDisponiveis)) + '</b><br>' +
+        '🎯 Jogadas: <b>' + escHtml(a.jogadasRestantes) + '</b> no nível + <b>' + escHtml(a.jogadasExtraArmazenadas) + '</b> extra' +
+        '</div>';
+    }
+    async function carregarHjCompras() {
+      var tb = document.getElementById('tbody-hj-compras');
+      if (!tb) return;
+      tb.innerHTML = '<tr><td colspan="8" class="vazio">A carregar...</td></tr>';
+      try {
+        var snap;
+        try {
+          snap = await db.collection('pagamentosManuais').orderBy('createdAt', 'desc').limit(300).get();
+        } catch (e1) {
+          snap = await db.collection('pagamentosManuais').limit(300).get();
+        }
+        var lista = [];
+        hjComprasCache = {};
+        snap.forEach(function (doc) {
+          var d = doc.data() || {};
+          d._id = doc.id;
+          if (d.jogo === 'homejub' && d.antes) { lista.push(d); hjComprasCache[doc.id] = d; }
+        });
+        lista.sort(function (a, b) { return String(b.createdAt || '').localeCompare(String(a.createdAt || '')); });
+        if (!lista.length) {
+          tb.innerHTML = '<tr><td colspan="8" class="vazio">Ainda sem compras com registo antes/depois.</td></tr>';
+          return;
+        }
+        tb.innerHTML = lista.map(function (d, i) {
+          var em = String(d.email || '').toLowerCase();
+          var revertido = d.status === 'revertido';
+          var acao = revertido
+            ? '<span class="status-tag" style="background:#555;color:#fff;">↩ Revertida</span><div style="font-size:10px;color:#999;">' + escHtml(String(d.revertidoEm || '').slice(0, 19).replace('T', ' ')) + '</div>'
+            : '<button type="button" class="btn-laranja" onclick="hjReverterCompra(\'' + escHtml(d._id) + '\')">↩ Voltar</button>';
+          acao += (em ? '<button type="button" class="btn-vermelho" onclick="bloquearJogosEmail(\'' + em.replace(/'/g, "\\'") + '\',\'ID e-Mola suspeito: ' + escHtml(String(d.txId || '')).replace(/'/g, "\\'") + '\')">🚫 Bloquear</button>' : '');
+          return '<tr data-busca-hj="' + escHtml((em + ' ' + (d.telefone || '') + ' ' + (d.txId || '')).toLowerCase()) + '">' +
+            '<td>' + (i + 1) + '</td>' +
+            '<td style="font-size:12px;">' + escHtml(em || '—') + '<br><span style="font-family:monospace;color:#00e676;">' + escHtml(d.telefone || '—') + '</span></td>' +
+            '<td style="font-family:monospace;font-size:11px;color:#ffcf4d;">' + escHtml(d.txId || '—') + '</td>' +
+            '<td style="font-size:12px;">' + escHtml(d.label || d.item || '—') + (d.mt ? ' <span style="color:#888;">(' + escHtml(d.mt) + ' MT)</span>' : '') + '</td>' +
+            '<td>' + hjResumoEstado(d.antes) + '</td>' +
+            '<td>' + hjResumoEstado(d.depois) + '</td>' +
+            '<td style="font-size:11px;white-space:nowrap;">' + escHtml(String(d.createdAt || '').slice(0, 19).replace('T', ' ')) + '</td>' +
+            '<td style="white-space:nowrap;">' + acao + '</td></tr>';
+        }).join('');
+      } catch (e) {
+        tb.innerHTML = '<tr><td colspan="8" class="vazio">Erro: ' + escHtml(e.message || e) + '</td></tr>';
+      }
+    }
+    function filtrarHjCompras() {
+      var q = (document.getElementById('hj-busca') && document.getElementById('hj-busca').value || '').trim().toLowerCase();
+      var tb = document.getElementById('tbody-hj-compras');
+      if (!tb) return;
+      tb.querySelectorAll('tr[data-busca-hj]').forEach(function (tr) {
+        tr.style.display = (!q || (tr.getAttribute('data-busca-hj') || '').indexOf(q) !== -1) ? '' : 'none';
+      });
+    }
+    async function hjReverterCompra(id) {
+      var d = hjComprasCache[id];
+      if (!d || !d.antes) return alert('Registo não encontrado. Atualiza a lista.');
+      var email = String(d.email || '').toLowerCase();
+      if (!email) return alert('Compra sem e-mail.');
+      var a = d.antes;
+      var antesMarcos = Array.isArray(a.marcosPagos) ? a.marcosPagos : [];
+      var novosMarcos = (Array.isArray(d.depois && d.depois.marcosPagos) ? d.depois.marcosPagos : []).filter(function (m) { return antesMarcos.indexOf(m) === -1; });
+      var msg = 'Voltar a conta ' + email + ' ao estado ANTES da compra?\n\n' +
+        'Nível desbloqueado: ' + a.nivelDesbloqueado + '\nMoedas: ' + a.moedasTotais + '\nVidas: ' + a.vidas +
+        '\nAjudas: ' + a.ajudasDisponiveis + '\nJogadas extra: ' + a.jogadasExtraArmazenadas +
+        '\n\nO progresso feito DEPOIS da compra também é perdido.';
+      if (novosMarcos.length) {
+        msg += '\n\n⚠️ Esta compra pagou os marcos de nível ' + novosMarcos.join(', ') + ' em pontos na conta Desafio MOZ. Esses pontos NÃO são retirados por este botão (retira à mão se precisares).';
+      }
+      if (!confirm(msg)) return;
+      try {
+        var agora = new Date().toISOString();
+        await db.collection('jogoEstado').doc(email).set({
+          nivelDesbloqueado: Number(a.nivelDesbloqueado) || 1,
+          moedasTotais: Number(a.moedasTotais) || 0,
+          vidas: Number(a.vidas) || 0,
+          proximaRecarga: Number(a.proximaRecarga) || 0,
+          ajudasDisponiveis: Number(a.ajudasDisponiveis) || 0,
+          jogadasExtraArmazenadas: Number(a.jogadasExtraArmazenadas) || 0,
+          moedasInfinitas: !!a.moedasInfinitas,
+          ajudasInfinitas: !!a.ajudasInfinitas,
+          ultimaAtualizacao: agora
+        }, { merge: true });
+        await db.collection('pagamentosManuais').doc(id).set({ status: 'revertido', revertidoEm: agora }, { merge: true });
+        if (d.txId) {
+          try { await db.collection('emolaTransacoes').doc(String(d.txId)).set({ revertido: true, revertidoEm: agora }, { merge: true }); } catch (e2) {}
+        }
+        if (typeof mostrarAviso === 'function') mostrarAviso('Conta de ' + email + ' voltou ao estado antes da compra.');
+        carregarHjCompras();
+      } catch (e) {
+        alert('Erro ao voltar: ' + (e.message || e));
+      }
+    }
+
+
+    /* ===== Roleta: compras com antes/ganhos e botão Voltar ===== */
+    var rtComprasCache = {};
+    var rtUsuariosAgora = {};
+    function rtDelta(d) {
+      var a = d.antes || {};
+      var u = rtUsuariosAgora[String(d.email || '').toLowerCase()];
+      if (!u) return null;
+      var ptsGanhos = Math.max(0, (Number(u.roletaPontosGanhos) || 0) - (Number(a.pontosGanhos) || 0));
+      var mtGanhos = Math.max(0, (Number(u.roletaMtGanhos) || 0) - (Number(a.mtGanhos) || 0));
+      var gastos = Math.max(0, (Number(u.roletaPontosGastos) || 0) - (Number(a.pontosGastos) || 0));
+      var girosFeitos = Math.max(0, (Number(u.roletaTotalGiros) || 0) - (Number(a.totalGiros) || 0));
+      var retirar = ptsGanhos + mtGanhos * 8;
+      var pontosAgora = Number(u.pontos) || 0;
+      var pontosNovo = Math.max(0, pontosAgora - retirar + gastos);
+      return { ptsGanhos: ptsGanhos, mtGanhos: mtGanhos, gastos: gastos, girosFeitos: girosFeitos, retirar: retirar, pontosAgora: pontosAgora, pontosNovo: pontosNovo, girosAgora: Number(u.roletaGiros) || 0 };
+    }
+    function rtResumoAntes(a) {
+      if (!a) return '—';
+      return '<div style="font-size:11px;line-height:1.5;white-space:nowrap;">' +
+        '⭐ Pontos: <b>' + escHtml(a.pontos) + '</b> (' + escHtml(a.mt != null ? a.mt : Math.floor((Number(a.pontos) || 0) / 8)) + ' MT)<br>' +
+        '🎡 Giros: <b>' + escHtml(a.giros) + '</b><br>' +
+        '🏆 Já ganhou na roleta: <b>' + escHtml(a.pontosGanhos) + '</b> pts + <b>' + escHtml(a.mtGanhos) + '</b> MT' +
+        '</div>';
+    }
+    function rtResumoDepois(d) {
+      var x = rtDelta(d);
+      if (!x) return '<span style="font-size:11px;color:#999;">conta não encontrada</span>';
+      return '<div style="font-size:11px;line-height:1.5;white-space:nowrap;">' +
+        '🎡 Giros feitos: <b>' + x.girosFeitos + '</b> (restam ' + x.girosAgora + ')<br>' +
+        '⭐ Ganhou: <b style="color:#00e676;">+' + x.ptsGanhos + '</b> pts<br>' +
+        '💰 Ganhou: <b style="color:#00e676;">+' + x.mtGanhos + '</b> MT<br>' +
+        '↩ Pontos agora: <b>' + x.pontosAgora + '</b> → <b style="color:#ffc107;">' + x.pontosNovo + '</b> se voltar' +
+        '</div>';
+    }
+    async function carregarRtCompras() {
+      var tb = document.getElementById('tbody-rt-compras');
+      if (!tb) return;
+      tb.innerHTML = '<tr><td colspan="8" class="vazio">A carregar...</td></tr>';
+      try {
+        var snap;
+        try {
+          snap = await db.collection('pagamentosManuais').orderBy('createdAt', 'desc').limit(300).get();
+        } catch (e1) {
+          snap = await db.collection('pagamentosManuais').limit(300).get();
+        }
+        var lista = [];
+        rtComprasCache = {};
+        snap.forEach(function (doc) {
+          var d = doc.data() || {};
+          d._id = doc.id;
+          if (d.jogo === 'roleta' && d.antes) { lista.push(d); rtComprasCache[doc.id] = d; }
+        });
+        lista.sort(function (a, b) { return String(b.createdAt || '').localeCompare(String(a.createdAt || '')); });
+        if (!lista.length) {
+          tb.innerHTML = '<tr><td colspan="8" class="vazio">Ainda sem compras com registo antes/depois.</td></tr>';
+          return;
+        }
+        // estado actual das contas (para calcular o que ganharam desde a compra)
+        rtUsuariosAgora = {};
+        var emails = [];
+        lista.forEach(function (d) { var e = String(d.email || '').toLowerCase(); if (e && emails.indexOf(e) === -1) emails.push(e); });
+        for (var i = 0; i < emails.length; i += 10) {
+          try {
+            var us = await db.collection('usuarios').where('email', 'in', emails.slice(i, i + 10)).get();
+            us.forEach(function (doc) { var u = doc.data() || {}; rtUsuariosAgora[String(u.email || '').toLowerCase()] = u; });
+          } catch (e2) {}
+        }
+        tb.innerHTML = lista.map(function (d, i) {
+          var em = String(d.email || '').toLowerCase();
+          var revertido = d.status === 'revertido';
+          var acao = revertido
+            ? '<span class="status-tag" style="background:#555;color:#fff;">↩ Revertida</span><div style="font-size:10px;color:#999;">' + escHtml(String(d.revertidoEm || '').slice(0, 19).replace('T', ' ')) + '</div>'
+            : '<button type="button" class="btn-laranja" onclick="rtReverterCompra(\'' + escHtml(d._id) + '\')">↩ Voltar</button>';
+          acao += (em ? '<button type="button" class="btn-vermelho" onclick="bloquearJogosEmail(\'' + em.replace(/'/g, "\\'") + '\',\'ID e-Mola suspeito: ' + escHtml(String(d.txId || '')).replace(/'/g, "\\'") + '\')">🚫 Bloquear</button>' : '');
+          return '<tr data-busca-rt="' + escHtml((em + ' ' + (d.telefone || '') + ' ' + (d.txId || '')).toLowerCase()) + '">' +
+            '<td>' + (i + 1) + '</td>' +
+            '<td style="font-size:12px;">' + escHtml(em || '—') + '<br><span style="font-family:monospace;color:#00e676;">' + escHtml(d.telefone || '—') + '</span></td>' +
+            '<td style="font-family:monospace;font-size:11px;color:#ffcf4d;">' + escHtml(d.txId || '—') + '</td>' +
+            '<td style="font-size:12px;">' + escHtml(d.label || '—') + (d.mt ? ' <span style="color:#888;">(' + escHtml(d.mt) + ' MT)</span>' : '') + '</td>' +
+            '<td>' + rtResumoAntes(d.antes) + '</td>' +
+            '<td>' + (revertido ? '<span style="font-size:11px;color:#999;">—</span>' : rtResumoDepois(d)) + '</td>' +
+            '<td style="font-size:11px;white-space:nowrap;">' + escHtml(String(d.createdAt || '').slice(0, 19).replace('T', ' ')) + '</td>' +
+            '<td style="white-space:nowrap;">' + acao + '</td></tr>';
+        }).join('');
+      } catch (e) {
+        tb.innerHTML = '<tr><td colspan="8" class="vazio">Erro: ' + escHtml(e.message || e) + '</td></tr>';
+      }
+    }
+    function filtrarRtCompras() {
+      var q = (document.getElementById('rt-busca') && document.getElementById('rt-busca').value || '').trim().toLowerCase();
+      var tb = document.getElementById('tbody-rt-compras');
+      if (!tb) return;
+      tb.querySelectorAll('tr[data-busca-rt]').forEach(function (tr) {
+        tr.style.display = (!q || (tr.getAttribute('data-busca-rt') || '').indexOf(q) !== -1) ? '' : 'none';
+      });
+    }
+    async function rtReverterCompra(id) {
+      var d = rtComprasCache[id];
+      if (!d || !d.antes) return alert('Registo não encontrado. Atualiza a lista.');
+      var email = String(d.email || '').toLowerCase();
+      if (!email) return alert('Compra sem e-mail.');
+      try {
+        var uref = await encontrarUserRefPorEmail(email);
+        if (!uref) return alert('Utilizador não encontrado: ' + email);
+        var usnap = await uref.get();
+        var u = usnap.data() || {};
+        rtUsuariosAgora[email] = u;              // valores frescos, não os da lista
+        var x = rtDelta(d);
+        var a = d.antes;
+        var msg = 'Voltar a roleta de ' + email + ' ao estado ANTES da compra?\n\n' +
+          'Pontos agora: ' + x.pontosAgora + '  →  ficam: ' + x.pontosNovo + '\n' +
+          '(retira ' + x.ptsGanhos + ' pts + ' + x.mtGanhos + ' MT ganhos na roleta' + (x.gastos ? ', devolve ' + x.gastos + ' pts gastos em giros' : '') + ')\n' +
+          'Giros: ' + x.girosAgora + '  →  ' + (Number(a.giros) || 0) + '\n\n' +
+          'Pontos ganhos noutras tarefas do site não são mexidos.';
+        var outras = Object.keys(rtComprasCache).filter(function (k) {
+          var o = rtComprasCache[k];
+          return k !== id && String(o.email || '').toLowerCase() === email && String(o.createdAt || '') > String(d.createdAt || '') && o.status !== 'revertido';
+        });
+        if (outras.length) msg += '\n\n⚠️ Este jogador fez ' + outras.length + ' compra(s) DEPOIS desta na roleta — também serão desfeitas.';
+        if (!confirm(msg)) return;
+        var agora = new Date().toISOString();
+        await uref.set({
+          pontos: x.pontosNovo,
+          roletaGiros: Number(a.giros) || 0,
+          roletaGanhos: Number(a.ganhos) || 0,
+          roletaPerdas: Number(a.perdas) || 0,
+          roletaPontosGanhos: Number(a.pontosGanhos) || 0,
+          roletaMtGanhos: Number(a.mtGanhos) || 0,
+          roletaTotalGiros: Number(a.totalGiros) || 0,
+          roletaGirosDificeis: Number(a.girosDificeis) || 0,
+          roletaGirosPerdedores: Number(a.girosPerdedores) || 0,
+          roletaPontosGastos: Number(a.pontosGastos) || 0,
+          roletaGirosPorPontos: Number(a.girosPorPontos) || 0,
+          roletaReversaoEm: agora,
+          ultimaAtualizacao: agora
+        }, { merge: true });
+        await db.collection('pagamentosManuais').doc(id).set({
+          status: 'revertido', revertidoEm: agora,
+          reversao: { pontosRetirados: x.retirar, pontosDevolvidos: x.gastos, pontosAntes: x.pontosAgora, pontosDepois: x.pontosNovo }
+        }, { merge: true });
+        if (d.txId) {
+          try { await db.collection('emolaTransacoes').doc(String(d.txId)).set({ revertido: true, revertidoEm: agora }, { merge: true }); } catch (e2) {}
+        }
+        if (typeof mostrarAviso === 'function') mostrarAviso('Roleta de ' + email + ' voltou ao estado antes da compra.');
+        carregarRtCompras();
+      } catch (e) {
+        alert('Erro ao voltar: ' + (e.message || e));
       }
     }
 

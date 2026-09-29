@@ -337,22 +337,23 @@
   #overlay-checkout-roleta{
     position:fixed; inset:0; z-index:80;
     background:rgba(4,5,9,0.88);
-    display:none; align-items:center; justify-content:center;
-    padding:18px; backdrop-filter:blur(6px);
+    display:none; align-items:flex-start; justify-content:center;
+    padding:12px 12px 28px; backdrop-filter:blur(6px);
+    overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain;
   }
   #overlay-checkout-roleta.ativo{display:flex;}
   .ck-caixa{
     width:min(360px,94vw);
     background:linear-gradient(165deg,#151b24 0%,#0e1118 100%);
     border:1px solid rgba(255,201,77,0.35);
-    border-radius:22px; padding:22px 18px 18px;
+    border-radius:22px; padding:14px 16px 16px;
     box-shadow:0 0 50px rgba(255,201,77,0.22), 0 16px 40px rgba(0,0,0,0.5);
-    text-align:center;
+    text-align:center; margin:auto;
   }
   .ck-icone{
-    width:64px; height:64px; border-radius:18px; margin:0 auto 12px;
+    width:40px; height:40px; border-radius:12px; margin:0 auto 6px;
     background:linear-gradient(135deg,var(--ouro),var(--ouro-forte));
-    display:flex; align-items:center; justify-content:center; font-size:30px;
+    display:flex; align-items:center; justify-content:center; font-size:20px;
     box-shadow:0 0 24px rgba(255,201,77,0.45);
   }
   .ck-caixa h2{
@@ -360,7 +361,8 @@
     background:linear-gradient(90deg,var(--ouro),#fff6df);
     -webkit-background-clip:text; background-clip:text; color:transparent;
   }
-  .ck-desc{font-size:13px; color:var(--texto-fraco); line-height:1.45; margin-bottom:14px;}
+  .ck-desc{font-size:13px; color:var(--texto-fraco); line-height:1.4; margin-bottom:8px;}
+  #overlay-checkout-roleta .pay-txid{font-size:16px; scroll-margin-bottom:90px;}
   .ck-desc b{color:var(--ouro);}
   .ck-passo{display:none; flex-direction:column; gap:12px; align-items:stretch;}
   .ck-passo.ativo{display:flex;}
@@ -652,10 +654,11 @@
           <span class="num-emola" id="num-emola-txt">869517893</span>
           <button type="button" class="btn-copiar-num" id="btn-copiar-emola" onclick="copiarNumeroEmola()">📋 Copiar número</button>
         </div>
-        <strong style="color:#22FF99;">2.</strong> Depois de pagar, copia o <b>ID da transacção</b> (ex: PP260927.0652.q29322)<br>
-        <strong style="color:#22FF99;">3.</strong> Cola o ID aqui e confirma para receber os giros.
+        <strong style="color:#22FF99;">2.</strong> Depois de pagar, copia o <b>ID da transacção</b> (ex: PP260927.0652.q29322)<div style="text-align:center;margin:6px 0 8px;"><img src="https://i.supaimg.com/9447b725-0914-4700-9681-fccbd9cb5399/0d27ef0d-69cb-43f4-8572-95a618184de5.jpg" alt="Exemplo de onde copiar o ID da transacção" style="width:120px;max-width:45%;height:auto;border-radius:8px;border:1px solid rgba(255,255,255,0.15);"><div style="font-size:10px;color:#8e9bb8;margin-top:2px;">Assim: copia o ID da mensagem</div></div>
+        <strong style="color:#22FF99;">3.</strong> Escreve o <b>número com que pagaste</b>, cola o ID aqui e confirma para receber os giros.
       </div>
       <div class="ck-hint" id="ck-email-hint" style="text-align:center;"></div>
+      <input type="tel" inputmode="numeric" class="pay-txid" id="ck-tel" placeholder="Número com que enviaste o dinheiro (ex: 84 123 4567)" autocomplete="tel">
       <input type="text" class="pay-txid" id="ck-txid" placeholder="Cola aqui o ID da transacção e-Mola" autocomplete="off">
       <div class="ck-btns">
         <button type="button" class="ck-btn primario" id="ck-confirmar">Confirmar e receber giros</button>
@@ -964,6 +967,16 @@ async function carregarContaFirebase(){
     if(Array.isArray(d.roletaUltimos) && (!estado.historico || !estado.historico.length)) estado.historico = d.roletaUltimos;
     if(d.roletaGirosDificeis != null) estado.girosDificeis = Number(d.roletaGirosDificeis) || 0;
     if(d.roletaGirosPerdedores != null) estado.girosPerdedores = Number(d.roletaGirosPerdedores) || 0;
+    try {
+      if(d.roletaReversaoEm){
+        var kRev = 'roletaReversaoVisto_' + EMAIL_UTILIZADOR;
+        if(localStorage.getItem(kRev) !== String(d.roletaReversaoEm)){
+          estado.garantias = [];
+          localStorage.setItem(kRev, String(d.roletaReversaoEm));
+          guardarEstadoLocal();
+        }
+      }
+    } catch(eRev){}
     atualizarUI();
   } catch(e){
     console.warn(e);
@@ -1321,8 +1334,12 @@ function iniciarPagamentoMetical(valorMT, giros){
   if(hint) hint.innerHTML = 'Conta: <b style="color:#22FF99">' + email + '</b>';
   var tx = document.getElementById('ck-txid');
   if(tx) tx.value = '';
+  var telEl = document.getElementById('ck-tel');
+  if(telEl) telEl.value = '';
   ckMostrarPasso('form');
-  document.getElementById('overlay-checkout-roleta').classList.add('ativo');
+  var ovCk = document.getElementById('overlay-checkout-roleta');
+  ovCk.classList.add('ativo');
+  ovCk.scrollTop = 0;
 }
 
 function ckNormalizarTel(n){
@@ -1332,6 +1349,10 @@ function ckNormalizarTel(n){
   return n;
 }
 
+['ck-tel','ck-txid'].forEach(function(id){
+  var el = document.getElementById(id);
+  if(el) el.addEventListener('focus', function(){ setTimeout(function(){ try{ el.scrollIntoView({block:'center', behavior:'smooth'}); }catch(e){} }, 300); });
+});
 document.getElementById('ck-cancelar').addEventListener('click', ckFechar);
 document.getElementById('ck-desistir').addEventListener('click', ckFechar);
 document.getElementById('ck-fechar-ok').addEventListener('click', ckFechar);
@@ -1343,6 +1364,41 @@ document.getElementById('overlay-checkout-roleta').addEventListener('click', fun
   if(e.target === this && !ckPollingId) ckFechar();
 });
 
+async function snapshotRoletaAntes(){
+  var o = {
+    pontos: Number(estado.pontos) || 0,
+    giros: Number(estado.giros) || 0,
+    ganhos: Number(estado.ganhos) || 0,
+    perdas: Number(estado.perdas) || 0,
+    pontosGanhos: Number(estado.pontosGanhos) || 0,
+    mtGanhos: Number(estado.mtGanhos) || 0,
+    totalGiros: Number(estado.totalGirosFeitos) || 0,
+    girosDificeis: Number(estado.girosDificeis) || 0,
+    girosPerdedores: Number(estado.girosPerdedores) || 0,
+    pontosGastos: 0,
+    girosPorPontos: 0
+  };
+  try {
+    if(userRef && !MODO_DEMO){
+      var sn = await userRef.get();
+      var d = (sn && sn.data && sn.data()) || {};
+      if(d.pontos != null) o.pontos = Number(d.pontos) || 0;
+      if(d.roletaGiros != null) o.giros = Number(d.roletaGiros) || 0;
+      if(d.roletaGanhos != null) o.ganhos = Number(d.roletaGanhos) || 0;
+      if(d.roletaPerdas != null) o.perdas = Number(d.roletaPerdas) || 0;
+      if(d.roletaPontosGanhos != null) o.pontosGanhos = Number(d.roletaPontosGanhos) || 0;
+      if(d.roletaMtGanhos != null) o.mtGanhos = Number(d.roletaMtGanhos) || 0;
+      if(d.roletaTotalGiros != null) o.totalGiros = Number(d.roletaTotalGiros) || 0;
+      if(d.roletaGirosDificeis != null) o.girosDificeis = Number(d.roletaGirosDificeis) || 0;
+      if(d.roletaGirosPerdedores != null) o.girosPerdedores = Number(d.roletaGirosPerdedores) || 0;
+      o.pontosGastos = Number(d.roletaPontosGastos) || 0;
+      o.girosPorPontos = Number(d.roletaGirosPorPontos) || 0;
+    }
+  } catch(e){}
+  o.mt = Math.floor(o.pontos / PTS_POR_MT);
+  return o;
+}
+
 document.getElementById('ck-confirmar').addEventListener('click', async function(){
   if(!ckPendente) return;
   var txRaw = (document.getElementById('ck-txid') && document.getElementById('ck-txid').value) || '';
@@ -1351,16 +1407,24 @@ document.getElementById('ck-confirmar').addEventListener('click', async function
     mostrarToast('Cola o ID completo da transacção e-Mola (ex: PP260927.0652.q29322)');
     return;
   }
+  var telDig = String(document.getElementById('ck-tel').value||'').replace(/\D/g,'');
+  if(telDig.length===12 && telDig.indexOf('258')===0) telDig = telDig.slice(3);
+  if(!/^8\d{8}$/.test(telDig)){
+    mostrarToast('Escreve o número com que enviaste o dinheiro (ex: 841234567)');
+    return;
+  }
   ckMostrarPasso('aguardar');
   document.getElementById('ck-status-txt').textContent = 'A verificar se este ID ainda não foi usado…';
   try {
     if (typeof db === 'undefined' || !db) throw new Error('Sem ligação ao Firebase');
+    var antesRt = await snapshotRoletaAntes();
     var txRef = db.collection('emolaTransacoes').doc(txId);
     await db.runTransaction(async function(tr){
       var snap = await tr.get(txRef);
       if(snap.exists) throw new Error('Este ID de transacção já foi usado. Cada ID só funciona uma vez.');
       tr.set(txRef, {
         email: ckPendente.email,
+        telefone: telDig,
         item: ckPendente.item || 'giros',
         jogo: 'roleta',
         giros: ckPendente.giros,
@@ -1378,6 +1442,9 @@ document.getElementById('ck-confirmar').addEventListener('click', async function
         giros: ckPendente.giros,
         mt: ckPendente.valorMT,
         txId: txId,
+        telefone: telDig,
+        antes: antesRt,
+        depois: { pontos: Number(estado.pontos) || 0, giros: Number(estado.giros) || 0, garantias: (estado.garantias || []).length },
         status: 'entregue',
         createdAt: new Date().toISOString()
       });
