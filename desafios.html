@@ -348,31 +348,28 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
   ⚠️ Se não cumprir as regras dos desafios (ex.: fingir inscrição ou não ver os anúncios), <strong>os pontos serão diminuídos</strong> pelos agentes do site.
 </p>
 
-<!-- DESAFIO YOUTUBE - CORRIGIDO -->
-<div class="cartao-yt" id="card-youtube">
+<!-- DESAFIO YOUTUBE - CANAL CANCELADO -->
+<div class="cartao-yt" id="card-youtube" style="opacity:0.85;border-color:rgba(255,80,80,0.35);">
     <div class="cartao-yt-topo">
         <img src="https://i.supaimg.com/b173afd9-4344-4026-a5d7-6a53e4b6efdc/8f054a24-2746-4a43-9f1c-354584289dc3.png"
              alt="Desafio MOZ" class="yt-logo"
              onerror="this.src='https://www.youtube.com/s/desktop/favicon.ico'">
         <div class="yt-info">
-            <h3><i class="fab fa-youtube" style="color:#ff0000;"></i> Canal Desafio MOZ</h3>
-            <p>Inscreva-se no nosso canal no YouTube e ganhe pontos.</p>
-            <div class="yt-ganho">+10 Pontos</div>
+            <h3><i class="fab fa-youtube" style="color:#888;"></i> Canal Desafio MOZ</h3>
+            <p style="color:#ff8a80;">Canal cancelado no YouTube — desafio indisponível.</p>
+            <div class="yt-ganho" style="background:rgba(255,80,80,0.12);border-color:rgba(255,80,80,0.35);color:#ff8a80;">Indisponível</div>
         </div>
     </div>
     <div class="yt-botoes">
-        <button type="button" class="btn-yt btn-yt-inscrever" id="btn-abrir-yt" onclick="abrirCanalYoutube()">
-            <i class="fab fa-youtube"></i> Inscrever-se no canal
+        <button type="button" class="btn-yt" id="btn-abrir-yt" disabled
+            style="background:rgba(80,80,90,0.5);color:#aaa;cursor:not-allowed;box-shadow:none;">
+            <i class="fas fa-ban"></i> Canal cancelado
         </button>
-        <button type="button" class="btn-yt btn-yt-confirmar" id="btn-confirmar-yt" onclick="confirmarInscricao()">
-            <i class="fas fa-check-circle"></i> Já me inscrevi — receber 10 pontos
-        </button>
-        <button type="button" class="btn-yt btn-yt-feito" id="btn-feito-yt" disabled>
-            <i class="fas fa-check-double"></i> Concluído · +10 pontos recebidos
-        </button>
+        <button type="button" class="btn-yt btn-yt-confirmar" id="btn-confirmar-yt" style="display:none;" disabled></button>
+        <button type="button" class="btn-yt btn-yt-feito" id="btn-feito-yt" style="display:none;" disabled></button>
     </div>
-    <p class="yt-aviso" id="yt-aviso">
-        1) Toque em “Inscrever-se no canal” · 2) Inscreva-se no YouTube · 3) Volte e toque em “Já me inscrevi”
+    <p class="yt-aviso" id="yt-aviso" style="color:#ffab40;">
+        O canal oficial foi removido / Este desafio está <strong>cancelado</strong> e não dá pontos. Continue com as outras tarefas e jogos.
     </p>
 </div>
 
@@ -493,82 +490,15 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
     }
 
     function abrirCanalYoutube() {
-        if (jaFezYoutube) return;
-        window.open(YOUTUBE_URL, '_blank', 'noopener,noreferrer');
-        abriuCanal = true;
-        var btnConf = document.getElementById('btn-confirmar-yt');
-        btnConf.classList.add('show');
-        document.getElementById('yt-aviso').textContent =
-            'Inscreva-se no canal e depois toque em “Já me inscrevi — receber 10 pontos”.';
+        alert('Canal cancelado no YouTube. Este desafio está indisponível.');
+        return;
     }
 
     async function confirmarInscricao() {
-        if (jaFezYoutube) {
-            alert('Já recebeu os pontos deste desafio.');
-            return;
-        }
-        if (!abriuCanal) {
-            alert('Primeiro toque em “Inscrever-se no canal” e inscreva-se no YouTube.');
-            return;
-        }
-        if (!emailUtilizador || emailUtilizador === '—') {
-            alert('Faça login para receber os pontos.');
-            window.location.href = 'criar-conta.html';
-            return;
-        }
-
-        var btn = document.getElementById('btn-confirmar-yt');
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> A guardar...';
-
-        try {
-            if (!docRef) {
-                var snap = await db.collection('usuarios').where('email', '==', emailUtilizador).limit(1).get();
-                if (snap.empty) {
-                    var emailNorm = String(emailUtilizador).trim().toLowerCase();
-                    if (emailNorm !== emailUtilizador) {
-                        snap = await db.collection('usuarios').where('email', '==', emailNorm).limit(1).get();
-                    }
-                }
-                if (snap.empty) {
-                    alert('Utilizador não encontrado. Faça login novamente.');
-                    window.location.href = 'criar-conta.html';
-                    return;
-                }
-                docRef = snap.docs[0].ref;
-            }
-
-            var fresh = await docRef.get();
-            var dados = fresh.exists ? fresh.data() : {};
-
-            if (dados.desafioYoutubeCompleto === true) {
-                jaFezYoutube = true;
-                mostrarEstadoFeito();
-                alert('Já tinha concluído este desafio.');
-                return;
-            }
-
-            var pts = (dados.pontos || 0) + PONTOS_YT;
-            await docRef.update({
-                pontos: pts,
-                desafioYoutubeCompleto: true,
-                desafioYoutubeData: new Date().toISOString(),
-                ultimaAtualizacao: new Date().toISOString()
-            });
-
-            if (dados.indicadoPor) { await creditarBonusMarcoIndicacao(dados.indicadoPor, dados.pontos || 0, pts); }
-
-            jaFezYoutube = true;
-            atualizarPontosUI(pts);
-            mostrarEstadoFeito();
-            alert('✅ +' + PONTOS_YT + ' pontos! Obrigado por se inscrever no canal Desafio MOZ.');
-        } catch (e) {
-            console.error(e);
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-check-circle"></i> Já me inscrevi — receber 10 pontos';
-            alert('Erro ao guardar pontos: ' + (e.message || e));
-        }
+        alert('Canal cancelado no YouTube. Este desafio não dá pontos.');
+        return;
     }
+
 
 
     var DEZ_HORAS_MS = 10 * 60 * 60 * 1000;
