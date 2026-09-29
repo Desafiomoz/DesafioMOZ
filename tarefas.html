@@ -321,6 +321,22 @@
         }
         .ad-overlay-foot .btn-receber.ativo { opacity: 1; pointer-events: auto; }
         .ad-indisponivel { font-size: 12px; color: #ffab40; margin-top: 4px; display: none; }
+        .aviso-anuncios {
+            background: linear-gradient(160deg, rgba(255,171,64,0.14), rgba(255,109,0,0.08));
+            border: 1px solid rgba(255,171,64,0.45); border-radius: 14px;
+            padding: 12px 14px; margin: 8px 0 12px; text-align: center;
+            box-shadow: 0 0 18px rgba(255,171,64,0.12);
+        }
+        .aviso-anuncios-topo { font-size: 14px; font-weight: 800; color: #ffab40; margin-bottom: 6px; }
+        .aviso-anuncios p { font-size: 12.5px; color: #d8dbe3; line-height: 1.5; margin: 3px 0; }
+        .aviso-anuncios strong { color: #fff; }
+        .aviso-anuncios-lista { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin: 8px 0 4px; }
+        .aviso-anuncios-lista span {
+            font-size: 11.5px; font-weight: 700; color: #00e676;
+            background: rgba(0,230,118,0.1); border: 1px solid rgba(0,230,118,0.35);
+            border-radius: 999px; padding: 4px 10px;
+        }
+        .aviso-anuncios-fim { font-size: 12px !important; color: #00e676 !important; font-weight: 700; }
     </style>
 <style>/* Brilho extra - efeito de aura no site */
 body{filter:brightness(1.16) saturate(1.1);}</style>
@@ -347,28 +363,16 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
         <!-- ANÚNCIOS (permanentes — código vem do Admin) -->
         <div class="sec-titulo"><i class="fas fa-ad"></i> Anúncios</div>
 
-        <div class="tarefa-card" id="card-ad-interativo">
-            <div class="tarefa-icon icon-anuncios">📱</div>
-            <div class="tarefa-info">
-                <h3 id="ad-int-titulo">Anúncio</h3>
-                <p id="ad-int-desc">Assiste ao anúncio</p>
-                <div class="ad-indisponivel" id="ad-int-msg">Sem anúncio disponível de momento</div>
+        <div class="aviso-anuncios">
+            <div class="aviso-anuncios-topo">⚠️ Anúncios indisponíveis</div>
+            <p>O sistema de anúncios está <strong>indisponível por um bom tempo</strong>.</p>
+            <p>Para resolver isso, vamos trazer <strong>mais formas de ganhar no Desafio MOZ</strong>. 🚀</p>
+            <div class="aviso-anuncios-lista">
+                <span>🎮 Mais jogos</span>
+                <span>📋 Mais missões</span>
+                <span>🏆 Mais desafios</span>
             </div>
-            <div class="tarefa-ganho">
-                <button class="btn-fazer" id="ad-int-btn" onclick="abrirAnuncioTarefa('interativo')">Ver</button>
-            </div>
-        </div>
-
-        <div class="tarefa-card" id="card-ad-rewarded">
-            <div class="tarefa-icon icon-anuncios">🎬</div>
-            <div class="tarefa-info">
-                <h3 id="ad-rew-titulo">Anúncio</h3>
-                <p id="ad-rew-desc">Assiste ao anúncio</p>
-                <div class="ad-indisponivel" id="ad-rew-msg">Sem anúncio disponível de momento</div>
-            </div>
-            <div class="tarefa-ganho">
-                <button class="btn-fazer" id="ad-rew-btn" onclick="abrirAnuncioTarefa('rewarded')">Ver</button>
-            </div>
+            <p class="aviso-anuncios-fim">Brevemente o site fica com muitas formas de ganhar!</p>
         </div>
 
         <!-- Overlay de anúncio (aparece no mesmo ecrã) -->
@@ -903,6 +907,7 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
         }
 
         function aplicarUIAnunciosTarefas() {
+            if (!document.getElementById('ad-int-titulo') || !document.getElementById('ad-rew-titulo')) return; // cartões de anúncio removidos
             // Interativo
             var int = anunciosTarefasCfg.interativo;
             var temInt = int && int.ativo !== false && (int.codigo || '').trim();
