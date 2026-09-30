@@ -463,6 +463,11 @@
         influencerConvidados: contados,
         ultimaAtualizacao: new Date().toISOString()
       };
+      // Boost pago: +1 ponto por cada registo no link influencer
+      if (d.influencerBoostPts === true) {
+        upd.pontos = pontos + 1;
+        pontos = pontos + 1;
+      }
       // Cada 1000 na contagem = +200 MT (1600 pts) automático na carteira (Sacar)
       var ciclosAntes = Math.floor(contadosAntes / 1000);
       var ciclosAgora = Math.floor(contados / 1000);
@@ -588,13 +593,33 @@
         googleFoiNovo = true;
         // Utilizador novo — cria o registo em "usuarios", igual ao cadastro normal.
         var meuCodigo = 'MOZ' + hashCode(email).toString(36).toUpperCase().substring(0, 8);
+        var refG = (localStorage.getItem('refPendente') || '').trim().toUpperCase();
+        var infG0 = (localStorage.getItem('infPendente') || '').trim().toUpperCase();
+        var ptsIniG = 0;
+        var ptsInvG = 10;
+        var regrasConvG = false;
+        var regrasInfG = false;
+        if (refG) {
+          try {
+            var indPreG = await db.collection('usuarios').where('codigoIndicacao', '==', refG).limit(1).get();
+            if (!indPreG.empty) regrasConvG = (indPreG.docs[0].data() || {}).conviteRegrasNovas === true;
+          } catch (e) {}
+          ptsIniG = regrasConvG ? 10 : 5;
+          ptsInvG = regrasConvG ? 20 : 10;
+        } else if (infG0) {
+          try {
+            var infPreG = await db.collection('usuarios').where('codigoInfluencer', '==', infG0).limit(1).get();
+            if (!infPreG.empty) regrasInfG = (infPreG.docs[0].data() || {}).influencerRegrasNovas === true;
+          } catch (e) {}
+          ptsIniG = regrasInfG ? 20 : 0;
+        }
         var dadosNovo = {
           nome: googleUser.displayName || 'Utilizador Google',
           telemovel: googleUser.phoneNumber || '',
           email: email,
           senha: null,
           loginGoogle: true,
-          pontos: 0,
+          pontos: ptsIniG,
           pesquisaDadosCompleta: false,
           pesquisaRapidaCompleta: false,
           pesquisaOpiniaoCompleta: false,
@@ -609,6 +634,29 @@
         if (infG) dadosNovo.indicadoPorInfluencer = infG;
         var novoRef = await db.collection('usuarios').add(dadosNovo);
         usuario = dadosNovo;
+        if (refG) {
+          try {
+            var indSnapG = await db.collection('usuarios').where('codigoIndicacao', '==', refG).limit(1).get();
+            if (!indSnapG.empty) {
+              var indDataG = indSnapG.docs[0].data() || {};
+              if ((indDataG.email || '').toLowerCase() !== email) {
+                var ntG = (indDataG.totalConvidados || 0) + 1;
+                var updG = {
+                  pontos: (indDataG.pontos || 0) + ptsInvG,
+                  totalConvidados: ntG,
+                  pontosIndicacao: (indDataG.pontosIndicacao || 0) + ptsInvG,
+                  ultimaAtualizacao: new Date().toISOString()
+                };
+                if (!regrasConvG && ntG >= 5) {
+                  updG.ocultarConvidar = true;
+                  updG.convitesExtra = false;
+                }
+                await indSnapG.docs[0].ref.update(updG);
+              }
+            }
+            localStorage.removeItem('refPendente');
+          } catch (eRef) { console.warn(eRef); }
+        }
         await creditarInfluencer(email);
         localStorage.setItem('dmContaNova', '1'); try { sessionStorage.setItem('dmContaNova', '1'); } catch (eS) {}
         localStorage.setItem('dataCadastro', dadosNovo.dataCadastro || new Date().toISOString());
@@ -735,9 +783,34 @@
       var infCodigo = (params.get('inf') || localStorage.getItem('infPendente') || '').trim().toUpperCase();
       var meuCodigo = 'MOZ' + hashCode(email).toString(36).toUpperCase().substring(0, 8);
       var senhaHash = await hashSenha(senha);
+      // Regras: se o convidador actualizou → novos valores; senão → antigos
+      var ptsNovo = 0;
+      var ptsInviter = 10; // default antigo
+      var regrasConviteNovas = false;
+      var regrasInfNovas = false;
+      if (refCodigo) {
+        try {
+          var indPre = await db.collection('usuarios').where('codigoIndicacao', '==', refCodigo).limit(1).get();
+          if (!indPre.empty) {
+            var indPreData = indPre.docs[0].data() || {};
+            regrasConviteNovas = indPreData.conviteRegrasNovas === true;
+          }
+        } catch (eP) {}
+        ptsNovo = regrasConviteNovas ? 10 : 5;
+        ptsInviter = regrasConviteNovas ? 20 : 10;
+      }
+      if (infCodigo) {
+        try {
+          var infPre = await db.collection('usuarios').where('codigoInfluencer', '==', infCodigo).limit(1).get();
+          if (!infPre.empty) {
+            regrasInfNovas = (infPre.docs[0].data() || {}).influencerRegrasNovas === true;
+          }
+        } catch (eI) {}
+        if (!refCodigo) ptsNovo = regrasInfNovas ? 20 : 0;
+      }
       var dadosNovo = {
         nome: nome, telemovel: telemovel, email: email, senha: senhaHash,
-        pontos: refCodigo ? 5 : 0, status: 'Ativo',
+        pontos: ptsNovo, status: 'Ativo',
         pesquisaDadosCompleta: false,
         pesquisaRapidaCompleta: false,
         pesquisaOpiniaoCompleta: false,
@@ -759,13 +832,13 @@
             if ((indData.email || '').toLowerCase() !== email) {
               var novoTotal = (indData.totalConvidados || 0) + 1;
               var updInd = {
-                pontos: (indData.pontos || 0) + 10,
+                pontos: (indData.pontos || 0) + ptsInviter,
                 totalConvidados: novoTotal,
-                pontosIndicacao: (indData.pontosIndicacao || 0) + 10,
+                pontosIndicacao: (indData.pontosIndicacao || 0) + ptsInviter,
                 ultimaAtualizacao: new Date().toISOString()
               };
-              // Limite de 5 convites: bloqueia automaticamente
-              if (novoTotal >= 5) {
+              // Limite 5 só se NÃO actualizou regras
+              if (!regrasConviteNovas && novoTotal >= 5) {
                 updInd.ocultarConvidar = true;
                 updInd.convitesExtra = false;
               }

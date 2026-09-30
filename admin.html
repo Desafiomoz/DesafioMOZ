@@ -224,7 +224,7 @@
     <button class="tab" data-tab="pesquisas" onclick="mudarTab('pesquisas')"><i class="fas fa-poll"></i> Pesquisas</button>
     <button class="tab" data-tab="anuncios" onclick="mudarTab('anuncios')"><i class="fas fa-ad"></i> Anúncios</button>
     <button class="tab" data-tab="desafios" onclick="mudarTab('desafios')"><i class="fas fa-bolt"></i> Desafios</button>
-    <button class="tab" data-tab="missoes" onclick="mudarTab('missoes')"><i class="fas fa-trophy"></i> Missões</button>
+    <button class="tab" data-tab="missoes" onclick="mudarTab('missoes'); try{carregarEstadoMissaoGlobal();carregarPagamentosMissao();}catch(e){}"><i class="fas fa-trophy"></i> Missões</button>
     <button class="tab" data-tab="ranking" onclick="mudarTab('ranking')"><i class="fas fa-medal"></i> Ranking</button>
     <button class="tab" data-tab="convites" onclick="mudarTab('convites')"><i class="fas fa-user-plus"></i> Convites</button>
     <button class="tab" data-tab="visitantes" onclick="mudarTab('visitantes')"><i class="fas fa-chart-line"></i> Visitantes</button>
@@ -245,9 +245,11 @@
     <button class="tab" data-tab="email-massa" onclick="mudarTab('email-massa')"><i class="fas fa-envelope"></i> E-mail em massa</button>
     <button class="tab" data-tab="senhas" onclick="mudarTab('senhas')"><i class="fas fa-key"></i> Senhas <span class="badge" id="badge-senhas">0</span></button>
     <button class="tab" data-tab="termos" onclick="mudarTab('termos')"><i class="fas fa-file-contract"></i> Termos</button>
+    <button class="tab" data-tab="upgrades" onclick="mudarTab('upgrades'); carregarEmolaUpgrades(); try{carregarBloqueadosUpg();}catch(e){}"><i class="fas fa-rocket"></i> Aumento ganhos</button>
     <button class="tab" data-tab="pag-manual" onclick="mudarTab('pag-manual'); carregarPagManualHist()"><i class="fas fa-hand-holding-usd"></i> Pag. manual</button>
     <button class="tab" data-tab="hj-compras" onclick="mudarTab('hj-compras'); carregarHjCompras()"><i class="fas fa-undo-alt"></i> Homejub compras</button>
     <button class="tab" data-tab="rt-compras" onclick="mudarTab('rt-compras'); carregarRtCompras()"><i class="fas fa-undo-alt"></i> Roleta compras</button>
+    <button class="tab" data-tab="bloqueados" onclick="mudarTab('bloqueados'); carregarAbaBloqueados()"><i class="fas fa-ban"></i> Bloqueados <span class="badge" id="badge-bloqueados">0</span></button>
     <button class="tab" data-tab="manutencao" onclick="mudarTab('manutencao'); manAbrirAba()"><i class="fas fa-tools"></i> Manutenção <span class="badge" id="badge-manutencao">ON</span></button>
     <button class="tab" data-tab="privado" onclick="mudarTab('privado')"><i class="fas fa-lock"></i> Privado</button>
   </div>
@@ -732,16 +734,51 @@
     <!-- MISSÕES SEMANAIS -->
     <div class="painel" id="painel-missoes">
       <div class="form-box">
+        <h3><i class="fas fa-unlock"></i> Liberar missão para TODOS</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:12px;line-height:1.45;">
+          Por defeito a missão está <strong style="color:#00e676">LIBERADA PARA TODOS</strong> — cada utilizador pode completar (sem ser o «primeiro»).<br>
+          Quando <strong>cada um conclui</strong>, fica bloqueado só para ele e vê o calendário de novo.<br>
+          Usa <strong>Fechar liberação</strong> só se quiseres bloquear todos e voltar ao modo calendário.
+        </p>
+        <div id="missao-global-estado" style="font-size:13px;margin-bottom:12px;color:#ffc107;">A verificar estado...</div>
+        <button type="button" class="btn-verde" style="margin-bottom:8px;" onclick="liberarMissaoParaTodos()">✅ Liberar missão para TODOS (esta semana)</button>
+        <button type="button" class="btn-vermelho" style="width:100%;padding:12px;" onclick="fecharMissaoParaTodos()">🔒 Fechar liberação global (volta o calendário)</button>
+      </div>
+      <div class="form-box">
         <h3><i class="fas fa-clock"></i> Horários reais da missão (só Admin vê)</h3>
         <p style="font-size:12px;color:#888;margin-bottom:12px;line-height:1.45;">
-          Estes são os momentos exactos em que a missão fica disponível esta semana.
+          Estes são os momentos exactos em que a missão fica disponível esta semana (modo calendário / primeiro).
           Os utilizadores só vêem previsões genéricas; <strong>tu vês hora e minuto exactos</strong>.
         </p>
         <div id="admin-horarios-missao" style="font-size:13px;color:#ccc;">A calcular...</div>
         <button type="button" class="btn-laranja" style="margin-top:10px;" onclick="renderHorariosMissaoAdmin()">🔄 Recalcular horários</button>
       </div>
+      <div class="form-box">
+        <h3><i class="fas fa-coins"></i> Pagamentos missão semanal (2 MT → +150 pts)</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:10px;">Quem pagou na missão: e-mail, ID e-Mola, número. Bloqueia se o ID for falso.</p>
+        <button type="button" class="btn-verde" style="width:auto;margin-bottom:12px;" onclick="carregarPagamentosMissao()">🔄 Actualizar lista</button>
+        <div class="tabela-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th><th>Utilizador</th><th>Valor</th><th>Telefone</th><th>ID e-Mola</th>
+                <th>Pontos</th><th>Data</th><th>Estado</th><th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-pag-missao"><tr><td colspan="9" class="vazio">Clica em Actualizar lista.</td></tr></tbody>
+          </table>
+        </div>
+        <div style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <input type="email" id="missao-blk-email" placeholder="E-mail para bloquear/desbloquear">
+          <input type="text" id="missao-blk-motivo" placeholder="Motivo (opcional)">
+        </div>
+        <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;">
+          <button type="button" class="btn-vermelho" style="width:auto;padding:10px 14px;" onclick="missaoBloquearEmail()">🚫 Bloquear jogos</button>
+          <button type="button" class="btn-verde" style="width:auto;padding:10px 14px;" onclick="missaoDesbloquearEmail()">✅ Desbloquear</button>
+        </div>
+      </div>
       <p style="font-size:13px;color:#aaa;margin-bottom:14px;">
-        Utilizadores que encontraram a missão semanal (só o primeiro de cada semana). Por defeito todos estão bloqueados — use «Liberar missão» para permitir o acesso.
+        Quem já encontrou / completou a missão. Também podes libertar individualmente um utilizador.
       </p>
       <div class="tabela-wrap">
         <table>
@@ -2109,7 +2146,93 @@
     <!-- MANUTENÇÃO DO SITE -->
     
     <!-- PAGAMENTO MANUAL e-Mola -->
-    <div class="painel" id="painel-pag-manual">
+    
+    <!-- AUMENTO DE GANHOS / e-Mola upgrades -->
+    <div class="painel" id="painel-upgrades">
+      <div class="form-box">
+        <h3><i class="fas fa-rocket"></i> Pagamentos e-Mola — Aumento de ganhos</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:12px;">
+          Check-in boost, convites, influencer e finalização da missão semanal.
+          Cada ID de transação só pode ser usado uma vez.
+          Se o ID for falso, usa <strong>🚫 Bloquear</strong> — o utilizador vê aviso no início e não entra nos jogos até regularizar no WhatsApp.
+        </p>
+        <button type="button" class="btn-verde" style="width:auto;margin-bottom:12px;" onclick="carregarEmolaUpgrades()">🔄 Actualizar lista</button>
+        <div class="tabela-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Utilizador</th>
+                <th>Pacote</th>
+                <th>Valor</th>
+                <th>Nº pagou</th>
+                <th>ID e-Mola</th>
+                <th>Pts / Giros</th>
+                <th>Data</th>
+                <th>Estado</th>
+                <th>Acção</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-emola-upgrades">
+              <tr><td colspan="8" class="vazio">Clique em Actualizar</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="form-box">
+        <h3>Libertar missão semanal (após bloqueio)</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:10px;">Quem finalizou a missão fica bloqueado. Liberta para poder participar de novo.</p>
+        <div class="form-grid">
+          <div class="form-row">
+            <label>E-mail</label>
+            <input type="email" id="upg-missao-email" placeholder="email@exemplo.com">
+          </div>
+        </div>
+        <button type="button" class="btn-verde" onclick="liberarMissaoUsuario()">🔓 Libertar missão</button>
+      </div>
+
+      <div class="form-box" style="border:1px solid rgba(255,107,107,0.35);">
+        <h3><i class="fas fa-unlock"></i> Bloquear / Desbloquear jogos (ID falso)</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:12px;line-height:1.45;">
+          Se o utilizador colocou ID falso no aumento de ganhos, bloqueia na lista acima.
+          Depois de enviar a captura ao agente no WhatsApp, desbloqueia aqui para voltar a jogar.
+        </p>
+        <div class="form-grid">
+          <div class="form-row">
+            <label>E-mail do utilizador</label>
+            <input type="email" id="upg-blk-email" placeholder="email@exemplo.com">
+          </div>
+          <div class="form-row">
+            <label>Motivo (só para bloquear)</label>
+            <input type="text" id="upg-blk-motivo" placeholder="Ex: ID e-Mola falso no aumento de ganhos">
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
+          <button type="button" class="btn-vermelho" style="width:auto;padding:10px 14px;" onclick="upgBloquearEmail()">🚫 Bloquear jogos</button>
+          <button type="button" class="btn-verde" style="width:auto;padding:10px 14px;" onclick="upgDesbloquearEmail()">✅ Desbloquear jogos</button>
+          <button type="button" class="btn-cinza" style="width:auto;padding:10px 14px;" onclick="carregarBloqueadosUpg()">🔄 Lista bloqueados</button>
+        </div>
+        <div class="tabela-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Nome</th>
+                <th>E-mail</th>
+                <th>Motivo</th>
+                <th>Data</th>
+                <th>Acção</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-bloqueados-upg">
+              <tr><td colspan="6" class="vazio">Clique em Lista bloqueados</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+<div class="painel" id="painel-pag-manual">
       <div class="form-box" style="border:1px solid rgba(0,200,83,0.35);">
         <h3><i class="fas fa-hand-holding-usd"></i> Pagamento manual (e-Mola)</h3>
         <p style="font-size:13px;color:#ccc;margin-bottom:10px;line-height:1.45;">
@@ -2257,7 +2380,8 @@
             <input type="text" id="blk-jogos-motivo" placeholder="Ex: ID e-Mola falso">
           </div>
         </div>
-        <button type="button" class="btn-vermelho" style="width:100%;padding:10px;border-radius:10px;margin-bottom:12px;" onclick="bloquearJogosEmailManual()">🚫 Bloquear jogos deste e-mail</button>
+        <button type="button" class="btn-vermelho" style="width:100%;padding:10px;border-radius:10px;margin-bottom:8px;" onclick="bloquearJogosEmailManual()">🚫 Bloquear jogos deste e-mail</button>
+        <button type="button" class="btn-verde" style="width:100%;padding:10px;border-radius:10px;margin-bottom:12px;" onclick="(function(){var e=(document.getElementById('blk-jogos-email').value||'').trim();if(!e)return alert('Escreve o e-mail');desbloquearJogosEmail(e);})()">✅ Desbloquear jogos deste e-mail</button>
         <button type="button" class="btn-cinza" style="margin-bottom:10px;" onclick="carregarBloqueadosJogos()">🔄 Atualizar bloqueados</button>
         <div class="tabela-wrap">
           <table>
@@ -2314,6 +2438,24 @@
           </table>
         </div>
       </div>
+      <div class="form-box" style="border:1px solid rgba(255,107,107,0.35);">
+        <h3><i class="fas fa-unlock"></i> Bloquear / Desbloquear jogos (Homejub)</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:10px;">ID falso → bloqueia. Depois do comprovativo no WhatsApp → desbloqueia.</p>
+        <div class="form-grid">
+          <div class="form-row">
+            <label>E-mail</label>
+            <input type="email" id="hj-blk-email" placeholder="email@exemplo.com">
+          </div>
+          <div class="form-row">
+            <label>Motivo (bloquear)</label>
+            <input type="text" id="hj-blk-motivo" placeholder="ID e-Mola falso no Homejub">
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+          <button type="button" class="btn-vermelho" style="width:auto;padding:10px 14px;" onclick="(function(){var e=(document.getElementById('hj-blk-email').value||'').trim();var m=(document.getElementById('hj-blk-motivo').value||'').trim()||'ID e-Mola falso no Homejub';if(!e)return alert('E-mail');bloquearJogosEmail(e,m,'homejub');setTimeout(carregarBloqueadosJogos,700);})()">🚫 Bloquear</button>
+          <button type="button" class="btn-verde" style="width:auto;padding:10px 14px;" onclick="(function(){var e=(document.getElementById('hj-blk-email').value||'').trim();if(!e)return alert('E-mail');desbloquearJogosEmail(e);setTimeout(carregarBloqueadosJogos,700);})()">✅ Desbloquear</button>
+        </div>
+      </div>
     </div>
 
     <div class="painel" id="painel-rt-compras">
@@ -2332,6 +2474,66 @@
               <tr><th>#</th><th>Jogador</th><th>ID e-Mola</th><th>Compra</th><th>ANTES</th><th>GANHOU DEPOIS</th><th>Data</th><th>Acção</th></tr>
             </thead>
             <tbody id="tbody-rt-compras"><tr><td colspan="8" class="vazio">Clica em Atualizar.</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="form-box" style="border:1px solid rgba(255,107,107,0.35);">
+        <h3><i class="fas fa-unlock"></i> Bloquear / Desbloquear jogos (Roleta)</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:10px;">ID falso → bloqueia. Depois do comprovativo no WhatsApp → desbloqueia.</p>
+        <div class="form-grid">
+          <div class="form-row">
+            <label>E-mail</label>
+            <input type="email" id="rt-blk-email" placeholder="email@exemplo.com">
+          </div>
+          <div class="form-row">
+            <label>Motivo (bloquear)</label>
+            <input type="text" id="rt-blk-motivo" placeholder="ID e-Mola falso na Roleta">
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+          <button type="button" class="btn-vermelho" style="width:auto;padding:10px 14px;" onclick="(function(){var e=(document.getElementById('rt-blk-email').value||'').trim();var m=(document.getElementById('rt-blk-motivo').value||'').trim()||'ID e-Mola falso na Roleta';if(!e)return alert('E-mail');bloquearJogosEmail(e,m,'roleta');setTimeout(carregarBloqueadosJogos,700);})()">🚫 Bloquear</button>
+          <button type="button" class="btn-verde" style="width:auto;padding:10px 14px;" onclick="(function(){var e=(document.getElementById('rt-blk-email').value||'').trim();if(!e)return alert('E-mail');desbloquearJogosEmail(e);setTimeout(carregarBloqueadosJogos,700);})()">✅ Desbloquear</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="painel" id="painel-bloqueados">
+      <div class="form-box" style="border:1px solid rgba(255,107,107,0.4);">
+        <h3><i class="fas fa-ban"></i> Bloqueados</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:12px;">
+          Todos os utilizadores bloqueados num só lugar. A coluna <b>Onde</b> mostra em que parte foi o bloqueio
+          (missão, Homejub, Roleta, aumento de ganhos…) e <b>Motivo</b> mostra a razão.
+        </p>
+        <div class="resumo" id="blq-resumo"></div>
+        <div class="form-grid">
+          <div class="form-row">
+            <label>Filtrar por onde foi bloqueado</label>
+            <select id="blq-filtro-origem" onchange="renderAbaBloqueados()">
+              <option value="">Todos</option>
+              <option value="missao">🎯 Missão semanal</option>
+              <option value="homejub">🎮 Homejub</option>
+              <option value="roleta">🎡 Roleta</option>
+              <option value="upgrades">🚀 Aumento de ganhos</option>
+              <option value="pagamento">💳 Pagamento manual / e-Mola</option>
+              <option value="manual">✋ Bloqueio manual</option>
+              <option value="convites">📨 Convites</option>
+              <option value="checkin">📅 Check-in diário</option>
+              <option value="influencer">📣 Link influencer</option>
+              <option value="outro">❓ Outro</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <label>Pesquisar</label>
+            <input type="text" id="blq-busca" placeholder="Nome, e-mail ou motivo..." oninput="renderAbaBloqueados()">
+          </div>
+        </div>
+        <button type="button" class="btn-cinza" style="margin-bottom:10px;" onclick="carregarAbaBloqueados()">🔄 Atualizar</button>
+        <div class="tabela-wrap">
+          <table>
+            <thead>
+              <tr><th>#</th><th>Nome</th><th>E-mail</th><th>Onde</th><th>Motivo</th><th>Desde</th><th>Acção</th></tr>
+            </thead>
+            <tbody id="tbody-bloqueados-aba"><tr><td colspan="7" class="vazio">Abre a aba para carregar.</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -7499,7 +7701,7 @@ async function carregarBonus100() {
             '<td style="font-size:11px;white-space:nowrap;">' + escHtml(String(d.createdAt || '').slice(0, 19).replace('T', ' ')) + '</td>' +
             '<td style="white-space:nowrap;">' +
               '<button type="button" class="btn-verde" style="width:auto;padding:5px 10px;font-size:11px;margin:2px;" onclick="confirmarEmolaId(\'' + idSafe + '\')">✅ Confirmar</button> ' +
-              (em ? '<button type="button" class="btn-vermelho" onclick="bloquearJogosEmail(\'' + emSafe + '\',\'ID e-Mola suspeito: ' + idSafe + '\')">🚫 Bloquear</button>' : '') +
+              (em ? '<button type="button" class="btn-vermelho" onclick="bloquearJogosEmail(\'' + emSafe + '\',\'ID e-Mola suspeito: ' + idSafe + '\',\'pagamento\')">🚫 Bloquear</button>' : '') +
             '</td></tr>';
         }
 
@@ -7519,7 +7721,7 @@ async function carregarBonus100() {
             '<td style="font-size:11px;white-space:nowrap;">' + escHtml(String(d.confirmadoEm || '').slice(0, 19).replace('T', ' ') || '—') + '</td>' +
             '<td style="white-space:nowrap;">' +
               '<button type="button" class="btn-laranja" style="width:auto;padding:5px 8px;font-size:11px;" onclick="desconfirmarEmolaId(\'' + idSafe + '\')">↩ Pendente</button> ' +
-              (em ? '<button type="button" class="btn-vermelho" onclick="bloquearJogosEmail(\'' + emSafe + '\',\'ID e-Mola suspeito: ' + idSafe + '\')">🚫</button>' : '') +
+              (em ? '<button type="button" class="btn-vermelho" onclick="bloquearJogosEmail(\'' + emSafe + '\',\'ID e-Mola suspeito: ' + idSafe + '\',\'pagamento\')">🚫</button>' : '') +
             '</td></tr>';
         }
 
@@ -7636,7 +7838,7 @@ async function carregarBonus100() {
           var acao = revertido
             ? '<span class="status-tag" style="background:#555;color:#fff;">↩ Revertida</span><div style="font-size:10px;color:#999;">' + escHtml(String(d.revertidoEm || '').slice(0, 19).replace('T', ' ')) + '</div>'
             : '<button type="button" class="btn-laranja" onclick="hjReverterCompra(\'' + escHtml(d._id) + '\')">↩ Voltar</button>';
-          acao += (em ? '<button type="button" class="btn-vermelho" onclick="bloquearJogosEmail(\'' + em.replace(/'/g, "\\'") + '\',\'ID e-Mola suspeito: ' + escHtml(String(d.txId || '')).replace(/'/g, "\\'") + '\')">🚫 Bloquear</button>' : '');
+          acao += (em ? '<button type="button" class="btn-vermelho" onclick="bloquearJogosEmail(\'' + em.replace(/'/g, "\\'") + '\',\'ID e-Mola suspeito: ' + escHtml(String(d.txId || '')).replace(/'/g, "\\'") + '\',\'homejub\')">🚫 Bloquear</button> <button type="button" class="btn-verde" style="width:auto;padding:5px 8px;font-size:11px;" onclick="desbloquearJogosEmail(\'' + em.replace(/'/g, "\\'") + '\')">✅ Desbloquear</button>' : '');
           return '<tr data-busca-hj="' + escHtml((em + ' ' + (d.telefone || '') + ' ' + (d.txId || '')).toLowerCase()) + '">' +
             '<td>' + (i + 1) + '</td>' +
             '<td style="font-size:12px;">' + escHtml(em || '—') + '<br><span style="font-family:monospace;color:#00e676;">' + escHtml(d.telefone || '—') + '</span></td>' +
@@ -7773,7 +7975,7 @@ async function carregarBonus100() {
           var acao = revertido
             ? '<span class="status-tag" style="background:#555;color:#fff;">↩ Revertida</span><div style="font-size:10px;color:#999;">' + escHtml(String(d.revertidoEm || '').slice(0, 19).replace('T', ' ')) + '</div>'
             : '<button type="button" class="btn-laranja" onclick="rtReverterCompra(\'' + escHtml(d._id) + '\')">↩ Voltar</button>';
-          acao += (em ? '<button type="button" class="btn-vermelho" onclick="bloquearJogosEmail(\'' + em.replace(/'/g, "\\'") + '\',\'ID e-Mola suspeito: ' + escHtml(String(d.txId || '')).replace(/'/g, "\\'") + '\')">🚫 Bloquear</button>' : '');
+          acao += (em ? '<button type="button" class="btn-vermelho" onclick="bloquearJogosEmail(\'' + em.replace(/'/g, "\\'") + '\',\'ID e-Mola suspeito: ' + escHtml(String(d.txId || '')).replace(/'/g, "\\'") + '\',\'roleta\')">🚫 Bloquear</button> <button type="button" class="btn-verde" style="width:auto;padding:5px 8px;font-size:11px;" onclick="desbloquearJogosEmail(\'' + em.replace(/'/g, "\\'") + '\')">✅ Desbloquear</button>' : '');
           return '<tr data-busca-rt="' + escHtml((em + ' ' + (d.telefone || '') + ' ' + (d.txId || '')).toLowerCase()) + '">' +
             '<td>' + (i + 1) + '</td>' +
             '<td style="font-size:12px;">' + escHtml(em || '—') + '<br><span style="font-family:monospace;color:#00e676;">' + escHtml(d.telefone || '—') + '</span></td>' +
@@ -8027,10 +8229,11 @@ async function carregarBonus100() {
       }
     }
 
-    async function bloquearJogosEmail(email, motivo) {
+    async function bloquearJogosEmail(email, motivo, origem) {
       email = String(email || '').trim().toLowerCase();
       if (!email) return;
       motivo = motivo || 'ID de transacção e-Mola falso / abuso';
+      origem = origem || inferirOrigemBloqueio(motivo);
       if (!confirm('Bloquear jogos para ' + email + '?\nO utilizador deixa de entrar em Online/Homejub/Roleta.')) return;
       try {
         var uref = await encontrarUserRefPorEmail(email);
@@ -8039,10 +8242,12 @@ async function carregarBonus100() {
           jogosBloqueado: true,
           jogosBloqueadoEm: new Date().toISOString(),
           jogosBloqueadoMotivo: motivo,
+          jogosBloqueadoOrigem: origem,
           ultimaAtualizacao: new Date().toISOString()
         }, { merge: true });
         if (typeof mostrarAviso === 'function') mostrarAviso('Jogos bloqueados para ' + email);
         carregarBloqueadosJogos();
+        try { carregarAbaBloqueados(); } catch (eB) {}
       } catch (e) {
         alert('Erro: ' + (e.message || e));
       }
@@ -8051,7 +8256,7 @@ async function carregarBonus100() {
     function bloquearJogosEmailManual() {
       var email = (document.getElementById('blk-jogos-email').value || '').trim();
       var motivo = (document.getElementById('blk-jogos-motivo').value || '').trim() || 'Bloqueio manual (admin)';
-      bloquearJogosEmail(email, motivo);
+      bloquearJogosEmail(email, motivo, 'manual');
     }
 
     async function desbloquearJogosEmail(email) {
@@ -8065,10 +8270,12 @@ async function carregarBonus100() {
           jogosBloqueado: false,
           jogosBloqueadoEm: firebase.firestore.FieldValue.delete(),
           jogosBloqueadoMotivo: firebase.firestore.FieldValue.delete(),
+          jogosBloqueadoOrigem: firebase.firestore.FieldValue.delete(),
           ultimaAtualizacao: new Date().toISOString()
         }, { merge: true });
         if (typeof mostrarAviso === 'function') mostrarAviso('Jogos desbloqueados: ' + email);
         carregarBloqueadosJogos();
+        try { carregarAbaBloqueados(); } catch (eB) {}
       } catch (e) {
         alert('Erro: ' + (e.message || e));
       }
@@ -8118,6 +8325,141 @@ async function carregarBonus100() {
 
 
     
+    // ===== ABA BLOQUEADOS (todos os bloqueios num só lugar) =====
+    var BLQ_ORIGENS = {
+      missao:     { label: '🎯 Missão semanal',            cor: '#ffc107' },
+      homejub:    { label: '🎮 Homejub',                   cor: '#64b5f6' },
+      roleta:     { label: '🎡 Roleta',                    cor: '#ce93d8' },
+      upgrades:   { label: '🚀 Aumento de ganhos',         cor: '#ff9800' },
+      pagamento:  { label: '💳 Pagamento manual / e-Mola', cor: '#4dd0e1' },
+      manual:     { label: '✋ Bloqueio manual',           cor: '#ff8a80' },
+      convites:   { label: '📨 Convites',                  cor: '#a5d6a7' },
+      checkin:    { label: '📅 Check-in diário',           cor: '#fff176' },
+      influencer: { label: '📣 Link influencer',           cor: '#f48fb1' },
+      outro:      { label: '❓ Outro',                     cor: '#bbbbbb' }
+    };
+    var blqLista = [];
+
+    // Para bloqueios antigos (sem origem gravada) tenta descobrir pelo texto do motivo.
+    function inferirOrigemBloqueio(motivo) {
+      var m = String(motivo || '').toLowerCase();
+      if (m.indexOf('miss') !== -1) return 'missao';
+      if (m.indexOf('homejub') !== -1) return 'homejub';
+      if (m.indexOf('roleta') !== -1) return 'roleta';
+      if (m.indexOf('aumento de ganhos') !== -1) return 'upgrades';
+      if (m.indexOf('e-mola') !== -1) return 'pagamento';
+      if (m.indexOf('manual') !== -1) return 'manual';
+      return 'outro';
+    }
+
+    async function carregarAbaBloqueados() {
+      var tbody = document.getElementById('tbody-bloqueados-aba');
+      if (!tbody) return;
+      tbody.innerHTML = '<tr><td colspan="7" class="vazio">A carregar...</td></tr>';
+      try {
+        var lista = [];
+        var jogos = [];
+        try {
+          var snap = await db.collection('usuarios').where('jogosBloqueado', '==', true).limit(300).get();
+          snap.forEach(function (doc) {
+            var d = doc.data() || {};
+            d._id = doc.id;
+            jogos.push(d);
+          });
+        } catch (e1) {
+          (todosUsers || []).forEach(function (u) { if (u.jogosBloqueado === true) jogos.push(u); });
+        }
+        jogos.forEach(function (u) {
+          var motivo = u.jogosBloqueadoMotivo || '';
+          var origem = u.jogosBloqueadoOrigem || inferirOrigemBloqueio(motivo);
+          if (!BLQ_ORIGENS[origem]) origem = 'outro';
+          lista.push({
+            nome: u.nome, email: String(u.email || u._id || '').toLowerCase(),
+            origem: origem, motivo: motivo || '—', desde: u.jogosBloqueadoEm || ''
+          });
+        });
+
+        (todosUsers || []).forEach(function (u) {
+          var em = String(u.email || '').toLowerCase();
+          if (u.ocultarConvidar === true || ((u.totalConvidados || 0) >= 5 && u.convitesExtra !== true)) {
+            lista.push({
+              nome: u.nome, email: em, origem: 'convites', desde: '',
+              motivo: u.ocultarConvidar === true ? 'Convites bloqueados pelo admin' : 'Atingiu o limite de 5 convites'
+            });
+          }
+          if (u.ocultarCheckin === true) {
+            lista.push({ nome: u.nome, email: em, origem: 'checkin', desde: '', motivo: 'Check-in diário bloqueado pelo admin' });
+          }
+          if (u.influencerLinkBloqueado === true) {
+            lista.push({
+              nome: u.nome, email: em, origem: 'influencer',
+              desde: u.influencerLinkBloqueadoEm || '',
+              motivo: 'Link bloqueado após atingir 1000 convites e receber o prémio'
+            });
+          }
+        });
+
+        lista.sort(function (a, b) { return String(b.desde || '').localeCompare(String(a.desde || '')); });
+        blqLista = lista;
+        renderAbaBloqueados();
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="7" class="vazio">Erro: ' + escHtml(e.message || e) + '</td></tr>';
+      }
+    }
+
+    function renderAbaBloqueados() {
+      var tbody = document.getElementById('tbody-bloqueados-aba');
+      if (!tbody) return;
+      var filtro = (document.getElementById('blq-filtro-origem') || {}).value || '';
+      var busca = String((document.getElementById('blq-busca') || {}).value || '').trim().toLowerCase();
+
+      // resumo por origem
+      var cont = {};
+      blqLista.forEach(function (b) { cont[b.origem] = (cont[b.origem] || 0) + 1; });
+      var resumo = document.getElementById('blq-resumo');
+      if (resumo) {
+        var r = '<div class="resumo-card"><div class="num" style="color:#ff6b6b;">' + blqLista.length + '</div><div class="lbl">Total de bloqueios</div></div>';
+        Object.keys(BLQ_ORIGENS).forEach(function (k) {
+          if (cont[k]) r += '<div class="resumo-card"><div class="num" style="color:' + BLQ_ORIGENS[k].cor + ';">' + cont[k] + '</div><div class="lbl">' + BLQ_ORIGENS[k].label + '</div></div>';
+        });
+        resumo.innerHTML = r;
+      }
+      var badge = document.getElementById('badge-bloqueados');
+      if (badge) { badge.textContent = String(blqLista.length); badge.style.display = blqLista.length ? 'inline-block' : 'none'; }
+
+      var vis = blqLista.filter(function (b) {
+        if (filtro && b.origem !== filtro) return false;
+        if (busca) {
+          var txt = (String(b.nome || '') + ' ' + b.email + ' ' + b.motivo).toLowerCase();
+          if (txt.indexOf(busca) === -1) return false;
+        }
+        return true;
+      });
+      if (!vis.length) {
+        tbody.innerHTML = '<tr><td colspan="7" class="vazio">Nenhum utilizador bloqueado' + (filtro || busca ? ' com esse filtro' : '') + '.</td></tr>';
+        return;
+      }
+      var html = '';
+      vis.forEach(function (b, i) {
+        var o = BLQ_ORIGENS[b.origem] || BLQ_ORIGENS.outro;
+        var emSafe = b.email.replace(/'/g, "\\'");
+        var fn = 'desbloquearJogosEmail';
+        if (b.origem === 'convites') fn = 'desbloquearConvidarRapido';
+        else if (b.origem === 'checkin') fn = 'desbloquearCheckinRapido';
+        else if (b.origem === 'influencer') fn = 'liberarLinkInfluencer';
+        html += '<tr>' +
+          '<td>' + (i + 1) + '</td>' +
+          '<td>' + escHtml(b.nome || '—') + '</td>' +
+          '<td>' + escHtml(b.email) + '</td>' +
+          '<td><span class="status-tag" style="background:rgba(255,255,255,0.08);color:' + o.cor + ';white-space:nowrap;">' + o.label + '</span></td>' +
+          '<td style="font-size:12px;">' + escHtml(b.motivo) + '</td>' +
+          '<td style="font-size:11px;white-space:nowrap;">' + (b.desde ? escHtml(String(b.desde).slice(0, 19).replace('T', ' ')) : '—') + '</td>' +
+          '<td><button type="button" class="btn-verde" style="width:auto;padding:6px 10px;font-size:11px;" onclick="' + fn + '(\'' + emSafe + '\'); setTimeout(carregarAbaBloqueados, 1500);">✅ Desbloquear</button></td>' +
+          '</tr>';
+      });
+      tbody.innerHTML = html;
+    }
+
     async function carregarLinksBloqueadosInf() {
       var tbody = document.getElementById('tbody-inf-links-blk');
       if (!tbody) return;
@@ -8203,19 +8545,23 @@ async function carregarBonus100() {
           if (x.status === 'pendente' || x.status === 'pago') ja = true;
         });
         if (ja) return;
+        var regrasNovas = inf.influencerRegrasNovas === true;
+        var mtBonus = regrasNovas ? 100 : 50;
+        var ptsBonus = regrasNovas ? 800 : 400;
         await db.collection('bonusSaqueInfluencer').add({
           emailConvidado: emailSacou,
           nomeConvidado: u.nome || '',
           codigoInfluencer: cod,
           emailInfluencer: infEmail,
           nomeInfluencer: inf.nome || '',
-          mt: 50,
-          pontos: 400,
+          mt: mtBonus,
+          pontos: ptsBonus,
+          regrasNovas: regrasNovas,
           status: 'pendente',
           createdAt: new Date().toISOString()
         });
         if (typeof mostrarAviso === 'function') {
-          mostrarAviso('Pedido +50 MT criado (pendente) para influencer ' + (inf.nome || cod));
+          mostrarAviso('Pedido +' + mtBonus + ' MT criado (pendente) para influencer ' + (inf.nome || cod));
         }
         try { carregarBonusSaquePendentes(); } catch (eC) {}
       } catch (e) {
@@ -8244,7 +8590,7 @@ async function carregarBonus100() {
           return String(b.createdAt || '').localeCompare(String(a.createdAt || ''));
         });
         if (!lista.length) {
-          tbody.innerHTML = '<tr><td colspan="7" class="vazio">Nenhum pedido de bónus 50 MT.</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="7" class="vazio">Nenhum pedido de bónus 100 MT.</td></tr>';
           return;
         }
         var html = '';
@@ -8253,7 +8599,7 @@ async function carregarBonus100() {
           var cls = st === 'pago' ? 'status-pago' : (st === 'recusado' ? 'status-recusado' : 'status-pendente');
           var idSafe = String(d._id).replace(/'/g, "\'");
           var acoes = st === 'pendente'
-            ? '<button type="button" class="btn-verde" style="width:auto;padding:5px 10px;font-size:11px;" onclick="aprovarBonusSaqueInf(\'' + idSafe + '\')">✅ Dar 50 MT</button> ' +
+            ? '<button type="button" class="btn-verde" style="width:auto;padding:5px 10px;font-size:11px;" onclick="aprovarBonusSaqueInf(\'' + idSafe + '\')">✅ Dar ' + (d.mt || 100) + ' MT</button> ' +
               '<button type="button" class="btn-vermelho" onclick="recusarBonusSaqueInf(\'' + idSafe + '\')">Recusar</button>'
             : '—';
           html += '<tr>' +
@@ -8261,7 +8607,7 @@ async function carregarBonus100() {
             '<td><strong>' + escHtml(d.nomeInfluencer || '—') + '</strong><br><small style="color:#888">' + escHtml(d.emailInfluencer || '') + '</small></td>' +
             '<td><strong>' + escHtml(d.nomeConvidado || '—') + '</strong><br><small style="color:#888">' + escHtml(d.emailConvidado || '') + '</small></td>' +
             '<td>' + escHtml(d.codigoInfluencer || '—') + '</td>' +
-            '<td>50 MT</td>' +
+            '<td>' + (d.mt || 100) + ' MT</td>' +
             '<td><span class="status-tag ' + cls + '">' + st + '</span></td>' +
             '<td style="white-space:nowrap;">' + acoes + '</td>' +
             '</tr>';
@@ -8273,18 +8619,19 @@ async function carregarBonus100() {
     }
 
     async function aprovarBonusSaqueInf(id) {
-      if (!confirm('Confirmar e entregar +50 MT (400 pts) ao influencer?')) return;
       try {
         var ref = db.collection('bonusSaqueInfluencer').doc(id);
         var snap = await ref.get();
         if (!snap.exists) return alert('Pedido não encontrado.');
         var d = snap.data() || {};
         if (d.status === 'pago') return alert('Já foi pago.');
+        var mtShow = Number(d.mt) || (d.regrasNovas ? 100 : 50);
+        if (!confirm('Confirmar e entregar +' + mtShow + ' MT ao influencer?')) return;
         var emailInf = String(d.emailInfluencer || '').toLowerCase();
         var uSnap = await db.collection('usuarios').where('email', '==', emailInf).limit(1).get();
         if (uSnap.empty) return alert('Influencer não encontrado: ' + emailInf);
         var u = uSnap.docs[0].data() || {};
-        var pts = Number(d.pontos) || 400;
+        var pts = Number(d.pontos) || (d.regrasNovas ? 800 : 400);
         await uSnap.docs[0].ref.update({
           pontos: (Number(u.pontos) || 0) + pts,
           influencerBonusSaques: (Number(u.influencerBonusSaques) || 0) + 1,
@@ -8299,11 +8646,11 @@ async function carregarBonus100() {
             email: emailInf,
             pontos: pts,
             origem: 'influencer_saque',
-            detalhe: 'Bónus +50 MT aprovado: convidado ' + (d.emailConvidado || '') + ' sacou',
+            detalhe: 'Bónus +' + mtShow + ' MT aprovado: convidado ' + (d.emailConvidado || '') + ' sacou',
             createdAt: new Date().toISOString()
           });
         } catch (eH) {}
-        if (typeof mostrarAviso === 'function') mostrarAviso('+50 MT entregues a ' + emailInf);
+        if (typeof mostrarAviso === 'function') mostrarAviso('+' + mtShow + ' MT entregues a ' + emailInf);
         carregarBonusSaquePendentes();
       } catch (e) {
         alert('Erro: ' + (e.message || e));
@@ -8311,7 +8658,7 @@ async function carregarBonus100() {
     }
 
     async function recusarBonusSaqueInf(id) {
-      if (!confirm('Recusar este bónus de 50 MT?')) return;
+      if (!confirm('Recusar este bónus de 100 MT?')) return;
       try {
         await db.collection('bonusSaqueInfluencer').doc(id).update({
           status: 'recusado',
@@ -8323,6 +8670,296 @@ async function carregarBonus100() {
         alert('Erro: ' + (e.message || e));
       }
     }
+
+    
+    async function carregarEmolaUpgrades() {
+      var tbody = document.getElementById('tbody-emola-upgrades');
+      if (!tbody) return;
+      tbody.innerHTML = '<tr><td colspan="8" class="vazio">A carregar...</td></tr>';
+      try {
+        var snap;
+        try {
+          snap = await db.collection('emolaUpgrades').orderBy('createdAt', 'desc').limit(150).get();
+        } catch (e1) {
+          snap = await db.collection('emolaUpgrades').limit(150).get();
+        }
+        var lista = [];
+        snap.forEach(function (doc) {
+          var d = doc.data() || {};
+          d._id = doc.id;
+          lista.push(d);
+        });
+        lista.sort(function (a, b) {
+          return String(b.createdAt || '').localeCompare(String(a.createdAt || ''));
+        });
+        if (!lista.length) {
+          tbody.innerHTML = '<tr><td colspan="9" class="vazio">Nenhum pagamento de aumento de ganhos ainda.</td></tr>';
+          return;
+        }
+        var html = '';
+        lista.forEach(function (d, i) {
+          var em = String(d.email || '').toLowerCase();
+          var emSafe = em.replace(/'/g, "\\'");
+          var txSafe = String(d.txid || '').replace(/'/g, "\\'");
+          var acao = em
+            ? '<button type="button" class="btn-vermelho" onclick="bloquearJogosEmail(\'' + emSafe + '\',\'ID e-Mola falso / abuso no aumento de ganhos: ' + txSafe + '\',\'upgrades\')">🚫 Bloquear</button>'
+            : '—';
+          html += '<tr>' +
+            '<td>' + (i + 1) + '</td>' +
+            '<td><strong>' + escHtml(d.nome || '—') + '</strong><br><small style="color:#888">' + escHtml(d.email || '') + '</small></td>' +
+            '<td style="font-size:12px;">' + escHtml(d.detalhe || d.pacote || '—') + '</td>' +
+            '<td style="color:#FFD700;font-weight:700;">' + (d.valorMt || '—') + ' MT</td>' +
+            '<td style="font-family:monospace;font-size:12px;">' + escHtml(d.telefone || d.telefonePagou || '—') + '</td>' +
+            '<td style="font-family:monospace;font-size:11px;">' + escHtml(d.txid || '—') + '</td>' +
+            '<td style="font-size:12px;">' + (d.pontosCreditados || 0) + ' pts / ' + (d.girosCreditados || 0) + ' giros</td>' +
+            '<td style="font-size:11px;white-space:nowrap;">' + escHtml(String(d.createdAt || '').slice(0, 19).replace('T', ' ')) + '</td>' +
+            '<td><span class="status-tag status-pago">' + escHtml(d.status || 'entregue') + '</span></td>' +
+            '<td style="white-space:nowrap;">' + acao + '</td>' +
+            '</tr>';
+        });
+        tbody.innerHTML = html;
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="9" class="vazio">Erro: ' + escHtml(e.message || e) + '</td></tr>';
+      }
+    }
+
+
+    function upgBloquearEmail() {
+      var email = (document.getElementById('upg-blk-email') && document.getElementById('upg-blk-email').value || '').trim();
+      var motivo = (document.getElementById('upg-blk-motivo') && document.getElementById('upg-blk-motivo').value || '').trim()
+        || 'ID e-Mola falso / abuso no aumento de ganhos';
+      if (!email) return alert('Escreve o e-mail.');
+      bloquearJogosEmail(email, motivo, 'upgrades');
+      setTimeout(carregarBloqueadosUpg, 800);
+    }
+    function upgDesbloquearEmail() {
+      var email = (document.getElementById('upg-blk-email') && document.getElementById('upg-blk-email').value || '').trim();
+      if (!email) return alert('Escreve o e-mail para desbloquear.');
+      desbloquearJogosEmail(email);
+      setTimeout(carregarBloqueadosUpg, 800);
+    }
+    async function carregarBloqueadosUpg() {
+      var tbody = document.getElementById('tbody-bloqueados-upg');
+      if (!tbody) return;
+      tbody.innerHTML = '<tr><td colspan="6" class="vazio">A carregar...</td></tr>';
+      try {
+        var lista = [];
+        try {
+          var snap = await db.collection('usuarios').where('jogosBloqueado', '==', true).limit(200).get();
+          snap.forEach(function (doc) {
+            var d = doc.data() || {};
+            d._id = doc.id;
+            lista.push(d);
+          });
+        } catch (e1) {
+          (todosUsers || []).forEach(function (u) {
+            if (u.jogosBloqueado === true) lista.push(u);
+          });
+        }
+        if (!lista.length) {
+          tbody.innerHTML = '<tr><td colspan="6" class="vazio">Nenhum utilizador bloqueado nos jogos.</td></tr>';
+          return;
+        }
+        var html = '';
+        lista.forEach(function (u, i) {
+          var em = String(u.email || u._id || '').toLowerCase();
+          var emSafe = em.replace(/'/g, "\\'");
+          html += '<tr>' +
+            '<td>' + (i + 1) + '</td>' +
+            '<td>' + escHtml(u.nome || '—') + '</td>' +
+            '<td>' + escHtml(em) + '</td>' +
+            '<td style="font-size:12px;">' + escHtml(u.jogosBloqueadoMotivo || '—') + '</td>' +
+            '<td style="font-size:11px;">' + escHtml(String(u.jogosBloqueadoEm || '').slice(0, 19).replace('T', ' ')) + '</td>' +
+            '<td><button type="button" class="btn-verde" style="width:auto;padding:6px 10px;font-size:11px;" onclick="desbloquearJogosEmail(\'' + emSafe + '\'); setTimeout(carregarBloqueadosUpg, 700);">✅ Desbloquear</button></td>' +
+            '</tr>';
+        });
+        tbody.innerHTML = html;
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="6" class="vazio">Erro: ' + escHtml(e.message || e) + '</td></tr>';
+      }
+    }
+
+
+    function getSemanaIdAdmin() {
+      var d = new Date();
+      var onejan = new Date(d.getFullYear(), 0, 1);
+      var week = Math.ceil((((d - onejan) / 86400000) + onejan.getDay() + 1) / 7);
+      return d.getFullYear() + '-S' + week;
+    }
+
+    async function carregarEstadoMissaoGlobal() {
+      var el = document.getElementById('missao-global-estado');
+      if (!el) return;
+      try {
+        var sid = getSemanaIdAdmin();
+        var snap = await db.collection('missaoSemanalConfig').doc(sid).get();
+        var lib = true; // defeito liberada
+        if (snap.exists && snap.data().liberadaParaTodos === false) lib = false;
+        if (snap.exists && snap.data().fechada === true) lib = false;
+        if (lib) {
+          try {
+            var g = await db.collection('missaoSemanalGlobal').doc(sid).get();
+            if (g.exists && g.data().liberadaParaTodos === false) lib = false;
+          } catch (e2) {}
+        }
+        if (lib) {
+          el.innerHTML = '<span class="status-tag status-pago">LIBERADA PARA TODOS</span> · Semana <b>' + sid + '</b> · cada um pode completar · ao concluir fica bloqueado só para ele';
+          el.style.color = '#00e676';
+        } else {
+          el.innerHTML = '<span class="status-tag status-bloqueado">FECHADA / CALENDÁRIO</span> · Semana <b>' + sid + '</b> · utilizadores só vêem horários';
+          el.style.color = '#ffc107';
+        }
+      } catch (e) {
+        el.textContent = 'Erro: ' + (e.message || e);
+      }
+    }
+
+    async function liberarMissaoParaTodos() {
+      var sid = getSemanaIdAdmin();
+      if (!confirm('Liberar a missão semanal para TODOS os utilizadores nesta semana (' + sid + ')?\n\nO calendário some e cada um pode completar. Quem já concluiu continua bloqueado.')) return;
+      try {
+        await db.collection('missaoSemanalConfig').doc(sid).set({
+          liberadaParaTodos: true,
+          liberadaEm: new Date().toISOString(),
+          semanaId: sid
+        }, { merge: true });
+        try {
+          await db.collection('missaoSemanalGlobal').doc(sid).set({
+            liberadaParaTodos: true,
+            liberadaEm: new Date().toISOString(),
+            semanaId: sid
+          }, { merge: true });
+        } catch (eG) {}
+        if (typeof mostrarAviso === 'function') mostrarAviso('Missão liberada para TODOS · ' + sid);
+        else alert('Missão liberada para todos.');
+        carregarEstadoMissaoGlobal();
+      } catch (e) {
+        alert('Erro: ' + (e.message || e) + '\n\nConfirma regras Firestore para missaoSemanalConfig.');
+      }
+    }
+
+    async function fecharMissaoParaTodos() {
+      var sid = getSemanaIdAdmin();
+      if (!confirm('Fechar a liberação global da semana ' + sid + '?\n\nVolta o modo calendário. Quem ainda não fez deixa de ver "liberada para todos".')) return;
+      try {
+        await db.collection('missaoSemanalConfig').doc(sid).set({
+          liberadaParaTodos: false,
+          fechadaEm: new Date().toISOString(),
+          semanaId: sid
+        }, { merge: true });
+        try {
+          await db.collection('missaoSemanalGlobal').doc(sid).set({
+            liberadaParaTodos: false,
+            fechadaEm: new Date().toISOString()
+          }, { merge: true });
+        } catch (eG) {}
+        if (typeof mostrarAviso === 'function') mostrarAviso('Liberação global fechada · ' + sid);
+        carregarEstadoMissaoGlobal();
+      } catch (e) {
+        alert('Erro: ' + (e.message || e));
+      }
+    }
+
+    
+    async function carregarPagamentosMissao() {
+      var tbody = document.getElementById('tbody-pag-missao');
+      if (!tbody) return;
+      tbody.innerHTML = '<tr><td colspan="9" class="vazio">A carregar...</td></tr>';
+      try {
+        var lista = [];
+        try {
+          var snap = await db.collection('emolaUpgrades').orderBy('createdAt', 'desc').limit(200).get();
+          snap.forEach(function (doc) {
+            var d = doc.data() || {};
+            d._id = doc.id;
+            var pkg = String(d.pacote || d.item || '');
+            var det = String(d.detalhe || '');
+            if (pkg.indexOf('missao') !== -1 || det.toLowerCase().indexOf('missão') !== -1 || det.toLowerCase().indexOf('missao') !== -1) {
+              lista.push(d);
+            }
+          });
+        } catch (e1) {
+          console.warn(e1);
+        }
+        try {
+          var snap3 = await db.collection('pagamentosManuais').where('jogo', '==', 'missao_semanal').limit(100).get();
+          snap3.forEach(function (doc) {
+            var d = doc.data() || {};
+            d._id = doc.id;
+            d.txid = d.txid || d.txId;
+            d.valorMt = d.valorMt || d.mt;
+            d.detalhe = d.detalhe || d.label || 'Missão semanal';
+            var exists = lista.some(function (x) { return x.txid && d.txid && x.txid === d.txid; });
+            if (!exists) lista.push(d);
+          });
+        } catch (e3) {}
+        lista.sort(function (a, b) {
+          return String(b.createdAt || '').localeCompare(String(a.createdAt || ''));
+        });
+        if (!lista.length) {
+          tbody.innerHTML = '<tr><td colspan="9" class="vazio">Nenhum pagamento de missão semanal ainda.</td></tr>';
+          return;
+        }
+        var html = '';
+        lista.forEach(function (d, i) {
+          var em = String(d.email || '').toLowerCase();
+          var emSafe = em.replace(/'/g, "\\'");
+          var tx = d.txid || d.txId || '—';
+          var acao = em
+            ? '<button type="button" class="btn-vermelho" onclick="bloquearJogosEmail(\'' + emSafe + '\',\'ID falso na missão semanal: ' + String(tx).replace(/'/g, '') + '\',\'missao\')">🚫 Bloquear</button> ' +
+              '<button type="button" class="btn-verde" onclick="desbloquearJogosEmail(\'' + emSafe + '\')">✅ Desbloquear</button>'
+            : '—';
+          html += '<tr>' +
+            '<td>' + (i + 1) + '</td>' +
+            '<td><strong>' + escHtml(d.nome || '—') + '</strong><br><small style="color:#888">' + escHtml(em) + '</small></td>' +
+            '<td style="color:#FFD700;font-weight:700;">' + (d.valorMt || d.mt || 2) + ' MT</td>' +
+            '<td style="font-family:monospace;font-size:12px;">' + escHtml(d.telefone || d.telefonePagou || '—') + '</td>' +
+            '<td style="font-family:monospace;font-size:11px;">' + escHtml(String(tx)) + '</td>' +
+            '<td>' + (d.pontosCreditados || 150) + ' pts</td>' +
+            '<td style="font-size:11px;white-space:nowrap;">' + escHtml(String(d.createdAt || '').slice(0, 19).replace('T', ' ')) + '</td>' +
+            '<td><span class="status-tag status-pago">' + escHtml(d.status || 'entregue') + '</span></td>' +
+            '<td style="white-space:nowrap;">' + acao + '</td>' +
+            '</tr>';
+        });
+        tbody.innerHTML = html;
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="9" class="vazio">Erro: ' + escHtml(e.message || e) + '</td></tr>';
+      }
+    }
+
+    function missaoBloquearEmail() {
+      var email = (document.getElementById('missao-blk-email') && document.getElementById('missao-blk-email').value || '').trim();
+      var motivo = (document.getElementById('missao-blk-motivo') && document.getElementById('missao-blk-motivo').value || '').trim()
+        || 'ID e-Mola falso / abuso na missão semanal';
+      if (!email) return alert('Escreve o e-mail.');
+      bloquearJogosEmail(email, motivo, 'missao');
+    }
+    function missaoDesbloquearEmail() {
+      var email = (document.getElementById('missao-blk-email') && document.getElementById('missao-blk-email').value || '').trim();
+      if (!email) return alert('Escreve o e-mail.');
+      desbloquearJogosEmail(email);
+    }
+
+async function liberarMissaoUsuario() {
+      var email = (document.getElementById('upg-missao-email').value || '').trim().toLowerCase();
+      if (!email || email.indexOf('@') === -1) return alert('E-mail inválido.');
+      if (!confirm('Libertar missão semanal para ' + email + '?')) return;
+      try {
+        var snap = await db.collection('usuarios').where('email', '==', email).limit(1).get();
+        if (snap.empty) return alert('Utilizador não encontrado.');
+        await snap.docs[0].ref.update({
+          missaoLiberada: true,
+          missaoBloqueadaApos: false,
+          missaoSemanalCompleta: false,
+          ultimaAtualizacao: new Date().toISOString()
+        });
+        if (typeof mostrarAviso === 'function') mostrarAviso('Missão libertada para ' + email);
+        else alert('Missão libertada.');
+      } catch (e) {
+        alert('Erro: ' + (e.message || e));
+      }
+    }
+
 
     // carregarTudo() agora é chamado pelo onAuthStateChanged, após login confirmado.
   </script>

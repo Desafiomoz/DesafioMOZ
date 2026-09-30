@@ -753,6 +753,41 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
         } catch (e) { console.warn('anunciosCurtos', e); }
     }
 
+    
+    function mostrarAvisoJogosBloqueado(motivo) {
+        if (document.getElementById('dm-blk-jogos')) return;
+        if (!document.getElementById('dm-blk-jogos-css')) {
+            var st = document.createElement('style');
+            st.id = 'dm-blk-jogos-css';
+            st.textContent =
+                '#dm-blk-jogos{position:fixed;inset:0;z-index:999999;background:rgba(4,6,12,.92);display:flex;align-items:center;justify-content:center;padding:18px;backdrop-filter:blur(6px);}' +
+                '#dm-blk-jogos .card{max-width:420px;width:100%;border-radius:20px;padding:24px 18px;background:linear-gradient(160deg,#1a1020,#0d1218);border:2px solid rgba(255,80,80,.6);box-shadow:0 0 50px rgba(255,60,60,.4),0 0 80px rgba(255,100,50,.15);text-align:center;animation:dmBlkPulse 2s ease-in-out infinite;}' +
+                '@keyframes dmBlkPulse{0%,100%{box-shadow:0 0 40px rgba(255,60,60,.35)}50%{box-shadow:0 0 60px rgba(255,80,60,.55)}}' +
+                '#dm-blk-jogos .ico{width:64px;height:64px;margin:0 auto 14px;border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:32px;background:linear-gradient(135deg,#ff3b5c,#ff8a5c);box-shadow:0 0 24px rgba(255,59,92,.5);}' +
+                '#dm-blk-jogos h3{margin:0 0 12px;color:#ff6b6b;font-size:19px;font-weight:800;}' +
+                '#dm-blk-jogos p{margin:0 0 12px;color:#d5dbe8;font-size:14px;line-height:1.55;text-align:left;}' +
+                '#dm-blk-jogos .mot{font-size:12px;color:#ffab40;margin:0 0 14px;padding:10px;background:rgba(255,171,64,.1);border:1px solid rgba(255,171,64,.3);border-radius:12px;text-align:left;}' +
+                '#dm-blk-jogos a.wa{display:inline-block;margin-top:8px;padding:14px 20px;border-radius:14px;background:linear-gradient(90deg,#25D366,#128C7E);color:#fff;font-weight:800;text-decoration:none;font-size:15px;box-shadow:0 6px 20px rgba(37,211,102,.4);}' +
+                '#dm-blk-jogos .aviso-final{margin-top:16px;font-size:13px;color:#ff8a80;line-height:1.45;font-weight:600;}';
+            document.head.appendChild(st);
+        }
+        var box = document.createElement('div');
+        box.id = 'dm-blk-jogos';
+        box.innerHTML =
+            '<div class="card">' +
+              '<div class="ico">🚫</div>' +
+              '<h3>Conta com restrição</h3>' +
+              '<p>A tua conta foi restringida no Desafio MOZ. Os jogos e algumas áreas ficam bloqueados até regularizares a situação.</p>' +
+              (motivo ? '<div class="mot"><b>Motivo:</b> ' + String(motivo).replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div>' : '') +
+              '<p><b>Se pagaste</b> (e-Mola ou outra forma): envia a <b>captura de ecrã do pagamento</b> ao agente do Desafio MOZ no WhatsApp.</p>' +
+              '<p><b>Se abusaste da nossa confiança</b> (ex.: ID falso): há forma de resolver — <b>paga a oferta</b> e envia o <b>comprovativo</b> ao agente.</p>' +
+              '<a class="wa" href="https://wa.link/64y9y2" target="_blank" rel="noopener">💬 Contactar agente WhatsApp</a>' +
+              '<div class="aviso-final">Caso não regularizes, a conta será apagada.</div>' +
+            '</div>';
+        document.body.appendChild(box);
+    }
+
+
     document.addEventListener('DOMContentLoaded', async function () {
         var nome = localStorage.getItem('nomeUtilizador') || '—';
         var tel = localStorage.getItem('telUtilizador') || '—';
@@ -784,6 +819,9 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
                         jaFezYoutube = true;
                         var cardYt = document.getElementById('card-youtube');
                         if (cardYt) cardYt.style.display = 'none';
+                    }
+                    if (u.jogosBloqueado === true) {
+                        mostrarAvisoJogosBloqueado(u.jogosBloqueadoMotivo || '');
                     }
                 }
             } catch (e) {

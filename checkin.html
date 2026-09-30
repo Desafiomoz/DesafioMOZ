@@ -255,6 +255,11 @@
       🔒 A carregar...
     </button>
     <p class="msg" id="msg"></p>
+    <p style="text-align:center;margin-top:16px;max-width:420px;margin-left:auto;margin-right:auto;">
+      <a href="aumento-ganhos.html" style="display:inline-block;padding:12px 18px;border-radius:14px;font-weight:800;font-size:13px;text-decoration:none;color:#04140a;background:linear-gradient(90deg,#22FF99,#FFC94D);box-shadow:0 0 24px rgba(34,255,153,0.35);">
+        ✨ Aumentar ganhos do check-in
+      </a>
+    </p>
   </div>
 
   <script>
@@ -283,6 +288,7 @@
     var checkins = [];
     var docRef = null;
     var checkinBloqueado = false;
+    var ptsCheckinDia = 3;
     var hoje = new Date();
     var viewAno = hoje.getFullYear();
     var viewMes = hoje.getMonth();
@@ -320,7 +326,7 @@
       (lista || []).forEach(function (x) {
         if (x.indexOf(prefix) === 0) n++;
       });
-      return n * 3;
+      return n * (ptsCheckinDia || 3);
     }
 
     function renderCalendario() {
@@ -375,10 +381,10 @@
         btn.disabled = true;
         btn.textContent = '✅ Check-in de hoje já feito';
         msg.className = 'msg ok';
-        msg.textContent = 'Volte amanhã para ganhar mais +3 pontos!';
+        msg.textContent = 'Volte amanhã para ganhar mais +' + (ptsCheckinDia || 3) + ' pontos!';
       } else {
         btn.disabled = false;
-        btn.textContent = '🎁 Fazer Check-in e Ganhar +3 Pontos';
+        btn.textContent = '🎁 Fazer Check-in e Ganhar +' + (ptsCheckinDia || 3) + ' Pontos';
         msg.className = 'msg';
         msg.textContent = 'Só pode fazer 1 check-in por dia.';
       }
@@ -415,6 +421,23 @@
         var data = snap.docs[0].data();
         checkins = Array.isArray(data.checkins) ? data.checkins.slice() : [];
         checkinBloqueado = data.ocultarCheckin === true;
+
+        // Boost de check-in (aumento de ganhos)
+        ptsCheckinDia = 3;
+        if (data.checkinBoostVitalicio === true && Number(data.checkinPtsDia) >= 5) {
+          ptsCheckinDia = Number(data.checkinPtsDia) || 16;
+        } else if (data.checkinBoostAte && Number(data.checkinPtsDia) > 3) {
+          try {
+            if (new Date(data.checkinBoostAte).getTime() > Date.now()) {
+              ptsCheckinDia = Number(data.checkinPtsDia) || 3;
+            }
+          } catch (eB) {}
+        }
+        var subTopo = document.querySelector('.topo p');
+        if (subTopo) {
+          subTopo.textContent = 'Entre todos os dias e ganhe +' + ptsCheckinDia + ' pontos' +
+            (ptsCheckinDia > 3 ? (data.checkinBoostVitalicio ? ' (vitalício)' : ' (boost activo)') : '');
+        }
 
         document.getElementById('loading').style.display = 'none';
         document.getElementById('conteudo').style.display = 'block';
@@ -459,7 +482,7 @@
 
         lista.push(hojeStr);
         var pontosAtuais = data.pontos || 0;
-        var novosPontos = pontosAtuais + 3;
+        var novosPontos = pontosAtuais + (ptsCheckinDia || 3);
 
         await docRef.update({
           checkins: lista,
@@ -472,17 +495,17 @@
 
         checkins = lista;
         localStorage.setItem('pontosUtilizador', String(novosPontos));
-        localStorage.setItem('ultimoGanho', '3');
+        localStorage.setItem('ultimoGanho', String(ptsCheckinDia || 3));
 
         renderCalendario();
 
         var msg = document.getElementById('msg');
         msg.className = 'msg ok';
-        msg.textContent = '🎉 +3 pontos adicionados! Volte amanhã.';
+        msg.textContent = '🎉 +' + (ptsCheckinDia || 3) + ' pontos adicionados! Volte amanhã.';
       } catch (erro) {
         console.error(erro);
         btn.disabled = false;
-        btn.textContent = '🎁 Fazer Check-in e Ganhar +3 Pontos';
+        btn.textContent = '🎁 Fazer Check-in e Ganhar +' + (ptsCheckinDia || 3) + ' Pontos';
         document.getElementById('msg').className = 'msg err';
         document.getElementById('msg').textContent = 'Erro: ' + (erro.message || erro);
       }

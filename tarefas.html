@@ -321,22 +321,6 @@
         }
         .ad-overlay-foot .btn-receber.ativo { opacity: 1; pointer-events: auto; }
         .ad-indisponivel { font-size: 12px; color: #ffab40; margin-top: 4px; display: none; }
-        .aviso-anuncios {
-            background: linear-gradient(160deg, rgba(255,171,64,0.14), rgba(255,109,0,0.08));
-            border: 1px solid rgba(255,171,64,0.45); border-radius: 14px;
-            padding: 12px 14px; margin: 8px 0 12px; text-align: center;
-            box-shadow: 0 0 18px rgba(255,171,64,0.12);
-        }
-        .aviso-anuncios-topo { font-size: 14px; font-weight: 800; color: #ffab40; margin-bottom: 6px; }
-        .aviso-anuncios p { font-size: 12.5px; color: #d8dbe3; line-height: 1.5; margin: 3px 0; }
-        .aviso-anuncios strong { color: #fff; }
-        .aviso-anuncios-lista { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin: 8px 0 4px; }
-        .aviso-anuncios-lista span {
-            font-size: 11.5px; font-weight: 700; color: #00e676;
-            background: rgba(0,230,118,0.1); border: 1px solid rgba(0,230,118,0.35);
-            border-radius: 999px; padding: 4px 10px;
-        }
-        .aviso-anuncios-fim { font-size: 12px !important; color: #00e676 !important; font-weight: 700; }
     </style>
 <style>/* Brilho extra - efeito de aura no site */
 body{filter:brightness(1.16) saturate(1.1);}</style>
@@ -361,21 +345,22 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
         </div>
 
         <!-- ANÚNCIOS (permanentes — código vem do Admin) -->
-        <div class="sec-titulo"><i class="fas fa-ad"></i> Anúncios</div>
-
-        <div class="aviso-anuncios">
-            <div class="aviso-anuncios-topo">⚠️ Anúncios indisponíveis</div>
-            <p>O sistema de anúncios está <strong>indisponível por um bom tempo</strong>.</p>
-            <p>Para resolver isso, vamos trazer <strong>mais formas de ganhar no Desafio MOZ</strong>. 🚀</p>
-            <div class="aviso-anuncios-lista">
-                <span>🎮 Mais jogos</span>
-                <span>📋 Mais missões</span>
-                <span>🏆 Mais desafios</span>
+        <!-- AUMENTO DE GANHOS (substitui anúncios) -->
+        <div class="sec-titulo"><i class="fas fa-rocket"></i> Aumenta os teus ganhos</div>
+        <div class="tarefa-card" id="card-aumento-ganhos" style="border:1px solid rgba(34,255,153,0.45);box-shadow:0 0 28px rgba(34,255,153,0.2);background:linear-gradient(145deg,rgba(48,22,80,0.5),rgba(8,42,38,0.6));position:relative;overflow:hidden;">
+            <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(168,85,247,0.12),transparent 50%,rgba(255,201,77,0.1));pointer-events:none;"></div>
+            <div class="tarefa-icon" style="background:linear-gradient(135deg,#a855f7,#22FF99);box-shadow:0 0 20px rgba(34,255,153,0.5);font-size:22px;">✨</div>
+            <div class="tarefa-info" style="position:relative;">
+                <h3 style="color:#22FF99;">Aumento de chance</h3>
+                <p style="color:#c8d0e0;">Check-in com mais pontos · convites · influencer (boosts pagos)</p>
             </div>
-            <p class="aviso-anuncios-fim">Brevemente o site fica com muitas formas de ganhar!</p>
+            <div class="tarefa-acao" style="position:relative;">
+                <div class="pontos" style="color:#FFC94D;">Boost</div>
+                <button class="btn-fazer" style="background:linear-gradient(90deg,#22FF99,#FFC94D);color:#04140a;font-weight:800;box-shadow:0 0 18px rgba(34,255,153,0.4);" onclick="window.location.href='aumento-ganhos.html'">Ver pacotes</button>
+            </div>
         </div>
 
-        <!-- Overlay de anúncio (aparece no mesmo ecrã) -->
+<!-- Overlay de anúncio (aparece no mesmo ecrã) -->
         <div class="ad-overlay" id="ad-overlay">
             <div class="ad-overlay-top">
                 <span id="ad-ov-titulo">Anúncio</span>
@@ -458,7 +443,7 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
             <div class="tarefa-icon icon-extra">👥</div>
             <div class="tarefa-info">
                 <h3 id="convidar-titulo">Convidar amigo</h3>
-                <p id="convidar-desc">Ganha quando ele se cadastrar (máx. 5)</p>
+                <p id="convidar-desc">Ganha +20 pts quando ele se cadastrar (sem limite)</p>
             </div>
             <div class="tarefa-ganho">
                 <div class="pontos" id="convidar-pts">+10 Pts</div>
@@ -466,14 +451,14 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
             </div>
         </div>
 
-        <div class="tarefa-card">
+        <div class="tarefa-card" id="card-checkin-diario">
             <div class="tarefa-icon icon-extra">📅</div>
             <div class="tarefa-info">
                 <h3>Check-in diário</h3>
-                <p>Entre todos os dias e ganhe</p>
+                <p id="checkin-desc">Entre todos os dias e ganhe</p>
             </div>
             <div class="tarefa-ganho">
-                <div class="pontos">+3 Pts</div>
+                <div class="pontos" id="checkin-pts">+3 Pts</div>
                 <button class="btn-fazer" onclick="window.location.href='checkin.html'">Fazer</button>
             </div>
         </div>
@@ -798,6 +783,42 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
             }
         }
 
+
+        function actualizarCheckinTarefas(data) {
+            var ptsEl = document.getElementById('checkin-pts');
+            var descEl = document.getElementById('checkin-desc');
+            if (!ptsEl) return;
+            var pts = 3;
+            var extra = '';
+            if (!data) {
+                ptsEl.textContent = '+3 Pts';
+                return;
+            }
+            if (data.checkinBoostVitalicio === true && Number(data.checkinPtsDia) >= 5) {
+                pts = Number(data.checkinPtsDia) || 5;
+                extra = ' (vitalício)';
+            } else if (data.checkinBoostAte && Number(data.checkinPtsDia) > 3) {
+                try {
+                    if (new Date(data.checkinBoostAte).getTime() > Date.now()) {
+                        pts = Number(data.checkinPtsDia) || 3;
+                        extra = ' (boost activo)';
+                    }
+                } catch (e) {}
+            } else if (Number(data.checkinPtsDia) > 3) {
+                pts = Number(data.checkinPtsDia) || 3;
+            }
+            ptsEl.textContent = '+' + pts + ' Pts';
+            if (pts > 3) {
+                ptsEl.style.color = '#FFD700';
+                ptsEl.style.fontWeight = '800';
+            }
+            if (descEl) {
+                descEl.textContent = pts > 3
+                    ? ('Ganha +' + pts + ' pontos por dia' + extra)
+                    : 'Entre todos os dias e ganhe';
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', async function () {
             var email = localStorage.getItem('emailUtilizador') || '—';
             document.getElementById('email-topo').textContent = email;
@@ -809,22 +830,26 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
                     var encontrado = await encontrarUtilizadorPorEmail(email);
                     if (encontrado) {
                         userData = encontrado.data;
+                        actualizarCheckinTarefas(userData);
 
                         // Convites bloqueados ou limite de 5: NÃO esconde o card — mostra mensagem
                         (function () {
                             var cardConv = document.getElementById('card-convidar-amigo');
                             if (!cardConv) return;
                             var totalConv = userData.totalConvidados || 0;
-                            var bloqueado = userData.ocultarConvidar === true || (totalConv >= 5 && userData.convitesExtra !== true);
+                            var regrasNovas = userData.conviteRegrasNovas === true;
+                            try {
+                              var cpEl = document.getElementById('convidar-pts');
+                              if (cpEl) cpEl.textContent = regrasNovas ? '+20 Pts' : '+10 Pts';
+                            } catch (eCp) {}
+                            var bloqueado = userData.ocultarConvidar === true || (!regrasNovas && totalConv >= 5 && userData.convitesExtra !== true);
                             var titulo = document.getElementById('convidar-titulo');
                             var desc = document.getElementById('convidar-desc');
                             var btn = document.getElementById('btn-convidar');
                             if (bloqueado) {
                                 if (titulo) titulo.textContent = 'Convites não disponíveis';
                                 if (desc) {
-                                    desc.textContent = totalConv >= 5
-                                        ? 'Usaste os teus 5 convites. Aguarde ter acesso novamente.'
-                                        : 'Usaste os teus convites. Aguarde ter acesso novamente.';
+                                    desc.textContent = 'Convites não disponíveis de momento. Aguarde ter acesso novamente.';
                                     desc.style.color = '#ffab40';
                                 }
                                 if (btn) {
@@ -907,7 +932,6 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
         }
 
         function aplicarUIAnunciosTarefas() {
-            if (!document.getElementById('ad-int-titulo') || !document.getElementById('ad-rew-titulo')) return; // cartões de anúncio removidos
             // Interativo
             var int = anunciosTarefasCfg.interativo;
             var temInt = int && int.ativo !== false && (int.codigo || '').trim();

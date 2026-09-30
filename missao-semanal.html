@@ -208,19 +208,30 @@
     <a href="tarefas.html" class="btn-voltar"><i class="fas fa-arrow-left"></i></a>
     <div>
       <h1>Missão Semanal</h1>
-      <p>Encontre e complete para ganhar +100 pts</p>
+      <p>Cada conta · perguntas → influencer → WhatsApp → 2 MT → +150 pts</p>
     </div>
   </div>
 
   <div id="loading" class="loading">A procurar a missão desta semana...</div>
+  <script>
+    // Failsafe: nunca fica preso neste ecrã
+    setTimeout(function () {
+      var L = document.getElementById('loading');
+      var C = document.getElementById('conteudo');
+      if (L && L.style.display !== 'none') {
+        L.style.display = 'none';
+        if (C) C.style.display = 'block';
+      }
+    }, 2500);
+  </script>
 
   <div id="conteudo" style="display:none;">
 
     <!-- RESUMO -->
     <div class="card">
       <div class="premio-box">
-        <div class="pts">+100</div>
-        <div class="lbl">pontos se completar a missão da semana</div>
+        <div class="pts">+150</div>
+        <div class="lbl">pontos nesta conta · cada um faz a sua missão</div>
       </div>
       <div class="stats">
         <div class="stat">
@@ -243,9 +254,9 @@
 
     <!-- PREVISÕES -->
     <div class="card" id="card-previsoes">
-      <h2><i class="fas fa-clock"></i> Previsões desta semana</h2>
-      <p style="font-size:12px;color:#888;margin-bottom:10px;">
-        A missão aparece em horários aleatórios. Quem a encontrar pode completá-la.
+      <h2><i class="fas fa-clock"></i> Calendário da missão</h2>
+      <p style="font-size:12px;color:#888;margin-bottom:10px;" id="txt-calendario-missao">
+        A missão está <b style="color:#00e676">liberada para todos</b>. Completa as 10 perguntas. Quando terminares, o calendário volta a aparecer na tua conta.
       </p>
       <div id="lista-previsoes"></div>
       <p class="aviso-mini">
@@ -260,7 +271,7 @@
         <h2><i class="fas fa-tasks"></i> Progresso da missão</h2>
         <div class="progresso"><div class="progresso-bar" id="barra"></div></div>
         <div class="progresso-txt" id="progresso-txt">0 / 10 perguntas</div>
-        <p class="aviso-mini">Por agora a missão é só as perguntas — sem anúncios.</p>
+        <p class="aviso-mini">Cada conta responde sozinha. Depois: link influencer → WhatsApp + foto → pagar 2 MT → +150 pts.</p>
       </div>
 
       <!-- PERGUNTAS -->
@@ -384,7 +395,7 @@
             <div class="opcao" onclick="sel(10,this,'Convidar')">Convidar amigos</div>
             <div class="opcao" onclick="sel(10,this,'Aprender')">Aprender e divertir-me</div>
           </div>
-          <button class="btn" id="btn-fim-perguntas" onclick="avancarQ(10)">Concluir e receber +100 pts</button>
+          <button class="btn" id="btn-fim-perguntas" onclick="avancarQ(10)">Continuar (passo seguinte)</button>
         </div>
       </div>
 
@@ -552,6 +563,20 @@
       document.getElementById('progresso-txt').textContent = feito + ' / ' + total + ' perguntas';
     }
 
+
+    function resetUIPerguntas() {
+      for (var q = 1; q <= 10; q++) {
+        var el = document.getElementById('qpasso' + q);
+        if (!el) continue;
+        el.classList.remove('ativo');
+        el.querySelectorAll('.opcao').forEach(function (o) { o.classList.remove('selecionada'); });
+      }
+      var q1 = document.getElementById('qpasso1');
+      if (q1) q1.classList.add('ativo');
+      respostas = {};
+      perguntasFeitas = 0;
+    }
+
     function sel(num, el, valor) {
       var passo = document.getElementById('qpasso' + num);
       passo.querySelectorAll('.opcao').forEach(function (o) { o.classList.remove('selecionada'); });
@@ -566,20 +591,22 @@
       }
       perguntasFeitas = Math.max(perguntasFeitas, num);
       atualizarProgresso();
+      // grava já nesta conta (não afecta outras)
+      guardarProgressoMissao();
 
       if (num < 10) {
         document.getElementById('qpasso' + num).classList.remove('ativo');
         document.getElementById('qpasso' + (num + 1)).classList.add('ativo');
       } else {
-        // Sem anúncios por agora — conclui a missão após as 10 perguntas
+        // Perguntas feitas — próximo passo: link influencer
         document.getElementById('card-perguntas').style.display = 'none';
         var cardAd = document.getElementById('card-anuncios');
         if (cardAd) cardAd.style.display = 'none';
         atualizarProgresso();
         guardarProgressoMissao().then(function () {
-          finalizarMissao();
+          mostrarPassoInfluencer();
         }).catch(function () {
-          finalizarMissao();
+          mostrarPassoInfluencer();
         });
       }
     }
@@ -761,7 +788,399 @@
     }
 
 
-    async function finalizarMissao() {
+
+    
+    function normalizarTxIdMissao(id) {
+      return String(id || '').trim().replace(/\s+/g, '').toUpperCase();
+    }
+    function txIdValidoMissao(id) {
+      return /^PP[A-Z0-9.\-]{5,40}$/i.test(id);
+    }
+    function normalizarTelMissao(v) {
+      var d = String(v || '').replace(/\D/g, '');
+      if (d.length === 12 && d.indexOf('258') === 0) d = d.slice(3);
+      return d;
+    }
+
+    var missaoPkgSel = null;
+    var missaoValorSel = 0;
+
+    
+    function esconderCardsMissaoExtra() {
+      ['card-pagamento-missao','card-passo-inf','card-passo-wa','card-sucesso'].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+      });
+      var cardAd = document.getElementById('card-anuncios');
+      if (cardAd) cardAd.style.display = 'none';
+    }
+
+    function mostrarPassoInfluencer() {
+      esconderCardsMissaoExtra();
+      document.getElementById('zona-missao').style.display = 'block';
+      document.getElementById('card-previsoes').style.display = 'none';
+      document.getElementById('card-perguntas').style.display = 'none';
+      document.getElementById('status-banner').className = 'status-banner status-ok';
+      document.getElementById('status-banner').textContent =
+        '✅ Perguntas ok! Passo 2/4: cola o TEU link de influencer.';
+
+      var box = document.getElementById('card-passo-inf');
+      if (!box) {
+        box = document.createElement('div');
+        box.id = 'card-passo-inf';
+        box.className = 'card';
+        box.innerHTML =
+          '<h2><i class="fas fa-star"></i> Passo 2 — O teu link de influencer</h2>' +
+          '<p style="font-size:13px;color:#ccc;line-height:1.5;margin-bottom:12px;">' +
+          'Vai a <a href="influencer.html" style="color:#00e676;font-weight:700;">Influencer</a>, copia o <b>teu</b> link único e cola aqui. ' +
+          'Só entra <b>um</b> link — tem de ser o da tua conta.</p>' +
+          '<input type="url" id="input-inf-link" placeholder="https://desafiomoz.pages.dev/index.html?inf=..." ' +
+          'style="width:100%;background:#111;border:1px solid #333;border-radius:12px;padding:12px;color:#fff;font-size:13px;margin-bottom:10px;">' +
+          '<button type="button" class="btn" id="btn-env-inf" onclick="enviarPassoInfluencer()">Continuar</button>';
+        var zona = document.getElementById('zona-missao');
+        zona.appendChild(box);
+      }
+      box.style.display = 'block';
+      if (userData.missaoInfLink) {
+        var inp = document.getElementById('input-inf-link');
+        if (inp) inp.value = userData.missaoInfLink;
+      }
+    }
+
+    async function enviarPassoInfluencer() {
+      var link = (document.getElementById('input-inf-link').value || '').trim();
+      if (!link || link.indexOf('http') !== 0) {
+        alert('Cola o teu link completo de influencer (começa por http).');
+        return;
+      }
+      // extrair código ?inf=
+      var cod = '';
+      try {
+        var u = new URL(link);
+        cod = (u.searchParams.get('inf') || '').trim().toUpperCase();
+      } catch (e) {
+        var m = link.match(/[?&]inf=([^&]+)/i);
+        if (m) cod = decodeURIComponent(m[1]).trim().toUpperCase();
+      }
+      if (!cod) {
+        alert('O link tem de ter o parâmetro inf= (o teu código de influencer).');
+        return;
+      }
+      var meuCod = (userData.codigoInfluencer || '').toUpperCase();
+      if (meuCod && cod !== meuCod) {
+        alert('Este link não é o da tua conta. Usa o link que aparece em Influencer na tua conta.');
+        return;
+      }
+      // se ainda não tem código, aceita e grava
+      var btn = document.getElementById('btn-env-inf');
+      if (btn) { btn.disabled = true; btn.textContent = 'A gravar...'; }
+      try {
+        var upd = {
+          missaoInfLink: link,
+          missaoInfCodigo: cod,
+          missaoInfOk: true,
+          missaoSemanaId: semanaId,
+          ultimaAtualizacao: new Date().toISOString()
+        };
+        if (!meuCod) upd.codigoInfluencer = cod;
+        await docRef.update(upd);
+        userData.missaoInfOk = true;
+        userData.missaoInfLink = link;
+        userData.codigoInfluencer = userData.codigoInfluencer || cod;
+        mostrarPassoWhatsapp();
+      } catch (e) {
+        alert('Erro: ' + (e.message || e));
+        if (btn) { btn.disabled = false; btn.textContent = 'Continuar'; }
+      }
+    }
+    window.enviarPassoInfluencer = enviarPassoInfluencer;
+
+    function mostrarPassoWhatsapp() {
+      esconderCardsMissaoExtra();
+      document.getElementById('zona-missao').style.display = 'block';
+      document.getElementById('card-perguntas').style.display = 'none';
+      document.getElementById('status-banner').className = 'status-banner status-ok';
+      document.getElementById('status-banner').textContent =
+        '✅ Passo 3/4: partilha o link num grupo WhatsApp e envia a foto.';
+
+      var box = document.getElementById('card-passo-wa');
+      if (!box) {
+        box = document.createElement('div');
+        box.id = 'card-passo-wa';
+        box.className = 'card';
+        box.innerHTML =
+          '<h2><i class="fab fa-whatsapp"></i> Passo 3 — WhatsApp</h2>' +
+          '<p style="font-size:13px;color:#ccc;line-height:1.5;margin-bottom:12px;">' +
+          '1. Abre um <b>grupo qualquer</b> do WhatsApp<br>' +
+          '2. Cola o teu link de influencer e envia<br>' +
+          '3. Tira uma <b>captura de ecrã</b> e escolhe a foto aqui (só para validar o passo — <b>não é enviada</b> para o servidor)</p>' +
+          '<input type="file" id="input-wa-foto" accept="image/*" ' +
+          'style="width:100%;margin-bottom:10px;color:#ccc;font-size:13px;">' +
+          '<div id="wa-foto-preview" style="display:none;margin-bottom:10px;text-align:center;">' +
+          '<img id="wa-foto-img" style="max-width:100%;max-height:180px;border-radius:12px;border:1px solid #333;"></div>' +
+          '<label style="display:flex;gap:8px;align-items:flex-start;font-size:13px;color:#ccc;margin-bottom:12px;cursor:pointer;">' +
+          '<input type="checkbox" id="check-wa-enviei" style="margin-top:3px;">' +
+          '<span>Confirmo que enviei o meu link num grupo de WhatsApp.</span></label>' +
+          '<button type="button" class="btn" id="btn-env-wa" onclick="enviarPassoWhatsapp()">Continuar para o pagamento</button>';
+        document.getElementById('zona-missao').appendChild(box);
+        setTimeout(function () {
+          var fi = document.getElementById('input-wa-foto');
+          if (fi) fi.onchange = function () {
+            var f = fi.files && fi.files[0];
+            if (!f) return;
+            if (f.size > 2.5 * 1024 * 1024) {
+              alert('Foto demasiado grande. Usa uma captura com menos de 2,5 MB.');
+              fi.value = '';
+              return;
+            }
+            var reader = new FileReader();
+            reader.onload = function (ev) {
+              window.__waFotoData = ev.target.result;
+              var prev = document.getElementById('wa-foto-preview');
+              var img = document.getElementById('wa-foto-img');
+              if (img) img.src = window.__waFotoData;
+              if (prev) prev.style.display = 'block';
+            };
+            reader.readAsDataURL(f);
+          };
+        }, 50);
+      }
+      box.style.display = 'block';
+    }
+
+    async function enviarPassoWhatsapp() {
+      var check = document.getElementById('check-wa-enviei');
+      if (!check || !check.checked) {
+        alert('Marca a caixa a confirmar que enviaste no WhatsApp.');
+        return;
+      }
+      // Foto só para "passar a fase" — NÃO é enviada nem guardada em lado nenhum
+      var fi = document.getElementById('input-wa-foto');
+      if (!window.__waFotoData && !(fi && fi.files && fi.files.length)) {
+        alert('Carrega a foto (captura de ecrã) do envio no WhatsApp para continuares.');
+        return;
+      }
+      var btn = document.getElementById('btn-env-wa');
+      if (btn) { btn.disabled = true; btn.textContent = 'A avançar...'; }
+      try {
+        // Só marca na conta que o passo foi feito (sem foto, sem coleção extra)
+        await docRef.update({
+          missaoWhatsappOk: true,
+          missaoSemanaId: semanaId,
+          ultimaAtualizacao: new Date().toISOString()
+        });
+        userData.missaoWhatsappOk = true;
+        // limpa a foto da memória do browser
+        window.__waFotoData = null;
+        var prev = document.getElementById('wa-foto-preview');
+        if (prev) prev.style.display = 'none';
+        if (fi) fi.value = '';
+        mostrarPagamentoMissao();
+      } catch (e) {
+        console.error(e);
+        alert('Erro: ' + (e.message || e));
+        if (btn) { btn.disabled = false; btn.textContent = 'Continuar para o pagamento'; }
+      }
+    }
+    window.enviarPassoWhatsapp = enviarPassoWhatsapp;
+
+    function mostrarPagamentoMissao() {
+      esconderCardsMissaoExtra();
+      document.getElementById('zona-missao').style.display = 'block';
+      document.getElementById('card-previsoes').style.display = 'none';
+      document.getElementById('card-perguntas').style.display = 'none';
+      document.getElementById('status-banner').className = 'status-banner status-ok';
+      document.getElementById('status-banner').textContent =
+        '✅ Passo 4/4: finaliza com 2 MT e-Mola e recebe +150 pts.';
+
+      var box = document.getElementById('card-pagamento-missao');
+      if (!box) {
+        box = document.createElement('div');
+        box.id = 'card-pagamento-missao';
+        box.className = 'card';
+        box.innerHTML =
+          '<h2><i class="fas fa-wallet"></i> Finalizar — 2 MT e-Mola</h2>' +
+          '<p style="font-size:13px;color:#ccc;line-height:1.55;margin-bottom:10px;">' +
+          'Oferta <b style="color:#FFD700">generosa</b> para sacares mais rápido: pagas <b>2 MT</b> e recebes ' +
+          '<b style="color:#00e676">+150 pontos</b> (≈18,75 MT) <b>só nesta conta</b>.</p>' +
+
+          '<div style="background:rgba(0,200,83,0.1);border:1px solid rgba(0,200,83,0.35);border-radius:12px;padding:12px;margin-bottom:12px;font-size:13px;color:#c8f7d0;line-height:1.5;">' +
+          '<b style="color:#00e676;">💚 Sem pressa</b><br>' +
+          'Se não conseguires fazer o pagamento agora, <b>não te preocupes</b>. ' +
+          'A missão fica aqui à tua espera — volta quando puderes, conclui o pagamento e recebes a oferta generosa de <b>+150 pontos</b>.' +
+          '</div>' +
+
+          '<div style="background:rgba(255,80,80,0.12);border:1px solid rgba(255,100,100,0.35);border-radius:12px;padding:10px;margin-bottom:12px;font-size:12px;color:#ffb4b4;">' +
+          '⚠️ ID falso = risco de bloqueio da conta no Desafio MOZ.</div>' +
+
+          '<p style="font-size:13px;margin-bottom:6px;"><b>1.</b> Envia <b style="color:#FFD700">2 MT</b> para e-Mola:</p>' +
+          '<div style="display:flex;gap:8px;align-items:center;background:#111;border:1px dashed #00c853;border-radius:12px;padding:12px;margin-bottom:12px;">' +
+          '<strong style="flex:1;font-size:18px;color:#00e676;letter-spacing:0.04em;">869517893</strong>' +
+          '<button type="button" class="btn-sec" style="width:auto;padding:8px 12px;margin:0;" onclick="copiarNumMissao()">Copiar</button></div>' +
+
+          '<p style="font-size:13px;margin-bottom:6px;"><b>2.</b> Depois do envio, a e-Mola mostra o <b>ID da transacção</b>.</p>' +
+          '<div style="background:#0d1118;border:1px solid #333;border-radius:12px;padding:12px;margin-bottom:12px;">' +
+          '<p style="font-size:12px;color:#aaa;margin-bottom:8px;line-height:1.45;">' +
+          'No comprovativo / mensagem da e-Mola procura o código que começa por <b style="color:#00e676;">PP</b>. ' +
+          'Copia o ID <b>completo</b> e cola abaixo.</p>' +
+          '<p style="font-size:12px;color:#888;margin-bottom:4px;">Exemplo de ID:</p>' +
+          '<code style="display:block;background:#111;border:1px solid #00c853;border-radius:8px;padding:10px 12px;color:#00e676;font-size:13px;letter-spacing:0.03em;word-break:break-all;">PP260927.0652.q29322</code>' +
+          '<p style="font-size:11px;color:#777;margin-top:8px;line-height:1.4;">O teu será parecido, mas com números e letras diferentes. Não uses este exemplo — usa o <b>teu</b> ID real.</p>' +
+          '</div>' +
+
+          '<p style="font-size:13px;margin-bottom:8px;"><b>3.</b> Número com que pagaste + o teu ID:</p>' +
+          '<input type="tel" id="missao-tel" placeholder="Número e-Mola (ex: 841234567)" ' +
+          'style="width:100%;background:#111;border:1px solid #333;border-radius:12px;padding:12px;color:#fff;font-size:14px;margin-bottom:8px;">' +
+          '<input type="text" id="missao-txid" placeholder="ID da transacção (ex: PP260927.0652.q29322)" ' +
+          'style="width:100%;background:#111;border:1px solid #333;border-radius:12px;padding:12px;color:#fff;font-size:13px;margin-bottom:12px;">' +
+          '<button type="button" class="btn" id="btn-pag-missao" onclick="enviarPagamentoMissao()">Confirmar e receber +150 pts</button>' +
+          '<p style="font-size:11px;color:#666;margin-top:10px;text-align:center;line-height:1.4;">Podes sair e voltar mais tarde — o teu progresso (perguntas + WhatsApp) fica guardado nesta conta.</p>';
+        document.getElementById('zona-missao').appendChild(box);
+      }
+      box.style.display = 'block';
+      missaoPkgSel = 'missao_2_pts150';
+      missaoValorSel = 2;
+    }
+
+    function copiarNumMissao() {
+      var n = '869517893';
+      try {
+        navigator.clipboard.writeText(n).then(function () { alert('Número copiado!'); });
+      } catch (e) {
+        var ta = document.createElement('textarea');
+        ta.value = n; document.body.appendChild(ta); ta.select();
+        try { document.execCommand('copy'); alert('Número copiado!'); } catch (e2) {}
+        document.body.removeChild(ta);
+      }
+    }
+    window.copiarNumMissao = copiarNumMissao;
+    window.mostrarPagamentoMissao = mostrarPagamentoMissao;
+    window.mostrarPassoInfluencer = mostrarPassoInfluencer;
+
+    async function enviarPagamentoMissao() {
+      var txid = String(document.getElementById('missao-txid').value || '').trim().replace(/\s+/g, '').toUpperCase();
+      var tel = String(document.getElementById('missao-tel').value || '').replace(/\D/g, '');
+      if (tel.length === 12 && tel.indexOf('258') === 0) tel = tel.slice(3);
+      if (!/^PP[A-Z0-9.\-]{5,40}$/i.test(txid)) {
+        alert('ID inválido. Cola o ID completo da e-Mola (começa por PP).');
+        return;
+      }
+      if (!/^8\d{8}$/.test(tel)) {
+        alert('Número inválido. Ex: 841234567');
+        return;
+      }
+      if (!userData.missaoInfOk || !userData.missaoWhatsappOk) {
+        alert('Completa primeiro os passos do link influencer e do WhatsApp.');
+        return;
+      }
+      var btn = document.getElementById('btn-pag-missao');
+      if (btn) { btn.disabled = true; btn.textContent = 'A verificar...'; }
+      try {
+        var txRef = db.collection('emolaTransacoes').doc(txid);
+        await db.runTransaction(async function (tr) {
+          var snap = await tr.get(txRef);
+          if (snap.exists) throw new Error('Este ID já foi usado. Cada ID só funciona uma vez.');
+          tr.set(txRef, {
+            email: email,
+            telefone: tel,
+            item: 'missao_2_pts150',
+            jogo: 'missao_semanal',
+            mt: 2,
+            descricao: 'Missão semanal +150 pts',
+            createdAt: new Date().toISOString()
+          });
+        });
+
+        var pontosAtuais = Number(userData.pontos || 0);
+        var ptsExtra = 150;
+        var novos = pontosAtuais + ptsExtra;
+        var encontradas = Number(userData.missoesSemanaisEncontradas || 0);
+        if (userData.missaoSemanaId !== semanaId) encontradas += 1;
+
+        await docRef.update({
+          pontos: novos,
+          missaoSemanaId: semanaId,
+          missaoSemanalCompleta: true,
+          missaoSemanalRespostas: respostas,
+          missoesSemanaisEncontradas: encontradas,
+          missaoLiberada: false,
+          missaoBloqueadaApos: true,
+          missaoPagamentoTxid: txid,
+          missaoPagamentoTel: tel,
+          missaoPagamentoMt: 2,
+          missaoPontosCreditados: ptsExtra,
+          ultimaAtualizacao: new Date().toISOString()
+        });
+
+        await db.collection('emolaUpgrades').add({
+          email: email,
+          nome: userData.nome || '',
+          txid: txid,
+          telefone: tel,
+          telefoneDestino: '869517893',
+          pacote: 'missao_2_pts150',
+          valorMt: 2,
+          detalhe: 'Missão semanal +150 pts',
+          pontosCreditados: ptsExtra,
+          girosCreditados: 0,
+          status: 'entregue',
+          createdAt: new Date().toISOString()
+        });
+        try {
+          await db.collection('pagamentosManuais').add({
+            jogo: 'missao_semanal',
+            email: email,
+            item: 'missao_2_pts150',
+            label: 'Missão semanal +150 pts',
+            mt: 2,
+            txId: txid,
+            telefone: tel,
+            status: 'entregue',
+            createdAt: new Date().toISOString()
+          });
+        } catch (eL) {}
+        try {
+          await db.collection('historicoPontos').add({
+            email: email, pontos: ptsExtra, origem: 'missao_semanal',
+            detalhe: 'Missão semanal completa +150 pts',
+            createdAt: new Date().toISOString()
+          });
+        } catch (eH) {}
+        if (userData.indicadoPor) {
+          try { await creditarBonusMarcoIndicacao(userData.indicadoPor, pontosAtuais, novos); } catch (eI) {}
+        }
+
+        localStorage.setItem('pontosUtilizador', String(novos));
+        jaCompletouEstaSemana = true;
+        userData.missaoSemanalCompleta = true;
+        userData.missaoBloqueadaApos = true;
+        userData.pontos = novos;
+
+        esconderCardsMissaoExtra();
+        var sc = document.getElementById('card-sucesso');
+        if (sc) {
+          sc.style.display = 'block';
+          var ptsEl = sc.querySelector('.pts');
+          if (ptsEl) ptsEl.textContent = '+150';
+        }
+        document.getElementById('status-banner').className = 'status-banner status-done';
+        document.getElementById('status-banner').textContent =
+          '🔒 Missão concluída nesta conta! +150 pts. Outras contas não são afectadas. O calendário voltou para ti.';
+        var cardPrev = document.getElementById('card-previsoes');
+        if (cardPrev) cardPrev.style.display = 'block';
+        alert('✅ +150 pontos na tua conta!');
+      } catch (e) {
+        console.error(e);
+        var msg = (e && e.message) ? e.message : String(e);
+        if (/already exists|ALREADY_EXISTS/i.test(msg)) msg = 'Este ID já foi usado. Cada ID só funciona uma vez.';
+        alert('Erro: ' + msg);
+      }
+      if (btn) { btn.disabled = false; btn.textContent = 'Confirmar e receber +150 pts'; }
+    }
+    window.enviarPagamentoMissao = enviarPagamentoMissao;
+
+
+async function finalizarMissao() {
       if (jaCompletouEstaSemana) return;
       try {
         var pontosAtuais = userData.pontos || 0;
@@ -778,13 +1197,19 @@
           missaoSemanalCompleta: true,
           missaoSemanalRespostas: respostas,
           missoesSemanaisEncontradas: encontradas,
+          missaoLiberada: false,
+          missaoBloqueadaApos: true,
           ultimaAtualizacao: new Date().toISOString()
         });
 
         if (userData.indicadoPor) { await creditarBonusMarcoIndicacao(userData.indicadoPor, pontosAtuais, novos); }
 
+        // Só marca global completa no modo "primeiro" (não no liberada para todos)
         try {
-          await missaoGlobalRef().update({ completa: true, dataCompleta: new Date().toISOString() });
+          var libTodos = await isMissaoLiberadaParaTodos();
+          if (!libTodos) {
+            await missaoGlobalRef().update({ completa: true, dataCompleta: new Date().toISOString() });
+          }
         } catch (eg) { console.warn(eg); }
 
         localStorage.setItem('pontosUtilizador', String(novos));
@@ -793,13 +1218,41 @@
         document.getElementById('card-sucesso').style.display = 'block';
         document.getElementById('barra').style.width = '100%';
         document.getElementById('progresso-txt').textContent = '10 / 10 perguntas';
+        var cardPrev = document.getElementById('card-previsoes');
+        if (cardPrev) cardPrev.style.display = 'block';
+        document.getElementById('status-banner').className = 'status-banner status-done';
+        document.getElementById('status-banner').textContent =
+          '🔒 Missão concluída na tua conta! Ficaste bloqueado. O calendário voltou — na próxima semana podes tentar de novo.';
         jaCompletouEstaSemana = true;
+        userData.missaoSemanalCompleta = true;
+        userData.missaoBloqueadaApos = true;
+        userData.missaoLiberada = false;
       } catch (e) {
         alert('Erro ao guardar: ' + (e.message || e));
       }
     }
 
     // Documento global da missão da semana: só O PRIMEIRO que encontrar fica com o privilégio
+
+    function withTimeout(promise, ms) {
+      return Promise.race([
+        promise,
+        new Promise(function (resolve) { setTimeout(function () { resolve(null); }, ms); })
+      ]);
+    }
+
+    async function isMissaoLiberadaParaTodos() {
+      // Por defeito SEMPRE liberada para todos. Timeout 3s para não ficar a processar.
+      try {
+        var snap = await withTimeout(db.collection('missaoSemanalConfig').doc(semanaId).get(), 3000);
+        if (snap && snap.exists) {
+          var d = snap.data() || {};
+          if (d.liberadaParaTodos === false || d.fechada === true) return false;
+        }
+      } catch (e) {}
+      return true;
+    }
+
     function missaoGlobalRef() {
       return db.collection('missaoSemanalGlobal').doc(semanaId);
     }
@@ -876,44 +1329,73 @@
     }
 
     async function iniciarMissaoEncontrada() {
-      // Bloqueado pelo Admin: mostra como se a missão ainda não estivesse ativa (sem avisar o bloqueio)
-      if (!userData || userData.missaoLiberada !== true) {
+      var liberadaTodos = await isMissaoLiberadaParaTodos();
+      var liberadaUser = userData && userData.missaoLiberada === true;
+
+      // Já completou esta semana
+      if (userData && userData.missaoSemanaId === semanaId && userData.missaoSemanalCompleta === true) {
+        document.getElementById('status-banner').className = 'status-banner status-done';
+        document.getElementById('status-banner').textContent =
+          '🔒 Já finalizaste a missão desta semana. Volta a ver o calendário para a próxima oportunidade.';
+        document.getElementById('zona-acao').innerHTML = '';
+        document.getElementById('zona-missao').style.display = 'none';
+        document.getElementById('card-previsoes').style.display = 'block';
+        return;
+      }
+
+      if (!liberadaTodos && !liberadaUser) {
         document.getElementById('status-banner').className = 'status-banner status-wait';
         document.getElementById('status-banner').textContent =
-          '⏳ Missão ainda não está ativa. Só quem encontrar PRIMEIRO nos horários previstos fica com a chance.';
+          '⏳ Missão ainda não está activa. Consulta os horários previstos abaixo.';
         document.getElementById('zona-acao').innerHTML =
           '<button class="btn-sec" type="button" onclick="location.reload()">Verificar novamente</button>';
         document.getElementById('zona-missao').style.display = 'none';
         return;
       }
-      // Só o primeiro pode começar
-      var claim = await tentarSerPrimeiro();
-      if (!claim.ok) {
-        // Pode ser o próprio a continuar
-        if (claim.dono === email) {
-          // continua
+
+      // Modo antigo (primeiro) só se NÃO estiver liberada para todos
+      if (!liberadaTodos) {
+        var claim = await tentarSerPrimeiro();
+        if (!claim.ok) {
+          if (claim.dono === email) {
+            // continua
+          } else {
+            document.getElementById('status-banner').className = 'status-banner status-done';
+            document.getElementById('status-banner').textContent =
+              '😔 Esta semana a missão já foi encontrada por outra pessoa' +
+              (claim.nome ? ' (' + claim.nome + ')' : '') +
+              '. Tente na próxima semana!';
+            document.getElementById('zona-acao').innerHTML = '';
+            document.getElementById('zona-missao').style.display = 'none';
+            return;
+          }
         } else {
-          document.getElementById('status-banner').className = 'status-banner status-done';
-          document.getElementById('status-banner').textContent =
-            '😔 Esta semana a missão já foi encontrada por outra pessoa' +
-            (claim.nome ? ' (' + claim.nome + ')' : '') +
-            '. Tente na próxima semana!';
-          document.getElementById('zona-acao').innerHTML = '';
-          document.getElementById('zona-missao').style.display = 'none';
-          return;
+          try {
+            var encontradas = (userData.missoesSemanaisEncontradas || 0) + 1;
+            await docRef.update({
+              missaoSemanaId: semanaId,
+              missaoSemanalCompleta: false,
+              missoesSemanaisEncontradas: encontradas
+            });
+            userData.missoesSemanaisEncontradas = encontradas;
+            userData.missaoSemanaId = semanaId;
+            document.getElementById('missoes-encontradas').textContent = encontradas;
+          } catch (e) { console.warn(e); }
         }
       } else {
-        // Primeiro a encontrar — conta no perfil
+        // Liberada para todos: cada um faz a sua
         try {
-          var encontradas = (userData.missoesSemanaisEncontradas || 0) + 1;
-          await docRef.update({
-            missaoSemanaId: semanaId,
-            missaoSemanalCompleta: false,
-            missoesSemanaisEncontradas: encontradas
-          });
-          userData.missoesSemanaisEncontradas = encontradas;
-          userData.missaoSemanaId = semanaId;
-          document.getElementById('missoes-encontradas').textContent = encontradas;
+          if (userData.missaoSemanaId !== semanaId || !userData.missoesSemanaisEncontradas) {
+            var enc2 = (userData.missoesSemanaisEncontradas || 0) + 1;
+            await docRef.update({
+              missaoSemanaId: semanaId,
+              missaoSemanalCompleta: false,
+              missoesSemanaisEncontradas: enc2
+            });
+            userData.missoesSemanaisEncontradas = enc2;
+            userData.missaoSemanaId = semanaId;
+            document.getElementById('missoes-encontradas').textContent = enc2;
+          }
         } catch (e) { console.warn(e); }
       }
 
@@ -922,14 +1404,42 @@
       document.getElementById('card-previsoes').style.display = 'none';
       document.getElementById('status-banner').className = 'status-banner status-ok';
       document.getElementById('status-banner').textContent =
-        '🏆 Foi o PRIMEIRO a encontrar! Complete as 10 perguntas para ganhar +100 pts.';
+        '✅ Missão nesta conta (' + email + '). Completa as 10 perguntas — o progresso é só teu.';
       document.getElementById('zona-acao').innerHTML = '';
-      // Retomar se já tinha progresso
-      if (perguntasFeitas >= 10) {
+
+      // SEMPRE limpar UI e recarregar progresso SÓ desta conta / esta semana
+      resetUIPerguntas();
+      perguntasFeitas = 0;
+      respostas = {};
+      if (userData.missaoSemanaId === semanaId) {
+        perguntasFeitas = parseInt(userData.missaoPerguntasFeitas || 0, 10) || 0;
+        if (userData.missaoSemanalRespostas && typeof userData.missaoSemanalRespostas === 'object') {
+          respostas = Object.assign({}, userData.missaoSemanalRespostas);
+          for (var qn = 1; qn <= 10; qn++) {
+            var val = respostas['q' + qn];
+            if (!val) continue;
+            var passo = document.getElementById('qpasso' + qn);
+            if (!passo) continue;
+            passo.querySelectorAll('.opcao').forEach(function (o) {
+              var oc = o.getAttribute('onclick') || '';
+              if (oc.indexOf("'" + val + "'") !== -1 || (o.textContent || '').indexOf(val) !== -1) {
+                o.classList.add('selecionada');
+              }
+            });
+          }
+        }
+      }
+
+      // Retomar se já tinha progresso NESTA conta
+      if (perguntasFeitas >= 10 && userData.missaoInfOk && userData.missaoWhatsappOk) {
         document.getElementById('card-perguntas').style.display = 'none';
-        var cardAd = document.getElementById('card-anuncios');
-        if (cardAd) cardAd.style.display = 'none';
-        finalizarMissao();
+        mostrarPagamentoMissao();
+      } else if (perguntasFeitas >= 10 && userData.missaoInfOk) {
+        document.getElementById('card-perguntas').style.display = 'none';
+        mostrarPassoWhatsapp();
+      } else if (perguntasFeitas >= 10) {
+        document.getElementById('card-perguntas').style.display = 'none';
+        mostrarPassoInfluencer();
       } else if (perguntasFeitas > 0) {
         for (var q = 1; q <= 10; q++) {
           var el = document.getElementById('qpasso' + q);
@@ -943,125 +1453,163 @@
     }
 
     async function carregar() {
-      email = localStorage.getItem('emailUtilizador') || '';
-      if (!email) {
-        alert('Sessão expirada. Faça login.');
-        window.location.href = 'criar-conta.html';
-        return;
-      }
-
-      semanaId = getSemanaId();
-      document.getElementById('semana-label').textContent = semanaId.replace(/.*-S/, 'S');
-
       try {
-        var snap = await db.collection('usuarios').where('email', '==', email).limit(1).get();
-        if (snap.empty) {
-          alert('Utilizador não encontrado.');
+        email = (localStorage.getItem('emailUtilizador') || localStorage.getItem('email') || '').trim();
+        if (email) email = email.toLowerCase();
+        if (!email) {
+          document.getElementById('loading').style.display = 'none';
+          document.getElementById('conteudo').style.display = 'block';
+          alert('Sessão expirada. Faça login.');
           window.location.href = 'criar-conta.html';
           return;
         }
-        docRef = snap.docs[0].ref;
-        userData = snap.docs[0].data();
-        document.getElementById('missoes-encontradas').textContent = userData.missoesSemanaisEncontradas || 0;
 
-        var slots = gerarPrevisoes(semanaId);
-        renderPrevisoes(slots);
+        try { semanaId = getSemanaId(); } catch (eS) { semanaId = new Date().getFullYear() + '-S1'; }
+        try {
+          var sl = document.getElementById('semana-label');
+          if (sl) sl.textContent = String(semanaId).replace(/.*-S/, 'S');
+        } catch (e) {}
 
-        // Estado global: quem encontrou primeiro esta semana
-        var globalSnap = await missaoGlobalRef().get();
-        var globalData = globalSnap.exists ? globalSnap.data() : null;
-        var donoEmail = globalData ? globalData.emailEncontrou : null;
-        var souODono = donoEmail === email;
-        var jaTemDono = !!donoEmail;
-
-        jaCompletouEstaSemana = (userData.missaoSemanaId === semanaId && userData.missaoSemanalCompleta === true)
-          || (globalData && globalData.completa === true && souODono);
-        var ativaAgora = estaAtiva(slots);
-
-        await carregarAnunciosMissao();
-
-        // Retomar progresso (perguntas feitas / anúncios)
-        if (userData.missaoSemanaId === semanaId) {
-          perguntasFeitas = parseInt(userData.missaoPerguntasFeitas || 0, 10) || 0;
-          anunciosVistos = parseInt(userData.missaoAnunciosVistos || 0, 10) || 0;
-          if (userData.missaoSemanalRespostas) respostas = userData.missaoSemanalRespostas;
+        // Timeout de segurança na query do utilizador
+        var snap = null;
+        try {
+          snap = await withTimeout(db.collection('usuarios').where('email', '==', email).limit(1).get(), 6000);
+        } catch (eQ) {
+          console.warn('query user', eQ);
+        }
+        // tenta também email original do localStorage (maiúsculas)
+        if ((!snap || !snap.docs || !snap.docs.length)) {
+          var emailOrig = (localStorage.getItem('emailUtilizador') || '').trim();
+          if (emailOrig && emailOrig !== email) {
+            try {
+              snap = await withTimeout(db.collection('usuarios').where('email', '==', emailOrig).limit(1).get(), 4000);
+            } catch (eQ2) {}
+          }
+        }
+        if (snap && snap.docs && snap.docs.length) {
+          docRef = snap.docs[0].ref;
+          userData = snap.docs[0].data() || {};
+        } else {
+          // fallback: doc id = email
+          try {
+            var d2 = await withTimeout(db.collection('usuarios').doc(email).get(), 4000);
+            if (d2 && d2.exists) {
+              docRef = d2.ref;
+              userData = d2.data() || {};
+            }
+          } catch (e2) {}
         }
 
-        // Admin: marcar que visitou a missão semanal (hoje)
-        try {
-          var hojeVis = new Date().toISOString().slice(0, 10);
-          await docRef.update({
-            missaoSemanalVisitou: true,
-            missaoSemanalVisitouEm: new Date().toISOString(),
-            missaoSemanalVisitouDia: hojeVis
-          });
-        } catch (eVis) { console.warn('visita missao', eVis); }
-
+        // Mostra UI SEMPRE
         document.getElementById('loading').style.display = 'none';
         document.getElementById('conteudo').style.display = 'block';
 
-        // Por defeito TODOS bloqueados até Admin liberar (missaoLiberada === true).
-        // NÃO avisar o utilizador — aparece como se a missão ainda não estivesse ativa.
-        if (userData.missaoLiberada !== true) {
+        if (!docRef || !userData) {
           document.getElementById('status-banner').className = 'status-banner status-wait';
-          document.getElementById('status-banner').textContent =
-            '⏳ Missão ainda não está ativa. Só quem encontrar PRIMEIRO nos horários previstos fica com a chance.';
+          document.getElementById('status-banner').textContent = 'Não foi possível carregar a conta. Faz login de novo.';
           document.getElementById('zona-acao').innerHTML =
-            '<button class="btn-sec" type="button" onclick="location.reload()">Verificar novamente</button>';
+            '<a class="btn" href="criar-conta.html">Ir ao login</a>';
+          return;
+        }
+
+        try {
+          var me = document.getElementById('missoes-encontradas');
+          if (me) me.textContent = userData.missoesSemanaisEncontradas || 0;
+        } catch (e) {}
+
+        var slots = [];
+        try { slots = gerarPrevisoes(semanaId); renderPrevisoes(slots); } catch (eR) { console.warn(eR); }
+
+        jaCompletouEstaSemana = (userData.missaoSemanaId === semanaId && userData.missaoSemanalCompleta === true);
+
+        try { carregarAnunciosMissao(); } catch (eA) {}
+
+        resetUIPerguntas();
+        perguntasFeitas = 0;
+        anunciosVistos = 0;
+        respostas = {};
+        if (userData.missaoSemanaId === semanaId) {
+          perguntasFeitas = parseInt(userData.missaoPerguntasFeitas || 0, 10) || 0;
+          if (userData.missaoSemanalRespostas && typeof userData.missaoSemanalRespostas === 'object') {
+            respostas = userData.missaoSemanalRespostas;
+          }
+        }
+
+        // visita background
+        try {
+          docRef.update({
+            missaoSemanalVisitou: true,
+            missaoSemanalVisitouEm: new Date().toISOString(),
+            missaoSemanalVisitouDia: new Date().toISOString().slice(0, 10)
+          }).catch(function () {});
+        } catch (eV) {}
+
+        var liberadaTodos = true;
+        try { liberadaTodos = await isMissaoLiberadaParaTodos(); } catch (eL) { liberadaTodos = true; }
+
+        if (jaCompletouEstaSemana || userData.missaoBloqueadaApos === semanaId) {
+          document.getElementById('status-banner').className = 'status-banner status-done';
+          document.getElementById('status-banner').textContent =
+            '🔒 Já concluíste a missão desta semana nesta conta. O calendário voltou.';
+          document.getElementById('card-previsoes').style.display = 'block';
+          document.getElementById('zona-acao').innerHTML = '';
           document.getElementById('zona-missao').style.display = 'none';
           return;
         }
 
-        if (jaCompletouEstaSemana && souODono) {
-          document.getElementById('status-banner').className = 'status-banner status-done';
-          document.getElementById('status-banner').textContent = '✅ Completou a missão desta semana (foi o primeiro). Volte na próxima!';
-          document.getElementById('zona-acao').innerHTML = '';
-        } else if (jaTemDono && !souODono) {
-          document.getElementById('status-banner').className = 'status-banner status-done';
-          document.getElementById('status-banner').textContent =
-            '😔 A missão desta semana já foi encontrada por ' +
-            (globalData.nomeEncontrou || 'outro utilizador') +
-            '. Só a primeira pessoa ganha o privilégio. Tente na próxima semana!';
-          document.getElementById('zona-acao').innerHTML = '';
-        } else if (souODono && !jaCompletouEstaSemana) {
+        // Liberada para todos (ou por defeito)
+        if (liberadaTodos || userData.missaoLiberada === true) {
+          document.getElementById('card-previsoes').style.display = 'none';
           document.getElementById('status-banner').className = 'status-banner status-ok';
-          if (perguntasFeitas >= 10) {
-            // Já terminou perguntas — se ainda não recebeu pontos, finaliza
-            document.getElementById('status-banner').textContent =
-              '🏆 Já respondeu às 10 perguntas. A confirmar a recompensa...';
-            document.getElementById('zona-acao').innerHTML = '';
-            finalizarMissao();
-          } else if (perguntasFeitas > 0 && perguntasFeitas < 10) {
-            document.getElementById('status-banner').textContent =
-              '🏆 Missão em curso. Continue as 10 perguntas para ganhar +100 pts.';
-            document.getElementById('zona-acao').innerHTML =
-              '<button class="btn" type="button" onclick="iniciarMissaoEncontrada()">Continuar missão</button>';
-          } else {
-            document.getElementById('status-banner').textContent =
-              '🏆 É o primeiro desta semana! Complete as 10 perguntas para +100 pts.';
+          document.getElementById('status-banner').textContent =
+            '✅ Missão liberada para todos! Cada conta responde as suas perguntas. No fim: link influencer → WhatsApp → 2 MT → +150 pts.';
+          document.getElementById('zona-acao').innerHTML =
+            '<button class="btn" type="button" onclick="iniciarMissaoEncontrada()">Começar missão</button>';
+
+          if (perguntasFeitas > 0 || userData.missaoInfOk || userData.missaoWhatsappOk) {
             document.getElementById('zona-acao').innerHTML =
               '<button class="btn" type="button" onclick="iniciarMissaoEncontrada()">Continuar missão</button>';
           }
-        } else if (ativaAgora) {
-          document.getElementById('status-banner').className = 'status-banner status-ok';
-          document.getElementById('status-banner').textContent =
-            '🎉 A missão está AGORA disponível! Se for o primeiro a clicar, ganha o privilégio desta semana.';
-          document.getElementById('zona-acao').innerHTML =
-            '<button class="btn" type="button" onclick="iniciarMissaoEncontrada()">Tentar ser o primeiro</button>';
-        } else {
-          document.getElementById('status-banner').className = 'status-banner status-wait';
-          document.getElementById('status-banner').textContent =
-            '⏳ Missão ainda não está ativa. Só quem encontrar PRIMEIRO nos horários previstos fica com a chance.';
-          document.getElementById('zona-acao').innerHTML =
-            '<button class="btn-sec" type="button" onclick="location.reload()">Verificar novamente</button>';
+          return;
         }
+
+        // Se admin fechou
+        document.getElementById('card-previsoes').style.display = 'block';
+        document.getElementById('status-banner').className = 'status-banner status-wait';
+        document.getElementById('status-banner').textContent =
+          '⏳ Missão em modo calendário. Consulta os horários abaixo.';
+        document.getElementById('zona-acao').innerHTML =
+          '<button class="btn-sec" type="button" onclick="location.reload()">Verificar novamente</button>';
       } catch (e) {
         console.error(e);
-        document.getElementById('loading').textContent = 'Erro: ' + (e.message || e);
+        try {
+          document.getElementById('loading').style.display = 'none';
+          document.getElementById('conteudo').style.display = 'block';
+          document.getElementById('status-banner').textContent = 'Erro: ' + (e.message || e);
+        } catch (e2) {}
       }
     }
 
-    carregar();
+    // stubs seguros (evita ReferenceError que bloqueava carregar)
+    if (typeof selecionarPkgMissao === 'function') window.selecionarPkgMissao = selecionarPkgMissao;
+    if (typeof copiarNumMissao === 'function') window.copiarNumMissao = copiarNumMissao;
+    if (typeof enviarPagamentoMissao === 'function') window.enviarPagamentoMissao = enviarPagamentoMissao;
+    if (typeof iniciarMissaoEncontrada === 'function') window.iniciarMissaoEncontrada = iniciarMissaoEncontrada;
+    if (typeof enviarPassoInfluencer === 'function') window.enviarPassoInfluencer = enviarPassoInfluencer;
+    if (typeof enviarPassoWhatsapp === 'function') window.enviarPassoWhatsapp = enviarPassoWhatsapp;
+
+    // Arranque seguro
+    try {
+      carregar();
+    } catch (eStart) {
+      console.error('carregar start', eStart);
+      try {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('conteudo').style.display = 'block';
+        var sb = document.getElementById('status-banner');
+        if (sb) sb.textContent = 'Erro ao iniciar: ' + (eStart.message || eStart);
+      } catch (e2) {}
+    }
   </script>
 
 <script>window.__DM_PRESENCA__ = { pagina: 'missao-semanal', jogando: null };</script>

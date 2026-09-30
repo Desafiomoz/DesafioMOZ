@@ -478,7 +478,10 @@
 
     <div class="hero">
       <span class="badge-live"><span class="dot"></span> Programa Influencer</span>
-      <h1>Ganha 200 MT por cada 1000 na contagem</h1>
+      <div style="margin-top:12px;">
+        <a href="aumento-ganhos.html" style="display:inline-block;padding:10px 16px;border-radius:12px;font-weight:800;font-size:12px;text-decoration:none;color:#04140a;background:linear-gradient(90deg,#22FF99,#a855f7);box-shadow:0 0 20px rgba(34,255,153,0.3);">✨ +1 pt por registo (boost pago)</a>
+      </div>
+      <h1>Ganha 200 MT aos 1000 · +100 MT se o convidado sacar</h1>
       <p>Partilha o teu <b>link único</b>, traz amigos e seguidores para o Desafio MOZ e sobe no ranking dos top influencers.</p>
     </div>
 
@@ -523,7 +526,7 @@
           </div>
           <div class="stat">
             <div class="num" id="stat-faltam">1000</div>
-            <div class="lab">Faltam para 200 MT</div>
+            <div class="lab">Faltam para 200 MT (meta)</div>
           </div>
           <div class="stat">
             <div class="num" id="stat-premios">0</div>
@@ -556,8 +559,8 @@
         <div class="premio">
           <div class="premio-ico">💰</div>
           <div>
-            <h3>200 MT no Desafio MOZ</h3>
-            <p>A cada <b>1000 pessoas</b> que criarem conta com o teu link, recebes <b>200 meticais</b> em pontos na tua conta (crédito automático quando a meta for atingida).</p>
+            <h3>200 MT + 100 MT no saque</h3>
+            <p>A cada <b>1000</b> na contagem: <b>200 MT</b> automáticos. Cada convidado ganha <b>+20 pts</b> ao registar. Se o convidado <b>sacar</b>, podes receber <b>100 MT</b> (o admin aprova no painel).</p>
           </div>
         </div>
         <div style="margin-top:14px;">
@@ -571,13 +574,20 @@
           </div>
           <div class="passo">
             <div class="passo-num">3</div>
-            <p>Ao chegares a <b>1000</b>, o prémio de <b>200 MT</b> é creditado — e a contagem recomeça para o próximo prémio.</p>
+            <p>Ao chegares a <b>1000</b>, o prémio de <b>200 MT</b> é creditado. Cada convidado ganha <b>+20 pts</b>; se ele sacar, podes receber <b>100 MT</b> (admin confirma). A contagem recomeça para o próximo prémio.</p>
           </div>
         </div>
       </div>
 
       <!-- Ranking -->
-      <div class="card">
+      
+    <div class="card" id="card-regras-inf" style="border-color:rgba(255,201,77,0.4);margin-bottom:16px;">
+      <h2><i class="fas fa-gift"></i> Regras do link</h2>
+      <div class="passo"><div class="passo-num">1</div><p>Cada pessoa que entrar com o teu link recebe <b>+20 pontos</b> ao criar conta.</p></div>
+      <div class="passo"><div class="passo-num">2</div><p>Quando o teu convidado <b>sacar</b> no Desafio MOZ, podes receber <b>100 MT</b> (800 pts) — o admin confirma antes de entrar na tua carteira.</p></div>
+      <div class="passo"><div class="passo-num">3</div><p>Aos <b>1000 convites</b> na barra continuas a receber <b>200 MT</b> (1600 pts) na carteira.</p></div>
+    </div>
+<div class="card">
         <h2><i class="fas fa-trophy"></i> Ranking de influencers</h2>
         <p style="font-size:12px;color:var(--suave);margin-bottom:12px;">Quem trouxe mais pessoas para o Desafio MOZ.</p>
         <div id="lista-ranking">
@@ -949,6 +959,21 @@
       // Prémios em falta (ex.: 1000, 2000…) → pontos na carteira automaticamente
       userDoc = await verificarPremiosInfluencer(userRef, userDoc);
       actualizarUI(userDoc);
+      // Texto das regras conforme actualização
+      var regrasInf = userDoc.influencerRegrasNovas === true;
+      var cardNovas = document.getElementById('card-regras-inf');
+      if (cardNovas) {
+        if (regrasInf) {
+          cardNovas.innerHTML = '<h2><i class="fas fa-gift"></i> Regras novas activas</h2>' +
+            '<div class="passo"><div class="passo-num">1</div><p>Cada convidado recebe <b>+20 pontos</b> ao criar conta.</p></div>' +
+            '<div class="passo"><div class="passo-num">2</div><p>Se o convidado <b>sacar</b>, podes receber <b>100 MT</b> (admin confirma).</p></div>' +
+            '<div class="passo"><div class="passo-num">3</div><p>Aos <b>1000</b> convites: <b>200 MT</b> na carteira.</p></div>';
+        } else {
+          cardNovas.innerHTML = '<h2><i class="fas fa-info-circle"></i> Regras actuais</h2>' +
+            '<div class="passo"><div class="passo-num">1</div><p>Cada registo com o teu link conta para a meta de <b>1000 → 200 MT</b>.</p></div>' +
+            '<div class="passo"><div class="passo-num">2</div><p>Para activar <b>+20 pts</b> ao convidado e <b>100 MT</b> no saque, vai a <a href="aumento-ganhos.html" style="color:var(--vivo)">Aumenta os teus ganhos</a> e toca em <b>Actualizar link de influencer</b> (grátis).</p></div>';
+        }
+      }
       await carregarRanking();
     } catch (e) {
       console.error(e);
