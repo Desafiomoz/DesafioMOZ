@@ -224,7 +224,7 @@
     <button class="tab" data-tab="pesquisas" onclick="mudarTab('pesquisas')"><i class="fas fa-poll"></i> Pesquisas</button>
     <button class="tab" data-tab="anuncios" onclick="mudarTab('anuncios')"><i class="fas fa-ad"></i> Anúncios</button>
     <button class="tab" data-tab="desafios" onclick="mudarTab('desafios')"><i class="fas fa-bolt"></i> Desafios</button>
-    <button class="tab" data-tab="missoes" onclick="mudarTab('missoes'); try{carregarEstadoMissaoGlobal();carregarPagamentosMissao();}catch(e){}"><i class="fas fa-trophy"></i> Missões</button>
+    <button class="tab" data-tab="missoes" onclick="mudarTab('missoes'); try{carregarEstadoMissaoGlobal();carregarPagamentosMissao();carregarVisitasMissao();}catch(e){}"><i class="fas fa-trophy"></i> Missões</button>
     <button class="tab" data-tab="ranking" onclick="mudarTab('ranking')"><i class="fas fa-medal"></i> Ranking</button>
     <button class="tab" data-tab="convites" onclick="mudarTab('convites')"><i class="fas fa-user-plus"></i> Convites</button>
     <button class="tab" data-tab="visitantes" onclick="mudarTab('visitantes')"><i class="fas fa-chart-line"></i> Visitantes</button>
@@ -743,6 +743,26 @@
         <div id="missao-global-estado" style="font-size:13px;margin-bottom:12px;color:#ffc107;">A verificar estado...</div>
         <button type="button" class="btn-verde" style="margin-bottom:8px;" onclick="liberarMissaoParaTodos()">✅ Liberar missão para TODOS (esta semana)</button>
         <button type="button" class="btn-vermelho" style="width:100%;padding:12px;" onclick="fecharMissaoParaTodos()">🔒 Fechar liberação global (volta o calendário)</button>
+      </div>
+      <div class="form-box">
+        <h3><i class="fas fa-eye"></i> Quem visitou a missão semanal</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:10px;line-height:1.45;">
+          Toca num dia do resumo (ou escolhe a data) para ver quem visitou nesse dia.
+        </p>
+        <div id="visitas-missao-nota" style="display:none;font-size:12px;color:#ffc107;margin-bottom:10px;line-height:1.45;">
+          ⚠️ Ainda não há registo diário (<b>missaoVisitas</b>). Por agora só se vê o <b>último dia</b> de visita de cada utilizador.
+          Para guardar o histórico de todos os dias, a página da missão precisa de gravar a visita.
+        </div>
+        <div class="resumo" id="visitas-missao-resumo"></div>
+        <div class="form-grid" style="margin-bottom:10px;">
+          <div class="form-row"><label>Dia</label><input type="date" id="visitas-missao-dia" onchange="carregarVisitasMissao()"></div>
+          <div class="form-row"><label>&nbsp;</label><button type="button" class="btn-cinza" style="width:100%;padding:10px;" onclick="carregarVisitasMissao()">🔄 Actualizar</button></div>
+        </div>
+        <div id="visitas-missao-total" style="font-size:13px;color:#00e676;margin-bottom:8px;"></div>
+        <div class="tabela-wrap"><table style="min-width:0;">
+          <thead><tr><th>#</th><th>Nome</th><th>E-mail</th><th>Hora</th><th>Estado</th></tr></thead>
+          <tbody id="tbody-visitas-missao"><tr><td colspan="5" class="vazio">A carregar...</td></tr></tbody>
+        </table></div>
       </div>
       <div class="form-box">
         <h3><i class="fas fa-clock"></i> Horários reais da missão (só Admin vê)</h3>
@@ -8814,9 +8834,115 @@ async function carregarBonus100() {
       }
     }
 
+
+    // Aplica missaoLiberada a TODOS os utilizadores (é este campo que a conta de cada um lê).
+    // liberar=true  -> desbloqueia todos, menos quem já concluiu a missão nesta semana.
+    // liberar=false -> bloqueia todos.
+    async function aplicarMissaoEmMassa(liberar, sid) {
+      var res = { alterados: 0, concluidos: 0 };
+      var users = (typeof todosUsers !== 'undefined' ? todosUsers : []) || [];
+      if (!users.length) {
+        var snapU = await db.collection('usuarios').get();
+        users = [];
+        snapU.forEach(function (doc) { var d = doc.data() || {}; d._id = doc.id; users.push(d); });
+      }
+      var agora = new Date().toISOString();
+      var alvos = [];
+      users.forEach(function (u) {
+        if (!u._id) return;
+        if (liberar) {
+          if (u.missaoSemanalCompleta === true && u.missaoSemanaId === sid) { res.concluidos++; return; }
+          alvos.push({ ref: db.collection('usuarios').doc(u._id), dados: {
+            missaoLiberada: true, bloqueadoMissaoSemanal: false,
+            missaoBloqueadaApos: false, missaoSemanalCompleta: false, ultimaAtualizacao: agora
+          }});
+        } else {
+          alvos.push({ ref: db.collection('usuarios').doc(u._id), dados: {
+            missaoLiberada: false, bloqueadoMissaoSemanal: true, ultimaAtualizacao: agora
+          }});
+        }
+      });
+      for (var i = 0; i < alvos.length; i += 400) {
+        var batch = db.batch();
+        alvos.slice(i, i + 400).forEach(function (a) { batch.update(a.ref, a.dados); });
+        await batch.commit();
+        res.alterados += Math.min(400, alvos.length - i);
+      }
+      return res;
+    }
+
+    // ===== VISITAS À MISSÃO SEMANAL (por dia) =====
+    async function carregarVisitasMissao() {
+      var tbody = document.getElementById('tbody-visitas-missao');
+      if (!tbody) return;
+      var inp = document.getElementById('visitas-missao-dia');
+      if (inp && !inp.value) inp.value = diaISO();
+      var dia = (inp && inp.value) || diaISO();
+      tbody.innerHTML = '<tr><td colspan="5" class="vazio">A carregar...</td></tr>';
+      try {
+        var porDia = {};      // dia -> { email: {nome,email,hora,completa} }
+        function add(d, email, nome, hora, completa) {
+          if (!d) return;
+          email = String(email || '').toLowerCase();
+          if (!email) return;
+          porDia[d] = porDia[d] || {};
+          var ant = porDia[d][email];
+          if (!ant) porDia[d][email] = { nome: nome, email: email, hora: hora || '', completa: !!completa };
+          else { if (hora && !ant.hora) ant.hora = hora; if (completa) ant.completa = true; }
+        }
+        // 1) campo do próprio utilizador (guarda só o ÚLTIMO dia de visita)
+        (todosUsers || []).forEach(function (u) {
+          if (u.missaoSemanalVisitouDia) add(String(u.missaoSemanalVisitouDia).slice(0, 10), u.email, u.nome, '', u.missaoSemanalCompleta === true);
+        });
+        // 2) registo diário (missaoVisitas) — guarda histórico de todos os dias
+        var temLog = false;
+        try {
+          var corte = new Date(); corte.setDate(corte.getDate() - 30);
+          var snap = await db.collection('missaoVisitas').where('dia', '>=', diaISO(corte)).limit(3000).get();
+          snap.forEach(function (doc) {
+            var d = doc.data() || {};
+            temLog = true;
+            add(String(d.dia || '').slice(0, 10), d.email, d.nome, d.hora || String(d.em || '').slice(11, 16), d.completa === true);
+          });
+        } catch (eLog) { console.warn('missaoVisitas:', eLog); }
+
+        // resumo últimos 7 dias
+        var resumo = '';
+        for (var i = 0; i < 7; i++) {
+          var dt = new Date(); dt.setDate(dt.getDate() - i);
+          var k = diaISO(dt);
+          var n = porDia[k] ? Object.keys(porDia[k]).length : 0;
+          resumo += '<div class="resumo-card" style="cursor:pointer;" onclick="document.getElementById(\'visitas-missao-dia\').value=\'' + k + '\';carregarVisitasMissao();">' +
+            '<div class="num">' + n + '</div><div class="lbl">' + (i === 0 ? 'Hoje' : k.slice(8) + '/' + k.slice(5, 7)) + '</div></div>';
+        }
+        var elR = document.getElementById('visitas-missao-resumo');
+        if (elR) elR.innerHTML = resumo;
+        var elN = document.getElementById('visitas-missao-nota');
+        if (elN) elN.style.display = temLog ? 'none' : 'block';
+
+        var lista = porDia[dia] ? Object.keys(porDia[dia]).map(function (e) { return porDia[dia][e]; }) : [];
+        lista.sort(function (a, b) { return String(b.hora || '').localeCompare(String(a.hora || '')); });
+        var elT = document.getElementById('visitas-missao-total');
+        if (elT) elT.textContent = lista.length + ' visitante(s) em ' + dia;
+        if (!lista.length) {
+          tbody.innerHTML = '<tr><td colspan="5" class="vazio">Ninguém visitou a missão em ' + escHtml(dia) + '.</td></tr>';
+          return;
+        }
+        var html = '';
+        lista.forEach(function (v, i) {
+          html += '<tr><td>' + (i + 1) + '</td><td>' + escHtml(v.nome || '—') + '</td><td>' + escHtml(v.email) + '</td>' +
+            '<td>' + escHtml(v.hora || '—') + '</td>' +
+            '<td>' + (v.completa ? '<span class="status-tag status-pago">Completou</span>' : '<span class="status-tag status-andamento">Visitou</span>') + '</td></tr>';
+        });
+        tbody.innerHTML = html;
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="5" class="vazio">Erro: ' + escHtml(e.message || e) + '</td></tr>';
+      }
+    }
+
     async function liberarMissaoParaTodos() {
       var sid = getSemanaIdAdmin();
-      if (!confirm('Liberar a missão semanal para TODOS os utilizadores nesta semana (' + sid + ')?\n\nO calendário some e cada um pode completar. Quem já concluiu continua bloqueado.')) return;
+      if (!confirm('Liberar a missão semanal para TODOS os utilizadores nesta semana (' + sid + ')?\n\nO calendário some e cada um pode completar. Quem já concluiu esta semana continua bloqueado.\n\nIsto desbloqueia a conta de cada utilizador (missaoLiberada).')) return;
       try {
         await db.collection('missaoSemanalConfig').doc(sid).set({
           liberadaParaTodos: true,
@@ -8830,9 +8956,13 @@ async function carregarBonus100() {
             semanaId: sid
           }, { merge: true });
         } catch (eG) {}
-        if (typeof mostrarAviso === 'function') mostrarAviso('Missão liberada para TODOS · ' + sid);
-        else alert('Missão liberada para todos.');
+        var nLib = await aplicarMissaoEmMassa(true, sid);
+        var msgLib = 'Missão liberada para TODOS · ' + sid + ' · ' + nLib.alterados + ' utilizador(es) desbloqueado(s)' +
+          (nLib.concluidos ? ' · ' + nLib.concluidos + ' já concluíram esta semana (mantidos bloqueados)' : '');
+        if (typeof mostrarAviso === 'function') mostrarAviso(msgLib);
+        else alert(msgLib);
         carregarEstadoMissaoGlobal();
+        try { await carregarTudo(); } catch (eT) {}
       } catch (e) {
         alert('Erro: ' + (e.message || e) + '\n\nConfirma regras Firestore para missaoSemanalConfig.');
       }
@@ -8840,7 +8970,7 @@ async function carregarBonus100() {
 
     async function fecharMissaoParaTodos() {
       var sid = getSemanaIdAdmin();
-      if (!confirm('Fechar a liberação global da semana ' + sid + '?\n\nVolta o modo calendário. Quem ainda não fez deixa de ver "liberada para todos".')) return;
+      if (!confirm('Fechar a liberação global da semana ' + sid + '?\n\nVolta o modo calendário e a missão fica BLOQUEADA para todos os utilizadores.')) return;
       try {
         await db.collection('missaoSemanalConfig').doc(sid).set({
           liberadaParaTodos: false,
@@ -8853,8 +8983,10 @@ async function carregarBonus100() {
             fechadaEm: new Date().toISOString()
           }, { merge: true });
         } catch (eG) {}
-        if (typeof mostrarAviso === 'function') mostrarAviso('Liberação global fechada · ' + sid);
+        var nFe = await aplicarMissaoEmMassa(false, sid);
+        if (typeof mostrarAviso === 'function') mostrarAviso('Liberação global fechada · ' + sid + ' · ' + nFe.alterados + ' utilizador(es) bloqueado(s)');
         carregarEstadoMissaoGlobal();
+        try { await carregarTudo(); } catch (eT) {}
       } catch (e) {
         alert('Erro: ' + (e.message || e));
       }
