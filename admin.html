@@ -224,7 +224,7 @@
     <button class="tab" data-tab="pesquisas" onclick="mudarTab('pesquisas')"><i class="fas fa-poll"></i> Pesquisas</button>
     <button class="tab" data-tab="anuncios" onclick="mudarTab('anuncios')"><i class="fas fa-ad"></i> Anúncios</button>
     <button class="tab" data-tab="desafios" onclick="mudarTab('desafios')"><i class="fas fa-bolt"></i> Desafios</button>
-    <button class="tab" data-tab="missoes" onclick="mudarTab('missoes'); try{carregarEstadoMissaoGlobal();carregarPagamentosMissao();carregarVisitasMissao();}catch(e){}"><i class="fas fa-trophy"></i> Missões</button>
+    <button class="tab" data-tab="missoes" onclick="mudarTab('missoes'); try{carregarEstadoMissaoGlobal();carregarPagamentosMissao();carregarVisitasMissao();carregarCliquesMissao();}catch(e){}"><i class="fas fa-trophy"></i> Missões</button>
     <button class="tab" data-tab="ranking" onclick="mudarTab('ranking')"><i class="fas fa-medal"></i> Ranking</button>
     <button class="tab" data-tab="convites" onclick="mudarTab('convites')"><i class="fas fa-user-plus"></i> Convites</button>
     <button class="tab" data-tab="visitantes" onclick="mudarTab('visitantes')"><i class="fas fa-chart-line"></i> Visitantes</button>
@@ -733,6 +733,23 @@
 
     <!-- MISSÕES SEMANAIS -->
     <div class="painel" id="painel-missoes">
+      <div class="form-box">
+        <h3><i class="fas fa-hand-pointer"></i> Quem CLICOU em Começar missão</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:10px;">Utilizadores que tocaram no botão para iniciar (não só visitaram a página).</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center;">
+          <input type="date" id="cliques-missao-dia" style="width:auto;min-width:150px;">
+          <button type="button" class="btn-verde" style="width:auto;padding:8px 14px;" onclick="carregarCliquesMissao()">🔄 Actualizar</button>
+          <span id="cliques-missao-total" style="font-size:12px;color:#00e676;"></span>
+        </div>
+        <div class="resumo" id="cliques-missao-resumo" style="margin-bottom:12px;"></div>
+        <div class="tabela-wrap">
+          <table>
+            <thead><tr><th>#</th><th>Nome</th><th>E-mail</th><th>Hora</th><th>Estado</th></tr></thead>
+            <tbody id="tbody-cliques-missao"><tr><td colspan="5" class="vazio">Clica em Actualizar.</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
       <div class="form-box">
         <h3><i class="fas fa-unlock"></i> Liberar missão para TODOS</h3>
         <p style="font-size:12px;color:#888;margin-bottom:12px;line-height:1.45;">
@@ -8901,6 +8918,81 @@ async function carregarBonus100() {
     }
 
     // ===== VISITAS À MISSÃO SEMANAL (por dia) =====
+
+    async function carregarCliquesMissao() {
+      var tbody = document.getElementById('tbody-cliques-missao');
+      if (!tbody) return;
+      var inp = document.getElementById('cliques-missao-dia');
+      if (inp && !inp.value) {
+        var hoje = new Date().toISOString().slice(0, 10);
+        inp.value = hoje;
+      }
+      var dia = (inp && inp.value) || new Date().toISOString().slice(0, 10);
+      tbody.innerHTML = '<tr><td colspan="5" class="vazio">A carregar...</td></tr>';
+      try {
+        var lista = [];
+        try {
+          var snap = await db.collection('missaoCliques').where('dia', '==', dia).limit(500).get();
+          snap.forEach(function (doc) {
+            var d = doc.data() || {};
+            d._id = doc.id;
+            lista.push(d);
+          });
+        } catch (e1) {
+          // sem índice: busca recente e filtra
+          var snap2 = await db.collection('missaoCliques').limit(500).get();
+          snap2.forEach(function (doc) {
+            var d = doc.data() || {};
+            if (String(d.dia || '').slice(0, 10) === dia) {
+              d._id = doc.id;
+              lista.push(d);
+            }
+          });
+        }
+        lista.sort(function (a, b) {
+          return String(b.em || b.hora || '').localeCompare(String(a.em || a.hora || ''));
+        });
+        var elT = document.getElementById('cliques-missao-total');
+        if (elT) elT.textContent = lista.length + ' clique(s) em Começar · ' + dia;
+        // resumo 7 dias
+        var porDia = {};
+        try {
+          var corte = new Date(); corte.setDate(corte.getDate() - 7);
+          var snapA = await db.collection('missaoCliques').limit(2000).get();
+          snapA.forEach(function (doc) {
+            var d = doc.data() || {};
+            var k = String(d.dia || '').slice(0, 10);
+            if (!k) return;
+            porDia[k] = (porDia[k] || 0) + 1;
+          });
+        } catch (eR) {}
+        var resumo = '';
+        for (var i = 0; i < 7; i++) {
+          var dt = new Date(); dt.setDate(dt.getDate() - i);
+          var k = dt.toISOString().slice(0, 10);
+          var n = porDia[k] || 0;
+          resumo += '<div class="resumo-card" style="cursor:pointer;" onclick="document.getElementById(\'cliques-missao-dia\').value=\'' + k + '\';carregarCliquesMissao();">' +
+            '<div class="num">' + n + '</div><div class="lbl">' + (i === 0 ? 'Hoje' : k.slice(8) + '/' + k.slice(5, 7)) + '</div></div>';
+        }
+        var elR = document.getElementById('cliques-missao-resumo');
+        if (elR) elR.innerHTML = resumo;
+
+        if (!lista.length) {
+          tbody.innerHTML = '<tr><td colspan="5" class="vazio">Ninguém clicou em Começar missão em ' + escHtml(dia) + '.</td></tr>';
+          return;
+        }
+        var html = '';
+        lista.forEach(function (v, i) {
+          html += '<tr><td>' + (i + 1) + '</td><td>' + escHtml(v.nome || '—') + '</td><td>' + escHtml(v.email || '') + '</td>' +
+            '<td>' + escHtml(v.hora || String(v.em || '').slice(11, 16) || '—') + '</td>' +
+            '<td><span class="status-tag status-pago">Clicou começar</span></td></tr>';
+        });
+        tbody.innerHTML = html;
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="5" class="vazio">Erro: ' + escHtml(e.message || e) + ' — cola regra missaoCliques no Firebase.</td></tr>';
+      }
+    }
+
     async function carregarVisitasMissao() {
       var tbody = document.getElementById('tbody-visitas-missao');
       if (!tbody) return;

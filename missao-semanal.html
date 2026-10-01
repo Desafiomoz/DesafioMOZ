@@ -200,6 +200,48 @@
     .aviso-mini {
       font-size: 12px; color: #888; line-height: 1.45; margin-top: 10px;
     }
+
+    .btn-comecar-missao {
+      width: 100%;
+      background: linear-gradient(90deg, #00c853, #00e676, #FFD700, #00e676, #00c853);
+      background-size: 200% 100%;
+      color: #000;
+      border: none;
+      border-radius: 16px;
+      padding: 18px 16px;
+      font-size: 16px;
+      font-weight: 900;
+      cursor: pointer;
+      animation: dmMissaoBtn 2s linear infinite, dmMissaoPulse 1.6s ease-in-out infinite;
+      box-shadow: 0 0 28px rgba(0,230,118,0.65), 0 0 50px rgba(255,215,0,0.35);
+      letter-spacing: 0.02em;
+      line-height: 1.35;
+    }
+    @keyframes dmMissaoBtn {
+      0% { background-position: 0% 50%; }
+      100% { background-position: 200% 50%; }
+    }
+    @keyframes dmMissaoPulse {
+      0%,100% { transform: scale(1); box-shadow: 0 0 24px rgba(0,230,118,0.55), 0 0 40px rgba(255,215,0,0.3); }
+      50% { transform: scale(1.03); box-shadow: 0 0 40px rgba(0,230,118,0.85), 0 0 70px rgba(255,215,0,0.5); }
+    }
+    .btn-comecar-wrap {
+      margin-top: 10px;
+      padding: 14px;
+      border-radius: 16px;
+      background: rgba(0,200,83,0.08);
+      border: 2px solid rgba(0,230,118,0.45);
+      box-shadow: 0 0 30px rgba(0,200,83,0.2);
+      text-align: center;
+    }
+    .btn-comecar-wrap .hint {
+      font-size: 13px;
+      color: #FFD700;
+      font-weight: 700;
+      margin-bottom: 10px;
+      line-height: 1.4;
+      text-shadow: 0 0 12px rgba(255,215,0,0.4);
+    }
   </style>
 </head>
 <body>
@@ -1328,6 +1370,36 @@ async function finalizarMissao() {
       atualizarProgresso();
     }
 
+
+    async function registarCliqueMissao() {
+      // Regista quem CLICOU em começar (admin vê isto separado das visitas)
+      try {
+        var agora = new Date();
+        var dia = agora.toISOString().slice(0, 10);
+        var hora = agora.toISOString().slice(11, 16);
+        var payload = {
+          email: email,
+          nome: (userData && userData.nome) || '',
+          dia: dia,
+          hora: hora,
+          em: agora.toISOString(),
+          semanaId: semanaId,
+          tipo: 'clique_comecar'
+        };
+        await db.collection('missaoCliques').add(payload);
+        // também no user
+        if (docRef) {
+          docRef.update({
+            missaoClicouComecar: true,
+            missaoClicouComecarEm: agora.toISOString(),
+            missaoClicouComecarDia: dia
+          }).catch(function () {});
+        }
+      } catch (e) {
+        console.warn('registar clique missao', e);
+      }
+    }
+
     async function iniciarMissaoEncontrada() {
       var liberadaTodos = await isMissaoLiberadaParaTodos();
       var liberadaUser = userData && userData.missaoLiberada === true;
@@ -1398,6 +1470,8 @@ async function finalizarMissao() {
           }
         } catch (e) { console.warn(e); }
       }
+
+      try { registarCliqueMissao(); } catch (eC) {}
 
       missaoAtiva = true;
       document.getElementById('zona-missao').style.display = 'block';
@@ -1535,12 +1609,24 @@ async function finalizarMissao() {
           }
         }
 
-        // visita background
+        // visita background (+ log diário para o admin)
         try {
+          var agoraV = new Date();
+          var diaV = agoraV.toISOString().slice(0, 10);
+          var horaV = agoraV.toISOString().slice(11, 16);
           docRef.update({
             missaoSemanalVisitou: true,
-            missaoSemanalVisitouEm: new Date().toISOString(),
-            missaoSemanalVisitouDia: new Date().toISOString().slice(0, 10)
+            missaoSemanalVisitouEm: agoraV.toISOString(),
+            missaoSemanalVisitouDia: diaV
+          }).catch(function () {});
+          db.collection('missaoVisitas').add({
+            email: email,
+            nome: userData.nome || '',
+            dia: diaV,
+            hora: horaV,
+            em: agoraV.toISOString(),
+            semanaId: semanaId,
+            completa: userData.missaoSemanalCompleta === true
           }).catch(function () {});
         } catch (eV) {}
 
@@ -1564,11 +1650,18 @@ async function finalizarMissao() {
           document.getElementById('status-banner').textContent =
             '✅ Missão liberada para todos! Cada conta responde as suas perguntas. No fim: link influencer → WhatsApp → 2 MT → +150 pts.';
           document.getElementById('zona-acao').innerHTML =
-            '<button class="btn" type="button" onclick="iniciarMissaoEncontrada()">Começar missão</button>';
+            '<div class="btn-comecar-wrap">' +
+            '<div class="hint">👇 CLICA AQUI e recebe <b style="color:#00e676">+150 pontos</b></div>' +
+            '<button class="btn-comecar-missao" type="button" onclick="iniciarMissaoEncontrada()">✨ Começar missão · +150 pts</button>' +
+            '<p style="font-size:11px;color:#888;margin-top:10px;line-height:1.4;">Perguntas → influencer → WhatsApp → pagar 2 MT → pontos na tua conta</p>' +
+          '</div>';
 
           if (perguntasFeitas > 0 || userData.missaoInfOk || userData.missaoWhatsappOk) {
             document.getElementById('zona-acao').innerHTML =
-              '<button class="btn" type="button" onclick="iniciarMissaoEncontrada()">Continuar missão</button>';
+              '<div class="btn-comecar-wrap">' +
+            '<div class="hint">👇 CONTINUA AQUI e termina para receber <b style="color:#00e676">+150 pontos</b></div>' +
+            '<button class="btn-comecar-missao" type="button" onclick="iniciarMissaoEncontrada()">▶️ Continuar missão · +150 pts</button>' +
+          '</div>';
           }
           return;
         }
