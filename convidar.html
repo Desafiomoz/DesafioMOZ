@@ -422,8 +422,27 @@
         var totalConv = data.totalConvidados || 0;
         var ptsInd = data.pontosIndicacao || 0;
         var regrasNovas = data.conviteRegrasNovas === true;
-        // Sem regras novas: máx 5 convites. Com regras novas: sem limite (só bloqueio manual).
-        var bloqueado = data.ocultarConvidar === true || (!regrasNovas && totalConv >= 5 && data.convitesExtra !== true);
+        // Regras antigas: máx 5 convites no total. Regras novas (+20 pts): máx 5 convites contados
+        // a partir da actualização (ou do último desbloqueio do admin).
+        var baseNovas = 0, usadosNovos = 0, limiteAtingido = false;
+        if (regrasNovas) {
+          if (data.convitesBaseNovas === undefined || data.convitesBaseNovas === null) {
+            // utilizador que actualizou antes desta regra: conta a partir de agora
+            baseNovas = totalConv;
+            try { await docRef.update({ convitesBaseNovas: baseNovas }); } catch (eB) {}
+          } else {
+            baseNovas = Number(data.convitesBaseNovas) || 0;
+          }
+          usadosNovos = Math.max(0, totalConv - baseNovas);
+          limiteAtingido = usadosNovos >= 5;
+        } else {
+          limiteAtingido = totalConv >= 5 && data.convitesExtra !== true;
+        }
+        var bloqueado = data.ocultarConvidar === true || limiteAtingido;
+        if (limiteAtingido && data.ocultarConvidar !== true) {
+          // regista o bloqueio para o admin ver e para o cadastro respeitar
+          try { await docRef.update({ ocultarConvidar: true }); } catch (eO) {}
+        }
 
         document.getElementById('loading').style.display = 'none';
 
@@ -431,10 +450,14 @@
           document.getElementById('total-convidados-bloq').textContent = totalConv;
           document.getElementById('pts-indicacao-bloq').textContent = ptsInd;
           var msgEl = document.getElementById('msg-bloqueado-texto');
-          if (data.ocultarConvidar === true) {
+          if (regrasNovas) {
+            msgEl.textContent = limiteAtingido
+              ? 'Usaste os teus 5 convites. Para convidar mais pessoas, aguarda o desbloqueio do administrador.'
+              : 'Convites não disponíveis de momento. Aguarde ter acesso novamente.';
+          } else if (data.ocultarConvidar === true) {
             msgEl.textContent = 'Convites não disponíveis de momento. Aguarde ter acesso novamente.';
           } else {
-            msgEl.innerHTML = 'Usaste os teus 5 convites. Vai a <a href="aumento-ganhos.html" style="color:#00e676">Aumenta os teus ganhos</a> e toca em <b>Actualizar link de convite</b> (grátis) para convidar sem limite e ganhar +20 pts por amigo.';
+            msgEl.innerHTML = 'Usaste os teus 5 convites. Vai a <a href="aumento-ganhos.html" style="color:#00e676">Aumenta os teus ganhos</a> e toca em <b>Actualizar link de convite</b> (grátis) para ganhar +20 pts por amigo (mais 5 convites).';
           }
           document.getElementById('msg-bloqueado').style.display = 'block';
           document.getElementById('conteudo').style.display = 'none';
@@ -447,7 +470,7 @@
           if (ptsEl) ptsEl.textContent = regrasNovas ? '+20' : '+10';
           if (lblEl) {
             lblEl.textContent = regrasNovas
-              ? 'pontos por cada amigo que se cadastrar pelo teu link · sem limite de convites'
+              ? 'pontos por cada amigo que se cadastrar pelo teu link · máx. 5 convites'
               : 'pontos por cada amigo que se cadastrar pelo seu link (máx. 5 convites)';
           }
           var passo3 = document.querySelectorAll('.passo-txt');
@@ -459,9 +482,9 @@
           var avisoLim = document.querySelector('.aviso');
           if (avisoLim) {
             if (regrasNovas) {
-              avisoLim.innerHTML = '⚠️ Só conta se o amigo se cadastrar pelo <strong>teu</strong> link. Podes convidar <strong>sem limite</strong>. O bónus +10 a cada 100 pontos do amigo continua.';
+              avisoLim.innerHTML = '⚠️ Só conta se o amigo se cadastrar pelo <strong>teu</strong> link. Tens no máximo <strong>5 convites</strong> (usaste ' + usadosNovos + '/5). Depois dos 5, o link bloqueia até o administrador desbloquear. O bónus +10 a cada 100 pontos do amigo continua.';
             } else {
-              avisoLim.innerHTML = '⚠️ Só conta se o amigo se cadastrar pelo <strong>teu</strong> link. Tens no máximo <strong>5 convites</strong>. Para passar a +20 pts e sem limite, actualiza em <a href="aumento-ganhos.html" style="color:#00e676">Aumenta os teus ganhos</a> (grátis).';
+              avisoLim.innerHTML = '⚠️ Só conta se o amigo se cadastrar pelo <strong>teu</strong> link. Tens no máximo <strong>5 convites</strong>. Para passar a +20 pts por amigo (máx. 5 convites), actualiza em <a href="aumento-ganhos.html" style="color:#00e676">Aumenta os teus ganhos</a> (grátis).';
             }
           }
           var link = montarLink(codigoIndicacao);

@@ -259,7 +259,7 @@
               <h3>Actualizar regras de convite</h3>
               <div class="desc" id="desc-upd-convite" style="margin-bottom:8px;">
                 <b style="color:var(--suave)">Agora (antigo):</b> +10 pts por amigo · amigo começa com +5 · máx. 5 convites.<br><br>
-                <b style="color:var(--ouro)">Depois de actualizar (grátis):</b> +<b>20 pontos</b> por amigo · amigo inicia com <b>+10</b> · <b>sem limite</b> de convites.<br>
+                <b style="color:var(--ouro)">Depois de actualizar (grátis):</b> +<b>20 pontos</b> por amigo · amigo inicia com <b>+10</b> · máx. <b>5 convites</b>. Depois dos 5, o link fica bloqueado até o administrador desbloquear.<br>
                 O bónus a cada 100 pts do amigo (+10 para ti) continua.
               </div>
               <span class="tag-ativo" id="tag-upd-convite">✅ Já actualizado</span>
@@ -382,7 +382,7 @@
         var b1 = document.getElementById('btn-upd-convite');
         if (b1) { b1.disabled = true; b1.textContent = 'Já actualizado'; }
         var d1 = document.getElementById('desc-upd-convite');
-        if (d1) d1.innerHTML = '<b style="color:var(--vivo)">Regras novas activas:</b> +20 pts por amigo · amigo +10 · sem limite de convites.';
+        if (d1) d1.innerHTML = '<b style="color:var(--vivo)">Regras novas activas:</b> +20 pts por amigo · amigo +10 · máx. 5 convites (depois o link bloqueia até o administrador desbloquear).';
       }
       // Influencer actualizado?
       if (d.influencerRegrasNovas === true) {
@@ -578,12 +578,14 @@
         await userRef.update({
           conviteRegrasNovas: true,
           ocultarConvidar: false,
-          convitesExtra: true,
+          convitesExtra: false,
+          convitesBaseNovas: Number(userData.totalConvidados) || 0,
           ultimaAtualizacao: new Date().toISOString()
         });
         userData.conviteRegrasNovas = true;
+        userData.convitesBaseNovas = Number(userData.totalConvidados) || 0;
         actualizarEstados();
-        toast('✅ Convites actualizados! +20 pts por amigo, sem limite.');
+        toast('✅ Convites actualizados! +20 pts por amigo, máx. 5 convites.');
       } catch (e) {
         alert('Erro: ' + (e.message || e));
         if (btn) { btn.disabled = false; btn.textContent = 'Actualizar link de convite (grátis)'; }

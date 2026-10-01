@@ -837,8 +837,9 @@
         <h3><i class="fas fa-user-plus"></i> Sistema de convites</h3>
         <p style="font-size:12px;color:#888;margin-bottom:10px;line-height:1.45;">
           Cada utilizador tem <strong>máximo 5 convites</strong>. Por cada amigo: convidador <strong>+10 pts</strong>, convidado <strong>+5 pts</strong>.
+          Quem <strong>actualiza o link</strong> (grátis, em «Aumento de ganhos») passa a <strong>+20 pts</strong> por amigo e convidado <strong>+10 pts</strong>, também com <strong>máximo 5 convites</strong>.
           A cada <strong>100 pontos</strong> que o convidado acumula, o convidador ganha +10 pts.
-          Ao atingir 5 convites, o utilizador fica bloqueado automaticamente (pode desbloquear em Utilizadores).
+          Ao atingir 5 convites, o utilizador fica bloqueado automaticamente. Ao <strong>desbloquear</strong> um utilizador com o link actualizado, ele ganha mais 5 convites (+20 pts cada).
         </p>
       </div>
       <div class="busca">
@@ -4512,11 +4513,25 @@ async function ajustarPontosUtilizador() {
     }
 
 
+    // Convites: regras antigas = máx 5 no total; regras novas (+20 pts) = máx 5 desde a actualização / último desbloqueio.
+    function convitesUsadosAdmin(u) {
+      var total = Number(u.totalConvidados) || 0;
+      if (u.conviteRegrasNovas === true) {
+        var base = (u.convitesBaseNovas === undefined || u.convitesBaseNovas === null) ? total : (Number(u.convitesBaseNovas) || 0);
+        return Math.max(0, total - base);
+      }
+      return total;
+    }
+    function conviteLimiteAtingido(u) {
+      if (u.conviteRegrasNovas === true) return convitesUsadosAdmin(u) >= 5;
+      return (Number(u.totalConvidados) || 0) >= 5 && u.convitesExtra !== true;
+    }
+
     function renderConvidarBloqueados() {
       var tbody = document.getElementById('tbody-convidar-bloqueados');
       if (!tbody) return;
       var bloqueados = (typeof todosUsers !== 'undefined' ? todosUsers : []).filter(function (u) {
-        return u.ocultarConvidar === true || (u.totalConvidados || 0) >= 5;
+        return u.ocultarConvidar === true || conviteLimiteAtingido(u);
       });
       if (!bloqueados.length) {
         tbody.innerHTML = '<tr><td colspan="6" class="vazio">Nenhum utilizador com convites bloqueados.</td></tr>';
@@ -4551,13 +4566,20 @@ async function ajustarPontosUtilizador() {
           snap = await db.collection('usuarios').where('email', '==', emailLow).limit(1).get();
         }
         if (snap.empty) return alert('Utilizador não encontrado.');
-        await snap.docs[0].ref.update({
+        var dUnl = snap.docs[0].data() || {};
+        var updUnl = {
           ocultarConvidar: false,
           convitesExtra: true,
           ultimaAtualizacao: new Date().toISOString()
-        });
+        };
+        if (dUnl.conviteRegrasNovas === true) {
+          // regras novas: dá mais 5 convites a contar a partir de agora
+          updUnl.convitesBaseNovas = Number(dUnl.totalConvidados) || 0;
+          updUnl.convitesExtra = false;
+        }
+        await snap.docs[0].ref.update(updUnl);
         await carregarTudo();
-        mostrarAviso('Convites desbloqueados para ' + email + '.');
+        mostrarAviso('Convites desbloqueados para ' + email + '.' + (dUnl.conviteRegrasNovas === true ? ' (+5 convites)' : ''));
       } catch (e) {
         alert('Erro: ' + (e.message || e));
       }
@@ -4579,6 +4601,11 @@ async function ajustarPontosUtilizador() {
         };
         if (!bloquear) upd.convitesExtra = true;
         if (bloquear) upd.convitesExtra = false;
+        var dM = snap.docs[0].data() || {};
+        if (!bloquear && dM.conviteRegrasNovas === true) {
+          upd.convitesBaseNovas = Number(dM.totalConvidados) || 0;
+          upd.convitesExtra = false;
+        }
         await snap.docs[0].ref.update(upd);
         document.getElementById('bloqueio-convidar-email').value = '';
         await carregarTudo();
@@ -6155,9 +6182,11 @@ async function enviarNotifAdmin() {
         var html = '';
         lista.forEach(function (u, i) {
           var total = u.totalConvidados || 0;
-          var bloqueado = u.ocultarConvidar === true || total >= 5;
+          var usadosC = convitesUsadosAdmin(u);
+          var limiteC = conviteLimiteAtingido(u);
+          var bloqueado = u.ocultarConvidar === true || limiteC;
           var estado = bloqueado
-            ? '<span class="status-tag status-bloqueado">Bloqueado' + (total >= 5 ? ' (limite 5)' : '') + '</span>'
+            ? '<span class="status-tag status-bloqueado">Bloqueado' + (limiteC ? ' (limite 5)' : '') + '</span>'
             : '<span class="status-tag status-ativo">Ativo</span>';
           // Listar convidados com pontos de cada um
           var convidadosInfo = [];
@@ -6174,7 +6203,7 @@ async function enviarNotifAdmin() {
             '<td>' + escHtml(u.nome || '—') + '</td>' +
             '<td>' + escHtml(u.email || '—') + '</td>' +
             '<td><code>' + escHtml(u.codigoIndicacao || '—') + '</code></td>' +
-            '<td class="' + (total >= 5 ? 'pts-alto' : 'pts-ok') + '">' + total + ' / 5</td>' +
+            '<td class="' + (usadosC >= 5 ? 'pts-alto' : 'pts-ok') + '"' + (u.conviteRegrasNovas === true ? ' title="Regras novas (+20 pts) · total de sempre: ' + total + '"' : '') + '>' + usadosC + ' / 5' + (u.conviteRegrasNovas === true ? ' <small style="color:#ffd700">+20</small>' : '') + '</td>' +
             '<td class="pts-ok">' + (u.pontosIndicacao || 0) + '</td>' +
             '<td>' + estado + '</td>' +
             '<td style="font-size:11px;max-width:220px;line-height:1.4;">' + escHtml(convidadosInfo.join(' · ') || '—') + '</td>' +
@@ -8401,7 +8430,7 @@ async function carregarBonus100() {
 
         (todosUsers || []).forEach(function (u) {
           var em = String(u.email || '').toLowerCase();
-          if (u.ocultarConvidar === true || ((u.totalConvidados || 0) >= 5 && u.convitesExtra !== true)) {
+          if (u.ocultarConvidar === true || conviteLimiteAtingido(u)) {
             lista.push({
               nome: u.nome, email: em, origem: 'convites', desde: '',
               motivo: u.ocultarConvidar === true ? 'Convites bloqueados pelo admin' : 'Atingiu o limite de 5 convites'
