@@ -225,6 +225,7 @@
     <button class="tab" data-tab="anuncios" onclick="mudarTab('anuncios')"><i class="fas fa-ad"></i> Anúncios</button>
     <button class="tab" data-tab="desafios" onclick="mudarTab('desafios')"><i class="fas fa-bolt"></i> Desafios</button>
     <button class="tab" data-tab="missoes" onclick="mudarTab('missoes'); try{carregarEstadoMissaoGlobal();carregarPagamentosMissao();carregarVisitasMissao();carregarCliquesMissao();}catch(e){}"><i class="fas fa-trophy"></i> Missões</button>
+    <button class="tab" data-tab="sorteio" onclick="mudarTab('sorteio'); try{carregarSorteioPag();carregarSorteioCliques();carregarSorteioBilhetes();carregarProximoAnuncioSorteio();carregarRankingAdminSorteio();}catch(e){}"><i class="fas fa-ticket-alt"></i> Sorteio</button>
     <button class="tab" data-tab="ranking" onclick="mudarTab('ranking')"><i class="fas fa-medal"></i> Ranking</button>
     <button class="tab" data-tab="convites" onclick="mudarTab('convites')"><i class="fas fa-user-plus"></i> Convites</button>
     <button class="tab" data-tab="visitantes" onclick="mudarTab('visitantes')"><i class="fas fa-chart-line"></i> Visitantes</button>
@@ -249,6 +250,7 @@
     <button class="tab" data-tab="pag-manual" onclick="mudarTab('pag-manual'); carregarPagManualHist()"><i class="fas fa-hand-holding-usd"></i> Pag. manual</button>
     <button class="tab" data-tab="hj-compras" onclick="mudarTab('hj-compras'); carregarHjCompras()"><i class="fas fa-undo-alt"></i> Homejub compras</button>
     <button class="tab" data-tab="rt-compras" onclick="mudarTab('rt-compras'); carregarRtCompras()"><i class="fas fa-undo-alt"></i> Roleta compras</button>
+    <button class="tab" data-tab="pagamentos" onclick="mudarTab('pagamentos'); carregarPagamentosEmola()"><i class="fas fa-wallet"></i> Pagamentos <span class="badge" id="badge-pagamentos">0</span></button>
     <button class="tab" data-tab="bloqueados" onclick="mudarTab('bloqueados'); carregarAbaBloqueados()"><i class="fas fa-ban"></i> Bloqueados <span class="badge" id="badge-bloqueados">0</span></button>
     <button class="tab" data-tab="manutencao" onclick="mudarTab('manutencao'); manAbrirAba()"><i class="fas fa-tools"></i> Manutenção <span class="badge" id="badge-manutencao">ON</span></button>
     <button class="tab" data-tab="privado" onclick="mudarTab('privado')"><i class="fas fa-lock"></i> Privado</button>
@@ -1292,7 +1294,7 @@
           <div class="resumo-card"><div class="num" id="online-roleta">0</div><div class="lbl">Na Roleta</div></div>
           <div class="resumo-card"><div class="num" id="online-homejub">0</div><div class="lbl">No Homejub</div></div>
         </div>
-        <button type="button" class="btn-verde" style="margin-bottom:12px;" onclick="renderOnlineAdmin()">🔄 Actualizar presença</button>
+        <button type="button" class="btn-verde" style="margin-bottom:12px;" onclick="renderOnlineAdmin(); try{renderEntraramHojeAdmin();}catch(e){}">🔄 Actualizar presença</button>
         <div class="busca">
           <input type="text" id="busca-online" placeholder="Filtrar nome, e-mail ou página..." oninput="filtrarOnlineAdmin()">
         </div>
@@ -1311,6 +1313,43 @@
             </thead>
             <tbody id="tbody-online">
               <tr><td colspan="7" class="vazio">Clica em Actualizar presença.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="form-box" style="margin-top:18px;">
+        <h3><i class="fas fa-calendar-day"></i> Quem entrou hoje · pontos ganhos hoje</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:12px;">
+          Quem teve actividade <strong>hoje</strong>. A coluna <strong>Ganhos hoje</strong> soma o que identificámos neste dia
+          (check-in, sorteio, admin, bónus, missão…). Se só navegou sem ganhar, aparece 0.
+        </p>
+        <div class="resumo" style="margin-bottom:14px;">
+          <div class="resumo-card"><div class="num" id="hoje-total">0</div><div class="lbl">Entraram hoje</div></div>
+          <div class="resumo-card"><div class="num" id="hoje-pontos-soma">0</div><div class="lbl">Pontos ganhos hoje</div></div>
+          <div class="resumo-card"><div class="num" id="hoje-checkin">0</div><div class="lbl">Check-in hoje</div></div>
+          <div class="resumo-card"><div class="num" id="hoje-novos">0</div><div class="lbl">Contas novas hoje</div></div>
+        </div>
+        <button type="button" class="btn-verde" style="margin-bottom:12px;" onclick="renderEntraramHojeAdmin()">🔄 Actualizar quem entrou hoje</button>
+        <div class="busca">
+          <input type="text" id="busca-hoje" placeholder="Filtrar nome, e-mail ou página..." oninput="filtrarEntraramHojeAdmin()">
+        </div>
+        <div class="tabela-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Nome</th>
+                <th>E-mail</th>
+                <th>Última página</th>
+                <th>Última actividade</th>
+                <th>Ganhos hoje</th>
+                <th>Detalhe (hoje)</th>
+                <th>Total conta</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-hoje">
+              <tr><td colspan="8" class="vazio">Clica em Actualizar quem entrou hoje.</td></tr>
             </tbody>
           </table>
         </div>
@@ -2156,7 +2195,120 @@
       </div>
     </div>
 
-<div class="painel" id="painel-privado">
+
+
+    <!-- SORTEIO -->
+    <div class="painel" id="painel-sorteio">
+      <div class="form-box">
+        <h3><i class="fas fa-clock"></i> Proximo anuncio (contagem no app)</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:10px;">
+          Se a contagem actual ainda estiver a decorrer, a data que guardares fica <b>na fila</b> e só começa <b>depois</b> da actual chegar a zero.
+          Se não houver contagem activa, passa a ser a contagem actual de imediato.
+        </p>
+        <div class="form-grid">
+          <div class="form-row">
+            <label>Data e hora do anuncio</label>
+            <input type="datetime-local" id="sorteio-prox-quando">
+          </div>
+          <div class="form-row" style="display:flex;align-items:flex-end;">
+            <button type="button" class="btn-verde" style="width:auto;padding:12px 18px;" onclick="salvarProximoAnuncioSorteio()">Guardar contagem</button>
+          </div>
+        </div>
+        <p id="sorteio-prox-estado" style="font-size:12px;color:#00e676;margin-top:8px;"></p>
+      </div>
+
+      <div class="form-box">
+        <h3><i class="fas fa-ticket-alt"></i> Bilhetes comprados — decide quem ganha</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:10px;">
+          Cada bilhete pago aparece aqui. Escolhe a posicao 1-10 se ganhou, ou deixa vazio se perdeu.
+          Depois clica em Publicar ranking para o app mostrar os nomes oficiais.
+        </p>
+        <button type="button" class="btn-verde" style="width:auto;margin-bottom:12px;" onclick="carregarSorteioBilhetes()">Actualizar bilhetes</button>
+        <div class="tabela-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th><th>Utilizador</th><th>Pagamento</th><th>Forca</th><th>Telefone</th>
+                <th>ID</th><th>Data</th><th>Posicao</th><th>Accao</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-sorteio-bilhetes"><tr><td colspan="9" class="vazio">Clica em Actualizar.</td></tr></tbody>
+          </table>
+        </div>
+        <button type="button" class="btn-verde" style="width:auto;margin-top:12px;" onclick="publicarRankingSorteio()">Publicar ranking no app</button>
+      </div>
+
+      <div class="form-box">
+        <h3><i class="fas fa-medal"></i> Escrever vencedor manualmente</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:10px;">Nome + posição. Se fores utilizador real, põe o <b>e-mail</b> para o prémio ir à carteira automaticamente.</p>
+        <div class="form-grid">
+          <div class="form-row">
+            <label>Nome a mostrar</label>
+            <input type="text" id="sv-nome" placeholder="Ex: Joao M.">
+          </div>
+          <div class="form-row">
+            <label>E-mail da conta (para receber prémio)</label>
+            <input type="email" id="sv-email" placeholder="ex: user@gmail.com">
+          </div>
+          <div class="form-row">
+            <label>Posicao (1-10)</label>
+            <input type="number" id="sv-lugar" min="1" max="10" placeholder="1">
+          </div>
+        </div>
+        <button type="button" class="btn-verde" style="width:auto;" onclick="adicionarVencedorManual()">Adicionar ao ranking + creditar</button>
+        <button type="button" class="btn-vermelho" style="width:auto;padding:10px 14px;" onclick="limparRankingSorteio()">Limpar ranking publico</button>
+      </div>
+
+      <div class="form-box">
+        <h3><i class="fas fa-list"></i> Ranking publico actual</h3>
+        <button type="button" class="btn-verde" style="width:auto;margin-bottom:12px;" onclick="carregarRankingAdminSorteio()">Ver ranking</button>
+        <div class="tabela-wrap">
+          <table>
+            <thead><tr><th>Lugar</th><th>Nome</th><th>Premio</th><th>E-mail</th><th>Accao</th></tr></thead>
+            <tbody id="tbody-sorteio-ranking"><tr><td colspan="5" class="vazio">—</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="form-box">
+        <h3><i class="fas fa-mobile-alt"></i> Pagamentos do sorteio (e-Mola)</h3>
+        <button type="button" class="btn-verde" style="width:auto;margin-bottom:12px;" onclick="carregarSorteioPag()">Actualizar pagamentos</button>
+        <div class="tabela-wrap">
+          <table>
+            <thead>
+              <tr><th>#</th><th>Utilizador</th><th>Bilhete</th><th>Valor</th><th>Telefone</th><th>ID e-Mola</th><th>Data</th><th>Acoes</th></tr>
+            </thead>
+            <tbody id="tbody-sorteio-pag"><tr><td colspan="8" class="vazio">Clica em Actualizar.</td></tr></tbody>
+          </table>
+        </div>
+        <div style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <input type="email" id="sorteio-blk-email" placeholder="E-mail para bloquear/desbloquear">
+          <input type="text" id="sorteio-blk-motivo" placeholder="Motivo (opcional)">
+        </div>
+        <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;">
+          <button type="button" class="btn-vermelho" style="width:auto;padding:10px 14px;" onclick="sorteioBloquear()">Bloquear</button>
+          <button type="button" class="btn-verde" style="width:auto;padding:10px 14px;" onclick="sorteioDesbloquear()">Desbloquear</button>
+        </div>
+      </div>
+
+      <div class="form-box">
+        <h3><i class="fas fa-hand-pointer"></i> Quem clicou / abriu o sorteio</h3>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center;">
+          <input type="date" id="sorteio-cliques-dia" style="width:auto;min-width:150px;">
+          <button type="button" class="btn-verde" style="width:auto;padding:8px 14px;" onclick="carregarSorteioCliques()">Actualizar</button>
+          <span id="sorteio-cliques-total" style="font-size:12px;color:#00e676;"></span>
+        </div>
+        <div class="tabela-wrap">
+          <table>
+            <thead><tr><th>#</th><th>Nome</th><th>E-mail</th><th>Hora</th><th>Dia</th></tr></thead>
+            <tbody id="tbody-sorteio-cliques"><tr><td colspan="5" class="vazio">Clica em Actualizar.</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    
+    <div class="painel" id="painel-privado">
       <div class="form-box">
         <h3><i class="fas fa-trash"></i> Limpar mensagens privadas</h3>
         <p style="font-size:12px;color:#888;margin-bottom:12px;">Apaga mensagens da coleção chatPrivado. Podes limpar tudo ou só de um e-mail.</p>
@@ -2535,6 +2687,53 @@
       </div>
     </div>
 
+    <div class="painel" id="painel-pagamentos">
+      <div class="form-box" style="border:1px solid rgba(0,230,118,0.4);">
+        <h3><i class="fas fa-wallet"></i> Pagamentos e-Mola</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:12px;line-height:1.45;">
+          Todos os que afirmam ter pago com e-Mola (Missão, Aumento de ganhos, Homejub, Roleta, Sorteio), com o ID e o número.
+          Se verificares que o pagamento é real, toca em <b>Confirmar</b> e ele passa para a caixa <b>Confirmados</b>.
+          Se for falso, usa <b>Bloquear</b> (e <b>Desbloquear</b> para reverter).
+        </p>
+        <div class="resumo" id="pg-resumo"></div>
+        <div class="form-grid">
+          <div class="form-row">
+            <label>Origem</label>
+            <select id="pg-filtro-origem" onchange="renderPagamentosEmola()">
+              <option value="">Todas</option>
+              <option value="missao">🎯 Missão semanal</option>
+              <option value="upgrades">🚀 Aumento de ganhos</option>
+              <option value="homejub">🎮 Homejub</option>
+              <option value="roleta">🎡 Roleta</option>
+              <option value="sorteio">🎟️ Sorteio</option>
+              <option value="outro">❓ Outro</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <label>Pesquisar</label>
+            <input type="text" id="pg-busca" placeholder="Nome, e-mail, número ou ID..." oninput="renderPagamentosEmola()">
+          </div>
+        </div>
+        <button type="button" class="btn-cinza" style="margin-bottom:12px;" onclick="carregarPagamentosEmola()">🔄 Atualizar</button>
+
+        <h4 style="margin:6px 0;color:#ffcf4d;">⏳ Por confirmar (<span id="pg-n-pend">0</span>)</h4>
+        <div class="tabela-wrap">
+          <table>
+            <thead><tr><th>#</th><th>Utilizador</th><th>Número</th><th>ID e-Mola</th><th>Origem / Pacote</th><th>Valor</th><th>Data</th><th>Entrega</th><th>Acções</th></tr></thead>
+            <tbody id="tbody-pg-pend"><tr><td colspan="9" class="vazio">Abre a aba para carregar.</td></tr></tbody>
+          </table>
+        </div>
+
+        <h4 style="margin:18px 0 6px;color:#00e676;">✅ Confirmados (<span id="pg-n-ok">0</span>)</h4>
+        <div class="tabela-wrap">
+          <table>
+            <thead><tr><th>#</th><th>Utilizador</th><th>Número</th><th>ID e-Mola</th><th>Origem / Pacote</th><th>Valor</th><th>Pago em</th><th>Confirmado em</th><th>Acções</th></tr></thead>
+            <tbody id="tbody-pg-ok"><tr><td colspan="9" class="vazio">—</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
     <div class="painel" id="painel-bloqueados">
       <div class="form-box" style="border:1px solid rgba(255,107,107,0.4);">
         <h3><i class="fas fa-ban"></i> Bloqueados</h3>
@@ -2815,7 +3014,10 @@ function mostrarAviso(txt) {
         if (nome === 'homejub') try { carregarHomejub(); } catch (eH) {}
         if (nome === 'influencer') { try { renderInfluencerAdmin(); } catch (eI) {} try { carregarLinksBloqueadosInf(); } catch (eL) {} try { carregarBonusSaquePendentes(); } catch (eB) {} }
         if (nome === 'chat') try { carregarChatAdmin(); } catch (eC) {}
-        if (nome === 'online') try { renderOnlineAdmin(); } catch (eO) {}
+        if (nome === 'online') {
+          try { renderOnlineAdmin(); } catch (eO) {}
+          try { renderEntraramHojeAdmin(); } catch (eH) {}
+        }
         if (nome === 'actividade') try { renderActividadeAdmin(); } catch (eA) {}
         if (nome === 'roleta') try { carregarRoletaAdmin(); carregarRoletaPontosAdmin(); carregarRoletaHistoricoAdmin(); } catch (eR) {}
         if (nome === 'origem') try { renderOrigemPontosAdmin(); } catch (eOg) {}
@@ -4505,6 +4707,7 @@ async function ajustarPontosUtilizador() {
         var dados = snap.docs[0].data();
         var atual = dados.pontos || 0;
         var novo = Math.max(0, atual + delta);
+        var hojeISO = (typeof diaISO === 'function') ? diaISO() : new Date().toISOString().slice(0, 10);
         var adminUp = {
           pontos: novo,
           ultimaAtualizacao: new Date().toISOString(),
@@ -4517,6 +4720,9 @@ async function ajustarPontosUtilizador() {
         };
         if (delta > 0) {
           adminUp.pontosAdmin = (Number(dados.pontosAdmin) || 0) + delta;
+          var baseHoje = (dados.pontosGanhosHojeDia === hojeISO) ? (Number(dados.pontosGanhosHoje) || 0) : 0;
+          adminUp.pontosGanhosHoje = baseHoje + delta;
+          adminUp.pontosGanhosHojeDia = hojeISO;
         }
         await ref.update(adminUp);
         if (dados.indicadoPor) { await creditarBonusMarcoIndicacao(dados.indicadoPor, atual, novo); }
@@ -5179,6 +5385,176 @@ async function ajustarPontosUtilizador() {
       if (!tb) return;
       tb.querySelectorAll('tr[data-busca-online]').forEach(function (tr) {
         tr.style.display = (!q || (tr.getAttribute('data-busca-online') || '').indexOf(q) !== -1) ? '' : 'none';
+      });
+    }
+
+    function diaDeISO(iso) {
+      if (!iso) return '';
+      try {
+        var s = String(iso);
+        if (s.length >= 10) return s.slice(0, 10);
+        return new Date(s).toISOString().slice(0, 10);
+      } catch (e) { return ''; }
+    }
+
+    function valorCheckinDoUser(u) {
+      // Campo oficial gravado no aumento de ganhos: checkinPtsDia (ex.: 16 vitalício por 5 MT)
+      var ptsDia = Number(u.checkinPtsDia) || 0;
+      if (ptsDia >= 16 && (u.checkinBoostVitalicio === true || u.checkinBoostTipo === '16_vitalicio' || !u.checkinBoostAte)) {
+        return ptsDia;
+      }
+      if (ptsDia > 3 && u.checkinBoostAte) {
+        try {
+          if (new Date(u.checkinBoostAte).getTime() > Date.now()) return ptsDia;
+        } catch (e) {}
+      }
+      if (ptsDia > 3 && u.checkinBoostVitalicio === true) return ptsDia;
+      if (Number(u.checkinPontos) > 0) return Number(u.checkinPontos);
+      if (Number(u.pontosCheckinDiario) > 0) return Number(u.pontosCheckinDiario);
+      if (u.checkinBoostVitalicio === true) return ptsDia >= 5 ? ptsDia : 16;
+      if (u.checkinVitalicio === true || u.checkinUpgrade === '16' || Number(u.checkinUpgrade) === 16) return 16;
+      if (Number(u.checkinUpgrade) === 8 || Number(u.checkinUpgrade) === 15) return Number(u.checkinUpgrade) === 15 ? 15 : 8;
+      if (ptsDia > 3) return ptsDia;
+      return 3;
+    }
+
+    /** Pontos ganhos HOJE (só o que tem data de hoje nos registos da conta). */
+    function pontosGanhosHojeCalc(u) {
+      var hoje = (typeof diaISO === 'function') ? diaISO() : new Date().toISOString().slice(0, 10);
+      var total = 0;
+      var det = [];
+
+      // Contador oficial (se as páginas gravarem pontosGanhosHoje no mesmo dia)
+      if (u.pontosGanhosHojeDia === hoje && u.pontosGanhosHoje != null) {
+        total = Math.max(0, Number(u.pontosGanhosHoje) || 0);
+        if (total > 0) det.push('Registo +' + total);
+        return { total: total, detalhe: det.length ? det.join(' · ') : '0' };
+      }
+
+      if (typeof checkinHoje === 'function' && checkinHoje(u)) {
+        var ck = valorCheckinDoUser(u);
+        total += ck;
+        det.push('Check-in +' + ck);
+      }
+
+      if (u.ultimoAjustePontos && diaDeISO(u.ultimoAjustePontos.em) === hoje) {
+        var dlt = Number(u.ultimoAjustePontos.delta) || 0;
+        if (dlt > 0) { total += dlt; det.push('Admin +' + dlt); }
+      }
+
+      if (u.ultimoPremioSorteio && diaDeISO(u.ultimoPremioSorteio.em) === hoje) {
+        var ps = Number(u.ultimoPremioSorteio.pontos) || 0;
+        if (ps > 0) { total += ps; det.push('Sorteio +' + ps); }
+      }
+
+      if (u.ultimoPremioInfluencer && diaDeISO(u.ultimoPremioInfluencer.em) === hoje) {
+        var pi = Number(u.ultimoPremioInfluencer.pontos) || Number(u.ultimoPremioInfluencer.pts) || 0;
+        if (pi > 0) { total += pi; det.push('Influencer +' + pi); }
+      }
+
+      // Bónus 80 / 100 se o campo de recepção for hoje
+      if (u.bonus80Em && diaDeISO(u.bonus80Em) === hoje) {
+        total += 80; det.push('Bónus80 +80');
+      }
+      if (u.bonus100Em && diaDeISO(u.bonus100Em) === hoje) {
+        total += 100; det.push('Bónus100 +100');
+      }
+      if (u.comunicado80RecebidoEm && diaDeISO(u.comunicado80RecebidoEm) === hoje) {
+        if (det.indexOf('Bónus80 +80') === -1) { total += 80; det.push('Bónus80 +80'); }
+      }
+      if (u.comunicado100RecebidoEm && diaDeISO(u.comunicado100RecebidoEm) === hoje) {
+        if (det.indexOf('Bónus100 +100') === -1) { total += 100; det.push('Bónus100 +100'); }
+      }
+
+      // Missão semanal paga hoje
+      if (u.missaoPagouEm && diaDeISO(u.missaoPagouEm) === hoje) {
+        var pm = Number(u.missaoPontosRecebidos) || 150;
+        total += pm; det.push('Missão +' + pm);
+      }
+
+      return { total: total, detalhe: det.length ? det.join(' · ') : '0 (sem ganhos identificados)' };
+    }
+
+    function origemPontosResumo(u) {
+      var g = pontosGanhosHojeCalc(u);
+      return g.detalhe;
+    }
+
+    function entrouHoje(u) {
+      var hoje = (typeof diaISO === 'function') ? diaISO() : new Date().toISOString().slice(0, 10);
+      if (diaDeISO(u.ultimaPresenca) === hoje) return true;
+      if (diaDeISO(u.ultimaAtualizacao) === hoje) return true;
+      if (diaDeISO(u.createdAt) === hoje || diaDeISO(u.dataCriacao) === hoje) return true;
+      if (u.ultimoCheckin === hoje) return true;
+      if (u.sorteioClicouDia === hoje) return true;
+      if (u.missaoSemanalVisitouDia === hoje) return true;
+      return false;
+    }
+
+    function contaNovaHoje(u) {
+      var hoje = (typeof diaISO === 'function') ? diaISO() : new Date().toISOString().slice(0, 10);
+      return diaDeISO(u.createdAt) === hoje || diaDeISO(u.dataCriacao) === hoje;
+    }
+
+    function renderEntraramHojeAdmin() {
+      var tbody = document.getElementById('tbody-hoje');
+      if (!tbody) return;
+      var users = (typeof todosUsers !== 'undefined' ? todosUsers : []).slice();
+      var lista = users.filter(entrouHoje);
+      // Quem ganhou mais pontos hoje primeiro
+      lista.sort(function (a, b) {
+        var ga = pontosGanhosHojeCalc(a).total;
+        var gb = pontosGanhosHojeCalc(b).total;
+        if (gb !== ga) return gb - ga;
+        return String(b.ultimaPresenca || b.ultimaAtualizacao || '').localeCompare(String(a.ultimaPresenca || a.ultimaAtualizacao || ''));
+      });
+      var somaPts = 0, nCk = 0, nNovos = 0;
+      lista.forEach(function (u) {
+        somaPts += pontosGanhosHojeCalc(u).total;
+        if (typeof checkinHoje === 'function' && checkinHoje(u)) nCk++;
+        if (contaNovaHoje(u)) nNovos++;
+      });
+      var elT = document.getElementById('hoje-total');
+      var elP = document.getElementById('hoje-pontos-soma');
+      var elC = document.getElementById('hoje-checkin');
+      var elN = document.getElementById('hoje-novos');
+      if (elT) elT.textContent = lista.length;
+      if (elP) elP.textContent = somaPts;
+      if (elC) elC.textContent = nCk;
+      if (elN) elN.textContent = nNovos;
+
+      if (!lista.length) {
+        tbody.innerHTML = '<tr><td colspan="8" class="vazio">Ninguém com actividade registada hoje.</td></tr>';
+        return;
+      }
+      var html = '';
+      lista.forEach(function (u, i) {
+        var quando = u.ultimaPresenca || u.ultimaAtualizacao || '—';
+        if (quando !== '—' && String(quando).length > 19) quando = String(quando).replace('T', ' ').slice(0, 19);
+        var pagina = u.paginaActual || u.ultimaPagina || '—';
+        var g = pontosGanhosHojeCalc(u);
+        var busca = ((u.nome || '') + ' ' + (u.email || '') + ' ' + pagina + ' ' + g.detalhe).toLowerCase();
+        var clsG = g.total > 0 ? 'pts-alto' : 'pts-baixo';
+        html += '<tr data-busca-hoje="' + escHtml(busca) + '">' +
+          '<td>' + (i + 1) + '</td>' +
+          '<td>' + escHtml(u.nome || '—') + (contaNovaHoje(u) ? ' <span class="status-tag status-andamento">novo</span>' : '') + '</td>' +
+          '<td>' + escHtml(u.email || '—') + '</td>' +
+          '<td><code>' + escHtml(pagina) + '</code></td>' +
+          '<td style="font-size:11px;white-space:nowrap;">' + escHtml(quando) + '</td>' +
+          '<td class="' + clsG + '"><b>' + g.total + '</b></td>' +
+          '<td style="font-size:11px;max-width:300px;line-height:1.35;">' + escHtml(g.detalhe) + '</td>' +
+          '<td class="pts-ok">' + (u.pontos || 0) + '</td>' +
+          '</tr>';
+      });
+      tbody.innerHTML = html;
+    }
+
+    function filtrarEntraramHojeAdmin() {
+      var q = (document.getElementById('busca-hoje') && document.getElementById('busca-hoje').value || '').trim().toLowerCase();
+      var tb = document.getElementById('tbody-hoje');
+      if (!tb) return;
+      tb.querySelectorAll('tr[data-busca-hoje]').forEach(function (tr) {
+        tr.style.display = (!q || (tr.getAttribute('data-busca-hoje') || '').indexOf(q) !== -1) ? '' : 'none';
       });
     }
 
@@ -8391,6 +8767,234 @@ async function carregarBonus100() {
 
 
     
+    // ===== ABA PAGAMENTOS (e-Mola: todos os que afirmam ter pago) =====
+    var pgLista = [];
+    var PG_ORIGENS = {
+      missao:   { label: '🎯 Missão semanal',    bloq: 'missao' },
+      upgrades: { label: '🚀 Aumento de ganhos', bloq: 'upgrades' },
+      homejub:  { label: '🎮 Homejub',           bloq: 'homejub' },
+      roleta:   { label: '🎡 Roleta',            bloq: 'roleta' },
+      sorteio:  { label: '🎟️ Sorteio',           bloq: 'pagamento' },
+      outro:    { label: '❓ Outro',             bloq: 'pagamento' }
+    };
+
+    function pgNormTx(t) { return String(t || '').replace(/\s+/g, '').toUpperCase(); }
+
+    function pgOrigemDe(jogo, pacote, detalhe) {
+      var j = String(jogo || '').toLowerCase();
+      var t = (String(pacote || '') + ' ' + String(detalhe || '')).toLowerCase();
+      if (j.indexOf('miss') !== -1 || t.indexOf('miss') !== -1) return 'missao';
+      if (j.indexOf('homejub') !== -1) return 'homejub';
+      if (j.indexOf('roleta') !== -1) return 'roleta';
+      if (j.indexOf('sorteio') !== -1) return 'sorteio';
+      return j ? 'outro' : 'upgrades';
+    }
+
+    async function carregarPagamentosEmola() {
+      var tp = document.getElementById('tbody-pg-pend');
+      var to = document.getElementById('tbody-pg-ok');
+      if (!tp || !to) return;
+      tp.innerHTML = '<tr><td colspan="9" class="vazio">A carregar...</td></tr>';
+      to.innerHTML = '<tr><td colspan="9" class="vazio">A carregar...</td></tr>';
+      var mapa = {};
+      function juntar(col, doc, n) {
+        var d = doc.data() || {};
+        var tx = n.tx;
+        var chave = pgNormTx(tx) || (col + ':' + doc.id);
+        var r = mapa[chave];
+        if (!r) {
+          r = mapa[chave] = {
+            chave: chave, tx: tx, email: '', nome: '', tel: '', origem: n.origem, item: '', mt: '',
+            data: '', entrega: '', confirmado: false, confirmadoEm: '', docs: []
+          };
+        }
+        r.docs.push({ col: col, id: doc.id });
+        if (!r.tx && tx) r.tx = tx;
+        if (!r.email && n.email) r.email = String(n.email).toLowerCase();
+        if (!r.nome && n.nome) r.nome = n.nome;
+        if (!r.tel && n.tel) r.tel = n.tel;
+        if (!r.item && n.item) r.item = n.item;
+        if (!r.mt && n.mt) r.mt = n.mt;
+        if (!r.data && n.data) r.data = n.data;
+        if (n.origem && n.origem !== 'outro' && (r.origem === 'outro' || !r.origem)) r.origem = n.origem;
+        if (n.entrega && (!r.entrega || n.entrega === 'revertido')) r.entrega = n.entrega;
+        if (d.confirmadoAdmin === true) { r.confirmado = true; if (d.confirmadoEm) r.confirmadoEm = d.confirmadoEm; }
+      }
+      async function ler(col, limite) {
+        try {
+          return await db.collection(col).orderBy('createdAt', 'desc').limit(limite).get();
+        } catch (e1) {
+          try { return await db.collection(col).limit(limite).get(); } catch (e2) { console.warn(col, e2); return null; }
+        }
+      }
+      try {
+        var sEm = await ler('emolaTransacoes', 400);
+        if (sEm) sEm.forEach(function (doc) {
+          var d = doc.data() || {};
+          juntar('emolaTransacoes', doc, {
+            tx: doc.id, email: d.email, nome: d.nome, tel: d.telefone, origem: pgOrigemDe(d.jogo, d.item, d.descricao),
+            item: d.descricao || d.item || '', mt: d.mt, data: d.createdAt, entrega: d.revertido === true ? 'revertido' : 'entregue'
+          });
+        });
+        var sPm = await ler('pagamentosManuais', 400);
+        if (sPm) sPm.forEach(function (doc) {
+          var d = doc.data() || {};
+          var tx = d.txId || d.txid;
+          if (!tx) return; // entregas feitas à mão pelo admin (sem ID) não entram
+          juntar('pagamentosManuais', doc, {
+            tx: tx, email: d.email, nome: d.nome, tel: d.telefone, origem: pgOrigemDe(d.jogo, d.item, d.label),
+            item: d.label || d.item || d.descricao || '', mt: d.mt || d.valorMt, data: d.createdAt,
+            entrega: d.status === 'revertido' ? 'revertido' : 'entregue'
+          });
+        });
+        var sUp = await ler('emolaUpgrades', 400);
+        if (sUp) sUp.forEach(function (doc) {
+          var d = doc.data() || {};
+          juntar('emolaUpgrades', doc, {
+            tx: d.txid || d.txId, email: d.email, nome: d.nome, tel: d.telefone || d.telefonePagou,
+            origem: pgOrigemDe('', d.pacote || d.item, d.detalhe), item: d.detalhe || d.pacote || '',
+            mt: d.valorMt, data: d.createdAt, entrega: d.status || 'entregue'
+          });
+        });
+        var sSo = await ler('sorteioPagamentos', 300);
+        if (sSo) sSo.forEach(function (doc) {
+          var d = doc.data() || {};
+          juntar('sorteioPagamentos', doc, {
+            tx: d.txid || d.txId, email: d.email, nome: d.nome, tel: d.telefone, origem: 'sorteio',
+            item: String(d.pacote || '').toUpperCase() + (d.forca ? ' · f' + d.forca : ''), mt: d.valorMt,
+            data: d.createdAt, entrega: d.status || 'entregue'
+          });
+        });
+        var lista = Object.keys(mapa).map(function (k) { return mapa[k]; });
+        lista.forEach(function (r) {
+          if (!r.nome) {
+            var u = (todosUsers || []).find(function (x) { return String(x.email || '').toLowerCase() === r.email; });
+            if (u) r.nome = u.nome || '';
+          }
+        });
+        lista.sort(function (a, b) { return String(b.data || '').localeCompare(String(a.data || '')); });
+        pgLista = lista;
+        renderPagamentosEmola();
+      } catch (e) {
+        tp.innerHTML = '<tr><td colspan="9" class="vazio">Erro: ' + escHtml(e.message || e) + '</td></tr>';
+        to.innerHTML = '<tr><td colspan="9" class="vazio">—</td></tr>';
+      }
+    }
+
+    function pgUserBloqueado(email) {
+      var u = (todosUsers || []).find(function (x) { return String(x.email || '').toLowerCase() === email; });
+      return !!(u && u.jogosBloqueado === true);
+    }
+
+    function renderPagamentosEmola() {
+      var tp = document.getElementById('tbody-pg-pend');
+      var to = document.getElementById('tbody-pg-ok');
+      if (!tp || !to) return;
+      var fo = (document.getElementById('pg-filtro-origem') || {}).value || '';
+      var q = String((document.getElementById('pg-busca') || {}).value || '').trim().toLowerCase();
+      var vis = pgLista.filter(function (r) {
+        if (fo && r.origem !== fo) return false;
+        if (q) {
+          var txt = (r.nome + ' ' + r.email + ' ' + r.tel + ' ' + r.tx + ' ' + r.item).toLowerCase();
+          if (txt.indexOf(q) === -1) return false;
+        }
+        return true;
+      });
+      var pend = vis.filter(function (r) { return !r.confirmado; });
+      var ok = vis.filter(function (r) { return r.confirmado; });
+
+      var totPend = pgLista.filter(function (r) { return !r.confirmado; }).length;
+      var badge = document.getElementById('badge-pagamentos');
+      if (badge) { badge.textContent = String(totPend); badge.style.display = totPend ? 'inline-block' : 'none'; }
+      var somaMt = 0;
+      pgLista.forEach(function (r) { somaMt += Number(r.mt) || 0; });
+      var res = document.getElementById('pg-resumo');
+      if (res) {
+        res.innerHTML =
+          '<div class="resumo-card"><div class="num">' + pgLista.length + '</div><div class="lbl">Total de pagamentos</div></div>' +
+          '<div class="resumo-card"><div class="num" style="color:#ffcf4d;">' + totPend + '</div><div class="lbl">Por confirmar</div></div>' +
+          '<div class="resumo-card"><div class="num" style="color:#00e676;">' + (pgLista.length - totPend) + '</div><div class="lbl">Confirmados</div></div>' +
+          '<div class="resumo-card"><div class="num">' + somaMt + ' MT</div><div class="lbl">Valor declarado</div></div>';
+      }
+      var np = document.getElementById('pg-n-pend'); if (np) np.textContent = pend.length;
+      var no = document.getElementById('pg-n-ok'); if (no) no.textContent = ok.length;
+
+      function linha(r, i, confirmada) {
+        var emSafe = r.email.replace(/'/g, "\\'");
+        var chSafe = r.chave.replace(/'/g, "\\'");
+        var txSafe = String(r.tx || '').replace(/'/g, '');
+        var o = PG_ORIGENS[r.origem] || PG_ORIGENS.outro;
+        var bloq = r.email ? pgUserBloqueado(r.email) : false;
+        var entrega = r.entrega === 'revertido'
+          ? '<span class="status-tag" style="background:#555;color:#fff;">↩ Revertida</span>'
+          : '<span class="status-tag status-pago">' + escHtml(r.entrega || 'entregue') + '</span>';
+        var acoes = '';
+        if (confirmada) acoes += '<button type="button" class="btn-laranja" style="width:auto;padding:5px 10px;font-size:11px;margin:2px;" onclick="pgDesconfirmar(\'' + chSafe + '\')">↩ Voltar a pendente</button> ';
+        else acoes += '<button type="button" class="btn-verde" style="width:auto;padding:5px 10px;font-size:11px;margin:2px;" onclick="pgConfirmar(\'' + chSafe + '\')">✅ Confirmar</button> ';
+        if (r.email) {
+          if (bloq) acoes += '<button type="button" class="btn-verde" style="width:auto;padding:5px 10px;font-size:11px;margin:2px;" onclick="pgDesbloquear(\'' + emSafe + '\')">🔓 Desbloquear</button>';
+          else acoes += '<button type="button" class="btn-vermelho" onclick="pgBloquear(\'' + emSafe + '\',\'' + txSafe + '\',\'' + o2(r.origem) + '\')">🚫 Bloquear</button>';
+        }
+        return '<tr>' +
+          '<td>' + (i + 1) + '</td>' +
+          '<td><strong>' + escHtml(r.nome || '—') + '</strong><br><small style="color:#888">' + escHtml(r.email || '—') + '</small>' +
+            (bloq ? '<br><span class="status-tag status-bloqueado">Bloqueado</span>' : '') + '</td>' +
+          '<td style="font-family:monospace;font-size:12px;color:#00e676;">' + escHtml(r.tel || '—') + '</td>' +
+          '<td style="font-family:monospace;font-size:11px;color:#ffcf4d;">' + escHtml(r.tx || '—') + '</td>' +
+          '<td style="font-size:12px;">' + o.label + '<br><small style="color:#aaa">' + escHtml(r.item || '') + '</small></td>' +
+          '<td style="color:#FFD700;font-weight:700;white-space:nowrap;">' + (r.mt ? escHtml(r.mt) + ' MT' : '—') + '</td>' +
+          '<td style="font-size:11px;white-space:nowrap;">' + escHtml(String(r.data || '').slice(0, 19).replace('T', ' ')) + '</td>' +
+          '<td style="font-size:11px;white-space:nowrap;">' + (confirmada
+            ? escHtml(String(r.confirmadoEm || '—').slice(0, 19).replace('T', ' '))
+            : entrega) + '</td>' +
+          '<td style="white-space:nowrap;">' + acoes + '</td></tr>';
+      }
+      function o2(k) { return (PG_ORIGENS[k] || PG_ORIGENS.outro).bloq; }
+
+      tp.innerHTML = pend.length ? pend.map(function (r, i) { return linha(r, i, false); }).join('')
+        : '<tr><td colspan="9" class="vazio">Nenhum pagamento por confirmar.</td></tr>';
+      to.innerHTML = ok.length ? ok.map(function (r, i) { return linha(r, i, true); }).join('')
+        : '<tr><td colspan="9" class="vazio">Ainda nada confirmado.</td></tr>';
+    }
+
+    async function pgMarcar(chave, confirmar) {
+      var r = pgLista.find(function (x) { return x.chave === chave; });
+      if (!r) return;
+      var msg = confirmar
+        ? 'Confirmar que este pagamento é real?\n' + (r.email || '') + '\nID: ' + (r.tx || '—') + (r.mt ? '\n' + r.mt + ' MT' : '')
+        : 'Voltar este pagamento para "Por confirmar"?\nID: ' + (r.tx || '—');
+      if (!confirm(msg)) return;
+      try {
+        var agora = new Date().toISOString();
+        for (var i = 0; i < r.docs.length; i++) {
+          var dd = r.docs[i];
+          var upd = confirmar
+            ? { confirmadoAdmin: true, confirmadoEm: agora }
+            : { confirmadoAdmin: false, confirmadoEm: firebase.firestore.FieldValue.delete() };
+          await db.collection(dd.col).doc(dd.id).set(upd, { merge: true });
+        }
+        r.confirmado = confirmar;
+        r.confirmadoEm = confirmar ? agora : '';
+        renderPagamentosEmola();
+        if (typeof mostrarAviso === 'function') mostrarAviso(confirmar ? 'Pagamento confirmado ✅' : 'Voltou a pendente');
+      } catch (e) {
+        alert('Erro: ' + (e.message || e));
+      }
+    }
+    function pgConfirmar(chave) { return pgMarcar(chave, true); }
+    function pgDesconfirmar(chave) { return pgMarcar(chave, false); }
+
+    async function pgBloquear(email, tx, origemBloq) {
+      await bloquearJogosEmail(email, 'ID e-Mola suspeito: ' + tx, origemBloq);
+      try { await carregarTudo(); } catch (e) {}
+      renderPagamentosEmola();
+    }
+    async function pgDesbloquear(email) {
+      await desbloquearJogosEmail(email);
+      try { await carregarTudo(); } catch (e) {}
+      renderPagamentosEmola();
+    }
+
     // ===== ABA BLOQUEADOS (todos os bloqueios num só lugar) =====
     var BLQ_ORIGENS = {
       missao:     { label: '🎯 Missão semanal',            cor: '#ffc107' },
@@ -8919,7 +9523,432 @@ async function carregarBonus100() {
 
     // ===== VISITAS À MISSÃO SEMANAL (por dia) =====
 
-    async function carregarCliquesMissao() {
+    
+    async function carregarSorteioPag() {
+      var tbody = document.getElementById('tbody-sorteio-pag');
+      if (!tbody) return;
+      tbody.innerHTML = '<tr><td colspan="8" class="vazio">A carregar...</td></tr>';
+      try {
+        var lista = [];
+        try {
+          var snap = await db.collection('sorteioPagamentos').orderBy('createdAt', 'desc').limit(200).get();
+          snap.forEach(function (doc) { var d = doc.data() || {}; d._id = doc.id; lista.push(d); });
+        } catch (e1) {
+          var snap2 = await db.collection('sorteioPagamentos').limit(200).get();
+          snap2.forEach(function (doc) { var d = doc.data() || {}; d._id = doc.id; lista.push(d); });
+          lista.sort(function (a, b) { return String(b.createdAt || '').localeCompare(String(a.createdAt || '')); });
+        }
+        if (!lista.length) {
+          tbody.innerHTML = '<tr><td colspan="8" class="vazio">Nenhum pagamento de sorteio ainda.</td></tr>';
+          return;
+        }
+        var html = '';
+        lista.forEach(function (d, i) {
+          var em = String(d.email || '').toLowerCase();
+          var emSafe = em.replace(/'/g, "\\'");
+          var tx = d.txid || '—';
+          var acao = em
+            ? '<button type="button" class="btn-vermelho" onclick="bloquearJogosEmail(\'' + emSafe + '\',\'ID falso no sorteio: ' + String(tx).replace(/'/g, '') + '\')">🚫 Bloquear</button> ' +
+              '<button type="button" class="btn-verde" onclick="desbloquearJogosEmail(\'' + emSafe + '\')">✅ Desbloquear</button>'
+            : '—';
+          html += '<tr>' +
+            '<td>' + (i + 1) + '</td>' +
+            '<td><strong>' + escHtml(d.nome || '—') + '</strong><br><small style="color:#888">' + escHtml(em) + '</small></td>' +
+            '<td>' + escHtml((d.pacote || d.tipoPagamento || '').toUpperCase()) + ' · f' + (d.forca || 1) + '</td>' +
+            '<td style="font-weight:700;">' +
+              ((d.tipoPagamento === 'pontos' || d.valorPontos)
+                ? ('<span style="color:#22FF99;">' + (d.valorPontos || 0) + ' pts</span>')
+                : ('<span style="color:#FFD700;">' + (d.valorMt || 0) + ' MT</span>')) +
+            '</td>' +
+            '<td style="font-family:monospace;font-size:12px;">' + escHtml(d.telefone || '—') + '</td>' +
+            '<td style="font-family:monospace;font-size:11px;">' + escHtml(String(tx)) + '</td>' +
+            '<td style="font-size:11px;white-space:nowrap;">' + escHtml(String(d.createdAt || '').slice(0, 19).replace('T', ' ')) + '</td>' +
+            '<td style="white-space:nowrap;">' + acao + '</td></tr>';
+        });
+        tbody.innerHTML = html;
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="8" class="vazio">Erro: ' + escHtml(e.message || e) + '</td></tr>';
+      }
+    }
+
+    async function carregarSorteioCliques() {
+      var tbody = document.getElementById('tbody-sorteio-cliques');
+      if (!tbody) return;
+      var inp = document.getElementById('sorteio-cliques-dia');
+      if (inp && !inp.value) inp.value = new Date().toISOString().slice(0, 10);
+      var dia = (inp && inp.value) || new Date().toISOString().slice(0, 10);
+      tbody.innerHTML = '<tr><td colspan="5" class="vazio">A carregar...</td></tr>';
+      try {
+        var lista = [];
+        try {
+          var snap = await db.collection('sorteioCliques').where('dia', '==', dia).limit(500).get();
+          snap.forEach(function (doc) { lista.push(doc.data() || {}); });
+        } catch (e1) {
+          var snap2 = await db.collection('sorteioCliques').limit(500).get();
+          snap2.forEach(function (doc) {
+            var d = doc.data() || {};
+            if (String(d.dia || '').slice(0, 10) === dia) lista.push(d);
+          });
+        }
+        lista.sort(function (a, b) { return String(b.em || '').localeCompare(String(a.em || '')); });
+        var elT = document.getElementById('sorteio-cliques-total');
+        if (elT) elT.textContent = lista.length + ' clique(s) · ' + dia;
+        if (!lista.length) {
+          tbody.innerHTML = '<tr><td colspan="5" class="vazio">Ninguém abriu o sorteio em ' + escHtml(dia) + '.</td></tr>';
+          return;
+        }
+        var html = '';
+        lista.forEach(function (v, i) {
+          html += '<tr><td>' + (i + 1) + '</td><td>' + escHtml(v.nome || '—') + '</td><td>' + escHtml(v.email || '') + '</td>' +
+            '<td>' + escHtml(v.hora || String(v.em || '').slice(11, 16)) + '</td><td>' + escHtml(v.dia || dia) + '</td></tr>';
+        });
+        tbody.innerHTML = html;
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="5" class="vazio">Erro: ' + escHtml(e.message || e) + '</td></tr>';
+      }
+    }
+
+    
+    var PREMIOS_SORTEIO = { 1: '5000 MZN', 2: '3000 MZN', 3: '1000 MZN', 4: '1000 pontos', 5: '500 pontos', 6: '250 pontos', 7: '130 pontos', 8: '70 pontos', 9: '30 pontos', 10: '16 pontos' };
+    // 1 MT = 8 pontos (igual ao resto do site: 200 MT = 1600 pts)
+    var PREMIOS_SORTEIO_PONTOS = { 1: 40000, 2: 24000, 3: 8000, 4: 1000, 5: 500, 6: 250, 7: 130, 8: 70, 9: 30, 10: 16 };
+
+    /** Credita o prémio do sorteio na carteira (pontos) do utilizador. Evita crédito duplicado. */
+    async function creditarPremioSorteio(email, lugar, extra) {
+      email = String(email || '').trim().toLowerCase();
+      lugar = parseInt(lugar, 10);
+      if (!email || isNaN(lugar) || lugar < 1 || lugar > 10) return { ok: false, motivo: 'dados' };
+      var pts = PREMIOS_SORTEIO_PONTOS[lugar] || 0;
+      if (pts <= 0) return { ok: false, motivo: 'pts' };
+      try {
+        // Idempotência: não pagar 2× o mesmo lugar+email neste ciclo
+        var chave = (email + '_L' + lugar).replace(/[^a-z0-9_@.-]/gi, '_');
+        var pagRef = db.collection('sorteioPremiosPagos').doc(chave);
+        var pagSnap = await pagRef.get();
+        if (pagSnap.exists) return { ok: false, motivo: 'ja_pago', pts: pts };
+
+        var snap = await db.collection('usuarios').where('email', '==', email).limit(1).get();
+        if (snap.empty) {
+          // tenta email original
+          snap = await db.collection('usuarios').where('email', '==', String(extra && extra.emailRaw || email)).limit(1).get();
+        }
+        if (snap.empty) return { ok: false, motivo: 'sem_conta', pts: pts };
+
+        var ref = snap.docs[0].ref;
+        var dados = snap.docs[0].data() || {};
+        var atual = Number(dados.pontos) || 0;
+        var novo = atual + pts;
+        var up = {
+          pontos: novo,
+          pontosSorteio: (Number(dados.pontosSorteio) || 0) + pts,
+          ultimaAtualizacao: new Date().toISOString(),
+          ultimoPremioSorteio: {
+            lugar: lugar,
+            pontos: pts,
+            premioLabel: PREMIOS_SORTEIO[lugar] || '',
+            em: new Date().toISOString()
+          }
+        };
+        await ref.update(up);
+        await pagRef.set({
+          email: email,
+          lugar: lugar,
+          pontos: pts,
+          premio: PREMIOS_SORTEIO[lugar] || '',
+          nome: dados.nome || (extra && extra.nome) || '',
+          pagoEm: new Date().toISOString(),
+          txid: (extra && extra.txid) || ''
+        });
+        if (dados.indicadoPor && typeof creditarBonusMarcoIndicacao === 'function') {
+          try { await creditarBonusMarcoIndicacao(dados.indicadoPor, atual, novo); } catch (eInd) {}
+        }
+        return { ok: true, pts: pts, de: atual, para: novo };
+      } catch (e) {
+        return { ok: false, motivo: e.message || String(e) };
+      }
+    }
+
+    async function carregarProximoAnuncioSorteio() {
+      try {
+        var snap = await db.collection('sorteioConfig').doc('proximo').get();
+        var el = document.getElementById('sorteio-prox-estado');
+        var inp = document.getElementById('sorteio-prox-quando');
+        var d = snap.exists ? (snap.data() || {}) : {};
+        var partes = [];
+        if (d.quando) {
+          var ts = new Date(d.quando).getTime();
+          var activa = ts > Date.now();
+          partes.push((activa ? '🟢 Contagem actual: ' : '⚪ Última/expirada: ') + new Date(d.quando).toLocaleString('pt-MZ'));
+          if (inp && activa) {
+            try {
+              var local = new Date(ts - new Date(ts).getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+              inp.value = local;
+            } catch (e0) {}
+          }
+        }
+        if (d.quandoSeguinte) {
+          var ts2 = new Date(d.quandoSeguinte).getTime();
+          if (ts2 > Date.now()) {
+            partes.push('📅 Na fila (depois do zero): ' + new Date(d.quandoSeguinte).toLocaleString('pt-MZ'));
+            if (inp) {
+              try {
+                var local2 = new Date(ts2 - new Date(ts2).getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+                inp.value = local2;
+              } catch (e1) {}
+            }
+          }
+        }
+        if (el) {
+          el.textContent = partes.length ? partes.join('  ·  ') : 'Ainda nao definido (app usa 2×/semana automatico).';
+        }
+      } catch (e) {}
+    }
+
+    async function salvarProximoAnuncioSorteio() {
+      var inp = document.getElementById('sorteio-prox-quando');
+      var v = inp && inp.value;
+      if (!v) return alert('Escolhe data e hora.');
+      try {
+        var iso = new Date(v).toISOString();
+        var tsNovo = new Date(v).getTime();
+        if (tsNovo <= Date.now()) return alert('Escolhe uma data/hora no futuro.');
+
+        var snap = await db.collection('sorteioConfig').doc('proximo').get();
+        var actual = snap.exists ? (snap.data() || {}) : {};
+        var tsActual = actual.quando ? new Date(actual.quando).getTime() : 0;
+        var contagemActiva = tsActual > Date.now();
+
+        if (contagemActiva) {
+          // Contagem em curso → guarda na fila; só entra depois do zero
+          await db.collection('sorteioConfig').doc('proximo').set({
+            quandoSeguinte: iso,
+            seguinteDefinidoEm: new Date().toISOString(),
+            actualizadoEm: new Date().toISOString()
+          }, { merge: true });
+          if (typeof mostrarAviso === 'function') {
+            mostrarAviso('Data na fila. A contagem actual continua. Depois do zero o relógio usa esta data.');
+          } else {
+            alert('Guardado na fila. Entra depois do zero da contagem actual.');
+          }
+        } else {
+          // Sem contagem activa → vira a contagem actual já
+          await db.collection('sorteioConfig').doc('proximo').set({
+            quando: iso,
+            quandoSeguinte: null,
+            actualizadoEm: new Date().toISOString(),
+            cicloId: 'c_' + Date.now(),
+            automatico: false
+          }, { merge: true });
+          if (typeof mostrarAviso === 'function') {
+            mostrarAviso('Contagem actual definida: ' + new Date(iso).toLocaleString('pt-MZ'));
+          } else {
+            alert('Contagem actual guardada.');
+          }
+        }
+        carregarProximoAnuncioSorteio();
+      } catch (e) {
+        alert('Erro: ' + (e.message || e));
+      }
+    }
+
+    async function carregarSorteioBilhetes() {
+      var tbody = document.getElementById('tbody-sorteio-bilhetes');
+      if (!tbody) return;
+      tbody.innerHTML = '<tr><td colspan="9" class="vazio">A carregar...</td></tr>';
+      try {
+        var lista = [];
+        try {
+          var snap = await db.collection('sorteioBilhetes').orderBy('createdAt', 'desc').limit(300).get();
+          snap.forEach(function (doc) { var d = doc.data() || {}; d._id = doc.id; lista.push(d); });
+        } catch (e1) {
+          var snap2 = await db.collection('sorteioBilhetes').limit(300).get();
+          snap2.forEach(function (doc) { var d = doc.data() || {}; d._id = doc.id; lista.push(d); });
+          lista.sort(function (a, b) { return String(b.createdAt || '').localeCompare(String(a.createdAt || '')); });
+        }
+        if (!lista.length) {
+          tbody.innerHTML = '<tr><td colspan="9" class="vazio">Ainda sem bilhetes.</td></tr>';
+          return;
+        }
+        var html = '';
+        lista.forEach(function (d, i) {
+          var id = d._id || '';
+          var pos = d.posicao != null ? d.posicao : '';
+          var pagLbl = (d.tipoPagamento === 'pontos' || d.valorPontos)
+            ? ('<span style="color:#22FF99;font-weight:700;">' + (d.valorPontos || 0) + ' pts</span>')
+            : ('<span style="color:#FFD700;font-weight:700;">' + (d.valorMt || 0) + ' MT</span>');
+          html += '<tr><td>' + (i + 1) + '</td>';
+          html += '<td><strong>' + escHtml(d.nome || '—') + '</strong><br><small style="color:#888">' + escHtml(d.email || '') + '</small></td>';
+          html += '<td>' + pagLbl + '</td>';
+          html += '<td style="color:#00e676;font-weight:700;">' + (d.forca || 1) + '</td>';
+          html += '<td style="font-family:monospace;font-size:12px;">' + escHtml(d.telefone || '—') + '</td>';
+          html += '<td style="font-family:monospace;font-size:11px;">' + escHtml(d.txid || '—') + '</td>';
+          html += '<td style="font-size:11px;">' + escHtml(String(d.createdAt || '').slice(0, 16).replace('T', ' ')) + '</td>';
+          html += '<td><input type="number" min="1" max="10" placeholder="—" value="' + escHtml(String(pos)) + '" id="pos-' + id + '" style="width:60px;padding:6px;background:#0d0d12;border:1px solid #333;color:#fff;border-radius:6px;"></td>';
+          html += '<td><button type="button" class="btn-azul" onclick="guardarPosicaoBilhete(\'' + id + '\')">Guardar</button></td></tr>';
+        });
+        tbody.innerHTML = html;
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="9" class="vazio">Erro: ' + escHtml(e.message || e) + '</td></tr>';
+      }
+    }
+
+    async function guardarPosicaoBilhete(id) {
+      var inp = document.getElementById('pos-' + id);
+      if (inp && String(inp.value).trim() === '') {
+        try {
+          await db.collection('sorteioBilhetes').doc(id).update({ posicao: null, decidido: true, decididoEm: new Date().toISOString() });
+          if (typeof mostrarAviso === 'function') mostrarAviso('Sem posicao (perdeu).');
+          carregarSorteioBilhetes();
+        } catch (e) { alert(e.message || e); }
+        return;
+      }
+      var v = inp ? parseInt(inp.value, 10) : NaN;
+      if (isNaN(v) || v < 1 || v > 10) return alert('Posicao entre 1 e 10.');
+      try {
+        await db.collection('sorteioBilhetes').doc(id).update({ posicao: v, decidido: true, decididoEm: new Date().toISOString() });
+        // Premio so e creditado quando o relogio do anuncio chega a zero (pagina sorteio)
+        if (typeof mostrarAviso === 'function') mostrarAviso('Posicao ' + v + ' guardada. Premio sera creditado quando a contagem chegar a zero.');
+        else alert('Posicao ' + v + ' guardada. Premio no zero do relogio.');
+        carregarSorteioBilhetes();
+      } catch (e) {
+        alert('Erro: ' + (e.message || e));
+      }
+    }
+
+    async function publicarRankingSorteio() {
+      if (!confirm('Publicar ranking no app?\n\nOs premios so serao creditados nas carteiras quando o relogio do anuncio chegar a zero.')) return;
+      try {
+        var snap = await db.collection('sorteioBilhetes').limit(500).get();
+        var porLugar = {};
+        snap.forEach(function (doc) {
+          var d = doc.data() || {};
+          var p = parseInt(d.posicao, 10);
+          if (p >= 1 && p <= 10) {
+            if (!porLugar[p] || (d.forca || 0) > (porLugar[p].forca || 0)) {
+              porLugar[p] = {
+                lugar: p,
+                nome: d.nome || (d.email || '').split('@')[0] || 'Utilizador',
+                email: d.email || '',
+                premio: PREMIOS_SORTEIO[p] || '',
+                forca: d.forca || 0,
+                valorMt: d.valorMt || 0,
+                txid: d.txid || '',
+                createdAt: new Date().toISOString()
+              };
+            }
+          }
+        });
+        var old = await db.collection('sorteioVencedores').limit(50).get();
+        var batch = db.batch();
+        old.forEach(function (doc) { batch.delete(doc.ref); });
+        await batch.commit();
+        var keys = Object.keys(porLugar).map(Number).sort(function (a, b) { return a - b; });
+        for (var i = 0; i < keys.length; i++) {
+          var L = keys[i];
+          await db.collection('sorteioVencedores').doc('lugar_' + L).set(porLugar[L], { merge: true });
+        }
+        var msg = 'Ranking publicado: ' + keys.length + ' posicao(oes). Premios serao creditados quando a contagem chegar a zero.';
+        if (typeof mostrarAviso === 'function') mostrarAviso(msg);
+        else alert(msg);
+        carregarRankingAdminSorteio();
+      } catch (e) {
+        alert('Erro: ' + (e.message || e));
+      }
+    }
+
+    async function adicionarVencedorManual() {
+      var nome = (document.getElementById('sv-nome') && document.getElementById('sv-nome').value || '').trim();
+      var lugar = parseInt(document.getElementById('sv-lugar') && document.getElementById('sv-lugar').value, 10);
+      var emailManual = (document.getElementById('sv-email') && document.getElementById('sv-email').value || '').trim().toLowerCase();
+      if (!nome) return alert('Escreve o nome.');
+      if (isNaN(lugar) || lugar < 1 || lugar > 10) return alert('Posicao 1-10.');
+      try {
+        // Se o "nome" for um email, usa como email
+        if (!emailManual && nome.indexOf('@') !== -1) emailManual = nome.toLowerCase();
+        await db.collection('sorteioVencedores').doc('lugar_' + lugar).set({
+          lugar: lugar,
+          nome: nome,
+          email: emailManual || '',
+          premio: PREMIOS_SORTEIO[lugar] || '',
+          createdAt: new Date().toISOString(),
+          manual: true
+        }, { merge: true });
+        var msg = nome + ' -> lugar ' + lugar + (emailManual ? ' (' + emailManual + ')' : '');
+        msg += '. Premio sera creditado quando a contagem chegar a zero.';
+        if (typeof mostrarAviso === 'function') mostrarAviso(msg);
+        else alert(msg);
+        document.getElementById('sv-nome').value = '';
+        if (document.getElementById('sv-email')) document.getElementById('sv-email').value = '';
+        carregarRankingAdminSorteio();
+      } catch (e) {
+        alert('Erro: ' + (e.message || e));
+      }
+    }
+
+    async function limparRankingSorteio() {
+      if (!confirm('Apagar todo o ranking publico?')) return;
+      try {
+        var old = await db.collection('sorteioVencedores').limit(50).get();
+        var batch = db.batch();
+        old.forEach(function (doc) { batch.delete(doc.ref); });
+        await batch.commit();
+        if (typeof mostrarAviso === 'function') mostrarAviso('Ranking limpo.');
+        carregarRankingAdminSorteio();
+      } catch (e) {
+        alert(e.message || e);
+      }
+    }
+
+    async function carregarRankingAdminSorteio() {
+      var tbody = document.getElementById('tbody-sorteio-ranking');
+      if (!tbody) return;
+      tbody.innerHTML = '<tr><td colspan="5" class="vazio">A carregar...</td></tr>';
+      try {
+        var lista = [];
+        var snap = await db.collection('sorteioVencedores').limit(20).get();
+        snap.forEach(function (doc) { var d = doc.data() || {}; d._id = doc.id; lista.push(d); });
+        lista.sort(function (a, b) { return (a.lugar || 99) - (b.lugar || 99); });
+        if (!lista.length) {
+          tbody.innerHTML = '<tr><td colspan="5" class="vazio">Vazio — app mostra nomes aleatorios.</td></tr>';
+          return;
+        }
+        var html = '';
+        lista.forEach(function (d) {
+          html += '<tr><td><b>' + (d.lugar || '—') + '</b></td><td>' + escHtml(d.nome || '—') + '</td>';
+          html += '<td style="color:#FFD700;">' + escHtml(d.premio || '') + '</td><td>' + escHtml(d.email || '—') + '</td>';
+          html += '<td><button type="button" class="btn-vermelho" onclick="apagarVencedorSorteio(\'' + (d._id || '') + '\')">Apagar</button></td></tr>';
+        });
+        tbody.innerHTML = html;
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="5" class="vazio">Erro: ' + escHtml(e.message || e) + '</td></tr>';
+      }
+    }
+
+    async function apagarVencedorSorteio(id) {
+      if (!id) return;
+      try {
+        await db.collection('sorteioVencedores').doc(id).delete();
+        carregarRankingAdminSorteio();
+      } catch (e) { alert(e.message || e); }
+    }
+
+
+
+    function sorteioBloquear() {
+      var email = (document.getElementById('sorteio-blk-email') && document.getElementById('sorteio-blk-email').value || '').trim();
+      var motivo = (document.getElementById('sorteio-blk-motivo') && document.getElementById('sorteio-blk-motivo').value || '').trim()
+        || 'ID e-Mola falso / abuso no sorteio';
+      if (!email) return alert('Escreve o e-mail.');
+      if (typeof bloquearJogosEmail === 'function') bloquearJogosEmail(email, motivo);
+      else alert('Função de bloqueio não disponível.');
+    }
+    function sorteioDesbloquear() {
+      var email = (document.getElementById('sorteio-blk-email') && document.getElementById('sorteio-blk-email').value || '').trim();
+      if (!email) return alert('Escreve o e-mail.');
+      if (typeof desbloquearJogosEmail === 'function') desbloquearJogosEmail(email);
+    }
+
+async function carregarCliquesMissao() {
       var tbody = document.getElementById('tbody-cliques-missao');
       if (!tbody) return;
       var inp = document.getElementById('cliques-missao-dia');
