@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="pt-MZ">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Sorteio – Desafio MOZ</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#06080e">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+  <script>
+    if (typeof window.__DESAFIO_MOZ_FIREBASE__ === 'undefined') {
+      window.__DESAFIO_MOZ_FIREBASE__ = true;
+      var firebaseConfig = {
+        apiKey: "AIzaSyDONfggnmf9OJX_AgfvcHTRf6tsuKD5nrA",
+        authDomain: "desafio-moz-61b70.firebaseapp.com",
+        projectId: "desafio-moz-61b70",
+        storageBucket: "desafio-moz-61b70.firebasestorage.app",
+        messagingSenderId: "945658936331",
+        appId: "1:945658936331:web:7ee4b0e7de1c1daf36db0e",
+        measurementId: "G-G1DZQ1B0DB"
+      };
+      if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+      window.db = firebase.firestore();
+    }
+    var db = window.db;
+  </script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    body {
+      background:
+        radial-gradient(circle at 20% 0%, rgba(255,215,0,0.18), transparent 42%),
+        radial-gradient(circle at 90% 20%, rgba(0,200,83,0.12), transparent 40%),
+        radial-gradient(circle at 50% 100%, rgba(168,85,247,0.1), transparent 45%),
+        #0a0a0f;
+      color: #fff; min-height: 100vh; padding: 16px 16px 40px;
+    }
+    .topo { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+    .btn-voltar {
+      width: 40px; height: 40px; border-radius: 12px;
+      background: rgba(255,215,0,0.12); border: 1px solid rgba(255,215,0,0.4);
+      color: #FFD700; font-size: 16px; display: flex; align-items: center; justify-content: center;
+      text-decoration: none;
+    }
+    .topo h1 { font-size: 18px; color: #FFD700; font-weight: 800; }
+    .topo p { font-size: 12px; color: #aaa; }
+
+    .hero {
+      max-width: 440px; margin: 0 auto 16px; border-radius: 20px; overflow: hidden;
+      border: 2px solid rgba(255,215,0,0.45);
+      box-shadow: 0 0 40px rgba(255,215,0,0.35), 0 0 70px rgba(0,200,83,0.15);
+      animation: heroGlow 2.5s ease-in-out infinite;
+    }
+    @keyframes heroGlow {
+      0%,100% { box-shadow: 0 0 30px rgba(255,215,0,0.3); }
+      50% { box-shadow: 0 0 55px rgba(255,215,0,0.55), 0 0 80px rgba(0,230,118,0.2); }
+    }
+    .hero img { width: 100%; display: block; max-height: 220px; object-fit: cover; }
+
+    .card {
+      background: rgba(21,21,31,0.96);
+      border: 1px solid rgba(255,215,0,0.28);
+      border-radius: 16px;
+      padding: 18px 16px;
+      max-width: 440px;
+      margin: 0 auto 14px;
+    }
+    .card h2 {
+      font-size: 15px; color: #FFD700; margin-bottom: 12px;
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    /* Contagem */
+    .countdown-box {
+      max-width: 440px; margin: 0 auto 14px;
+      background: linear-gradient(145deg, rgba(30,25,10,0.95), rgba(15,20,30,0.98));
+      border: 2px solid rgba(255,215,0,0.5);
+      border-radius: 18px; padding: 16px;
+      text-align: center;
+      box-shadow: 0 0 32px rgba(255,215,0,0.25);
+    }
+    .countdown-box .lbl { font-size: 13px; color: #ccc; margin-bottom: 10px; }
+    .countdown-box .lbl b { color: #FFD700; }
+    .cd-grid { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
+    .cd-item {
+      min-width: 64px; background: rgba(0,0,0,0.45);
+      border: 1px solid rgba(255,215,0,0.35); border-radius: 12px; padding: 10px 8px;
+    }
+    .cd-item .num { font-size: 22px; font-weight: 900; color: #FFD700; line-height: 1.1; }
+    .cd-item .u { font-size: 10px; color: #aaa; margin-top: 2px; text-transform: uppercase; }
+
+    /* Meus bilhetes */
+    .meus-box {
+      max-width: 440px; margin: 0 auto 14px;
+      background: linear-gradient(145deg, rgba(48,22,80,0.5), rgba(8,42,38,0.55));
+      border: 2px solid rgba(34,255,153,0.45);
+      border-radius: 18px; padding: 16px;
+      box-shadow: 0 0 28px rgba(34,255,153,0.25), 0 0 40px rgba(168,85,247,0.15);
+      animation: meusGlow 2.2s ease-in-out infinite;
+    }
+    @keyframes meusGlow {
+      0%,100% { box-shadow: 0 0 22px rgba(34,255,153,0.2); }
+      50% { box-shadow: 0 0 36px rgba(34,255,153,0.4), 0 0 50px rgba(255,215,0,0.15); }
+    }
+    .meus-box h2 { color: #22FF99; margin-bottom: 10px; font-size: 15px; display: flex; align-items: center; gap: 8px; }
+    .ticket-chip {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(0,0,0,0.35); border: 1px solid rgba(255,215,0,0.4);
+      border-radius: 12px; padding: 10px 12px; margin: 4px; font-size: 13px;
+      box-shadow: 0 0 14px rgba(255,215,0,0.2);
+    }
+    .ticket-chip b { color: #FFD700; }
+    .ticket-chip .f { color: #22FF99; font-weight: 800; }
+
+    .premio-lista { list-style: none; }
+    .premio-lista li {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.06); font-size: 14px;
+    }
+    .premio-lista li:last-child { border-bottom: none; }
+    .premio-lista .lugar { font-weight: 700; color: #ccc; }
+    .premio-lista .valor { font-weight: 800; color: #FFD700; }
+    .premio-lista .valor.pts { color: #22FF99; }
+    .premio-lista li:nth-child(1) .lugar { color: #FFD700; text-shadow: 0 0 12px rgba(255,215,0,0.5); }
+    .premio-lista li:nth-child(2) .lugar { color: #C0C0C0; }
+    .premio-lista li:nth-child(3) .lugar { color: #CD7F32; }
+
+    /* Ranking top 3 */
+    .rank-top {
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .rank-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 14px; border-radius: 14px;
+      border: 1px solid rgba(255,215,0,0.25);
+      background: rgba(0,0,0,0.3);
+    }
+    .rank-row.o1 {
+      border-color: rgba(255,215,0,0.7);
+      background: linear-gradient(90deg, rgba(255,215,0,0.15), rgba(0,0,0,0.2));
+      box-shadow: 0 0 24px rgba(255,215,0,0.35);
+      animation: goldPulse 2s ease-in-out infinite;
+    }
+    .rank-row.o2 {
+      border-color: rgba(192,192,192,0.55);
+      box-shadow: 0 0 18px rgba(192,192,192,0.2);
+    }
+    .rank-row.o3 {
+      border-color: rgba(205,127,50,0.55);
+      box-shadow: 0 0 18px rgba(205,127,50,0.25);
+    }
+    @keyframes goldPulse {
+      0%,100% { box-shadow: 0 0 18px rgba(255,215,0,0.3); }
+      50% { box-shadow: 0 0 32px rgba(255,215,0,0.55); }
+    }
+    .rank-medal { font-size: 26px; }
+    .rank-info { flex: 1; min-width: 0; }
+    .rank-info .nm { font-weight: 800; font-size: 15px; }
+    .rank-info .sub { font-size: 11px; color: #aaa; }
+    .rank-premio { font-weight: 900; color: #FFD700; font-size: 15px; white-space: nowrap; }
+
+    .btn {
+      width: 100%; background: linear-gradient(90deg, #FFD700, #00e676);
+      color: #04140a; border: none; border-radius: 14px; padding: 15px;
+      font-size: 15px; font-weight: 900; cursor: pointer;
+      box-shadow: 0 0 24px rgba(255,215,0,0.4);
+    }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-sec {
+      width: 100%; background: rgba(255,215,0,0.12); color: #FFD700;
+      border: 1px solid rgba(255,215,0,0.4); border-radius: 12px; padding: 12px;
+      font-size: 13px; font-weight: 700; cursor: pointer; margin-top: 8px;
+    }
+
+    input {
+      width: 100%; background: #111; border: 1px solid #333; border-radius: 12px;
+      padding: 12px; color: #fff; font-size: 14px; margin-bottom: 8px; outline: none;
+    }
+    input:focus { border-color: #FFD700; }
+
+    .valor-box {
+      background: rgba(0,0,0,0.35); border: 1px solid rgba(255,215,0,0.3);
+      border-radius: 14px; padding: 14px; margin-bottom: 12px;
+    }
+    .valor-box label { display: block; font-size: 12px; color: #aaa; margin-bottom: 6px; }
+    .forca-preview {
+      margin-top: 10px; font-size: 13px; color: #ccc; text-align: center;
+    }
+    .forca-preview b { color: #22FF99; }
+    .forca-bar {
+      margin-top: 8px; height: 8px; background: #1a1a28; border-radius: 8px; overflow: hidden;
+    }
+    .forca-bar span {
+      display: block; height: 100%; border-radius: 8px;
+      background: linear-gradient(90deg, #00c853, #FFD700);
+      transition: width 0.25s;
+    }
+
+
+    /* Info chamada entre contagem e bilhetes */
+    .info-rapido {
+      max-width: 440px; margin: 0 auto 14px;
+      background: linear-gradient(145deg, rgba(255,215,0,0.18), rgba(0,200,83,0.12), rgba(168,85,247,0.15));
+      border: 2px solid rgba(255,215,0,0.65);
+      border-radius: 18px; padding: 16px 14px;
+      text-align: center;
+      box-shadow: 0 0 28px rgba(255,215,0,0.35), 0 0 48px rgba(34,255,153,0.2);
+      animation: infoPulse 2s ease-in-out infinite;
+      position: relative; overflow: hidden;
+    }
+    .info-rapido::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+      animation: infoShine 3s linear infinite;
+    }
+    @keyframes infoPulse {
+      0%,100% { box-shadow: 0 0 22px rgba(255,215,0,0.3), 0 0 36px rgba(34,255,153,0.15); }
+      50% { box-shadow: 0 0 40px rgba(255,215,0,0.55), 0 0 60px rgba(34,255,153,0.3); }
+    }
+    @keyframes infoShine {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+    .info-rapido .ico { font-size: 28px; margin-bottom: 6px; position: relative; }
+    .info-rapido p {
+      margin: 0; font-size: 14px; line-height: 1.5; color: #f0f0f0;
+      position: relative; font-weight: 600;
+    }
+    .info-rapido b { color: #FFD700; text-shadow: 0 0 12px rgba(255,215,0,0.5); }
+    .info-rapido .destaque {
+      display: inline-block; margin-top: 8px;
+      background: linear-gradient(90deg, #FFD700, #00e676);
+      color: #04140a; font-weight: 900; font-size: 15px;
+      padding: 6px 14px; border-radius: 999px;
+      box-shadow: 0 0 18px rgba(255,215,0,0.4);
+    }
+
+    #zona-pag { display: none; }
+    .loading { text-align: center; padding: 40px; color: #888; }
+  </style>
+</head>
+<body>
+
+  <div class="topo">
+    <a href="tarefas.html" class="btn-voltar"><i class="fas fa-arrow-left"></i></a>
+    <div>
+      <h1>Sorteio Desafio MOZ</h1>
+      <p>Compra bilhetes · quanto mais forte, mais chance</p>
+    </div>
+  </div>
+
+  <div id="loading" class="loading">A carregar...</div>
+  <div id="conteudo" style="display:none;">
+
+    <div class="hero">
+      <img src="https://i.supaimg.com/9447b725-0914-4700-9681-fccbd9cb5399/63785bc8-7293-47ad-b20d-1447216cb932.jpg" alt="Sorteio Desafio MOZ">
+    </div>
+
+    <!-- Contagem para próximo anúncio -->
+    <div class="countdown-box">
+      <div class="lbl">Próximo anúncio dos vencedores será daqui a</div>
+      <div class="cd-grid">
+        <div class="cd-item"><div class="num" id="cd-d">0</div><div class="u">dias</div></div>
+        <div class="cd-item"><div class="num" id="cd-h">0</div><div class="u">horas</div></div>
+        <div class="cd-item"><div class="num" id="cd-m">0</div><div class="u">min</div></div>
+        <div class="cd-item"><div class="num" id="cd-s">0</div><div class="u">seg</div></div>
+      </div>
+      <p id="cd-data" style="font-size:11px;color:#888;margin-top:10px;"></p>
+    </div>
+
+
+    <!-- Chamada ao saque / bilhete -->
+    <div class="info-rapido">
+      <div class="ico">⏰🔥</div>
+      <p><b>Compra o teu bilhete antes que o tempo zere!</b><br>
+      Podes ser o <b>próximo a ganhar</b> — o caminho mais rápido ao saque no Desafio MOZ.</p>
+      <div class="destaque">Até 5 000 MT</div>
+      <p style="margin-top:10px;font-size:12px;color:#ccc;position:relative;">Não fiques de fora · quanto mais forte o bilhete, mais chance</p>
+    </div>
+
+    <!-- Meus bilhetes (topo chamativo) -->
+    <div class="meus-box" id="zona-meus-topo">
+      <h2><i class="fas fa-ticket-alt"></i> Os teus bilhetes</h2>
+      <div id="lista-meus"><div style="text-align:center;color:#888;font-size:13px;padding:8px;">Ainda não compraste bilhetes. Escolhe um valor abaixo!</div></div>
+    </div>
+
+    <div class="card">
+      <h2><i class="fas fa-trophy"></i> Prémios do sorteio</h2>
+      <ul class="premio-lista">
+        <li><span class="lugar">🥇 1.º lugar</span><span class="valor">5 000 MZN</span></li>
+        <li><span class="lugar">🥈 2.º lugar</span><span class="valor">3 000 MZN</span></li>
+        <li><span class="lugar">🥉 3.º lugar</span><span class="valor">1 000 MZN</span></li>
+        <li><span class="lugar">4.º lugar</span><span class="valor pts">1 000 pontos</span></li>
+        <li><span class="lugar">5.º lugar</span><span class="valor pts">500 pontos</span></li>
+        <li><span class="lugar">6.º lugar</span><span class="valor pts">250 pontos</span></li>
+        <li><span class="lugar">7.º lugar</span><span class="valor pts">130 pontos</span></li>
+        <li><span class="lugar">8.º lugar</span><span class="valor pts">70 pontos</span></li>
+        <li><span class="lugar">9.º lugar</span><span class="valor pts">30 pontos</span></li>
+        <li><span class="lugar">10.º lugar</span><span class="valor pts">16 pontos</span></li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2><i class="fas fa-medal"></i> Ranking de sorteados</h2>
+      <p style="font-size:12px;color:#aaa;margin-bottom:10px;">Top 3 com muita aura · restantes em lista.</p>
+      <div id="ranking-sorteados" class="rank-top">
+        <div style="text-align:center;color:#666;padding:12px;">A carregar ranking…</div>
+      </div>
+    </div>
+
+    <div class="card" id="zona-bilhetes">
+      <h2><i class="fas fa-ticket-alt"></i> Compra o teu bilhete</h2>
+      <p style="font-size:13px;color:#ccc;margin-bottom:12px;line-height:1.45;">
+        Quanto <b style="color:#FFD700;">mais forte</b> o bilhete, mais chance tens de ganhar.
+        Paga em <b style="color:#FFD700;">e-Mola (MT)</b> ou com os teus <b style="color:#22FF99;">pontos</b> da conta.
+      </p>
+      <div style="display:flex;gap:8px;margin-bottom:12px;">
+        <button type="button" class="btn-sec" id="tab-mt" style="margin:0;flex:1;background:linear-gradient(90deg,#FFD700,#00e676);color:#04140a;border:none;" onclick="escolherModoCompra('mt')">💰 e-Mola (MT)</button>
+        <button type="button" class="btn-sec" id="tab-pts" style="margin:0;flex:1;" onclick="escolherModoCompra('pontos')">⭐ Pontos</button>
+      </div>
+      <div class="valor-box" id="box-mt">
+        <label>Quantos meticais queres pagar? (mín. 2 MZN)</label>
+        <input type="number" id="input-mt" min="2" step="1" placeholder="Ex: 2, 5, 10, 20..." oninput="actualizarForca()">
+      </div>
+      <div class="valor-box" id="box-pts" style="display:none;">
+        <label>Quantos pontos queres gastar? (mín. 20 pts)</label>
+        <input type="number" id="input-pts" min="20" step="1" placeholder="Ex: 20, 40, 80..." oninput="actualizarForca()">
+        <p style="font-size:11px;color:#888;margin-top:6px;">Tens: <b id="saldo-pts" style="color:#22FF99;">—</b> pontos</p>
+      </div>
+      <div class="forca-preview">Força do bilhete: <b id="forca-lbl">—</b></div>
+      <div class="forca-bar"><span id="forca-bar" style="width:0%"></span></div>
+      <button type="button" class="btn" id="btn-comprar" style="margin-top:12px;" onclick="abrirPagamento()">Continuar</button>
+    </div>
+
+    <div class="card" id="zona-pag">
+      <h2><i class="fas fa-wallet"></i> Pagar por e-Mola</h2>
+      <p style="font-size:13px;color:#ccc;margin-bottom:10px;line-height:1.45;">
+        Bilhete: <b id="pag-pkg-lbl" style="color:#FFD700;">—</b>
+      </p>
+      <p style="font-size:13px;margin-bottom:6px;"><b>1.</b> Envia o valor para e-Mola:</p>
+      <div style="display:flex;gap:8px;align-items:center;background:#111;border:1px dashed #FFD700;border-radius:12px;padding:12px;margin-bottom:12px;">
+        <strong style="flex:1;font-size:18px;color:#FFD700;">869517893</strong>
+        <button type="button" class="btn-sec" style="width:auto;padding:8px 12px;margin:0;" onclick="copiarNum()">Copiar</button>
+      </div>
+      <p style="font-size:12px;color:#aaa;margin-bottom:8px;line-height:1.45;">
+        <b>2.</b> Copia o <b style="color:#00e676;">ID da transacção</b> (começa por <b style="color:#00e676;">PP</b>). Vê na imagem onde aparece:
+      </p>
+      <div style="margin-bottom:12px;border-radius:14px;overflow:hidden;border:2px solid rgba(0,230,118,0.4);box-shadow:0 0 20px rgba(0,230,118,0.2);">
+        <img src="https://i.supaimg.com/9447b725-0914-4700-9681-fccbd9cb5399/0d27ef0d-69cb-43f4-8572-95a618184de5.jpg" alt="Onde pegar o ID e-Mola" style="width:100%;display:block;">
+      </div>
+      <p style="font-size:12px;color:#aaa;margin-bottom:8px;line-height:1.45;">
+        Exemplo: <code style="color:#00e676;">PP260927.0652.q29322</code>
+      </p>
+      <div style="background:rgba(255,80,80,0.12);border:1px solid rgba(255,100,100,0.35);border-radius:12px;padding:10px;margin-bottom:12px;font-size:12px;color:#ffb4b4;">
+        ⚠️ ID falso = risco de bloqueio da conta.
+      </div>
+      <input type="tel" id="pag-tel" placeholder="Número e-Mola (ex: 841234567)">
+      <input type="text" id="pag-txid" placeholder="ID da transacção (ex: PP...)">
+      <button type="button" class="btn" id="btn-confirmar" onclick="confirmarPagamento()">Confirmar bilhete</button>
+      <button type="button" class="btn-sec" onclick="fecharPagamento()">Voltar</button>
+    </div>
+  </div>
+
+<script>
+  var email = '', docRef = null, userData = {};
+  var mtSel = 0, forcaSel = 0, ptsSel = 0;
+  var modoCompra = 'mt'; // 'mt' | 'pontos'
+  var countdownTarget = null;
+  var cdTimer = null;
+  var rankingZerado = false; // relógio chegou a zero → força nomes aleatórios
+  var listaAleatoriaCache = null; // evita mudar nomes a cada segundo
+  var premiosPagosNesteCiclo = false; // evita pagar 2× no mesmo carregamento
+
+  // 1 MT = 8 pontos (igual ao resto do site)
+  var PREMIOS_SORTEIO_PONTOS = { 1: 40000, 2: 24000, 3: 8000, 4: 1000, 5: 500, 6: 250, 7: 130, 8: 70, 9: 30, 10: 16 };
+  var PREMIOS_SORTEIO_LBL = { 1: '5000 MZN', 2: '3000 MZN', 3: '1000 MZN', 4: '1000 pontos', 5: '500 pontos', 6: '250 pontos', 7: '130 pontos', 8: '70 pontos', 9: '30 pontos', 10: '16 pontos' };
+
+  var NOMES_ALEATORIOS = [
+    'Carlos M.','Ana J.','Pedro S.','Maria L.','João R.','Sofia T.','António P.',
+    'Lucia N.','Miguel F.','Beatriz C.','Nardo A.','Marla K.','Júnior D.','Francisco V.',
+    'Inês B.','Hélder G.','Paula W.','Ricardo Z.','Tatiana H.','Samuel O.'
+  ];
+
+  function withTimeout(p, ms) {
+    return Promise.race([p, new Promise(function (r) { setTimeout(function () { r(null); }, ms); })]);
+  }
+
+  function calcForca(mt) {
+    mt = parseInt(mt, 10) || 0;
+    if (mt < 2) return 0;
+    if (mt <= 2) return 1;
+    if (mt <= 3) return 2;
+    if (mt <= 5) return 4;
+    if (mt <= 10) return 8;
+    if (mt <= 20) return 12;
+    if (mt <= 50) return 18;
+    return Math.min(30, 18 + Math.floor((mt - 50) / 10));
+  }
+  // Pontos: mínimo 20; força equivalente a MT (8 pts ≈ 1 MT)
+  function calcForcaPontos(pts) {
+    pts = parseInt(pts, 10) || 0;
+    if (pts < 20) return 0;
+    var mtEq = Math.max(2, Math.round(pts / 8));
+    return calcForca(mtEq);
+  }
+  function forcaPct(f) {
+    return Math.min(100, Math.round((f / 30) * 100));
+  }
+
+  function escolherModoCompra(modo) {
+    modoCompra = modo === 'pontos' ? 'pontos' : 'mt';
+    var boxMt = document.getElementById('box-mt');
+    var boxPts = document.getElementById('box-pts');
+    var tabMt = document.getElementById('tab-mt');
+    var tabPts = document.getElementById('tab-pts');
+    if (modoCompra === 'pontos') {
+      boxMt.style.display = 'none';
+      boxPts.style.display = 'block';
+      tabPts.style.background = 'linear-gradient(90deg,#FFD700,#00e676)';
+      tabPts.style.color = '#04140a';
+      tabPts.style.border = 'none';
+      tabMt.style.background = 'rgba(255,215,0,0.12)';
+      tabMt.style.color = '#FFD700';
+      tabMt.style.border = '1px solid rgba(255,215,0,0.4)';
+      var sal = document.getElementById('saldo-pts');
+      if (sal) sal.textContent = (userData.pontos != null ? userData.pontos : '—');
+    } else {
+      boxMt.style.display = 'block';
+      boxPts.style.display = 'none';
+      tabMt.style.background = 'linear-gradient(90deg,#FFD700,#00e676)';
+      tabMt.style.color = '#04140a';
+      tabMt.style.border = 'none';
+      tabPts.style.background = 'rgba(255,215,0,0.12)';
+      tabPts.style.color = '#FFD700';
+      tabPts.style.border = '1px solid rgba(255,215,0,0.4)';
+    }
+    actualizarForca();
+  }
+
+  function actualizarForca() {
+    var f = 0;
+    if (modoCompra === 'pontos') {
+      var pts = parseInt(document.getElementById('input-pts').value, 10) || 0;
+      f = calcForcaPontos(pts);
+      document.getElementById('forca-lbl').textContent = f > 0 ? f + ' / 30' : 'mínimo 20 pontos';
+    } else {
+      var mt = parseInt(document.getElementById('input-mt').value, 10) || 0;
+      f = calcForca(mt);
+      document.getElementById('forca-lbl').textContent = f > 0 ? f + ' / 30' : 'mínimo 2 MT';
+    }
+    document.getElementById('forca-bar').style.width = forcaPct(f) + '%';
+  }
+
+  function abrirPagamento() {
+    if (modoCompra === 'pontos') {
+      var pts = parseInt(document.getElementById('input-pts').value, 10) || 0;
+      if (pts < 20) return alert('Mínimo 20 pontos.');
+      var saldo = Number(userData.pontos) || 0;
+      if (saldo < pts) return alert('Pontos insuficientes. Tens ' + saldo + ' pts.');
+      ptsSel = pts;
+      mtSel = 0;
+      forcaSel = calcForcaPontos(pts);
+      comprarComPontos();
+      return;
+    }
+    var mt = parseInt(document.getElementById('input-mt').value, 10) || 0;
+    if (mt < 2) return alert('Mínimo 2 meticais.');
+    mtSel = mt;
+    ptsSel = 0;
+    forcaSel = calcForca(mt);
+    document.getElementById('zona-bilhetes').style.display = 'none';
+    document.getElementById('zona-pag').style.display = 'block';
+    document.getElementById('pag-pkg-lbl').textContent = mtSel + ' MT · força ' + forcaSel;
+  }
+  function fecharPagamento() {
+    document.getElementById('zona-pag').style.display = 'none';
+    document.getElementById('zona-bilhetes').style.display = 'block';
+  }
+
+  async function comprarComPontos() {
+    var btn = document.getElementById('btn-comprar');
+    btn.disabled = true; btn.textContent = 'A comprar...';
+    try {
+      if (!docRef) throw new Error('Conta não encontrada. Faz login de novo.');
+      var pts = ptsSel;
+      var forca = forcaSel;
+      await db.runTransaction(async function (tr) {
+        var snap = await tr.get(docRef);
+        if (!snap.exists) throw new Error('Conta não encontrada.');
+        var d = snap.data() || {};
+        var saldo = Number(d.pontos) || 0;
+        if (saldo < pts) throw new Error('Pontos insuficientes. Tens ' + saldo + ' pts.');
+        tr.update(docRef, {
+          pontos: saldo - pts,
+          pontosSorteioGastos: (Number(d.pontosSorteioGastos) || 0) + pts,
+          ultimaAtualizacao: new Date().toISOString()
+        });
+      });
+      userData.pontos = (Number(userData.pontos) || 0) - pts;
+      var salEl = document.getElementById('saldo-pts');
+      if (salEl) salEl.textContent = userData.pontos;
+
+      var bilhete = {
+        email: email,
+        nome: userData.nome || '',
+        pacote: 'pontos',
+        tipoPagamento: 'pontos',
+        valorMt: 0,
+        valorPontos: pts,
+        forca: forca,
+        telefone: '',
+        txid: 'PTS_' + Date.now(),
+        status: 'activo',
+        posicao: null,
+        decidido: false,
+        createdAt: new Date().toISOString()
+      };
+      await db.collection('sorteioBilhetes').add(bilhete);
+      await db.collection('sorteioPagamentos').add({
+        email: email,
+        nome: userData.nome || '',
+        pacote: 'pontos',
+        tipoPagamento: 'pontos',
+        valorMt: 0,
+        valorPontos: pts,
+        forca: forca,
+        status: 'entregue',
+        createdAt: new Date().toISOString()
+      });
+      if (docRef) {
+        docRef.update({
+          sorteioClicou: true,
+          sorteioUltimoBilhete: pts + 'pts',
+          sorteioUltimoEm: new Date().toISOString()
+        }).catch(function () {});
+      }
+      alert('✅ Bilhete comprado com ' + pts + ' pontos! Força ' + forca + '. Boa sorte!');
+      document.getElementById('input-pts').value = '';
+      actualizarForca();
+      carregarMeusBilhetes();
+    } catch (e) {
+      alert('Erro: ' + (e.message || e));
+    }
+    btn.disabled = false; btn.textContent = 'Continuar';
+  }
+
+  function copiarNum() {
+    var n = '869517893';
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(n).then(function () { alert('Número copiado!'); }).catch(function () {
+        prompt('Copia o número:', n);
+      });
+    } else prompt('Copia o número:', n);
+  }
+
+  async function confirmarPagamento() {
+    var txid = String(document.getElementById('pag-txid').value || '').trim().replace(/\s+/g, '').toUpperCase();
+    var tel = String(document.getElementById('pag-tel').value || '').replace(/\D/g, '');
+    if (tel.length === 12 && tel.indexOf('258') === 0) tel = tel.slice(3);
+    if (!/^PP[A-Z0-9.\-]{5,40}$/i.test(txid)) {
+      alert('ID inválido. Cola o ID completo da e-Mola (começa por PP).');
+      return;
+    }
+    if (!/^8\d{8}$/.test(tel)) {
+      alert('Número inválido. Ex: 841234567');
+      return;
+    }
+    if (!mtSel || mtSel < 2) return alert('Valor inválido.');
+    var btn = document.getElementById('btn-confirmar');
+    btn.disabled = true; btn.textContent = 'A verificar...';
+    try {
+      var txRef = db.collection('emolaTransacoes').doc(txid);
+      await db.runTransaction(async function (tr) {
+        var snap = await tr.get(txRef);
+        if (snap.exists) throw new Error('Este ID já foi usado. Cada ID só funciona uma vez.');
+        tr.set(txRef, {
+          email: email,
+          telefone: tel,
+          item: 'sorteio_custom',
+          jogo: 'sorteio',
+          mt: mtSel,
+          forca: forcaSel,
+          descricao: 'Sorteio bilhete ' + mtSel + ' MT força ' + forcaSel,
+          createdAt: new Date().toISOString()
+        });
+      });
+
+      var bilhete = {
+        email: email,
+        nome: userData.nome || '',
+        pacote: 'custom',
+        tipoPagamento: 'emola',
+        valorMt: mtSel,
+        valorPontos: 0,
+        forca: forcaSel,
+        telefone: tel,
+        txid: txid,
+        status: 'activo',
+        posicao: null,
+        decidido: false,
+        createdAt: new Date().toISOString()
+      };
+      await db.collection('sorteioBilhetes').add(bilhete);
+      await db.collection('sorteioPagamentos').add({
+        email: email,
+        nome: userData.nome || '',
+        pacote: 'custom',
+        tipoPagamento: 'emola',
+        valorMt: mtSel,
+        valorPontos: 0,
+        forca: forcaSel,
+        telefone: tel,
+        txid: txid,
+        status: 'entregue',
+        createdAt: new Date().toISOString()
+      });
+      if (docRef) {
+        docRef.update({
+          sorteioClicou: true,
+          sorteioUltimoBilhete: mtSel + 'MT',
+          sorteioUltimoEm: new Date().toISOString()
+        }).catch(function () {});
+      }
+      alert('✅ Bilhete registado! Força ' + forcaSel + '. Boa sorte!');
+      fecharPagamento();
+      document.getElementById('input-mt').value = '';
+      actualizarForca();
+      carregarMeusBilhetes();
+    } catch (e) {
+      alert('Erro: ' + (e.message || e));
+    }
+    btn.disabled = false; btn.textContent = 'Confirmar bilhete';
+  }
+
+  // 2× por semana: Quarta 20:00 e Domingo 20:00 (hora local)
+  function proximoAnuncio2xSemana(aPartirDe) {
+    var base = aPartirDe ? new Date(aPartirDe) : new Date();
+    var candidatos = [];
+    // procurar nos próximos 14 dias o próximo slot (domingo=0, quarta=3)
+    for (var i = 0; i < 14; i++) {
+      var d = new Date(base.getTime());
+      d.setDate(base.getDate() + i);
+      d.setHours(20, 0, 0, 0);
+      var dia = d.getDay();
+      if ((dia === 0 || dia === 3) && d.getTime() > base.getTime()) {
+        candidatos.push(d.getTime());
+      }
+    }
+    if (!candidatos.length) {
+      var fallback = new Date(base.getTime());
+      fallback.setDate(fallback.getDate() + 3);
+      fallback.setHours(20, 0, 0, 0);
+      return fallback.getTime();
+    }
+    candidatos.sort(function (a, b) { return a - b; });
+    return candidatos[0];
+  }
+
+  function actualizarLabelContagem(ts, auto) {
+    var el = document.getElementById('cd-data');
+    if (!el) return;
+    try {
+      var txt = new Date(ts).toLocaleString('pt-MZ');
+      el.textContent = auto
+        ? 'Próximo anúncio automático (2×/semana): ' + txt
+        : 'Anúncio previsto: ' + txt;
+    } catch (e) {
+      el.textContent = '';
+    }
+  }
+
+  /** Paga prémios aos ganhadores (posição 1–10) quando o anúncio chega a zero. Idempotente. */
+  async function pagarPremiosNoZero() {
+    if (premiosPagosNesteCiclo) return;
+    premiosPagosNesteCiclo = true;
+    try {
+      // 1) Bilhetes com posição definida pelo admin
+      var porLugar = {};
+      try {
+        var snapB = await db.collection('sorteioBilhetes').limit(500).get();
+        snapB.forEach(function (doc) {
+          var d = doc.data() || {};
+          var p = parseInt(d.posicao, 10);
+          if (p >= 1 && p <= 10 && d.email) {
+            if (!porLugar[p] || (d.forca || 0) > (porLugar[p].forca || 0)) {
+              porLugar[p] = {
+                email: String(d.email).trim().toLowerCase(),
+                nome: d.nome || '',
+                txid: d.txid || '',
+                forca: d.forca || 0
+              };
+            }
+          }
+        });
+      } catch (eB) {}
+
+      // 2) Ranking publicado (sorteioVencedores) — completa lugares em falta
+      try {
+        var snapV = await db.collection('sorteioVencedores').limit(20).get();
+        snapV.forEach(function (doc) {
+          var d = doc.data() || {};
+          var p = parseInt(d.lugar, 10);
+          if (p >= 1 && p <= 10 && d.email && !porLugar[p]) {
+            porLugar[p] = {
+              email: String(d.email).trim().toLowerCase(),
+              nome: d.nome || '',
+              txid: d.txid || '',
+              forca: 0
+            };
+          }
+        });
+      } catch (eV) {}
+
+      var lugares = Object.keys(porLugar).map(Number).sort(function (a, b) { return a - b; });
+      for (var i = 0; i < lugares.length; i++) {
+        var L = lugares[i];
+        var info = porLugar[L];
+        var pts = PREMIOS_SORTEIO_PONTOS[L] || 0;
+        if (!info.email || pts <= 0) continue;
+
+        var chave = (info.email + '_L' + L).replace(/[^a-z0-9_@.-]/gi, '_');
+        var pagRef = db.collection('sorteioPremiosPagos').doc(chave);
+        try {
+          var pagSnap = await pagRef.get();
+          if (pagSnap.exists) continue; // já pago
+
+          var uSnap = await db.collection('usuarios').where('email', '==', info.email).limit(1).get();
+          if (uSnap.empty) continue;
+
+          var ref = uSnap.docs[0].ref;
+          var dados = uSnap.docs[0].data() || {};
+          var atual = Number(dados.pontos) || 0;
+          var novo = atual + pts;
+          await ref.update({
+            pontos: novo,
+            pontosSorteio: (Number(dados.pontosSorteio) || 0) + pts,
+            ultimaAtualizacao: new Date().toISOString(),
+            ultimoPremioSorteio: {
+              lugar: L,
+              pontos: pts,
+              premioLabel: PREMIOS_SORTEIO_LBL[L] || '',
+              em: new Date().toISOString()
+            }
+          });
+          await pagRef.set({
+            email: info.email,
+            lugar: L,
+            pontos: pts,
+            premio: PREMIOS_SORTEIO_LBL[L] || '',
+            nome: info.nome || dados.nome || '',
+            pagoEm: new Date().toISOString(),
+            txid: info.txid || '',
+            origem: 'anuncio_zero'
+          });
+          try {
+            await db.collection('sorteioVencedores').doc('lugar_' + L).set({
+              premioCreditado: true,
+              pontosCreditados: pts,
+              pagoEm: new Date().toISOString()
+            }, { merge: true });
+          } catch (eM) {}
+        } catch (eOne) {
+          // continua para os outros lugares
+        }
+      }
+    } catch (e) {
+      premiosPagosNesteCiclo = false; // permite tentar de novo noutro visitante
+    }
+  }
+
+  async function reiniciarContagemAutomatica() {
+    var novo = null;
+    var veioDaFila = false;
+    // Se o admin definiu data na fila, usa essa depois do zero
+    try {
+      var snap = await db.collection('sorteioConfig').doc('proximo').get();
+      if (snap.exists) {
+        var d = snap.data() || {};
+        if (d.quandoSeguinte) {
+          var tsSeg = new Date(d.quandoSeguinte).getTime();
+          if (tsSeg > Date.now()) {
+            novo = tsSeg;
+            veioDaFila = true;
+          }
+        }
+      }
+    } catch (e0) {}
+
+    if (!novo) novo = proximoAnuncio2xSemana(Date.now());
+
+    countdownTarget = novo;
+    window.__sorteioCicloInicio = Date.now();
+    rankingZerado = false;
+    listaAleatoriaCache = null;
+    premiosPagosNesteCiclo = false;
+    actualizarLabelContagem(novo, !veioDaFila);
+    carregarRankingSorteados();
+
+    try {
+      var payload = {
+        quando: new Date(novo).toISOString(),
+        actualizadoEm: new Date().toISOString(),
+        automatico: !veioDaFila,
+        cicloId: (veioDaFila ? 'fila_' : 'auto_') + novo,
+        cicloInicio: new Date().toISOString()
+      };
+      // Consome a fila
+      payload.quandoSeguinte = null;
+      db.collection('sorteioConfig').doc('proximo').set(payload, { merge: true }).catch(function () {});
+    } catch (e) {}
+  }
+
+  function tickCountdown() {
+    if (!countdownTarget) return;
+    var agora = Date.now();
+    var diff = Math.max(0, countdownTarget - agora);
+    var s = Math.floor(diff / 1000);
+    var d = Math.floor(s / 86400); s %= 86400;
+    var h = Math.floor(s / 3600); s %= 3600;
+    var m = Math.floor(s / 60); s %= 60;
+    document.getElementById('cd-d').textContent = d;
+    document.getElementById('cd-h').textContent = h;
+    document.getElementById('cd-m').textContent = m;
+    document.getElementById('cd-s').textContent = s;
+
+    // Relógio a zero → PAGAR prémios + nomes aleatórios + nova contagem
+    if (diff === 0) {
+      if (!window.__sorteioZeroFeito || window.__sorteioZeroFeito !== countdownTarget) {
+        window.__sorteioZeroFeito = countdownTarget;
+        // 1) Creditar ganhadores na carteira
+        pagarPremiosNoZero();
+        // 2) Ranking visual aleatório
+        rankingZerado = true;
+        listaAleatoriaCache = null;
+        carregarRankingSorteados();
+        // 3) Nova contagem 2×/semana
+        reiniciarContagemAutomatica();
+      }
+    }
+  }
+
+  async function carregarCountdown() {
+    var usouAdmin = false;
+    try {
+      var snap = await db.collection('sorteioConfig').doc('proximo').get();
+      if (snap.exists && snap.data().quando) {
+        var ts = new Date(snap.data().quando).getTime();
+        // Se a data do admin ainda é futura, usa-a
+        if (ts > Date.now()) {
+          countdownTarget = ts;
+          usouAdmin = true;
+          actualizarLabelContagem(ts, !!snap.data().automatico);
+        }
+      }
+    } catch (e) {}
+
+    // Sem data futura → pagar prémios + arrancar próxima (fila do admin ou 2×/semana)
+    if (!countdownTarget || countdownTarget <= Date.now()) {
+      pagarPremiosNoZero();
+      await reiniciarContagemAutomatica();
+    } else {
+      rankingZerado = false;
+    }
+
+    tickCountdown();
+    if (cdTimer) clearInterval(cdTimer);
+    cdTimer = setInterval(tickCountdown, 1000);
+  }
+
+  function gerarNomesAleatorios() {
+    if (listaAleatoriaCache) return listaAleatoriaCache;
+    var usados = {};
+    var lista = [];
+    for (var i = 1; i <= 10; i++) {
+      var nm = NOMES_ALEATORIOS[Math.floor(Math.random() * NOMES_ALEATORIOS.length)];
+      while (usados[nm]) nm = NOMES_ALEATORIOS[Math.floor(Math.random() * NOMES_ALEATORIOS.length)];
+      usados[nm] = true;
+      var prem = i === 1 ? '5000 MZN' : i === 2 ? '3000 MZN' : i === 3 ? '1000 MZN'
+        : i === 4 ? '1000 pts' : i === 5 ? '500 pts' : i === 6 ? '250 pts'
+        : i === 7 ? '130 pts' : i === 8 ? '70 pts' : i === 9 ? '30 pts' : '16 pts';
+      lista.push({ lugar: i, nome: nm, premio: prem, aleatorio: true });
+    }
+    listaAleatoriaCache = lista;
+    return lista;
+  }
+
+  async function carregarRankingSorteados() {
+    var box = document.getElementById('ranking-sorteados');
+    if (!box) return;
+    try {
+      // Relógio a zero (ou já passou) → SEMPRE nomes aleatórios, mesmo com ganhadores no admin
+      var relogioZerado = rankingZerado || (countdownTarget && Date.now() >= countdownTarget);
+      if (relogioZerado) {
+        rankingZerado = true;
+        var listaZ = gerarNomesAleatorios();
+        box.innerHTML = montarHtmlRanking(listaZ);
+        return;
+      }
+
+      var lista = [];
+      var cicloInicio = window.__sorteioCicloInicio || 0;
+      try {
+        var snap = await db.collection('sorteioVencedores').orderBy('lugar', 'asc').limit(10).get();
+        snap.forEach(function (doc) {
+          var d = doc.data() || {};
+          d._id = doc.id;
+          // Ignora ganhadores do ciclo anterior (antes do último zero)
+          if (cicloInicio && d.createdAt) {
+            var t = new Date(d.createdAt).getTime();
+            if (t < cicloInicio) return;
+          }
+          lista.push(d);
+        });
+      } catch (e1) {
+        var snap2 = await db.collection('sorteioVencedores').limit(20).get();
+        snap2.forEach(function (doc) {
+          var d = doc.data() || {};
+          d._id = doc.id;
+          if (cicloInicio && d.createdAt) {
+            var t2 = new Date(d.createdAt).getTime();
+            if (t2 < cicloInicio) return;
+          }
+          lista.push(d);
+        });
+        lista.sort(function (a, b) { return (a.lugar || 99) - (b.lugar || 99); });
+      }
+
+      // Sem decisão do admin neste ciclo → nomes aleatórios
+      if (!lista.length) {
+        lista = gerarNomesAleatorios();
+      }
+
+      box.innerHTML = montarHtmlRanking(lista);
+    } catch (e) {
+      box.innerHTML = '<div style="text-align:center;color:#888;padding:12px;">Ranking em breve.</div>';
+    }
+  }
+
+  function montarHtmlRanking(lista) {
+    var html = '';
+    lista.forEach(function (v) {
+      var lugar = parseInt(v.lugar, 10) || 0;
+      var medal = lugar === 1 ? '🥇' : lugar === 2 ? '🥈' : lugar === 3 ? '🥉' : lugar + 'º';
+      var nome = v.nome || v.email || 'Utilizador';
+      if (String(nome).indexOf('@') !== -1) nome = String(nome).split('@')[0];
+      var premio = v.premio || v.valorMzn || '';
+      if (lugar >= 1 && lugar <= 3) {
+        html += '<div class="rank-row o' + lugar + '">' +
+          '<div class="rank-medal">' + medal + '</div>' +
+          '<div class="rank-info"><div class="nm">' + escS(nome) + '</div>' +
+          '<div class="sub">' + (v.aleatorio ? 'Aguarda decisão oficial' : 'Vencedor anunciado') + '</div></div>' +
+          '<div class="rank-premio">' + escS(String(premio)) + '</div></div>';
+      } else {
+        html += '<div style="display:flex;justify-content:space-between;padding:8px 4px;border-bottom:1px solid rgba(255,255,255,0.06);font-size:13px;">' +
+          '<span><b style="color:#aaa;">' + medal + '</b> ' + escS(nome) + '</span>' +
+          '<span style="color:#22FF99;font-weight:700;">' + escS(String(premio)) + '</span></div>';
+      }
+    });
+    return html;
+  }
+  function escS(s) {
+    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  async function carregarMeusBilhetes() {
+    var box = document.getElementById('lista-meus');
+    if (!box) return;
+    try {
+      var snap = await db.collection('sorteioBilhetes').where('email', '==', email).limit(50).get();
+      if (snap.empty) {
+        box.innerHTML = '<div style="text-align:center;color:#888;font-size:13px;padding:8px;">Ainda não compraste bilhetes. Escolhe um valor abaixo!</div>';
+        return;
+      }
+      var items = [];
+      snap.forEach(function (doc) { items.push(doc.data() || {}); });
+      items.sort(function (a, b) { return String(b.createdAt || '').localeCompare(String(a.createdAt || '')); });
+      var html = '';
+      items.forEach(function (d) {
+        var lblPag = (d.tipoPagamento === 'pontos' || d.valorPontos)
+          ? ((d.valorPontos || 0) + ' pts')
+          : ((d.valorMt || 0) + ' MT');
+        html += '<div class="ticket-chip">' +
+          '<span>🎫</span>' +
+          '<span><b>' + lblPag + '</b></span>' +
+          '<span class="f">força ' + (d.forca || 1) + '</span>' +
+          (d.posicao ? '<span style="color:#FFD700;">#' + d.posicao + '</span>' : '') +
+          '</div>';
+      });
+      box.innerHTML = html;
+    } catch (e) {
+      box.innerHTML = '<div style="text-align:center;color:#888;font-size:13px;">—</div>';
+    }
+  }
+
+  async function carregar() {
+    try {
+      email = (localStorage.getItem('emailUtilizador') || localStorage.getItem('email') || '').trim().toLowerCase();
+      if (!email) {
+        alert('Faz login para participar no sorteio.');
+        window.location.href = 'criar-conta.html';
+        return;
+      }
+      var snap = await withTimeout(db.collection('usuarios').where('email', '==', email).limit(1).get(), 6000);
+      if (snap && snap.docs && snap.docs.length) {
+        docRef = snap.docs[0].ref;
+        userData = snap.docs[0].data() || {};
+      }
+      try {
+        var agora = new Date();
+        await db.collection('sorteioCliques').add({
+          email: email,
+          nome: userData.nome || '',
+          dia: agora.toISOString().slice(0, 10),
+          hora: agora.toISOString().slice(11, 16),
+          em: agora.toISOString()
+        });
+        if (docRef) {
+          docRef.update({
+            sorteioClicou: true,
+            sorteioClicouEm: agora.toISOString(),
+            sorteioClicouDia: agora.toISOString().slice(0, 10)
+          }).catch(function () {});
+        }
+      } catch (eC) {}
+
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('conteudo').style.display = 'block';
+      carregarCountdown();
+      carregarMeusBilhetes();
+      carregarRankingSorteados();
+    } catch (e) {
+      document.getElementById('loading').textContent = 'Erro: ' + (e.message || e);
+    }
+  }
+  carregar();
+</script>
+<script>window.__DM_PRESENCA__ = { pagina: 'sorteio', jogando: null };</script>
+<script src="presenca.js?v=1"></script>
+</body>
+</html>
