@@ -369,11 +369,13 @@
       </div>
       <div class="grupo-input">
         <label>Telemóvel (M-Pesa / e-Mola)</label>
-        <input type="tel" id="telemovel-cadastro" placeholder="+258 8X XXX XXXX" autocomplete="tel">
+        <input type="tel" id="telemovel-cadastro" placeholder="84XXXXXXX ou +258 84 XXX XXXX" autocomplete="tel">
+        <small style="display:block;margin-top:5px;font-size:11px;color:#8e9bb8;">Só números de Moçambique (começam por 8)</small>
       </div>
       <div class="grupo-input">
-        <label>E-mail</label>
+        <label>E-mail (só Gmail)</label>
         <input type="email" id="email-cadastro" placeholder="seuemail@gmail.com" autocomplete="email">
+        <small style="display:block;margin-top:5px;font-size:11px;color:#8e9bb8;">Apenas endereços @gmail.com</small>
       </div>
       <div class="grupo-input">
         <label>Criar senha</label>
@@ -568,6 +570,45 @@
     return Math.abs(hash);
   }
 
+  // Só Gmail
+  function emailGmailValido(email) {
+    email = String(email || '').trim().toLowerCase();
+    return /^[a-z0-9._%+-]+@gmail\.com$/.test(email);
+  }
+
+  // Número Moçambique: 8XXXXXXXX | 2588XXXXXXXX | +2588XXXXXXXX
+  function telMozValido(tel) {
+    var t = String(tel || '').replace(/[\s\-\.\(\)]/g, '');
+    if (/^\+2588\d{8}$/.test(t)) return true;
+    if (/^2588\d{8}$/.test(t)) return true;
+    if (/^8\d{8}$/.test(t)) return true;
+    return false;
+  }
+
+  function normalizarTelMoz(tel) {
+    var t = String(tel || '').replace(/[\s\-\.\(\)]/g, '');
+    if (/^\+2588\d{8}$/.test(t)) return t;
+    if (/^2588\d{8}$/.test(t)) return '+' + t;
+    if (/^8\d{8}$/.test(t)) return '+258' + t;
+    return t;
+  }
+
+  // true = link esgotado / bloqueado pelo admin
+  function conviteEsgotado(indData) {
+    if (!indData) return true;
+    if (indData.ocultarConvidar === true) return true;
+    var total = Number(indData.totalConvidados || 0);
+    if (indData.conviteRegrasNovas === true) {
+      var base = Number(indData.convitesBaseNovas);
+      if (isNaN(base)) base = 0;
+      var usados = Math.max(0, total - base);
+      return usados >= 5;
+    }
+    // regras antigas
+    if (indData.convitesExtra === true) return false;
+    return total >= 5;
+  }
+
   // ENTRAR / CADASTRAR COM GOOGLE — cria o utilizador em "usuarios" se ainda não existir
   async function entrarComGoogle() {
     try {
@@ -584,6 +625,9 @@
       var googleUser = resultado.user;
       var email = (googleUser.email || '').trim().toLowerCase();
       if (!email) return mostrarAviso('⚠️ Não foi possível obter o e-mail da conta Google.');
+      if (!emailGmailValido(email)) {
+        return mostrarAviso('⚠️ Só são aceites contas Google com e-mail <b>@gmail.com</b>.');
+      }
 
       var procura = await db.collection('usuarios').where('email', '==', email).limit(1).get();
       var usuario;
@@ -602,11 +646,25 @@
         if (refG) {
           try {
             var indPreG = await db.collection('usuarios').where('codigoIndicacao', '==', refG).limit(1).get();
-            if (!indPreG.empty) regrasConvG = (indPreG.docs[0].data() || {}).conviteRegrasNovas === true;
+            if (!indPreG.empty) {
+              var dPreG = indPreG.docs[0].data() || {};
+              regrasConvG = dPreG.conviteRegrasNovas === true;
+              if (conviteEsgotado(dPreG)) {
+                mostrarAviso('⚠️ Este link de convite já está fora de prazo (máx. 5 amigos). Conta sem bónus de convite.');
+                refG = '';
+                localStorage.removeItem('refPendente');
+              }
+            } else {
+              refG = '';
+              localStorage.removeItem('refPendente');
+            }
           } catch (e) {}
-          ptsIniG = regrasConvG ? 10 : 5;
-          ptsInvG = regrasConvG ? 20 : 10;
-        } else if (infG0) {
+          if (refG) {
+            ptsIniG = regrasConvG ? 10 : 5;
+            ptsInvG = regrasConvG ? 20 : 10;
+          }
+        }
+        if (!refG && infG0) {
           try {
             var infPreG = await db.collection('usuarios').where('codigoInfluencer', '==', infG0).limit(1).get();
             if (!infPreG.empty) regrasInfG = (infPreG.docs[0].data() || {}).influencerRegrasNovas === true;
@@ -630,6 +688,7 @@
           aceitouTermos: true,
           aceitouTermosEm: new Date().toISOString()
         };
+        if (refG) dadosNovo.indicadoPor = refG;
         var infG = (localStorage.getItem('infPendente') || '').trim().toUpperCase();
         if (infG) dadosNovo.indicadoPorInfluencer = infG;
         var novoRef = await db.collection('usuarios').add(dadosNovo);
@@ -639,7 +698,9 @@
             var indSnapG = await db.collection('usuarios').where('codigoIndicacao', '==', refG).limit(1).get();
             if (!indSnapG.empty) {
               var indDataG = indSnapG.docs[0].data() || {};
-              if ((indDataG.email || '').toLowerCase() !== email) {
+              if (conviteEsgotado(indDataG)) {
+                try { await indSnapG.docs[0].ref.update({ ocultarConvidar: true }); } catch (eB) {}
+              } else if ((indDataG.email || '').toLowerCase() !== email) {
                 var ntG = (indDataG.totalConvidados || 0) + 1;
                 var updG = {
                   pontos: (indDataG.pontos || 0) + ptsInvG,
@@ -647,7 +708,8 @@
                   pontosIndicacao: (indDataG.pontosIndicacao || 0) + ptsInvG,
                   ultimaAtualizacao: new Date().toISOString()
                 };
-                if (!regrasConvG && ntG >= 5) {
+                var aposG = Object.assign({}, indDataG, { totalConvidados: ntG });
+                if (conviteEsgotado(aposG)) {
                   updG.ocultarConvidar = true;
                   updG.convitesExtra = false;
                 }
@@ -764,6 +826,13 @@
     var senha = document.getElementById('senha-cadastro').value;
     var btn = document.getElementById('btn-cadastro');
     if (!nome || !telemovel || !email || !senha) return mostrarAviso('⚠️ Preencha todos os campos!');
+    if (!emailGmailValido(email)) {
+      return mostrarAviso('⚠️ Só são aceites e-mails <b>@gmail.com</b> (ex.: nome@gmail.com).');
+    }
+    if (!telMozValido(telemovel)) {
+      return mostrarAviso('⚠️ Só são aceites números de Moçambique: <b>8XXXXXXXX</b> ou <b>+258 8XX XXX XXX</b>.');
+    }
+    telemovel = normalizarTelMoz(telemovel);
     if (senha.length < 6) return mostrarAviso('⚠️ Senha deve ter pelo menos 6 caracteres!');
     var aceito = document.getElementById('aceito-termos');
     if (!aceito || !aceito.checked) return mostrarAviso('⚠️ Tem de aceitar os Termos de Uso para criar conta. Se não concordar, pode sair sem se registar.');
@@ -772,6 +841,13 @@
     mostrarAviso('⏳ A processar...', 'sucesso');
     try {
       var telExiste = await db.collection('usuarios').where('telemovel', '==', telemovel).limit(1).get();
+      if (telExiste.empty) {
+        // também procura formato antigo sem +258
+        var telAlt = telemovel.replace(/^\+258/, '');
+        if (telAlt !== telemovel) {
+          telExiste = await db.collection('usuarios').where('telemovel', '==', telAlt).limit(1).get();
+        }
+      }
       var emailExiste = await db.collection('usuarios').where('email', '==', email).limit(1).get();
       if (!telExiste.empty || !emailExiste.empty) {
         btn.disabled = false;
@@ -788,16 +864,34 @@
       var ptsInviter = 10; // default antigo
       var regrasConviteNovas = false;
       var regrasInfNovas = false;
+      var refEsgotado = false;
+      var indPreRef = null;
+      var indPreData = null;
       if (refCodigo) {
         try {
           var indPre = await db.collection('usuarios').where('codigoIndicacao', '==', refCodigo).limit(1).get();
           if (!indPre.empty) {
-            var indPreData = indPre.docs[0].data() || {};
+            indPreRef = indPre.docs[0].ref;
+            indPreData = indPre.docs[0].data() || {};
             regrasConviteNovas = indPreData.conviteRegrasNovas === true;
+            if (conviteEsgotado(indPreData)) {
+              refEsgotado = true;
+            }
+          } else {
+            // código inválido
+            refEsgotado = true;
           }
         } catch (eP) {}
-        ptsNovo = regrasConviteNovas ? 10 : 5;
-        ptsInviter = regrasConviteNovas ? 20 : 10;
+        if (refEsgotado) {
+          // link fora de prazo: conta sem bónus de convite
+          mostrarAviso('⚠️ Este link de convite já atingiu o máximo de 5 amigos ou está bloqueado — está <b>fora de prazo</b>. A conta será criada sem bónus de convite.');
+          refCodigo = '';
+          localStorage.removeItem('refPendente');
+          ptsNovo = 0;
+        } else {
+          ptsNovo = regrasConviteNovas ? 10 : 5;
+          ptsInviter = regrasConviteNovas ? 20 : 10;
+        }
       }
       if (infCodigo) {
         try {
@@ -828,8 +922,12 @@
           var indSnap = await db.collection('usuarios').where('codigoIndicacao', '==', refCodigo).limit(1).get();
           if (!indSnap.empty) {
             var indRef = indSnap.docs[0].ref;
-            var indData = indSnap.docs[0].data();
-            if ((indData.email || '').toLowerCase() !== email) {
+            var indData = indSnap.docs[0].data() || {};
+            // Revalida no momento do crédito (evita passar do máximo)
+            if (conviteEsgotado(indData)) {
+              // não credita — já esgotado
+              try { await indRef.update({ ocultarConvidar: true, ultimaAtualizacao: new Date().toISOString() }); } catch (eB) {}
+            } else if ((indData.email || '').toLowerCase() !== email) {
               var novoTotal = (indData.totalConvidados || 0) + 1;
               var updInd = {
                 pontos: (indData.pontos || 0) + ptsInviter,
@@ -837,8 +935,11 @@
                 pontosIndicacao: (indData.pontosIndicacao || 0) + ptsInviter,
                 ultimaAtualizacao: new Date().toISOString()
               };
-              // Limite 5 só se NÃO actualizou regras
-              if (!regrasConviteNovas && novoTotal >= 5) {
+              // Após este convite, se atingiu 5 → bloqueia o link
+              var dataApos = Object.assign({}, indData, { totalConvidados: novoTotal });
+              if (conviteEsgotado(dataApos) || (indData.conviteRegrasNovas === true
+                  ? (Math.max(0, novoTotal - (Number(indData.convitesBaseNovas) || 0)) >= 5)
+                  : (novoTotal >= 5 && indData.convitesExtra !== true))) {
                 updInd.ocultarConvidar = true;
                 updInd.convitesExtra = false;
               }
