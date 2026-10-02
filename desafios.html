@@ -754,8 +754,39 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
     }
 
     
+    function mostrarAvisoContaBloqueada(motivo) {
+        if (document.getElementById('dm-blk-conta')) return;
+        if (!document.getElementById('dm-blk-conta-css')) {
+            var st = document.createElement('style');
+            st.id = 'dm-blk-conta-css';
+            st.textContent =
+                '#dm-blk-conta{position:fixed;inset:0;z-index:1000000;background:rgba(4,6,12,.95);display:flex;align-items:center;justify-content:center;padding:18px;backdrop-filter:blur(8px);}' +
+                '#dm-blk-conta .card{max-width:420px;width:100%;border-radius:20px;padding:24px 18px;background:linear-gradient(160deg,#1a1020,#0d1218);border:2px solid rgba(255,80,80,.7);box-shadow:0 0 50px rgba(255,60,60,.45);text-align:center;}' +
+                '#dm-blk-conta .ico{width:64px;height:64px;margin:0 auto 14px;border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:32px;background:linear-gradient(135deg,#ff3b5c,#ff8a5c);}' +
+                '#dm-blk-conta h3{margin:0 0 12px;color:#ff6b6b;font-size:19px;font-weight:800;}' +
+                '#dm-blk-conta p{margin:0 0 12px;color:#d5dbe8;font-size:14px;line-height:1.55;text-align:left;}' +
+                '#dm-blk-conta .mot{font-size:12px;color:#ffab40;margin:0 0 14px;padding:10px;background:rgba(255,171,64,.1);border:1px solid rgba(255,171,64,.3);border-radius:12px;text-align:left;}' +
+                '#dm-blk-conta a.wa{display:inline-block;margin-top:8px;padding:14px 20px;border-radius:14px;background:linear-gradient(90deg,#25D366,#128C7E);color:#fff;font-weight:800;text-decoration:none;font-size:15px;box-shadow:0 6px 20px rgba(37,211,102,.4);}' +
+                '#dm-blk-conta .aviso-final{margin-top:16px;font-size:13px;color:#ff8a80;line-height:1.45;font-weight:600;}';
+            document.head.appendChild(st);
+        }
+        var box = document.createElement('div');
+        box.id = 'dm-blk-conta';
+        box.innerHTML =
+            '<div class="card">' +
+              '<div class="ico">🔒</div>' +
+              '<h3>Conta bloqueada</h3>' +
+              '<p>A tua conta foi <b>bloqueada</b> no Desafio MOZ por violação dos <b>Termos de Uso</b> e/ou da <b>Política de Privacidade</b>.</p>' +
+              (motivo ? '<div class="mot"><b>Motivo:</b> ' + String(motivo).replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div>' : '') +
+              '<p>Para voltares a usar o site, tens de <b>entrar em contacto com o agente</b> do Desafio MOZ no WhatsApp e explicar a situação.</p>' +
+              '<a class="wa" href="https://wa.link/64y9y2" target="_blank" rel="noopener">💬 Contactar agente WhatsApp</a>' +
+              '<div class="aviso-final">Só o agente / administração pode desbloquear a conta.</div>' +
+            '</div>';
+        document.body.appendChild(box);
+    }
+
     function mostrarAvisoJogosBloqueado(motivo) {
-        if (document.getElementById('dm-blk-jogos')) return;
+        if (document.getElementById('dm-blk-jogos') || document.getElementById('dm-blk-conta')) return;
         if (!document.getElementById('dm-blk-jogos-css')) {
             var st = document.createElement('style');
             st.id = 'dm-blk-jogos-css';
@@ -800,19 +831,45 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
         var pontos = parseInt(localStorage.getItem('pontosUtilizador') || '0', 10);
         atualizarPontosUI(pontos);
 
-        // Sincroniza com Firebase
+        // Sincroniza com Firebase (procura robusta do utilizador)
         if (emailUtilizador && emailUtilizador !== '—') {
             try {
-                var snap = await db.collection('usuarios').where('email', '==', emailUtilizador).limit(1).get();
-                if (snap.empty) {
-                    var emailNorm = String(emailUtilizador).trim().toLowerCase();
-                    if (emailNorm !== emailUtilizador) {
-                        snap = await db.collection('usuarios').where('email', '==', emailNorm).limit(1).get();
-                    }
+                var emailRaw = String(emailUtilizador).trim();
+                var emailNorm = emailRaw.toLowerCase();
+                var u = null;
+                var uref = null;
+
+                // 1) Query por email exacto e normalizado
+                var snap = await db.collection('usuarios').where('email', '==', emailRaw).limit(1).get();
+                if (snap.empty && emailNorm !== emailRaw) {
+                    snap = await db.collection('usuarios').where('email', '==', emailNorm).limit(1).get();
                 }
                 if (!snap.empty) {
-                    docRef = snap.docs[0].ref;
-                    var u = snap.docs[0].data();
+                    uref = snap.docs[0].ref;
+                    u = snap.docs[0].data() || {};
+                }
+
+                // 2) Doc id = email
+                if (!u) {
+                    var d1 = await db.collection('usuarios').doc(emailNorm).get();
+                    if (d1.exists) { uref = d1.ref; u = d1.data() || {}; }
+                }
+                if (!u && emailRaw !== emailNorm) {
+                    var d2 = await db.collection('usuarios').doc(emailRaw).get();
+                    if (d2.exists) { uref = d2.ref; u = d2.data() || {}; }
+                }
+
+                // 3) localStorage pode guardar o id do doc
+                if (!u) {
+                    var idGuardado = localStorage.getItem('userId') || localStorage.getItem('uidUtilizador') || '';
+                    if (idGuardado) {
+                        var d3 = await db.collection('usuarios').doc(idGuardado).get();
+                        if (d3.exists) { uref = d3.ref; u = d3.data() || {}; }
+                    }
+                }
+
+                if (u && uref) {
+                    docRef = uref;
                     userDataCache = u;
                     if (u.pontos != null) atualizarPontosUI(u.pontos);
                     if (u.desafioYoutubeCompleto === true) {
@@ -820,7 +877,10 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
                         var cardYt = document.getElementById('card-youtube');
                         if (cardYt) cardYt.style.display = 'none';
                     }
-                    if (u.jogosBloqueado === true) {
+                    // Bloqueio de conta (termos / privacidade) — prioridade máxima
+                    if (u.contaBloqueada === true || u.contaBloqueada === 'true' || u.contaBloqueada === 1) {
+                        mostrarAvisoContaBloqueada(u.contaBloqueadaMotivo || '');
+                    } else if (u.jogosBloqueado === true || u.jogosBloqueado === 'true' || u.jogosBloqueado === 1) {
                         mostrarAvisoJogosBloqueado(u.jogosBloqueadoMotivo || '');
                     }
                 }

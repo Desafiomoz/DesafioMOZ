@@ -246,6 +246,7 @@
     <button class="tab" data-tab="email-massa" onclick="mudarTab('email-massa')"><i class="fas fa-envelope"></i> E-mail em massa</button>
     <button class="tab" data-tab="senhas" onclick="mudarTab('senhas')"><i class="fas fa-key"></i> Senhas <span class="badge" id="badge-senhas">0</span></button>
     <button class="tab" data-tab="termos" onclick="mudarTab('termos')"><i class="fas fa-file-contract"></i> Termos</button>
+    <button class="tab" data-tab="bloq-conta" onclick="mudarTab('bloq-conta'); try{carregarContasBloqueadas();}catch(e){}"><i class="fas fa-user-slash"></i> Bloqueio conta</button>
     <button class="tab" data-tab="upgrades" onclick="mudarTab('upgrades'); carregarEmolaUpgrades(); try{carregarBloqueadosUpg();}catch(e){}"><i class="fas fa-rocket"></i> Aumento ganhos</button>
     <button class="tab" data-tab="pag-manual" onclick="mudarTab('pag-manual'); carregarPagManualHist()"><i class="fas fa-hand-holding-usd"></i> Pag. manual</button>
     <button class="tab" data-tab="hj-compras" onclick="mudarTab('hj-compras'); carregarHjCompras()"><i class="fas fa-undo-alt"></i> Homejub compras</button>
@@ -1891,6 +1892,65 @@
             </thead>
             <tbody id="tbody-termos">
               <tr><td colspan="5" class="vazio">A carregar...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- BLOQUEIO DE CONTA (Termos / Privacidade) -->
+    <div class="painel" id="painel-bloq-conta">
+      <div class="form-box" style="border:1px solid rgba(255,107,107,0.35);">
+        <h3><i class="fas fa-user-slash"></i> Bloquear conta — Termos e Política de Privacidade</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:12px;line-height:1.45;">
+          Se o utilizador <strong>violar os Termos de Uso</strong> ou a <strong>Política de Privacidade</strong>,
+          bloqueia a conta. Ele deixa de usar o Desafio MOZ até contactar o agente no WhatsApp
+          (<a href="https://wa.link/64y9y2" target="_blank" style="color:#25D366;">wa.link/64y9y2</a>) e seres tu a desbloquear.
+        </p>
+        <div class="form-grid">
+          <div class="form-row">
+            <label>E-mail do utilizador</label>
+            <input type="email" id="bloq-conta-email" placeholder="email@exemplo.com">
+          </div>
+          <div class="form-row">
+            <label>Motivo / tipo de violação</label>
+            <select id="bloq-conta-tipo">
+              <option value="termos">Violação dos Termos de Uso</option>
+              <option value="privacidade">Violação da Política de Privacidade</option>
+              <option value="ambos">Termos e Política de Privacidade</option>
+              <option value="outro">Outro abuso de confiança</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <label>Detalhe (opcional — aparece ao utilizador)</label>
+          <input type="text" id="bloq-conta-motivo" placeholder="Ex.: Conteúdo ofensivo, spam, dados falsos…">
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;">
+          <button type="button" class="btn-vermelho" style="width:auto;padding:12px 18px;border-radius:10px;" onclick="bloquearContaEmail()">🚫 Bloquear conta</button>
+          <button type="button" class="btn-verde" style="width:auto;padding:12px 18px;" onclick="desbloquearContaEmail()">✅ Desbloquear conta</button>
+        </div>
+      </div>
+
+      <div class="form-box">
+        <h3><i class="fas fa-ban"></i> Contas bloqueadas agora</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:10px;">Lista de quem tem a conta bloqueada. Podes desbloquear directamente na tabela.</p>
+        <button type="button" class="btn-verde" style="width:auto;margin-bottom:12px;" onclick="carregarContasBloqueadas()">🔄 Actualizar lista</button>
+        <div class="tabela-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Nome</th>
+                <th>E-mail</th>
+                <th>Tipo</th>
+                <th>Motivo</th>
+                <th>Desde</th>
+                <th>Acção</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-contas-bloqueadas">
+              <tr><td colspan="7" class="vazio">Clica em Actualizar lista.</td></tr>
             </tbody>
           </table>
         </div>
@@ -8084,13 +8144,57 @@ async function carregarBonus100() {
     };
 
     async function encontrarUserRefPorEmail(email) {
-      email = String(email || '').trim().toLowerCase();
-      if (!email) return null;
-      var snap = await db.collection('usuarios').where('email', '==', email).limit(1).get();
-      if (!snap.empty) return snap.docs[0].ref;
-      // fallback: doc id = email
-      var d = await db.collection('usuarios').doc(email).get();
-      if (d.exists) return d.ref;
+      var raw = String(email || '').trim();
+      var emailLow = raw.toLowerCase();
+      if (!emailLow) return null;
+
+      // 1) Cache local (todosUsers)
+      try {
+        if (typeof todosUsers !== 'undefined' && Array.isArray(todosUsers)) {
+          for (var i = 0; i < todosUsers.length; i++) {
+            var u = todosUsers[i];
+            if (u && u._ref && String(u.email || '').trim().toLowerCase() === emailLow) {
+              return u._ref;
+            }
+            if (u && u._id && String(u.email || '').trim().toLowerCase() === emailLow) {
+              return db.collection('usuarios').doc(u._id);
+            }
+          }
+        }
+      } catch (e0) {}
+
+      // 2) Query exacta (minúsculas e original)
+      try {
+        var snap = await db.collection('usuarios').where('email', '==', emailLow).limit(1).get();
+        if (!snap.empty) return snap.docs[0].ref;
+        if (raw !== emailLow) {
+          snap = await db.collection('usuarios').where('email', '==', raw).limit(1).get();
+          if (!snap.empty) return snap.docs[0].ref;
+        }
+      } catch (e1) {}
+
+      // 3) Doc id = email
+      try {
+        var d = await db.collection('usuarios').doc(emailLow).get();
+        if (d.exists) return d.ref;
+        if (raw !== emailLow) {
+          d = await db.collection('usuarios').doc(raw).get();
+          if (d.exists) return d.ref;
+        }
+      } catch (e2) {}
+
+      // 4) Percorre coleção (último recurso — contas com case diferente)
+      try {
+        var todos = await db.collection('usuarios').limit(2000).get();
+        var found = null;
+        todos.forEach(function (doc) {
+          if (found) return;
+          var em = String((doc.data() || {}).email || '').trim().toLowerCase();
+          if (em === emailLow) found = doc.ref;
+        });
+        if (found) return found;
+      } catch (e3) {}
+
       return null;
     }
 
@@ -8669,6 +8773,135 @@ async function carregarBonus100() {
       } catch (e) {
         alert('Erro: ' + (e.message || e));
       }
+    }
+
+    function _actualizarCacheUserBloqueio(email, patch) {
+      email = String(email || '').trim().toLowerCase();
+      try {
+        if (typeof todosUsers !== 'undefined' && Array.isArray(todosUsers)) {
+          todosUsers.forEach(function (u) {
+            if (String(u.email || '').trim().toLowerCase() === email) {
+              Object.keys(patch).forEach(function (k) {
+                if (patch[k] === null) delete u[k];
+                else u[k] = patch[k];
+              });
+            }
+          });
+        }
+      } catch (e) {}
+    }
+
+    async function bloquearContaEmail() {
+      var email = (document.getElementById('bloq-conta-email') && document.getElementById('bloq-conta-email').value || '').trim().toLowerCase();
+      var tipo = (document.getElementById('bloq-conta-tipo') && document.getElementById('bloq-conta-tipo').value) || 'termos';
+      var detalhe = (document.getElementById('bloq-conta-motivo') && document.getElementById('bloq-conta-motivo').value || '').trim();
+      if (!email || email.indexOf('@') === -1) return alert('E-mail inválido.');
+      var tipoLbl = {
+        termos: 'Violação dos Termos de Uso',
+        privacidade: 'Violação da Política de Privacidade',
+        ambos: 'Violação dos Termos e da Política de Privacidade',
+        outro: 'Abuso de confiança / violação das regras do site'
+      }[tipo] || 'Violação dos Termos de Uso';
+      var motivo = detalhe ? (tipoLbl + ': ' + detalhe) : tipoLbl;
+      if (!confirm('Bloquear a CONTA de ' + email + '?\n\n' + motivo + '\n\nO utilizador deixa de usar o Desafio MOZ até contactar o agente e seres tu a desbloquear.')) return;
+      try {
+        var uref = await encontrarUserRefPorEmail(email);
+        if (!uref) {
+          return alert('Utilizador não encontrado: ' + email + '\n\nConfirma o e-mail exacto na aba Utilizadores.');
+        }
+        var payload = {
+          contaBloqueada: true,
+          contaBloqueadaEm: new Date().toISOString(),
+          contaBloqueadaMotivo: motivo,
+          contaBloqueadaTipo: tipo,
+          ultimaAtualizacao: new Date().toISOString()
+        };
+        try {
+          await uref.update(payload);
+        } catch (eUp) {
+          // fallback merge se update falhar
+          await uref.set(payload, { merge: true });
+        }
+        _actualizarCacheUserBloqueio(email, payload);
+        if (typeof mostrarAviso === 'function') mostrarAviso('Conta bloqueada: ' + email);
+        else alert('Conta bloqueada: ' + email);
+        carregarContasBloqueadas();
+      } catch (e) {
+        alert('Erro ao bloquear: ' + (e.message || e) + '\n\nSe disser "permission denied", as regras do Firebase estão a bloquear a escrita.');
+      }
+    }
+
+    async function desbloquearContaEmail(emailArg) {
+      var email = (emailArg || (document.getElementById('bloq-conta-email') && document.getElementById('bloq-conta-email').value) || '').trim().toLowerCase();
+      if (!email || email.indexOf('@') === -1) return alert('E-mail inválido.');
+      if (!confirm('Desbloquear a conta de ' + email + '?\nVolta a poder usar o Desafio MOZ normalmente.')) return;
+      try {
+        var uref = await encontrarUserRefPorEmail(email);
+        if (!uref) return alert('Utilizador não encontrado: ' + email);
+        var payload = {
+          contaBloqueada: false,
+          contaBloqueadaEm: null,
+          contaBloqueadaMotivo: null,
+          contaBloqueadaTipo: null,
+          contaDesbloqueadaEm: new Date().toISOString(),
+          ultimaAtualizacao: new Date().toISOString()
+        };
+        try {
+          await uref.update({
+            contaBloqueada: false,
+            contaBloqueadaEm: firebase.firestore.FieldValue.delete(),
+            contaBloqueadaMotivo: firebase.firestore.FieldValue.delete(),
+            contaBloqueadaTipo: firebase.firestore.FieldValue.delete(),
+            contaDesbloqueadaEm: payload.contaDesbloqueadaEm,
+            ultimaAtualizacao: payload.ultimaAtualizacao
+          });
+        } catch (eUp) {
+          await uref.set({
+            contaBloqueada: false,
+            contaDesbloqueadaEm: payload.contaDesbloqueadaEm,
+            ultimaAtualizacao: payload.ultimaAtualizacao
+          }, { merge: true });
+        }
+        _actualizarCacheUserBloqueio(email, payload);
+        if (typeof mostrarAviso === 'function') mostrarAviso('Conta desbloqueada: ' + email);
+        else alert('Conta desbloqueada: ' + email);
+        carregarContasBloqueadas();
+      } catch (e) {
+        alert('Erro ao desbloquear: ' + (e.message || e));
+      }
+    }
+
+    function carregarContasBloqueadas() {
+      var tbody = document.getElementById('tbody-contas-bloqueadas');
+      if (!tbody) return;
+      var users = (typeof todosUsers !== 'undefined' ? todosUsers : []).filter(function (u) {
+        return u.contaBloqueada === true;
+      });
+      users.sort(function (a, b) {
+        return String(b.contaBloqueadaEm || '').localeCompare(String(a.contaBloqueadaEm || ''));
+      });
+      if (!users.length) {
+        tbody.innerHTML = '<tr><td colspan="7" class="vazio">Nenhuma conta bloqueada por termos/privacidade.</td></tr>';
+        return;
+      }
+      var html = '';
+      users.forEach(function (u, i) {
+        var em = String(u.email || '').toLowerCase();
+        var emSafe = em.replace(/'/g, "\\'");
+        var quando = u.contaBloqueadaEm || '—';
+        if (quando !== '—' && String(quando).length > 19) quando = String(quando).replace('T', ' ').slice(0, 19);
+        var tipo = u.contaBloqueadaTipo || 'termos';
+        html += '<tr>' +
+          '<td>' + (i + 1) + '</td>' +
+          '<td>' + escHtml(u.nome || '—') + '</td>' +
+          '<td>' + escHtml(em) + '</td>' +
+          '<td><span class="status-tag status-bloqueado">' + escHtml(tipo) + '</span></td>' +
+          '<td style="font-size:12px;max-width:220px;">' + escHtml(u.contaBloqueadaMotivo || '—') + '</td>' +
+          '<td style="font-size:11px;white-space:nowrap;">' + escHtml(quando) + '</td>' +
+          '<td><button type="button" class="btn-verde" onclick="desbloquearContaEmail(\'' + emSafe + '\')">✅ Desbloquear</button></td>' +
+          '</tr>';
+      });
+      tbody.innerHTML = html;
     }
 
     async function bloquearJogosEmail(email, motivo, origem) {
