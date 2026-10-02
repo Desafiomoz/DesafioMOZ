@@ -592,6 +592,19 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
             });
         }
 
+        // 24 horas em milissegundos (espera entre lotes de pesquisas)
+        var UM_DIA_MS = 24 * 60 * 60 * 1000;
+        var MAX_PROG_POR_LOTE = 4;
+
+        function passou24Horas(iso) {
+            if (!iso) return false;
+            try {
+                var d = new Date(iso);
+                if (isNaN(d.getTime())) return false;
+                return (Date.now() - d.getTime()) >= UM_DIA_MS;
+            } catch (e) { return false; }
+        }
+
         // Novas pesquisas do Admin só após 10 horas do cadastro (utilizador novo)
         function passou10Horas(dataCadastro) {
             if (!dataCadastro) return true;
@@ -628,9 +641,9 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
 
         // Pesquisas do Admin:
         // 1) Só depois das 4 fixas concluídas
-        // 2) Utilizador NOVO: só após 10 horas do cadastro
-        // 3) Utilizador ANTIGO: vê até 4 de imediato (mesmo que o Admin tenha criado várias no mesmo dia).
-        //    As restantes (5ª, 6ª, 7ª...) só ficam disponíveis 10 horas depois da dataHora da pesquisa.
+        // 2) Depois de terminar as 4 fixas → espera 24 horas
+        // 3) Aparecem no máximo 4 programadas por vez
+        // 4) Ao terminar esse lote → espera mais 24 horas para o próximo lote
         async function carregarPesquisasProgramadas(u) {
             var zona = document.getElementById('lista-pesquisas');
             if (!zona) return;
@@ -670,7 +683,38 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
                 return;
             }
 
-            // Só o que ESTE utilizador já fez (documento Firebase dele).
+            // Grava quando terminou as 4 fixas (1.ª vez)
+            var fixasEm = u && u.pesquisasFixasCompletasEm;
+            if (u && u._ref && !fixasEm) {
+                // Contas antigas (cadastro > 2 dias): não bloquear 24h de novo
+                var cadastroAntigo = false;
+                try {
+                    if (u.dataCadastro && (Date.now() - new Date(u.dataCadastro).getTime()) > 2 * UM_DIA_MS) {
+                        cadastroAntigo = true;
+                    }
+                } catch (e0) {}
+                fixasEm = cadastroAntigo
+                    ? new Date(Date.now() - UM_DIA_MS - 60000).toISOString()
+                    : new Date().toISOString();
+                try {
+                    await u._ref.update({ pesquisasFixasCompletasEm: fixasEm });
+                    u.pesquisasFixasCompletasEm = fixasEm;
+                } catch (e1) {}
+            }
+
+            // 3) Após as 4 fixas → esperar 24 horas
+            if (fixasEm && !passou24Horas(fixasEm)) {
+                console.log('[Desafio MOZ] Programadas bloqueadas: aguarde 24h após terminar as 4 pesquisas fixas.');
+                atualizarMsgIndisponivel();
+                return;
+            }
+            if (!fixasEm) {
+                // Sem Firebase / sem data: não mostra programadas até haver registo
+                atualizarMsgIndisponivel();
+                return;
+            }
+
+            // Só o que ESTE utilizador já fez
             var feitas = {};
             if (u && u.pesquisasProgramadasFeitas && typeof u.pesquisasProgramadasFeitas === 'object') {
                 Object.keys(u.pesquisasProgramadasFeitas).forEach(function (k) {
@@ -684,17 +728,12 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
                     });
                 } catch (e) {}
             }
-
-            // Remove chave global antiga (bug)
             try { localStorage.removeItem('pesquisasProgFeitas'); } catch (e) {}
 
             try {
                 var snap = await db.collection('pesquisasProgramadas').get();
                 var agoraMs = Date.now();
-                var DEZ_HORAS = 10 * 60 * 60 * 1000;
-                var MAX_VISIVEIS = 4;
 
-                // Lista completa de pesquisas ativas (ordenadas por dataHora)
                 var todasAtivas = [];
                 snap.forEach(function (doc) {
                     var p = doc.data();
@@ -706,46 +745,41 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
                     p._dtMs = dt.getTime();
                     todasAtivas.push(p);
                 });
-                todasAtivas.sort(function (a, b) {
-                    return a._dtMs - b._dtMs;
-                });
+                todasAtivas.sort(function (a, b) { return a._dtMs - b._dtMs; });
 
-                // Filtra as que o utilizador ainda NÃO fez e cuja data já passou
-                // Regra especial:
-                //   - As primeiras 4 (por ordem de data) ficam disponíveis assim que dataHora <= agora
-                //   - A partir da 5ª, só ficam disponíveis 10 horas DEPOIS da sua dataHora
-                //   Assim, se o Admin criar 7 no mesmo dia, o utilizador antigo vê 4 de imediato
-                //   e as outras 3 só 10 horas depois.
-                var elegiveis = [];
-                var indiceGlobal = 0; // posição entre as ativas com data já passada (incluindo as já feitas)
+                // Só as que já "nasceram" (dataHora <= agora)
+                var nascidas = todasAtivas.filter(function (p) { return p._dtMs <= agoraMs; });
+                var nFeitas = 0;
+                nascidas.forEach(function (p) { if (feitas[p._id]) nFeitas++; });
 
-                todasAtivas.forEach(function (p) {
-                    // Ainda não chegou a hora de aparição base
-                    if (p._dtMs > agoraMs) return;
+                // Lote actual: blocos de 4 (0–3, 4–7, …)
+                var batchStart = Math.floor(nFeitas / MAX_PROG_POR_LOTE) * MAX_PROG_POR_LOTE;
 
-                    // Conta a posição desta pesquisa entre as que já "nasceram"
-                    var posicao = indiceGlobal;
-                    indiceGlobal++;
-
-                    // Já concluída por este utilizador → não mostra, mas conta na posição
-                    if (feitas[p._id]) return;
-
-                    // Primeiras 4: disponíveis de imediato
-                    // A partir da 5ª: só após dataHora + 10 horas
-                    if (posicao < 4) {
-                        elegiveis.push(p);
-                    } else {
-                        if (agoraMs >= p._dtMs + DEZ_HORAS) {
-                            elegiveis.push(p);
-                        }
+                // Se acabou um lote completo (0, 4, 8…), espera 24h desde a última programada concluída
+                var ultimaProgEm = (u && u.ultimaPesquisaProgEm) || null;
+                if (nFeitas > 0 && (nFeitas % MAX_PROG_POR_LOTE === 0)) {
+                    if (ultimaProgEm && !passou24Horas(ultimaProgEm)) {
+                        console.log('[Desafio MOZ] Próximo lote de programadas em 24h após a última concluída.');
+                        atualizarMsgIndisponivel();
+                        return;
                     }
-                });
+                    // Sem data da última: contas antigas — libertar
+                    if (!ultimaProgEm && nFeitas >= MAX_PROG_POR_LOTE) {
+                        // manter batchStart; utilizador já fez o 1.º lote há tempo
+                    }
+                }
 
-                // Mostra no máximo 4
+                // Dentro do lote: mostrar as não feitas desse intervalo (máx. 4)
+                var elegiveis = [];
+                for (var i = batchStart; i < nascidas.length && i < batchStart + MAX_PROG_POR_LOTE; i++) {
+                    var item = nascidas[i];
+                    if (feitas[item._id]) continue;
+                    elegiveis.push(item);
+                }
+
                 var adicionadas = 0;
                 elegiveis.forEach(function (p) {
-                    if (adicionadas >= MAX_VISIVEIS) return;
-
+                    if (adicionadas >= MAX_PROG_POR_LOTE) return;
                     var card = document.createElement('div');
                     card.className = 'tarefa-card pesq-programada';
                     card.id = 'card-prog-' + p._id;
@@ -762,7 +796,7 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
                     zona.appendChild(card);
                     adicionadas++;
                 });
-                console.log('[Desafio MOZ] Pesquisas programadas visíveis:', adicionadas, '| elegíveis:', elegiveis.length, '| total ativas:', todasAtivas.length);
+                console.log('[Desafio MOZ] Programadas visíveis:', adicionadas, '| lote a partir de', batchStart, '| feitas', nFeitas);
             } catch (e) {
                 console.warn('Pesquisas programadas:', e);
             }
@@ -846,7 +880,8 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
                 try {
                     var encontrado = await encontrarUtilizadorPorEmail(email);
                     if (encontrado) {
-                        userData = encontrado.data;
+                        userData = encontrado.data || {};
+                        userData._ref = encontrado.ref;
                         actualizarCheckinTarefas(userData);
 
                         // Convites bloqueados ou limite de 5: NÃO esconde o card — mostra mensagem

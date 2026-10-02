@@ -172,9 +172,11 @@
         feitas[pesquisaId] = true;
 
         // Atualiza APENAS o documento DESTE utilizador (nunca a pesquisa global)
+        // ultimaPesquisaProgEm → tarefas espera 24h antes do próximo lote
         await docRef.update({
           pontos: pts,
           pesquisasProgramadasFeitas: feitas,
+          ultimaPesquisaProgEm: new Date().toISOString(),
           ultimaAtualizacao: new Date().toISOString()
         });
 
