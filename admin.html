@@ -877,15 +877,19 @@
         </table>
       </div>
       <h3 style="color:#00e676;font-size:14px;margin:20px 0 10px;"><i class="fas fa-link"></i> Quem convidou quem</h3>
+      <p style="font-size:12px;color:#888;margin-bottom:10px;line-height:1.45;">
+        Podes <strong>apagar</strong> um convite: o convidado deixa de estar ligado ao código e o contador de convites do convidador
+        <strong>diminui 1</strong> (reflecte na página Convidar). Os pontos de indicação desse convite também são retirados ao convidador.
+      </p>
       <div class="tabela-wrap">
         <table>
           <thead>
             <tr>
               <th>#</th><th>Convidado</th><th>E-mail</th><th>Pontos</th><th>Código do convidador</th>
-              <th>Convidador</th><th>Cadastro</th>
+              <th>Convidador</th><th>Cadastro</th><th>Ações</th>
             </tr>
           </thead>
-          <tbody id="tbody-convites-relacoes"><tr><td colspan="7" class="vazio">A carregar...</td></tr></tbody>
+          <tbody id="tbody-convites-relacoes"><tr><td colspan="8" class="vazio">A carregar...</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -6672,7 +6676,7 @@ async function enviarNotifAdmin() {
           return String(b.dataCadastro || '').localeCompare(String(a.dataCadastro || ''));
         });
         if (!rels.length) {
-          tbodyRel.innerHTML = '<tr><td colspan="7" class="vazio">Nenhuma relação de convite registada.</td></tr>';
+          tbodyRel.innerHTML = '<tr><td colspan="8" class="vazio">Nenhuma relação de convite registada.</td></tr>';
         } else {
           var hr = '';
           rels.forEach(function (u, i) {
@@ -6681,6 +6685,7 @@ async function enviarNotifAdmin() {
             var nomeConv = conv ? (conv.nome || conv.email) : '—';
             var dataCad = u.dataCadastro || u.criadoEm || '—';
             if (dataCad !== '—' && dataCad.length > 10) dataCad = dataCad.substring(0, 10);
+            var emConv = String(u.email || '').toLowerCase().replace(/'/g, "\\'");
             hr += '<tr data-busca="' + escHtml((u.nome || '') + ' ' + (u.email || '') + ' ' + cod + ' ' + nomeConv).toLowerCase() + '">' +
               '<td>' + (i + 1) + '</td>' +
               '<td>' + escHtml(u.nome || '—') + '</td>' +
@@ -6689,10 +6694,87 @@ async function enviarNotifAdmin() {
               '<td><code>' + escHtml(cod || '—') + '</code></td>' +
               '<td>' + escHtml(nomeConv) + '</td>' +
               '<td>' + escHtml(dataCad) + '</td>' +
+              '<td><button type="button" class="btn-vermelho" onclick="apagarRelacaoConvite(\'' + emConv + '\')">🗑 Apagar convite</button></td>' +
               '</tr>';
           });
           tbodyRel.innerHTML = hr;
         }
+      }
+    }
+
+    /**
+     * Apaga a relação de convite:
+     * - remove indicadoPor do convidado
+     * - diminui totalConvidados (e pontosIndicacao) do convidador
+     * - reflecte na página Convidar do utilizador
+     */
+    async function apagarRelacaoConvite(emailConvidado) {
+      emailConvidado = String(emailConvidado || '').trim().toLowerCase();
+      if (!emailConvidado || emailConvidado.indexOf('@') === -1) return alert('E-mail do convidado inválido.');
+      if (!confirm('Apagar este convite?\n\n• O convidado (' + emailConvidado + ') deixa de estar ligado ao código.\n• O contador de convites do convidador diminui 1.\n• Os pontos de indicação desse convite são retirados ao convidador.\n\nIsto não apaga a conta do convidado.')) return;
+      try {
+        var uref = await encontrarUserRefPorEmail(emailConvidado);
+        if (!uref) return alert('Convidado não encontrado: ' + emailConvidado);
+        var snapC = await uref.get();
+        if (!snapC.exists) return alert('Convidado não encontrado.');
+        var dadosC = snapC.data() || {};
+        var codigo = String(dadosC.indicadoPor || '').trim().toUpperCase();
+        if (!codigo) return alert('Este utilizador já não tem indicadoPor (relação já apagada).');
+
+        // 1) limpa ligação no convidado
+        await uref.update({
+          indicadoPor: firebase.firestore.FieldValue.delete(),
+          conviteRemovidoEm: new Date().toISOString(),
+          conviteRemovidoCodigo: codigo,
+          ultimaAtualizacao: new Date().toISOString()
+        });
+
+        // 2) diminui contagem no convidador
+        var indSnap = await db.collection('usuarios').where('codigoIndicacao', '==', codigo).limit(1).get();
+        if (!indSnap.empty) {
+          var indRef = indSnap.docs[0].ref;
+          var ind = indSnap.docs[0].data() || {};
+          var total = Math.max(0, (Number(ind.totalConvidados) || 0) - 1);
+          // pontos desse convite: 20 se regras novas, senão 10
+          var ptsConvite = ind.conviteRegrasNovas === true ? 20 : 10;
+          var ptsInd = Math.max(0, (Number(ind.pontosIndicacao) || 0) - ptsConvite);
+          var ptsCarteira = Math.max(0, (Number(ind.pontos) || 0) - ptsConvite);
+          var upd = {
+            totalConvidados: total,
+            pontosIndicacao: ptsInd,
+            pontos: ptsCarteira,
+            ultimaAtualizacao: new Date().toISOString()
+          };
+          // se ficou abaixo do limite 5, não força desbloqueio (admin decide);
+          // mas se estava só no limite, o contador na página já baixa.
+          await indRef.update(upd);
+
+          // actualiza cache local
+          try {
+            if (typeof todosUsers !== 'undefined' && Array.isArray(todosUsers)) {
+              todosUsers.forEach(function (u) {
+                if (String(u.email || '').toLowerCase() === emailConvidado) {
+                  delete u.indicadoPor;
+                }
+                if (String(u.codigoIndicacao || '').toUpperCase() === codigo) {
+                  u.totalConvidados = total;
+                  u.pontosIndicacao = ptsInd;
+                  u.pontos = ptsCarteira;
+                }
+              });
+            }
+          } catch (eC) {}
+        }
+
+        if (typeof mostrarAviso === 'function') {
+          mostrarAviso('Convite apagado. Contador do convidador: −1.');
+        } else {
+          alert('Convite apagado.');
+        }
+        renderConvitesAdmin();
+        try { if (typeof carregarListaBloqueadosConvites === 'function') carregarListaBloqueadosConvites(); } catch (eL) {}
+      } catch (e) {
+        alert('Erro ao apagar convite: ' + (e.message || e));
       }
     }
 
