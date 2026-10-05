@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="pt-MZ">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Índice — manual.site</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --night: #0F1B1E;
+    --night-2: #16292B;
+    --gold: #F2A93B;
+    --coral: #E85D3D;
+    --savanna: #4C8C77;
+    --paper: #F5F1E8;
+    --paper-dim: #C9C2B2;
+  }
+
+  *{ box-sizing: border-box; }
+
+  body{
+    margin:0;
+    background: var(--night);
+    color: var(--paper);
+    font-family: 'IBM Plex Sans', sans-serif;
+    line-height: 1.55;
+  }
+
+  h1, h2, .display{
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    line-height: 1.1;
+    margin: 0;
+    color: var(--paper);
+  }
+
+  a{ color: inherit; text-decoration: none; }
+
+  .wrap{
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 28px;
+  }
+
+  header{
+    padding: 48px 0 20px;
+  }
+
+  .brand{
+    font-family: 'Fraunces', serif;
+    font-weight: 700;
+    font-size: 1.05rem;
+  }
+  .brand span{ color: var(--gold); }
+
+  .back{
+    display: inline-block;
+    margin-top: 28px;
+    color: var(--paper-dim);
+    font-size: 0.92rem;
+    border-bottom: 1px solid rgba(245,241,232,0.25);
+    padding-bottom: 2px;
+  }
+  .back:hover{ color: var(--gold); border-color: var(--gold); }
+
+  .intro{
+    padding: 24px 0 56px;
+    border-bottom: 1px solid rgba(245,241,232,0.08);
+  }
+
+  .intro h1{
+    font-size: clamp(2rem, 4.2vw, 2.8rem);
+    max-width: 16ch;
+  }
+
+  .intro p{
+    margin-top: 18px;
+    color: var(--paper-dim);
+    font-size: 1.05rem;
+    max-width: 52ch;
+  }
+
+  .modules{
+    padding: 12px 0 96px;
+  }
+
+  .module{
+    display: grid;
+    grid-template-columns: 64px 1fr auto;
+    gap: 24px;
+    align-items: center;
+    padding: 30px 0;
+    border-bottom: 1px solid rgba(245,241,232,0.08);
+    transition: padding-left 0.15s ease;
+  }
+
+  .module:first-child{ border-top: 1px solid rgba(245,241,232,0.08); }
+
+  .module:hover{ padding-left: 10px; }
+
+  .module-number{
+    font-family: 'Fraunces', serif;
+    font-size: 1.6rem;
+    color: var(--gold);
+  }
+
+  .module.final .module-number{ color: var(--coral); }
+
+  .module h2{
+    font-size: 1.2rem;
+    font-weight: 600;
+  }
+
+  .module p{
+    margin: 6px 0 0;
+    color: var(--paper-dim);
+    font-size: 0.95rem;
+    max-width: 46ch;
+  }
+
+  .module-tag{
+    font-size: 0.82rem;
+    color: var(--paper-dim);
+    border: 1px solid rgba(245,241,232,0.18);
+    border-radius: 5px;
+    padding: 6px 12px;
+    white-space: nowrap;
+  }
+
+  .module.final .module-tag{
+    color: var(--night);
+    background: var(--coral);
+    border-color: var(--coral);
+  }
+
+  @media (max-width: 640px){
+    .module{
+      grid-template-columns: 40px 1fr;
+    }
+    .module-tag{
+      grid-column: 2 / 3;
+      justify-self: start;
+      margin-top: 8px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <span class="brand">manual<span>.</span>site</span>
+  </div>
+</header>
+
+<section class="intro">
+  <div class="wrap">
+    <h1>Índice do manual</h1>
+    <p>Seis módulos, na ordem certa. Segue um a um e no fim vais ter o teu próprio site, publicado e no ar.</p>
+    <a class="back" href="index.html">&larr; Voltar à página inicial</a>
+  </div>
+</section>
+
+<section class="modules">
+  <div class="wrap">
+
+    <a class="module" href="modulo-1.html">
+      <div class="module-number">1</div>
+      <div>
+        <h2>Fundamentos</h2>
+        <p>A estrutura mínima de um site e o vocabulário básico que vais precisar antes de avançar.</p>
+      </div>
+      <span class="module-tag">Módulo 1</span>
+    </a>
+
+    <a class="module" href="modulo-2.html">
+      <div class="module-number">2</div>
+      <div>
+        <h2>Usando IA para gerar código</h2>
+        <p>Como pedir à inteligência artificial o código certo, e como entender o que ela devolve.</p>
+      </div>
+      <span class="module-tag">Módulo 2</span>
+    </a>
+
+    <a class="module" href="modulo-3.html">
+      <div class="module-number">3</div>
+      <div>
+        <h2>Onde colocar o código</h2>
+        <p>Como usar uma aplicação como o Spck Editor para montar e testar o teu site no telemóvel.</p>
+      </div>
+      <span class="module-tag">Módulo 3</span>
+    </a>
+
+    <a class="module" href="modulo-4.html">
+      <div class="module-number">4</div>
+      <div>
+        <h2>Publicar o site</h2>
+        <p>O caminho para colocar o teu site online, de graça, com um link para partilhar.</p>
+      </div>
+      <span class="module-tag">Módulo 4</span>
+    </a>
+
+    <a class="module" href="modulo-5.html">
+      <div class="module-number">5</div>
+      <div>
+        <h2>Do pedido ao site no ar (teoria)</h2>
+        <p>O processo completo explicado com um exemplo novo — o ZungaShop, uma loja online — antes de veres tudo em vídeo.</p>
+      </div>
+      <span class="module-tag">Módulo 5</span>
+    </a>
+
+    <a class="module final" href="modulo-6.html">
+      <div class="module-number">6</div>
+      <div>
+        <h2>Tutoriais em vídeo</h2>
+        <p>Tudo o que aprendeste, agora na prática — vídeos passo a passo feitos direto pelo telemóvel.</p>
+      </div>
+      <span class="module-tag">Módulo final</span>
+    </a>
+
+  </div>
+</section>
+
+</body>
+</html>

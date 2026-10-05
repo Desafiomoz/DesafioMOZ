@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="pt-MZ">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cria o teu site em menos de um dia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --night: #0F1B1E;
+    --night-2: #16292B;
+    --gold: #D9A944;
+    --coral: #E85D3D;
+    --savanna: #4C8C77;
+    --paper: #F5F1E8;
+    --paper-dim: #C9C2B2;
+  }
+
+  *{ box-sizing: border-box; }
+  html{ scroll-behavior: smooth; }
+
+  body{
+    margin:0;
+    background: var(--night);
+    color: var(--paper);
+    font-family: 'IBM Plex Sans', sans-serif;
+    line-height: 1.55;
+  }
+
+  h1, h2, .display{
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    line-height: 1.08;
+    margin: 0;
+    color: var(--paper);
+  }
+
+  a{ color: inherit; }
+
+  .wrap{
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 0 28px;
+  }
+
+  /* ---------- HERO ---------- */
+
+  header.hero{
+    padding: 64px 0 80px;
+    border-bottom: 1px solid rgba(245,241,232,0.08);
+  }
+
+  .hero-grid{
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 56px;
+    align-items: center;
+  }
+
+  .brand{
+    font-family: 'Fraunces', serif;
+    font-weight: 700;
+    font-size: 1.05rem;
+    letter-spacing: 0.01em;
+    margin-bottom: 56px;
+    display: inline-block;
+  }
+  .brand span{ color: var(--gold); }
+
+  h1.display{
+    font-size: clamp(2.2rem, 4.4vw, 3.4rem);
+    max-width: 14ch;
+  }
+
+  h1.display em{
+    font-style: normal;
+    color: var(--gold);
+  }
+
+  .lede{
+    margin-top: 22px;
+    font-size: 1.1rem;
+    color: var(--paper-dim);
+    max-width: 46ch;
+  }
+
+  .cta-row{
+    margin-top: 34px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .btn{
+    background: var(--coral);
+    color: var(--night);
+    font-weight: 600;
+    padding: 15px 28px;
+    border-radius: 6px;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 1rem;
+    transition: transform 0.15s ease, background 0.15s ease;
+  }
+  .btn:hover{ background: var(--gold); }
+  .btn:focus-visible{ outline: 3px solid var(--gold); outline-offset: 3px; }
+
+  .cta-note{
+    color: var(--paper-dim);
+    font-size: 0.92rem;
+  }
+
+  /* Mock browser illustration */
+  .mock{
+    background: var(--night-2);
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid rgba(245,241,232,0.1);
+    box-shadow: 0 30px 60px -20px rgba(0,0,0,0.6);
+  }
+  .mock-bar{
+    display:flex;
+    gap: 7px;
+    padding: 12px 14px;
+    background: rgba(0,0,0,0.2);
+  }
+  .mock-bar span{
+    width: 10px; height: 10px; border-radius: 50%;
+    background: rgba(245,241,232,0.25);
+  }
+  .mock-body{
+    padding: 22px 20px 26px;
+    font-family: 'IBM Plex Sans', monospace;
+    font-size: 0.86rem;
+  }
+  .mock-line{
+    white-space: pre;
+    color: var(--paper-dim);
+    opacity: 0;
+    animation: reveal 0.4s ease forwards;
+  }
+  .mock-line b{ color: var(--gold); font-weight: 500; }
+  .mock-line i{ color: var(--savanna); font-style: normal; }
+  .mock-line:nth-child(1){ animation-delay: 0.2s; }
+  .mock-line:nth-child(2){ animation-delay: 0.5s; }
+  .mock-line:nth-child(3){ animation-delay: 0.8s; }
+  .mock-line:nth-child(4){ animation-delay: 1.1s; }
+  .mock-line:nth-child(5){ animation-delay: 1.4s; }
+
+  .mock-preview{
+    margin-top: 18px;
+    background: var(--paper);
+    color: var(--night);
+    border-radius: 6px;
+    padding: 16px 18px;
+    opacity: 0;
+    animation: reveal 0.5s ease forwards;
+    animation-delay: 1.8s;
+  }
+  .mock-preview strong{ display:block; font-family:'Fraunces', serif; font-size: 1.05rem; margin-bottom: 4px; }
+  .mock-preview span{ color: #5b5647; font-size: 0.85rem; }
+
+  @keyframes reveal{
+    from{ opacity:0; transform: translateY(4px); }
+    to{ opacity:1; transform: translateY(0); }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .mock-line, .mock-preview{ animation: none; opacity: 1; }
+  }
+
+  /* ---------- STATEMENT / AURA SECTION ---------- */
+
+  section.statement{
+    position: relative;
+    padding: 96px 0;
+    text-align: center;
+    overflow: hidden;
+    border-bottom: 1px solid rgba(245,241,232,0.08);
+  }
+
+  section.statement::before{
+    content: "";
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 900px; height: 900px;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(circle, rgba(242,169,59,0.16) 0%, rgba(242,169,59,0.05) 40%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .statement-text{
+    position: relative;
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: clamp(1.7rem, 3.6vw, 2.7rem);
+    line-height: 1.25;
+    max-width: 20ch;
+    margin: 0 auto;
+    background: linear-gradient(100deg, var(--gold) 0%, #FBD98A 45%, var(--gold) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 0 0 60px rgba(242,169,59,0.35);
+  }
+
+  .statement-sub{
+    position: relative;
+    margin: 22px auto 0;
+    max-width: 42ch;
+    color: var(--paper-dim);
+    font-size: 1.02rem;
+  }
+
+  /* ---------- QUESTION SECTION ---------- */
+
+  section.question{
+    padding: 72px 0;
+    border-bottom: 1px solid rgba(245,241,232,0.08);
+  }
+
+  .question h2{
+    font-size: clamp(1.6rem, 3vw, 2.2rem);
+    max-width: 22ch;
+  }
+
+  .question p{
+    margin-top: 18px;
+    color: var(--paper-dim);
+    max-width: 58ch;
+    font-size: 1.05rem;
+  }
+
+  .question strong{ color: var(--paper); font-weight: 600; }
+
+  /* ---------- LEARN SECTION ---------- */
+
+  section.learn{
+    padding: 72px 0;
+    border-bottom: 1px solid rgba(245,241,232,0.08);
+  }
+
+  section.learn h2{
+    font-size: clamp(1.6rem, 3vw, 2.2rem);
+    margin-bottom: 16px;
+    max-width: 20ch;
+  }
+
+  .learn-intro{
+    color: var(--paper-dim);
+    font-size: 1.02rem;
+    max-width: 56ch;
+    margin: 0 0 40px;
+  }
+
+  .learn-list{
+    display: grid;
+    gap: 0;
+  }
+
+  .learn-item{
+    display: grid;
+    grid-template-columns: 44px 1fr;
+    gap: 20px;
+    padding: 24px 0;
+    border-top: 1px solid rgba(245,241,232,0.08);
+  }
+  .learn-item:last-child{ border-bottom: 1px solid rgba(245,241,232,0.08); }
+
+  .learn-mark{
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: var(--night-2);
+    border: 1px solid rgba(245,241,232,0.12);
+    display:flex; align-items:center; justify-content:center;
+    color: var(--gold);
+    font-family: 'Fraunces', serif;
+    font-size: 1.1rem;
+  }
+
+  .learn-item h3{
+    margin: 0 0 6px;
+    font-size: 1.08rem;
+    font-weight: 600;
+    color: var(--paper);
+  }
+
+  .learn-item p{
+    margin: 0;
+    color: var(--paper-dim);
+    font-size: 0.98rem;
+    max-width: 52ch;
+  }
+
+  /* ---------- FOR WHO ---------- */
+
+  section.forwho{
+    padding: 72px 0;
+    border-bottom: 1px solid rgba(245,241,232,0.08);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 56px;
+    align-items: start;
+  }
+
+  section.forwho h2{
+    font-size: clamp(1.6rem, 3vw, 2.2rem);
+    max-width: 14ch;
+  }
+
+  section.forwho p{
+    color: var(--paper-dim);
+    font-size: 1.05rem;
+  }
+
+  section.forwho p strong{ color: var(--paper); font-weight: 600; }
+
+  /* ---------- FINAL CTA ---------- */
+
+  section.final{
+    padding: 88px 0 96px;
+    text-align: left;
+  }
+
+  section.final h2{
+    font-size: clamp(1.9rem, 4vw, 2.6rem);
+    max-width: 16ch;
+  }
+
+  section.final .lede{ margin-bottom: 30px; }
+
+  footer{
+    border-top: 1px solid rgba(245,241,232,0.08);
+    padding: 28px 0 40px;
+    color: var(--paper-dim);
+    font-size: 0.88rem;
+  }
+
+  @media (max-width: 860px){
+    .hero-grid{ grid-template-columns: 1fr; }
+    section.forwho{ grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <span class="brand">manual<span>.</span>site</span>
+    <div class="hero-grid">
+      <div>
+        <h1 class="display">Cria o teu site profissional em <em>menos de um dia</em></h1>
+        <p class="lede">Já te perguntaste como fazer um site de verdade — não um qualquer? Aqui aprendes, passo a passo, a usar inteligência artificial para gerar o código e a pôr o teu site no ar, tudo pelo telemóvel.</p>
+        <div class="cta-row">
+          <a class="btn" href="#comecar">Começar o guia</a>
+          <span class="cta-note">Sem experiência prévia. Só precisas do teu telemóvel.</span>
+        </div>
+      </div>
+      <div class="mock">
+        <div class="mock-bar"><span></span><span></span><span></span></div>
+        <div class="mock-body">
+          <div class="mock-line">&lt;<b>html</b>&gt;</div>
+          <div class="mock-line">&nbsp;&nbsp;&lt;<b>h1</b>&gt;<i>O meu negócio</i>&lt;/<b>h1</b>&gt;</div>
+          <div class="mock-line">&nbsp;&nbsp;&lt;<b>p</b>&gt;<i>Feito por mim.</i>&lt;/<b>p</b>&gt;</div>
+          <div class="mock-line">&lt;/<b>html</b>&gt;</div>
+          <div class="mock-line">&nbsp;</div>
+          <div class="mock-preview">
+            <strong>O meu negócio</strong>
+            <span>Feito por mim. No ar em minutos.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section class="statement">
+  <div class="wrap">
+    <p class="statement-text">Domina este manual, cria o site certo, e o potencial para faturar milhões no mercado está aí.</p>
+    <p class="statement-sub">Tudo depende de ti.</p>
+  </div>
+</section>
+
+<section class="question">
+  <div class="wrap">
+    <h2>Essa dúvida acaba aqui.</h2>
+    <p>Muita gente acha que precisa de anos a estudar programação antes de conseguir criar alguma coisa. Não é verdade. Com as ferramentas certas, tu consegues gerar a chave, entender o suficiente para o ajustar, e publicar um site real — <strong>hoje</strong>, não daqui a um ano.</p>
+  </div>
+</section>
+
+<section class="learn" id="comecar">
+  <div class="wrap">
+    <h2>O que vais aprender</h2>
+    <p class="learn-intro">Além do texto, o manual tem vídeos tutoriais mostrando cada passo na prática — para veres exatamente como fazer, e repetires no teu próprio site.</p>
+    <div class="learn-list">
+      <div class="learn-item">
+        <div class="learn-mark">1</div>
+        <div>
+          <h3>Pedir à chave certo</h3>
+          <p>Como escrever pedidos claros para que as ferramentas te entregues o que realmente funcionam, e como ler o que ela devolve.</p>
+        </div>
+      </div>
+      <div class="learn-item">
+        <div class="learn-mark">2</div>
+        <div>
+          <h3>Montar o site no lugar certo</h3>
+          <p>Como organizar os teus ficheiros e pré-visualizar o site diretamente no telemóvel, sem precisar de computador.</p>
+        </div>
+      </div>
+      <div class="learn-item">
+        <div class="learn-mark">3</div>
+        <div>
+          <h3>Publicar o site, de graça</h3>
+          <p>O caminho mais simples para colocar o teu site online e teres um link para partilhar com quem quiseres.</p>
+        </div>
+      </div>
+      <div class="learn-item">
+        <div class="learn-mark">4</div>
+        <div>
+          <h3>Corrigir os erros mais comuns</h3>
+          <p>Os problemas que quase todos os iniciantes encontram — e a forma rápida de resolver cada um.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="forwho">
+  <div class="wrap" style="display:contents">
+    <h2>Este manual é para ti</h2>
+    <p>Para ti que nunca escreveste uma linha de código, mas queres ter o teu próprio site — para um negócio, um portfólio, ou uma ideia que ainda nem tem nome. <strong>Não precisas de saber programar.</strong> Precisas de seguir os passos.</p>
+  </div>
+</section>
+
+<section class="final">
+  <div class="wrap">
+    <h2>O teu site começa aqui.</h2>
+    <p class="lede">Segue o guia, módulo a módulo, e no fim vais ter um site teu, publicado, com link para mostrar a quem quiseres.</p>
+    <a class="btn" href="indice.html">Começar agora</a>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">manual.site — um guia feito para jovens moçambicanos que querem criar o seu próprio site.</div>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="pt-MZ">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Módulo 5 — Parte 2: Guia detalhado do ZungaShop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --night: #0F1B1E; --night-2: #16292B; --gold: #F2A93B; --coral: #E85D3D;
+    --savanna: #4C8C77; --paper: #F5F1E8; --paper-dim: #C9C2B2;
+  }
+  *{ box-sizing: border-box; }
+  body{ margin:0; background: var(--night); color: var(--paper); font-family:'IBM Plex Sans',sans-serif; line-height:1.6; }
+  h1,h2,h3,.display{ font-family:'Fraunces',serif; font-weight:600; line-height:1.15; margin:0; color:var(--paper); }
+  a{ color: inherit; }
+  .wrap{ max-width: 720px; margin:0 auto; padding: 0 28px; }
+  header{ padding: 40px 0 0; }
+  .brand{ font-family:'Fraunces',serif; font-weight:700; font-size:1.05rem; }
+  .brand span{ color: var(--gold); }
+  .back{ display:inline-block; margin-top:26px; color:var(--paper-dim); font-size:0.9rem; text-decoration:none; border-bottom:1px solid rgba(245,241,232,0.25); padding-bottom:2px; }
+  .back:hover{ color:var(--gold); border-color:var(--gold); }
+  article{ padding: 36px 0 20px; border-bottom: 1px solid rgba(245,241,232,0.08); }
+  .eyebrow{ color: var(--gold); font-size: 0.92rem; font-weight:500; }
+  h1{ margin-top: 10px; font-size: clamp(1.9rem, 4.4vw, 2.5rem); max-width: 22ch; }
+  .intro{ margin-top:16px; color: var(--paper-dim); font-size:1.05rem; max-width: 62ch; }
+  section.body{ padding: 40px 0; }
+  section.body h2{ font-size: 1.35rem; margin-bottom: 14px; }
+  section.body h2:not(:first-child){ margin-top: 48px; }
+  section.body h3{ font-size: 1.1rem; margin: 28px 0 10px; color: var(--gold); }
+  section.body p{ color: var(--paper-dim); font-size: 1.02rem; max-width: 62ch; }
+  section.body strong{ color: var(--paper); font-weight:600; }
+  .code{
+    background: var(--night-2); border: 1px solid rgba(245,241,232,0.1); border-radius: 8px;
+    padding: 18px 20px; font-family: 'IBM Plex Mono', monospace; font-size: 0.88rem;
+    color: var(--paper); white-space: pre-wrap; overflow-x: auto; margin: 18px 0;
+  }
+  .img-placeholder{
+    width: 100%;
+    min-height: 180px;
+    background: var(--night-2);
+    border: 1px dashed rgba(245,241,232,0.25);
+    border-radius: 10px;
+    margin: 16px 0 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--paper-dim);
+    font-size: 0.92rem;
+    text-align: center;
+    padding: 24px;
+  }
+  .img-caption{
+    font-size: 0.88rem;
+    color: var(--paper-dim);
+    margin: 0 0 20px;
+    font-style: italic;
+  }
+  .product-box{
+    background: var(--night-2);
+    border: 1px solid rgba(245,241,232,0.1);
+    border-radius: 10px;
+    padding: 16px 18px;
+    margin: 12px 0;
+  }
+  .product-box strong{ color: var(--gold); }
+  .callout{ margin-top: 24px; border-left: 3px solid var(--coral); padding: 4px 0 4px 18px; color: var(--paper-dim); font-size: 0.98rem; }
+  .callout strong{ color: var(--paper); }
+  .pager{ display:flex; justify-content: space-between; align-items:center; padding: 32px 0 64px; gap: 20px; flex-wrap: wrap; }
+  .pager a{ text-decoration:none; font-size:0.95rem; color: var(--paper-dim); }
+  .pager a:hover{ color: var(--gold); }
+  .pager .next{ background: var(--coral); color: var(--night); font-weight:600; padding: 13px 24px; border-radius: 6px; }
+  .pager .next:hover{ background: var(--gold); color: var(--night); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <span class="brand">manual<span>.</span>site</span>
+    <br><a class="back" href="modulo-5.html">&larr; Voltar à Parte 1</a>
+  </div>
+</header>
+
+<article>
+  <div class="wrap">
+    <div class="eyebrow">Módulo 5 — Parte 2</div>
+    <h1>Guia detalhado: do zero ao ZungaShop no ar</h1>
+    <p class="intro">Aqui vais ver exactamente o que fazer em cada passo. Lê com atenção. Mais tarde, nos vídeos, vais ver tudo isto a acontecer no telemóvel.</p>
+  </div>
+</article>
+
+<section class="body">
+  <div class="wrap">
+
+    <!-- PASSO 1 -->
+    <h2>1. A ideia</h2>
+    <p>Antes de escrever qualquer código, precisas de ter <strong>uma ideia de site</strong> que faça sentido e que possa te dar dinheiro.</p>
+    <p>Não precisa de ser complicado. Pode ser:</p>
+    <p>• Uma loja de roupa<br>
+       • Uma lanchonete<br>
+       • Serviços de cabelo ou unhas<br>
+       • Aluguer de casas<br>
+       • Venda de telemóveis usados</p>
+    <p>No nosso exemplo vamos criar um site piqueno de venda no whatsapp o <strong>ZungaShop</strong> — uma loja online simples de roupa e acessórios.</p>
+
+    <h3>Os produtos do ZungaShop</h3>
+    <p>Vamos colocar estes produtos no site:</p>
+
+    <div class="product-box">
+      <strong>Camisa Social Premium</strong><br>
+      Marca: ClassicFit<br>
+      Preço: 1.200 MZN
+    </div>
+
+    <div class="product-box">
+      <strong>Calça Jeans Slim</strong><br>
+      Marca: UrbanWear<br>
+      Preço: 1.800 MZN
+    </div>
+
+    <div class="product-box">
+      <strong>Sapatos Casuais</strong><br>
+      Marca: StepMoz<br>
+      Preço: 2.500 MZN
+    </div>
+
+    <div class="product-box">
+      <strong>T-shirt Básica (pack 2)</strong><br>
+      Marca: ComfortDay<br>
+      Preço: 900 MZN
+    </div>
+
+    <p>Tu podes mudar os produtos, as marcas e os preços depois. O importante é teres uma ideia clara do que queres vender.</p>
+
+    <!-- PASSO 2 -->
+    <h2>2. O pedido à Claude</h2>
+    <p>Agora vais escrever o pedido (prompt) que vais enviar à IA. Tem de ser claro: o que queres, para quem, e como deve parecer.</p>
+
+    <p>Copia este pedido (ou adapta):</p>
+
+    <div class="code">Cria um código HTML completo de uma página HTML e CSS de uma só página
+para uma loja online chamada ZungaShop.
+
+Preciso de:
+- Título com o nome da loja
+- Lista de produtos com foto, nome, marca e preço
+- Botão de WhatsApp em cada produto para comprar usa esse link: https://wa.link/llmw7t
+
+Produtos:
+1. Camisa Social Premium — ClassicFit — 1.200 MZN
+2. Calça Jeans Slim — UrbanWear — 1.800 MZN
+3. Sapatos Casuais — StepMoz — 2.500 MZN
+4. T-shirt Básica (pack 2) — ComfortDay — 900 MZN
+
+Cores: modernas e de confiança (escuro + dourado ou verde).
+O site deve funcionar bem no telemóvel.</div>
+
+    <div class="img-placeholder">
+      [ ESPAÇO PARA IMAGEM ]<br>
+      Mostra onde colar o pedido na Claude
+    </div>
+    <p class="img-caption">Aqui vais colocar a captura de ecrã a mostrar onde se escreve o pedido na Claude.</p>
+
+    <!-- PASSO 3 -->
+    <h2>3. Como copiar o código</h2>
+    <p>A Claude vai devolver o código completo do site. Tens de copiar <strong>tudo</strong>:</p>
+    <p>1. Procura a primeira linha: <code>&lt;!DOCTYPE html&gt;</code><br>
+       2. Arrasta até à última linha: <code>&lt;/html&gt;</code><br>
+       3. Copia tudo (pressiona longo → Copiar)</p>
+
+    <div class="img-placeholder">
+      [ ESPAÇO PARA IMAGEM ]<br>
+      Mostra como selecionar e copiar o código todo
+    </div>
+    <p class="img-caption">Captura de ecrã a mostrar o código selecionado e o botão de copiar.</p>
+
+    <div class="callout"><strong>Importante:</strong> Se copiares só uma parte, o site não vai funcionar. Copia desde o início até ao fim.</div>
+
+    <!-- PASSO 4 -->
+    <h2>4. Colar no Spck Editor</h2>
+    <p>Abre o Spck Editor no telemóvel e segue estes passos:</p>
+    <p>1. Abre o teu projeto (ou cria um novo chamado <strong>ZungaShop</strong>)<br>
+       2. Abre o ficheiro <strong>index.html</strong><br>
+       3. Apaga tudo o que estiver lá dentro<br>
+       4. Cola o código que copiaste da Claude<br>
+       5. Guarda o ficheiro</p>
+
+    <div class="img-placeholder">
+      [ ESPAÇO PARA IMAGEM 1 ]<br>
+      Mostra onde criar / abrir o projeto
+    </div>
+    <p class="img-caption">Indica com seta onde clicar para criar ou abrir o projeto.</p>
+
+    <div class="img-placeholder">
+      [ ESPAÇO PARA IMAGEM 2 ]<br>
+      Mostra o ficheiro index.html e onde colar o código
+    </div>
+    <p class="img-caption">Mostra o ecrã do editor com o código já colado.</p>
+
+    <div class="img-placeholder">
+      [ ESPAÇO PARA IMAGEM 3 ]<br>
+      Mostra o botão de guardar e o de pré-visualizar
+    </div>
+    <p class="img-caption">Indica onde guardar e onde carregar na pré-visualização.</p>
+
+    <!-- PASSO 5 -->
+    <h2>5. Publicar (hospedagem)</h2>
+    <p>Agora o site está no teu telemóvel. Para qualquer pessoa poder ver, precisas de o publicar (ex: Cloudflare Pages).</p>
+    <p>Os passos gerais são:</p>
+    <p>1. Exportar o projeto (ou os ficheiros)<br>
+       2. Criar um projeto no Cloudflare Pages<br>
+       3. Enviar os ficheiros<br>
+       4. Esperar o site ficar no ar<br>
+       5. Copiar o link final</p>
+
+    <div class="img-placeholder">
+      [ ESPAÇO PARA IMAGEM 1 ]<br>
+      Mostra como exportar / preparar os ficheiros
+    </div>
+    <p class="img-caption">Captura a mostrar o processo de exportação.</p>
+
+    <div class="img-placeholder">
+      [ ESPAÇO PARA IMAGEM 2 ]<br>
+      Mostra o painel do Cloudflare Pages / upload
+    </div>
+    <p class="img-caption">Indica onde fazer o upload dos ficheiros.</p>
+
+    <div class="img-placeholder">
+      [ ESPAÇO PARA IMAGEM 3 ]<br>
+      Mostra o link final do site já no ar
+    </div>
+    <p class="img-caption">O link que vais partilhar com os clientes.</p>
+
+    <div class="callout"><strong>Lembra-te:</strong> cada ficheiro (incluindo vídeos) não pode passar de 25 MB no Cloudflare Pages.</div>
+
+    <!-- FECHO -->
+    <h2>Resumo rápido</h2>
+    <p>1. Tens uma ideia (ZungaShop + produtos)<br>
+       2. Escreves o pedido e envias à Claude<br>
+       3. Copias o código completo<br>
+       4. Colas no Spck Editor e guardas<br>
+       5. Publicas e partilhas o link</p>
+
+    <p>No próximo módulo vais ver este processo todo em vídeo, passo a passo, no telemóvel.</p>
+
+  </div>
+</section>
+
+<div class="wrap">
+  <div class="pager">
+    <a href="modulo-5.html">&larr; Parte 1</a>
+    <a class="next" href="modulo-6.html">Módulo final: Tutoriais em vídeo</a>
+  </div>
+</div>
+
+</body>
+</html>

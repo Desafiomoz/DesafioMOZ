@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="pt-MZ">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Módulo 2 — Usando IA para gerar código</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --night: #0F1B1E; --night-2: #16292B; --gold: #C9A24B; --coral: #E85D3D;
+    --savanna: #4C8C77; --paper: #F5F1E8; --paper-dim: #C9C2B2;
+  }
+  *{ box-sizing: border-box; }
+  body{ margin:0; background: var(--night); color: var(--paper); font-family:'IBM Plex Sans',sans-serif; line-height:1.6; }
+  h1,h2,.display{ font-family:'Fraunces',serif; font-weight:600; line-height:1.15; margin:0; color:var(--paper); }
+  a{ color: inherit; }
+  .wrap{ max-width: 720px; margin:0 auto; padding: 0 28px; }
+  header{ padding: 40px 0 0; }
+  .brand{ font-family:'Fraunces',serif; font-weight:700; font-size:1.05rem; }
+  .brand span{ color: var(--gold); }
+  .back{ display:inline-block; margin-top:26px; color:var(--paper-dim); font-size:0.9rem; text-decoration:none; border-bottom:1px solid rgba(245,241,232,0.25); padding-bottom:2px; }
+  .back:hover{ color:var(--gold); border-color:var(--gold); }
+  article{ padding: 36px 0 20px; border-bottom: 1px solid rgba(245,241,232,0.08); }
+  .eyebrow{ color: var(--gold); font-size: 0.92rem; font-weight:500; }
+  h1{ margin-top: 10px; font-size: clamp(1.9rem, 4.4vw, 2.5rem); max-width: 20ch; }
+  .intro{ margin-top:16px; color: var(--paper-dim); font-size:1.05rem; max-width: 62ch; }
+  section.body{ padding: 40px 0; }
+  section.body h2{ font-size: 1.3rem; margin-bottom: 12px; }
+  section.body h2:not(:first-child){ margin-top: 40px; }
+  section.body p{ color: var(--paper-dim); font-size: 1.02rem; max-width: 62ch; }
+  section.body strong{ color: var(--paper); font-weight:600; }
+  ul.steps{ margin: 18px 0; padding-left: 0; list-style: none; }
+  ul.steps li{ padding: 10px 0 10px 30px; position: relative; color: var(--paper-dim); font-size: 1.02rem; border-top: 1px solid rgba(245,241,232,0.08); }
+  ul.steps li:first-child{ border-top: none; }
+  ul.steps li::before{ content:"—"; position:absolute; left:0; color: var(--gold); }
+  ul.steps-rich{ margin: 18px 0; padding-left: 0; list-style: none; }
+  ul.steps-rich li{ padding: 18px 0 18px 30px; position: relative; color: var(--paper-dim); font-size: 1.02rem; border-top: 1px solid rgba(245,241,232,0.08); }
+  ul.steps-rich li:first-child{ border-top: none; }
+  ul.steps-rich li::before{ content:"—"; position:absolute; left:0; top:18px; color: var(--gold); }
+  ul.steps-rich li p{ margin: 12px 0 0; }
+  ul.steps-rich li .code{ margin-top: 12px; }
+  .code{
+    background: var(--night-2); border: 1px solid rgba(245,241,232,0.1); border-radius: 8px;
+    padding: 18px 20px; font-family: 'IBM Plex Mono', monospace; font-size: 0.88rem;
+    color: var(--paper); white-space: pre-wrap; overflow-x: auto; margin: 18px 0;
+  }
+  .callout{ margin-top: 24px; border-left: 3px solid var(--coral); padding: 4px 0 4px 18px; color: var(--paper-dim); font-size: 0.98rem; }
+  .callout strong{ color: var(--paper); }
+  section.body h3{ font-family:'Fraunces',serif; font-weight:600; font-size: 1.1rem; color: var(--paper); margin: 26px 0 10px; }
+  .result-label{ margin-top: 30px; }
+  .video-wrap{
+    position: relative; width: 100%; padding-top: 100%;
+    border-radius: 8px; overflow: hidden; border: 1px solid rgba(245,241,232,0.12);
+    background: var(--night-2); margin: 4px 0 16px;
+  }
+  .video-wrap video{
+    position: absolute; top:0; left:0; width:100%; height:100%; object-fit: cover;
+  }
+  .claude-img{
+    width: 100%; border-radius: 8px; border: 1px solid rgba(245,241,232,0.12);
+    margin: 16px 0 4px; display: block;
+  }
+  .continue-btn{
+    display:inline-block; margin-top: 32px; background: var(--gold); color: var(--night);
+    font-weight:600; padding: 15px 26px; border-radius: 6px; text-decoration:none; font-size: 1rem;
+  }
+  .continue-btn:hover{ background: var(--coral); }
+  .pager{ display:flex; justify-content: space-between; align-items:center; padding: 32px 0 64px; gap: 20px; flex-wrap: wrap; }
+  .pager a{ text-decoration:none; font-size:0.95rem; color: var(--paper-dim); }
+  .pager a:hover{ color: var(--gold); }
+  .pager .next{ background: var(--coral); color: var(--night); font-weight:600; padding: 13px 24px; border-radius: 6px; }
+  .pager .next:hover{ background: var(--gold); color: var(--night); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <span class="brand">manual<span>.</span>site</span>
+    <br><a class="back" href="indice.html">&larr; Voltar ao índice</a>
+  </div>
+</header>
+
+<article>
+  <div class="wrap">
+    <div class="eyebrow">Módulo 2</div>
+    <h1>Usando IA para gerar código</h1>
+    <p class="intro">Se você for estudar programação, meu amigo ou minha amiga, você leva anos e gasta muito dinheiro para entender as coisas. Mas neste módulo eu vou explicar como fazer um código que levaria um mês para concluir, em apenas alguns segundos, usando as ferramentas certas.</p>
+    <p class="intro">Aqui está a parte que substitui anos de estudo: em vez de escreveres o código do zero, tu pedes — com clareza — e a IA escreve por ti. A qualidade do resultado depende de como pedes.</p>
+  </div>
+</article>
+
+<section class="body">
+  <div class="wrap">
+
+    <h2>Como fazer um bom pedido</h2>
+    <p>Um pedido fraco dá um resultado fraco. Um bom pedido diz três coisas: <strong>o que</strong> queres, <strong>para quem</strong> é, e <strong>como</strong> deve parecer.</p>
+
+    <div class="code">Fraco:
+"faz um site"
+
+Bom:
+"Cria uma página HTML e CSS de uma só página
+para um cabeleireiro em Maputo. Preciso de:
+título com o nome do salão, uma foto de capa,
+uma lista de serviços com preços, e um botão
+de WhatsApp no fim. Cores: preto e dourado."</div>
+
+    <h3 class="result-label">Resultado do pedido</h3>
+    <div class="video-wrap">
+      <video controls playsinline>
+        <source src="resultado-modulo2.mp4" type="video/mp4">
+      </video>
+    </div>
+    <p>Esse vídeo que você viu aí em cima é o resultado feito por inteligência artificial do site do cabeleireiro de Maputo. Leia até o fim e você saberá como fazer o seu também, na ordem certa do que pedir.</p>
+
+    <h2>O que pedir, na ordem certa</h2>
+
+    <ul class="steps-rich">
+      <li>
+        <strong>Diz o tipo de site</strong> (portfólio, negócio, currículo). Use o exemplo da lanchonete: coloque o site que você quer criar — um site que traga muito dinheiro e atraia muitas pessoas para o seu negócio, seja ele físico ou online. Por exemplo: "Lanchonete" como nome do site.
+      </li>
+      <li>
+        <strong>Lista as secções que queres</strong> (ex: sobre, serviços, contacto). Coloque aquilo que achar melhor para o seu negócio — no rodapé do site, o que você quer que apareça: Contato, Serviços e Sobre. Cada secção que você colocar terá uma página única, então as informações ficam organizadas sem precisar unir tudo.
+        <p>Por exemplo, na página de Contato, coloque: número de telefone, e-mail e a forma como as pessoas podem entrar em contato. Na página Sobre, coloque informações da lanchonete, onde se localiza, etc.</p>
+        <p>O pedido a fazer à IA para o rodapé:</p>
+        <div class="code">Quero que você coloque as seguintes seções: Contato
+e Sobre. Complete cada uma com as informações certas.</div>
+      </li>
+      <li>
+        <strong>Diz as cores ou o estilo que imaginas.</strong> Por exemplo: fundo preto e branco, letras de cores que combinem bem. Capriche. Com base no seu estilo, pense bem.
+      </li>
+      <li>
+        <strong>Pede sempre "HTML e CSS num único ficheiro"</strong> para simplificar. Por último, peça:
+        <div class="code">Coloque o HTML e CSS em um único ficheiro,
+com base no meu estilo.</div>
+      </li>
+    </ul>
+
+    <p>É a IA fará tudo para você, não se preocupe — a única coisa que precisas fazer é dar as informações.</p>
+
+    <p><strong>Agora preste muita atenção:</strong> a inteligência artificial que eu recomendo é o <strong>Claude</strong>. Se a versão do seu telemóvel não for compatível, é melhor pedir para um familiar ou amigo baixar e gerar todos os códigos.</p>
+
+    <img class="claude-img" src="https://i.supaimg.com/9447b725-0914-4700-9681-fccbd9cb5399/66d9c0fd-e56a-4c6a-a2e0-9f7e8efd74a3.jpg" alt="Claude, a inteligência artificial recomendada">
+
+    <a class="continue-btn" href="modulo-2-parte2.html">Continuar módulo</a>
+
+  </div>
+</section>
+
+<div class="wrap">
+  <div class="pager">
+    <a href="modulo-1.html">&larr; Módulo 1</a>
+    <a class="next" href="modulo-2-parte2.html">Continuar: enviar à IA</a>
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="pt-MZ">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Ver vídeo — manual.site</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --night: #0F1B1E; --night-2: #16292B; --gold: #F2A93B; --coral: #E85D3D;
+    --paper: #F5F1E8; --paper-dim: #C9C2B2;
+  }
+  *{ box-sizing: border-box; }
+  html, body{ margin:0; height:100%; background:#000; color: var(--paper); font-family:'IBM Plex Sans',sans-serif; }
+  body{ display:flex; flex-direction:column; min-height:100%; }
+
+  .top{
+    flex: none;
+    display:flex; align-items:center; justify-content:space-between;
+    gap: 12px;
+    padding: 14px 16px;
+    background: var(--night);
+    border-bottom: 1px solid rgba(245,241,232,0.08);
+  }
+  .back{
+    color: var(--paper-dim);
+    text-decoration: none;
+    font-size: 0.92rem;
+  }
+  .back:hover{ color: var(--gold); }
+  .title{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size: 0.95rem;
+    text-align: right;
+    flex: 1;
+    margin: 0;
+    color: var(--paper);
+  }
+
+  .stage{
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #000;
+    position: relative;
+    min-height: 0;
+  }
+  video{
+    width: 100%;
+    max-height: 100%;
+    max-width: 100%;
+    height: auto;
+    background: #000;
+    outline: none;
+  }
+
+  .meta{
+    flex: none;
+    padding: 16px 18px 28px;
+    background: var(--night);
+    border-top: 1px solid rgba(245,241,232,0.08);
+  }
+  .meta p{
+    margin: 0;
+    color: var(--paper-dim);
+    font-size: 0.9rem;
+  }
+  .meta strong{ color: var(--paper); }
+
+  .error{
+    padding: 40px 24px;
+    text-align: center;
+    color: var(--paper-dim);
+  }
+  .error a{ color: var(--gold); }
+</style>
+</head>
+<body>
+
+<div class="top">
+  <a class="back" href="modulo-6.html">&larr; Voltar</a>
+  <h1 class="title" id="titulo">Vídeo</h1>
+</div>
+
+<div class="stage" id="stage">
+  <video id="player" controls playsinline preload="metadata"></video>
+</div>
+
+<div class="meta">
+  <p id="info"></p>
+</div>
+
+<script>
+(function () {
+  var videos = {
+    '1': { src: 'video1.mp4', title: '1. Pedir o primeiro código à IA', dur: '~4 min 18 s' },
+    '2': { src: 'video2.mp4', title: '2. Colar o código no Spck Editor', dur: '~2 min 57 s' },
+    '3': { src: 'video3.mp4', title: '3. Publicar o site com Netlify', dur: '~2 min 58 s' }
+  };
+
+  var params = new URLSearchParams(window.location.search);
+  var id = params.get('v') || '1';
+  var data = videos[id];
+
+  var player = document.getElementById('player');
+  var titulo = document.getElementById('titulo');
+  var info = document.getElementById('info');
+  var stage = document.getElementById('stage');
+
+  if (!data) {
+    stage.innerHTML = '<div class="error">Vídeo não encontrado.<br><a href="modulo-6.html">Voltar aos vídeos</a></div>';
+    return;
+  }
+
+  titulo.textContent = data.title;
+  document.title = data.title + ' — manual.site';
+  info.innerHTML = '<strong>' + data.title + '</strong> · ' + data.dur;
+
+  var source = document.createElement('source');
+  source.src = data.src;
+  source.type = 'video/mp4';
+  player.appendChild(source);
+  player.load();
+})();
+</script>
+
+</body>
+</html>

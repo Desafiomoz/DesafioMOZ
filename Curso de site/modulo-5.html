@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="pt-MZ">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Módulo 5 — Do pedido ao site no ar (teoria)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --night: #0F1B1E; --night-2: #16292B; --gold: #F2A93B; --coral: #E85D3D;
+    --savanna: #4C8C77; --paper: #F5F1E8; --paper-dim: #C9C2B2;
+  }
+  *{ box-sizing: border-box; }
+  body{ margin:0; background: var(--night); color: var(--paper); font-family:'IBM Plex Sans',sans-serif; line-height:1.6; }
+  h1,h2,.display{ font-family:'Fraunces',serif; font-weight:600; line-height:1.15; margin:0; color:var(--paper); }
+  a{ color: inherit; }
+  .wrap{ max-width: 720px; margin:0 auto; padding: 0 28px; }
+  header{ padding: 40px 0 0; }
+  .brand{ font-family:'Fraunces',serif; font-weight:700; font-size:1.05rem; }
+  .brand span{ color: var(--gold); }
+  .back{ display:inline-block; margin-top:26px; color:var(--paper-dim); font-size:0.9rem; text-decoration:none; border-bottom:1px solid rgba(245,241,232,0.25); padding-bottom:2px; }
+  .back:hover{ color:var(--gold); border-color:var(--gold); }
+  article{ padding: 36px 0 20px; border-bottom: 1px solid rgba(245,241,232,0.08); }
+  .eyebrow{ color: var(--gold); font-size: 0.92rem; font-weight:500; }
+  h1{ margin-top: 10px; font-size: clamp(1.9rem, 4.4vw, 2.5rem); max-width: 22ch; }
+  .intro{ margin-top:16px; color: var(--paper-dim); font-size:1.05rem; max-width: 62ch; }
+  section.body{ padding: 40px 0; }
+  section.body h2{ font-size: 1.3rem; margin-bottom: 12px; }
+  section.body h2:not(:first-child){ margin-top: 40px; }
+  section.body p{ color: var(--paper-dim); font-size: 1.02rem; max-width: 62ch; }
+  section.body strong{ color: var(--paper); font-weight:600; }
+  .code{
+    background: var(--night-2); border: 1px solid rgba(245,241,232,0.1); border-radius: 8px;
+    padding: 18px 20px; font-family: 'IBM Plex Mono', monospace; font-size: 0.88rem;
+    color: var(--paper); white-space: pre-wrap; overflow-x: auto; margin: 18px 0;
+  }
+  ol.steps{ margin: 18px 0; padding-left: 0; list-style: none; counter-reset: step; }
+  ol.steps li{ counter-increment: step; padding: 16px 0 16px 42px; position: relative; color: var(--paper-dim); font-size: 1.02rem; border-top: 1px solid rgba(245,241,232,0.08); }
+  ol.steps li:first-child{ border-top: none; }
+  ol.steps li::before{ content: counter(step); position:absolute; left:0; top:16px; color: var(--night); background: var(--gold); width:24px; height:24px; border-radius:50%; font-size:0.82rem; font-weight:600; display:flex; align-items:center; justify-content:center; font-family:'IBM Plex Sans',sans-serif; }
+  ol.steps li strong{ color: var(--paper); }
+  ol.steps li p{ margin: 8px 0 0; }
+  .callout{ margin-top: 24px; border-left: 3px solid var(--coral); padding: 4px 0 4px 18px; color: var(--paper-dim); font-size: 0.98rem; }
+  .callout strong{ color: var(--paper); }
+  .pager{ display:flex; justify-content: space-between; align-items:center; padding: 32px 0 64px; gap: 20px; flex-wrap: wrap; }
+  .pager a{ text-decoration:none; font-size:0.95rem; color: var(--paper-dim); }
+  .pager a:hover{ color: var(--gold); }
+  .pager .next{ background: var(--coral); color: var(--night); font-weight:600; padding: 13px 24px; border-radius: 6px; }
+  .pager .next:hover{ background: var(--gold); color: var(--night); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <span class="brand">manual<span>.</span>site</span>
+    <br><a class="back" href="indice.html">&larr; Voltar ao índice</a>
+  </div>
+</header>
+
+<article>
+  <div class="wrap">
+    <div class="eyebrow">Módulo 5</div>
+    <h1>Do pedido ao site no ar: a teoria antes da prática</h1>
+    <p class="intro">Antes dos vídeos, vamos explicar aqui, com calma, o site que vamos construir juntos passo a passo. É um site de venda de objetos, chamado <strong>ZungaShop</strong>. Vamos seguir o caminho inteiro: a ideia, o pedido, enviar à IA, copiar, colar no Spck Editor, lançar no ar e, por fim, mostrar o link. Depois deste módulo, verás tudo isto em vídeo, na prática.</p>
+  </div>
+</article>
+
+<section class="body">
+  <div class="wrap">
+
+    <h2>A ideia</h2>
+    <p>O <strong>ZungaShop</strong> vai ser um site simples de venda de objetos — roupa, eletrónicos, artigos usados, o que quiseres vender. Uma página onde os produtos aparecem com foto, nome e preço, e as pessoas conseguem entrar em contacto para comprar. Simples de fazer, mas já parece um negócio a sério.</p>
+
+    <h2>O caminho, passo a passo</h2>
+
+    <ol class="steps">
+      <li>
+        <strong>A ideia.</strong> Decidimos o nome (ZungaShop) e o que o site precisa de ter: título, lista de produtos com preços, e uma forma fácil de comprar.
+      </li>
+      <li>
+        <strong>O pedido à IA.</strong> Escrevemos um pedido claro, como aprendeste no Módulo 2 — dizendo o quê, para quem, e como deve parecer:
+        <div class="code">Cria uma página HTML e CSS de uma só página
+para uma loja online chamada ZungaShop.
+Preciso de: título com o nome da loja, uma
+lista de produtos com foto, nome e preço, e
+um botão de WhatsApp em cada produto para
+comprar. Cores: que combinem com uma loja
+moderna e de confiança.</div>
+      </li>
+      <li>
+        <strong>Enviar à IA (Claude).</strong> Copiamos esse pedido e enviamos à Claude, do mesmo jeito que já viste no Módulo 2.
+      </li>
+      <li>
+        <strong>Copiar o código.</strong> A IA devolve o código completo. Copiamos tudo, do <code>&lt;!DOCTYPE html&gt;</code> até ao <code>&lt;/html&gt;</code> final.
+      </li>
+      <li>
+        <strong>Colar no Spck Editor.</strong> Abrimos o projeto no Spck Editor e colamos o código no ficheiro <strong>index.html</strong>, como aprendeste no Módulo 3.
+      </li>
+      <li>
+        <strong>Lançar no ar.</strong> Publicamos o site, como já viste no Módulo 4 — o ZungaShop deixa de estar só no telemóvel e passa a estar acessível para qualquer pessoa, em qualquer lugar.
+      </li>
+      <li>
+        <strong>Exibir o link.</strong> No fim, mostramos o link do ZungaShop já publicado — pronto para partilhar com clientes de verdade.
+      </li>
+    </ol>
+
+    <div class="callout"><strong>Isto é só a teoria geral.</strong> Agora vamos ao detalhe — produto a produto, clique a clique — para ficares a saber exactamente o que fazer em cada passo.</div>
+
+    <h2 style="margin-top:48px;">Parte 2 — O guia detalhado</h2>
+    <p>Na próxima página vais ver o passo a passo completo do ZungaShop: a ideia, os produtos, o pedido à Claude, como copiar o código, onde clicar no Spck Editor e como publicar. Cada etapa tem espaço para imagens que te mostram exactamente onde clicar.</p>
+
+  </div>
+</section>
+
+<div class="wrap">
+  <div class="pager">
+    <a href="modulo-4.html">&larr; Módulo 4</a>
+    <a class="next" href="modulo-5-parte-2.html">Parte 2: Guia detalhado →</a>
+  </div>
+</div>
+
+</body>
+</html>

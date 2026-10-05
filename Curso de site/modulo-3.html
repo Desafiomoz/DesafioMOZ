@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="pt-MZ">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Módulo 3 — Onde colocar o código</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --night: #0F1B1E; --night-2: #16292B; --gold: #F2A93B; --coral: #E85D3D;
+    --savanna: #4C8C77; --paper: #F5F1E8; --paper-dim: #C9C2B2;
+  }
+  *{ box-sizing: border-box; }
+  body{ margin:0; background: var(--night); color: var(--paper); font-family:'IBM Plex Sans',sans-serif; line-height:1.6; }
+  h1,h2,.display{ font-family:'Fraunces',serif; font-weight:600; line-height:1.15; margin:0; color:var(--paper); }
+  a{ color: inherit; }
+  .wrap{ max-width: 720px; margin:0 auto; padding: 0 28px; }
+  header{ padding: 40px 0 0; }
+  .brand{ font-family:'Fraunces',serif; font-weight:700; font-size:1.05rem; }
+  .brand span{ color: var(--gold); }
+  .back{ display:inline-block; margin-top:26px; color:var(--paper-dim); font-size:0.9rem; text-decoration:none; border-bottom:1px solid rgba(245,241,232,0.25); padding-bottom:2px; }
+  .back:hover{ color:var(--gold); border-color:var(--gold); }
+  article{ padding: 36px 0 20px; border-bottom: 1px solid rgba(245,241,232,0.08); }
+  .eyebrow{ color: var(--gold); font-size: 0.92rem; font-weight:500; }
+  h1{ margin-top: 10px; font-size: clamp(1.9rem, 4.4vw, 2.5rem); max-width: 20ch; }
+  .intro{ margin-top:16px; color: var(--paper-dim); font-size:1.05rem; max-width: 62ch; }
+  section.body{ padding: 40px 0; }
+  section.body h2{ font-size: 1.3rem; margin-bottom: 12px; }
+  section.body h2:not(:first-child){ margin-top: 40px; }
+  section.body p{ color: var(--paper-dim); font-size: 1.02rem; max-width: 62ch; }
+  section.body strong{ color: var(--paper); font-weight:600; }
+  ol.steps{ margin: 18px 0; padding-left: 0; list-style: none; counter-reset: step; }
+  ol.steps li{ counter-increment: step; padding: 14px 0 14px 42px; position: relative; color: var(--paper-dim); font-size: 1.02rem; border-top: 1px solid rgba(245,241,232,0.08); }
+  ol.steps li:first-child{ border-top: none; }
+  ol.steps li::before{ content: counter(step); position:absolute; left:0; top:14px; color: var(--night); background: var(--gold); width:24px; height:24px; border-radius:50%; font-size:0.82rem; font-weight:600; display:flex; align-items:center; justify-content:center; font-family:'IBM Plex Sans',sans-serif; }
+  .callout{ margin-top: 24px; border-left: 3px solid var(--coral); padding: 4px 0 4px 18px; color: var(--paper-dim); font-size: 0.98rem; }
+  .callout strong{ color: var(--paper); }
+  .spck-img{
+    width: 100%; border-radius: 8px; border: 1px solid rgba(245,241,232,0.12);
+    margin: 16px 0 4px; display: block;
+  }
+  .video-wrap{
+    position: relative; width: 100%; padding-top: 177.78%;
+    border-radius: 12px; overflow: hidden; border: 1px solid rgba(245,241,232,0.12);
+    background: #000; margin: 16px 0 4px;
+  }
+  .video-wrap video {
+    position: absolute; top:0; left:0; width:100%; height:100%; border:0; object-fit: cover;
+  }
+  .pager{ display:flex; justify-content: space-between; align-items:center; padding: 32px 0 64px; gap: 20px; flex-wrap: wrap; }
+  .pager a{ text-decoration:none; font-size:0.95rem; color: var(--paper-dim); }
+  .pager a:hover{ color: var(--gold); }
+  .pager .next{ background: var(--coral); color: var(--night); font-weight:600; padding: 13px 24px; border-radius: 6px; }
+  .pager .next:hover{ background: var(--gold); color: var(--night); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <span class="brand">manual<span>.</span>site</span>
+    <br><a class="back" href="indice.html">&larr; Voltar ao índice</a>
+  </div>
+</header>
+
+<article>
+  <div class="wrap">
+    <div class="eyebrow">Módulo 3</div>
+    <h1>Onde colocar o código</h1>
+    <p class="intro">Já tens o código gerado pela IA. Agora precisas de um lugar para colar isso e ver o teu site a ganhar vida — direto no telemóvel, sem computador. Vamos usar o Spck Editor.</p>
+  </div>
+</article>
+
+<section class="body">
+  <div class="wrap">
+
+    <h2>Passo a passo</h2>
+    <ol class="steps">
+      <li>
+        Instala o <strong>Spck Editor</strong> na Play Store (é gratuito).
+        <img class="spck-img" src="https://i.supaimg.com/9447b725-0914-4700-9681-fccbd9cb5399/1cad1d6b-e6dc-4c21-8fbb-d79b7fdd7b45.jpg" alt="Spck Editor na Play Store">
+      </li>
+      <li>Abre o aplicativo e toca em <strong>criar novo projeto</strong>.</li>
+      <li>Dentro do projeto, cria um ficheiro chamado exatamente <strong>index.html</strong> — este nome é obrigatório.</li>
+      <li>Apaga o conteúdo que vier por padrão e cola todo o código que a IA te deu, do <code>&lt;!DOCTYPE html&gt;</code> até ao fim.</li>
+      <li>Guarda o ficheiro.</li>
+      <li>Toca no botão de pré-visualização (geralmente um ícone de "play" ou "olho") para ver o site a funcionar dentro do próprio app.</li>
+    </ol>
+
+    <h2>Se o site vier mais de um ficheiro</h2>
+    <p>Às vezes a IA separa o CSS num ficheiro à parte, chamado normalmente <strong>style.css</strong>. Se isso acontecer, cria também esse ficheiro dentro do mesmo projeto, com o mesmo nome que a IA indicou, e cola o conteúdo correspondente.</p>
+
+    <h2>Se a pré-visualização não aparecer</h2>
+    <p>O motivo mais comum é o nome do ficheiro principal estar diferente de <strong>index.html</strong>. Confirma o nome antes de tentar mais nada.</p>
+
+    <p>Este vídeo é um exemplo de onde vais colocar o código que a IA (Claude) gerou para ti:</p>
+    <div class="video-wrap">
+      <video 
+             src="Abertura.mp4" 
+             controls
+             playsinline
+             preload="metadata"
+             style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;border:0;">
+      </video>
+    </div>
+
+    <div class="callout"><strong>Guarda sempre antes de pré-visualizar.</strong> É o erro mais comum de quem está a começar — editar e esquecer de guardar.</div>
+
+  </div>
+</section>
+
+<div class="wrap">
+  <div class="pager">
+    <a href="modulo-2.html">&larr; Módulo 2</a>
+    <a class="next" href="modulo-4.html">Módulo 4: Publicar o site</a>
+  </div>
+</div>
+
+
+
+
+</body>
+</html>

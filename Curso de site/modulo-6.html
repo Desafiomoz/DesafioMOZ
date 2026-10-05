@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="pt-MZ">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Módulo final — Tutoriais em vídeo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --night: #0F1B1E; --night-2: #16292B; --gold: #F2A93B; --coral: #E85D3D;
+    --savanna: #4C8C77; --paper: #F5F1E8; --paper-dim: #C9C2B2;
+  }
+  *{ box-sizing: border-box; }
+  body{ margin:0; background: var(--night); color: var(--paper); font-family:'IBM Plex Sans',sans-serif; line-height:1.6; }
+  h1,h2,.display{ font-family:'Fraunces',serif; font-weight:600; line-height:1.15; margin:0; color:var(--paper); }
+  a{ color: inherit; }
+  .wrap{ max-width: 720px; margin:0 auto; padding: 0 28px; }
+  header{ padding: 40px 0 0; }
+  .brand{ font-family:'Fraunces',serif; font-weight:700; font-size:1.05rem; }
+  .brand span{ color: var(--gold); }
+  .back{ display:inline-block; margin-top:26px; color:var(--paper-dim); font-size:0.9rem; text-decoration:none; border-bottom:1px solid rgba(245,241,232,0.25); padding-bottom:2px; }
+  .back:hover{ color:var(--gold); border-color:var(--gold); }
+  article{ padding: 36px 0 20px; border-bottom: 1px solid rgba(245,241,232,0.08); }
+  .eyebrow{ color: var(--coral); font-size: 0.92rem; font-weight:500; }
+  h1{ margin-top: 10px; font-size: clamp(1.9rem, 4.4vw, 2.5rem); max-width: 20ch; }
+  .intro{ margin-top:16px; color: var(--paper-dim); font-size:1.05rem; max-width: 62ch; }
+  section.body{ padding: 40px 0; }
+  section.body h2{ font-size: 1.3rem; margin-bottom: 12px; }
+  section.body p{ color: var(--paper-dim); font-size: 1.02rem; max-width: 62ch; }
+  section.body strong{ color: var(--paper); font-weight:600; }
+
+  .video-list{ display: grid; gap: 16px; margin-top: 20px; }
+  a.video-card{
+    display:flex; align-items:center; gap: 18px;
+    background: var(--night-2); border: 1px solid rgba(245,241,232,0.1);
+    border-radius: 8px; padding: 18px 20px;
+    text-decoration: none;
+    transition: border-color .15s ease, transform .15s ease;
+  }
+  a.video-card:hover{
+    border-color: var(--gold);
+    transform: translateY(-2px);
+  }
+  a.video-card:active{ transform: translateY(0); }
+  .play{
+    width: 46px; height: 46px; border-radius: 50%;
+    background: var(--coral); flex: none;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .play::before{
+    content:""; border-style: solid; border-width: 8px 0 8px 13px;
+    border-color: transparent transparent transparent var(--night);
+    margin-left: 3px;
+  }
+  .video-card h3{ margin:0 0 4px; font-size: 1.02rem; font-weight:600; color: var(--paper); }
+  .video-card span{ color: var(--paper-dim); font-size: 0.88rem; }
+
+  .callout{ margin-top: 32px; border-left: 3px solid var(--gold); padding: 4px 0 4px 18px; color: var(--paper-dim); font-size: 0.98rem; }
+  .callout strong{ color: var(--paper); }
+
+  .pager{ display:flex; justify-content: space-between; align-items:center; padding: 32px 0 64px; gap: 20px; flex-wrap: wrap; }
+  .pager a{ text-decoration:none; font-size:0.95rem; color: var(--paper-dim); }
+  .pager a:hover{ color: var(--gold); }
+  .pager .next{ background: var(--gold); color: var(--night); font-weight:600; padding: 13px 24px; border-radius: 6px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <span class="brand">manual<span>.</span>site</span>
+    <br><a class="back" href="indice.html">&larr; Voltar ao índice</a>
+  </div>
+</header>
+
+<article>
+  <div class="wrap">
+    <div class="eyebrow">Módulo final</div>
+    <h1>Tutoriais em vídeo</h1>
+    <p class="intro">Tudo o que leste nos módulos anteriores, agora mostrado na prática — passo a passo, gravado direto do telemóvel, para veres exatamente onde tocar em cada momento.</p>
+  </div>
+</article>
+
+<section class="body">
+  <div class="wrap">
+
+    <h2>Vídeos deste módulo</h2>
+    <div class="video-list">
+
+      <a class="video-card" href="ver-video.html?v=1">
+        <div class="play"></div>
+        <div>
+          <h3>1. Pedir o primeiro código à IA</h3>
+          <span>~4 min 18 s · Toca para ver</span>
+        </div>
+      </a>
+
+      <a class="video-card" href="ver-video.html?v=2">
+        <div class="play"></div>
+        <div>
+          <h3>2. Colar o código no Spck Editor</h3>
+          <span>~2 min 57 s · Toca para ver</span>
+        </div>
+      </a>
+
+      <a class="video-card" href="ver-video.html?v=3">
+        <div class="play"></div>
+        <div>
+          <h3>3. Publicar o site com Netlify</h3>
+          <span>~2 min 58 s · Toca para ver</span>
+        </div>
+      </a>
+
+    </div>
+
+    <div class="callout">
+      <strong>Como ver:</strong> Toca num vídeo. Abre numa página só para ele. Toca no play para começar.
+    </div>
+
+  </div>
+</section>
+
+<div class="wrap">
+  <div class="pager">
+    <a href="modulo-4.html">&larr; Módulo 4</a>
+    <a class="next" href="indice.html">Voltar ao índice</a>
+  </div>
+</div>
+
+</body>
+</html>

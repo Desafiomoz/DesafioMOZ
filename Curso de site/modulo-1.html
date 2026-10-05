@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="pt-MZ">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Módulo 1 — Fundamentos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --night: #0F1B1E;
+    --night-2: #16292B;
+    --gold: #F2A93B;
+    --coral: #E85D3D;
+    --savanna: #4C8C77;
+    --paper: #F5F1E8;
+    --paper-dim: #C9C2B2;
+  }
+  *{ box-sizing: border-box; }
+  body{ margin:0; background: var(--night); color: var(--paper); font-family:'IBM Plex Sans',sans-serif; line-height:1.6; }
+  h1,h2,.display{ font-family:'Fraunces',serif; font-weight:600; line-height:1.15; margin:0; color:var(--paper); }
+  a{ color: inherit; }
+  .wrap{ max-width: 720px; margin:0 auto; padding: 0 28px; }
+
+  header{ padding: 40px 0 0; }
+  .brand{ font-family:'Fraunces',serif; font-weight:700; font-size:1.05rem; }
+  .brand span{ color: var(--gold); }
+  .back{ display:inline-block; margin-top:26px; color:var(--paper-dim); font-size:0.9rem; text-decoration:none; border-bottom:1px solid rgba(245,241,232,0.25); padding-bottom:2px; }
+  .back:hover{ color:var(--gold); border-color:var(--gold); }
+
+  article{ padding: 36px 0 20px; border-bottom: 1px solid rgba(245,241,232,0.08); }
+  .eyebrow{ color: var(--gold); font-size: 0.92rem; font-weight:500; }
+  h1{ margin-top: 10px; font-size: clamp(1.9rem, 4.4vw, 2.5rem); max-width: 18ch; }
+  .intro{ margin-top:16px; color: var(--paper-dim); font-size:1.05rem; max-width: 62ch; }
+
+  section.body{ padding: 40px 0; }
+  section.body h2{ font-size: 1.3rem; margin-bottom: 12px; }
+  section.body h2:not(:first-child){ margin-top: 40px; }
+  section.body p{ color: var(--paper-dim); font-size: 1.02rem; max-width: 62ch; }
+  section.body strong{ color: var(--paper); font-weight:600; }
+
+  ul.steps{ margin: 18px 0; padding-left: 0; list-style: none; }
+  ul.steps li{ padding: 10px 0 10px 30px; position: relative; color: var(--paper-dim); font-size: 1.02rem; border-top: 1px solid rgba(245,241,232,0.08); }
+  ul.steps li:first-child{ border-top: none; }
+  ul.steps li::before{ content:"—"; position:absolute; left:0; color: var(--gold); }
+
+  .code{
+    background: var(--night-2);
+    border: 1px solid rgba(245,241,232,0.1);
+    border-radius: 8px;
+    padding: 18px 20px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.88rem;
+    color: var(--paper-dim);
+    white-space: pre;
+    overflow-x: auto;
+    margin: 18px 0;
+  }
+  .code b{ color: var(--gold); font-weight: 500; }
+  .code i{ color: var(--savanna); font-style: normal; }
+
+  .callout{
+    margin-top: 24px;
+    border-left: 3px solid var(--coral);
+    padding: 4px 0 4px 18px;
+    color: var(--paper-dim);
+    font-size: 0.98rem;
+  }
+  .callout strong{ color: var(--paper); }
+
+  .pager{
+    display:flex; justify-content: space-between; align-items:center;
+    padding: 32px 0 64px;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .pager a{ text-decoration:none; font-size:0.95rem; color: var(--paper-dim); }
+  .pager a:hover{ color: var(--gold); }
+  .pager .next{
+    background: var(--coral); color: var(--night); font-weight:600;
+    padding: 13px 24px; border-radius: 6px;
+  }
+  .pager .next:hover{ background: var(--gold); color: var(--night); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <span class="brand">manual<span>.</span>site</span>
+    <br><a class="back" href="indice.html">&larr; Voltar ao índice</a>
+  </div>
+</header>
+
+<article>
+  <div class="wrap">
+    <div class="eyebrow">Módulo 1</div>
+    <h1>Fundamentos</h1>
+    <p class="intro">Antes de pedires código a uma IA, vale a pena entender o mínimo do que esse código significa. Não precisas decorar nada — só reconhecer as peças quando as vires.</p>
+  </div>
+</article>
+
+<section class="body">
+  <div class="wrap">
+
+    <h2>O que é um site, na prática</h2>
+    <p><strong>Um site profissional é feito por códigos.</strong> O principal deles é o HTML — é ele que dá forma a tudo o que vês numa página.</p>
+    <p>Um site é feito de <strong>ficheiros de texto</strong> que o navegador (Chrome, por exemplo) sabe interpretar. O <strong>HTML</strong> descreve o conteúdo: títulos, textos, imagens, botões. O <strong>CSS</strong> descreve a aparência: cores, tamanhos, espaçamento.</p>
+
+    <h2>A estrutura mínima</h2>
+    <p>Todo o site começa com o mesmo esqueleto de código. Vais ver isto centenas de vezes — e é sempre assim que ele começa:</p>
+    <div class="code">&lt;<b>!DOCTYPE html</b>&gt;
+&lt;<b>html</b>&gt;
+  &lt;<b>head</b>&gt;
+    &lt;<b>title</b>&gt;<i>Título da aba do navegador</i>&lt;/<b>title</b>&gt;
+  &lt;/<b>head</b>&gt;
+  &lt;<b>body</b>&gt;
+    <i>Tudo o que aparece na página vai aqui</i>
+  &lt;/<b>body</b>&gt;
+&lt;/<b>html</b>&gt;</div>
+
+    <h2>As peças mais comuns</h2>
+    <ul class="steps">
+      <li><strong>&lt;h1&gt;</strong> — o título principal da página</li>
+      <li><strong>&lt;p&gt;</strong> — um parágrafo de texto</li>
+      <li><strong>&lt;img&gt;</strong> — uma imagem</li>
+      <li><strong>&lt;a&gt;</strong> — um link para outra página</li>
+      <li><strong>&lt;div&gt;</strong> — uma caixa para organizar outras coisas dentro dela</li>
+    </ul>
+
+    <h2>Onde entra o CSS</h2>
+    <p>O CSS diz como cada peça deve parecer. Por exemplo, dizer que um título deve ser dourado e grande:</p>
+    <div class="code"><i>h1</i> {
+  color: gold;
+  font-size: 32px;
+}</div>
+    <p>Não precisas de escrever isto de memória — no próximo módulo, é exatamente isto que vais pedir à IA para gerar por ti.</p>
+
+    <h2>E o JavaScript?</h2>
+    <p>Se o HTML é o esqueleto e o CSS é a roupa, o <strong>JavaScript</strong> é o que dá movimento. É ele que faz um botão reagir quando é tocado, uma mensagem aparecer sem recarregar a página, ou um menu abrir e fechar. É o que transforma um site parado num site vivo.</p>
+    <div class="code"><i>document</i>.querySelector(<i>"button"</i>).onclick = function() {
+  alert(<i>"Obrigado por visitares o site!"</i>);
+};</div>
+
+    <div class="callout"><strong>Não precisas decorar nada disto.</strong> Só reconhecer o formato quando a IA gerar o código — para saberes se recebeste algo com sentido antes de colar no editor.</div>
+    <div class="callout"><strong>Os fundamentos são necessários.</strong> Não precisas de memorizá-los — o que precisas é de ter a noção de como eles são.</div>
+    <div class="callout"><strong>Não pules nenhum manual.</strong> Lê com calma, porque o teu futuro muda se entenderes o que está aqui.</div>
+
+  </div>
+</section>
+
+<div class="wrap">
+  <div class="pager">
+    <a href="indice.html">&larr; Índice</a>
+    <a class="next" href="modulo-2.html">Módulo 2: Usando IA para gerar código</a>
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="pt-MZ">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Módulo 2 — Enviar e receber o código</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --night: #0F1B1E; --night-2: #16292B; --gold: #F2A93B; --coral: #E85D3D;
+    --savanna: #4C8C77; --paper: #F5F1E8; --paper-dim: #C9C2B2;
+  }
+  *{ box-sizing: border-box; }
+  body{ margin:0; background: var(--night); color: var(--paper); font-family:'IBM Plex Sans',sans-serif; line-height:1.6; }
+  h1,h2,.display{ font-family:'Fraunces',serif; font-weight:600; line-height:1.15; margin:0; color:var(--paper); }
+  a{ color: inherit; }
+  .wrap{ max-width: 720px; margin:0 auto; padding: 0 28px; }
+  header{ padding: 40px 0 0; }
+  .brand{ font-family:'Fraunces',serif; font-weight:700; font-size:1.05rem; }
+  .brand span{ color: var(--gold); }
+  .back{ display:inline-block; margin-top:26px; color:var(--paper-dim); font-size:0.9rem; text-decoration:none; border-bottom:1px solid rgba(245,241,232,0.25); padding-bottom:2px; }
+  .back:hover{ color:var(--gold); border-color:var(--gold); }
+  article{ padding: 36px 0 20px; border-bottom: 1px solid rgba(245,241,232,0.08); }
+  .eyebrow{ color: var(--gold); font-size: 0.92rem; font-weight:500; }
+  h1{ margin-top: 10px; font-size: clamp(1.9rem, 4.4vw, 2.5rem); max-width: 22ch; }
+  .intro{ margin-top:16px; color: var(--paper-dim); font-size:1.05rem; max-width: 62ch; }
+  section.body{ padding: 40px 0; }
+  section.body h2{ font-size: 1.3rem; margin-bottom: 12px; }
+  section.body h2:not(:first-child){ margin-top: 40px; }
+  section.body p{ color: var(--paper-dim); font-size: 1.02rem; max-width: 62ch; }
+  section.body strong{ color: var(--paper); font-weight:600; }
+  .code{
+    background: var(--night-2); border: 1px solid rgba(245,241,232,0.1); border-radius: 8px;
+    padding: 18px 20px; font-family: 'IBM Plex Mono', monospace; font-size: 0.84rem;
+    color: var(--paper); white-space: pre-wrap; overflow-x: auto; margin: 18px 0;
+  }
+  .callout{ margin-top: 24px; border-left: 3px solid var(--coral); padding: 4px 0 4px 18px; color: var(--paper-dim); font-size: 0.98rem; }
+  .callout strong{ color: var(--paper); }
+  .result-label{ margin-top: 30px; }
+  .video-wrap{
+    position: relative; width: 100%; padding-top: 100%;
+    border-radius: 8px; overflow: hidden; border: 1px solid rgba(245,241,232,0.12);
+    background: var(--night-2); margin: 4px 0 16px;
+  }
+  .video-wrap video{
+    position: absolute; top:0; left:0; width:100%; height:100%; object-fit: cover;
+  }
+  .pager{ display:flex; justify-content: space-between; align-items:center; padding: 32px 0 64px; gap: 20px; flex-wrap: wrap; }
+  .pager a{ text-decoration:none; font-size:0.95rem; color: var(--paper-dim); }
+  .pager a:hover{ color: var(--gold); }
+  .pager .next{ background: var(--coral); color: var(--night); font-weight:600; padding: 13px 24px; border-radius: 6px; }
+  .pager .next:hover{ background: var(--gold); color: var(--night); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <span class="brand">manual<span>.</span>site</span>
+    <br><a class="back" href="indice.html">&larr; Voltar ao índice</a>
+  </div>
+</header>
+
+<article>
+  <div class="wrap">
+    <div class="eyebrow">Módulo 2 · continuação</div>
+    <h1>Enviar as informações e receber o código</h1>
+    <p class="intro">Agora que já sabes o que pedir, falta enviar isso à IA certa e entender o que vais receber de volta.</p>
+  </div>
+</article>
+
+<section class="body">
+  <div class="wrap">
+
+    <h2>Quando a IA devolver o código</h2>
+    <p>Vais receber um bloco de texto com tags como as que viste no Módulo 1. Copia <strong>tudo</strong>, do <code>&lt;!DOCTYPE html&gt;</code> até ao <code>&lt;/html&gt;</code> final — é isso que vais colar no editor no próximo módulo.</p>
+    <p>Baixe o Claude e envie a informação completa do seu site.</p>
+    <p>Aqui está tudo sobre a lanchonete, para você perceber exatamente como fica um pedido completo enviado à IA:</p>
+    <div class="code">Cria uma página HTML e CSS num único ficheiro
+para a minha lanchonete.
+
+Nome do site: Lanchonete Sabor da Esquina.
+
+Quero as seguintes seções: Contato e Sobre.
+
+Na seção Contato, coloca: número de telefone,
+e-mail e horário de atendimento.
+
+Na seção Sobre, coloca: uma descrição da
+lanchonete e a localização (Bairro Central,
+Maputo).
+
+Estilo: fundo preto e branco, com letras em
+tons que combinem bem. Capricha no visual.
+
+Coloca o HTML e o CSS num único ficheiro,
+com base neste estilo.</div>
+
+    <p>Depois de enviar, você receberá o código HTML completo do seu site — neste exemplo, o da lanchonete:</p>
+    <div class="code">&lt;!DOCTYPE html&gt;
+&lt;html lang="pt"&gt;
+&lt;head&gt;
+  &lt;meta charset="UTF-8"&gt;
+  &lt;title&gt;Lanchonete Sabor da Esquina&lt;/title&gt;
+  &lt;style&gt;
+    body { margin:0; font-family: Arial, sans-serif; background:#000; color:#fff; }
+    header { padding:40px 20px; text-align:center; border-bottom:2px solid #fff; }
+    header h1 { margin:0; font-size:2rem; }
+    section { padding:30px 20px; max-width:600px; margin:0 auto; }
+    section h2 { color:#f2a93b; }
+    footer { display:flex; justify-content:center; gap:20px; padding:20px; border-top:2px solid #fff; }
+    footer a { color:#fff; text-decoration:none; }
+  &lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+
+  &lt;header&gt;
+    &lt;h1&gt;Lanchonete Sabor da Esquina&lt;/h1&gt;
+    &lt;p&gt;O sabor que traz você de volta.&lt;/p&gt;
+  &lt;/header&gt;
+
+  &lt;section id="sobre"&gt;
+    &lt;h2&gt;Sobre&lt;/h2&gt;
+    &lt;p&gt;A Lanchonete Sabor da Esquina fica no Bairro
+    Central, em Maputo. Servimos lanches frescos
+    feitos na hora, todos os dias.&lt;/p&gt;
+  &lt;/section&gt;
+
+  &lt;section id="contato"&gt;
+    &lt;h2&gt;Contato&lt;/h2&gt;
+    &lt;p&gt;Telefone: 84 000 0000&lt;/p&gt;
+    &lt;p&gt;E-mail: contato@saborlanchonete.co.mz&lt;/p&gt;
+    &lt;p&gt;Horário: Segunda a Sábado, das 8h às 20h&lt;/p&gt;
+  &lt;/section&gt;
+
+  &lt;footer&gt;
+    &lt;a href="#sobre"&gt;Sobre&lt;/a&gt;
+    &lt;a href="#contato"&gt;Contato&lt;/a&gt;
+  &lt;/footer&gt;
+
+&lt;/body&gt;
+&lt;/html&gt;</div>
+
+    <h3 class="result-label">Exemplo na prática — a lanchonete</h3>
+    <div class="video-wrap">
+      <video controls playsinline>
+        <source src="Claude.mp4" type="video/mp4">
+      </video>
+    </div>
+    <p>Aqui está o resultado desse pedido em ação: o site da lanchonete, exatamente como a IA o gerou a partir do texto que viste acima.</p>
+
+    <h2>Se algo parecer errado</h2>
+    <p>Não tentes corrigir à mão ainda. Volta à IA e descreve o problema: "o botão não aparece", "as cores estão trocadas". Pedir de novo, com mais detalhe, é mais rápido do que tentar adivinhar.</p>
+
+    <div class="callout"><strong>Regra de ouro:</strong> um pedido, um objetivo. Em vez de pedir o site inteiro de uma vez, podes pedir secção por secção se for muito grande.</div>
+
+  </div>
+</section>
+
+<div class="wrap">
+  <div class="pager">
+    <a href="modulo-2.html">&larr; Voltar</a>
+    <a class="next" href="modulo-3.html">Módulo 3: Onde colocar o código</a>
+  </div>
+</div>
+
+</body>
+</html>
