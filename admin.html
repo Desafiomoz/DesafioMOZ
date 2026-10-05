@@ -247,6 +247,7 @@
     <button class="tab" data-tab="senhas" onclick="mudarTab('senhas')"><i class="fas fa-key"></i> Senhas <span class="badge" id="badge-senhas">0</span></button>
     <button class="tab" data-tab="termos" onclick="mudarTab('termos')"><i class="fas fa-file-contract"></i> Termos</button>
     <button class="tab" data-tab="bloq-conta" onclick="mudarTab('bloq-conta'); try{carregarContasBloqueadas();}catch(e){}"><i class="fas fa-user-slash"></i> Bloqueio conta</button>
+    <button class="tab" data-tab="tua-vez" onclick="mudarTab('tua-vez'); try{carregarTuaVezPedidos();carregarTuaVezInteresses();}catch(e){}"><i class="fas fa-rocket"></i> Tua vez <span class="badge" id="badge-tua-vez">0</span></button>
     <button class="tab" data-tab="upgrades" onclick="mudarTab('upgrades'); carregarEmolaUpgrades(); try{carregarBloqueadosUpg();}catch(e){}"><i class="fas fa-rocket"></i> Aumento ganhos</button>
     <button class="tab" data-tab="pag-manual" onclick="mudarTab('pag-manual'); carregarPagManualHist()"><i class="fas fa-hand-holding-usd"></i> Pag. manual</button>
     <button class="tab" data-tab="hj-compras" onclick="mudarTab('hj-compras'); carregarHjCompras()"><i class="fas fa-undo-alt"></i> Homejub compras</button>
@@ -1961,6 +1962,57 @@
       </div>
     </div>
 
+    <!-- TUA VEZ: pedidos de site + interesses curso -->
+    <div class="painel" id="painel-tua-vez">
+      <div class="form-box">
+        <h3><i class="fas fa-rocket"></i> Tua vez — Pedidos de site</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:10px;line-height:1.45;">
+          Utilizadores enviam o tipo de site e o orçamento. <strong>Aprova</strong> ou <strong>recusa</strong> com motivo.
+          Se aprovares, o utilizador vê o botão do WhatsApp na página Tua vez.
+        </p>
+        <button type="button" class="btn-verde" style="width:auto;margin-bottom:12px;" onclick="carregarTuaVezPedidos()">🔄 Actualizar pedidos</button>
+        <div class="tabela-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th><th>Nome / E-mail</th><th>Tipo de site</th><th>Orçamento</th><th>Estado</th><th>Data</th><th>Acções</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-tua-vez-pedidos">
+              <tr><td colspan="7" class="vazio">A carregar...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="form-box">
+        <h3><i class="fas fa-graduation-cap"></i> Interesse no curso de sites (200 MT)</h3>
+        <button type="button" class="btn-verde" style="width:auto;margin-bottom:12px;" onclick="carregarTuaVezInteresses()">🔄 Actualizar</button>
+        <div class="tabela-wrap">
+          <table>
+            <thead>
+              <tr><th>#</th><th>Nome</th><th>E-mail</th><th>Quando</th></tr>
+            </thead>
+            <tbody id="tbody-tua-vez-curso">
+              <tr><td colspan="4" class="vazio">A carregar...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="form-box">
+        <h3><i class="fas fa-gamepad"></i> Interesse no curso de jogos (em breve)</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:10px;">Quando o curso estiver pronto, contacta estes interessados.</p>
+        <div class="tabela-wrap">
+          <table>
+            <thead>
+              <tr><th>#</th><th>Nome</th><th>E-mail</th><th>Quando</th></tr>
+            </thead>
+            <tbody id="tbody-tua-vez-jogo">
+              <tr><td colspan="4" class="vazio">A carregar...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
 
 <div class="painel" id="painel-bonus100">
       <div class="form-box">
@@ -8986,6 +9038,123 @@ async function carregarBonus100() {
       tbody.innerHTML = html;
     }
 
+    async function carregarTuaVezPedidos() {
+      var tbody = document.getElementById('tbody-tua-vez-pedidos');
+      if (!tbody) return;
+      tbody.innerHTML = '<tr><td colspan="7" class="vazio">A carregar...</td></tr>';
+      try {
+        var lista = [];
+        var snap;
+        try {
+          snap = await db.collection('tuaVezPedidosSite').orderBy('createdAt', 'desc').limit(150).get();
+        } catch (e1) {
+          snap = await db.collection('tuaVezPedidosSite').limit(150).get();
+        }
+        snap.forEach(function (doc) {
+          var d = doc.data() || {};
+          d._id = doc.id;
+          lista.push(d);
+        });
+        lista.sort(function (a, b) {
+          return String(b.createdAt || '').localeCompare(String(a.createdAt || ''));
+        });
+        var pend = lista.filter(function (d) { return d.status === 'pendente' || !d.status; }).length;
+        var badge = document.getElementById('badge-tua-vez');
+        if (badge) {
+          if (pend > 0) { badge.style.display = 'inline'; badge.textContent = String(pend); }
+          else { badge.style.display = 'none'; }
+        }
+        if (!lista.length) {
+          tbody.innerHTML = '<tr><td colspan="7" class="vazio">Nenhum pedido ainda.</td></tr>';
+          return;
+        }
+        var html = '';
+        lista.forEach(function (d, i) {
+          var st = d.status || 'pendente';
+          var tag = st === 'aprovado' ? 'status-pago' : (st === 'recusado' ? 'status-recusado' : 'status-pendente');
+          var idSafe = String(d._id || '').replace(/'/g, "\\'");
+          var acoes = '';
+          if (st === 'pendente' || !d.status) {
+            acoes =
+              '<button type="button" class="btn-verde" style="width:auto;padding:5px 8px;font-size:11px;" onclick="tuaVezDecidir(\'' + idSafe + '\',\'aprovado\')">✅ Aprovar</button> ' +
+              '<button type="button" class="btn-vermelho" style="width:auto;padding:5px 8px;font-size:11px;" onclick="tuaVezDecidir(\'' + idSafe + '\',\'recusado\')">❌ Recusar</button>';
+          } else {
+            acoes = '<span style="font-size:11px;color:#888;">' + escHtml(d.motivo || '—') + '</span>';
+          }
+          html += '<tr>' +
+            '<td>' + (i + 1) + '</td>' +
+            '<td><strong>' + escHtml(d.nome || '—') + '</strong><br><small style="color:#888">' + escHtml(d.email || '') + '</small></td>' +
+            '<td style="font-size:12px;max-width:200px;">' + escHtml(d.tipoSite || '—') + '</td>' +
+            '<td class="pts-alto">' + (d.orcamento || '—') + ' MT</td>' +
+            '<td><span class="status-tag ' + tag + '">' + escHtml(st) + '</span></td>' +
+            '<td style="font-size:11px;white-space:nowrap;">' + escHtml(String(d.createdAt || '').slice(0, 16).replace('T', ' ')) + '</td>' +
+            '<td style="white-space:nowrap;">' + acoes + '</td>' +
+            '</tr>';
+        });
+        tbody.innerHTML = html;
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="7" class="vazio">Erro: ' + escHtml(e.message || e) + ' — regras Firestore: tuaVezPedidosSite</td></tr>';
+      }
+    }
+
+    async function tuaVezDecidir(id, status) {
+      if (!id) return;
+      var motivo = prompt(status === 'aprovado'
+        ? 'Motivo / nota para o utilizador (opcional):'
+        : 'Motivo da recusa (recomendado):', '') || '';
+      if (status === 'recusado' && !confirm('Recusar este pedido?')) return;
+      if (status === 'aprovado' && !confirm('Aprovar? O utilizador verá o botão do WhatsApp.')) return;
+      try {
+        await db.collection('tuaVezPedidosSite').doc(id).update({
+          status: status,
+          motivo: motivo,
+          decididoEm: new Date().toISOString()
+        });
+        if (typeof mostrarAviso === 'function') mostrarAviso('Pedido ' + status + '.');
+        carregarTuaVezPedidos();
+      } catch (e) {
+        alert('Erro: ' + (e.message || e));
+      }
+    }
+
+    async function carregarTuaVezInteresses() {
+      var tCurso = document.getElementById('tbody-tua-vez-curso');
+      var tJogo = document.getElementById('tbody-tua-vez-jogo');
+      async function fill(col, tbody) {
+        if (!tbody) return;
+        tbody.innerHTML = '<tr><td colspan="4" class="vazio">A carregar...</td></tr>';
+        try {
+          var lista = [];
+          var snap;
+          try { snap = await db.collection(col).orderBy('createdAt', 'desc').limit(200).get(); }
+          catch (e1) { snap = await db.collection(col).limit(200).get(); }
+          snap.forEach(function (doc) {
+            var d = doc.data() || {};
+            d._id = doc.id;
+            lista.push(d);
+          });
+          lista.sort(function (a, b) {
+            return String(b.createdAt || '').localeCompare(String(a.createdAt || ''));
+          });
+          if (!lista.length) {
+            tbody.innerHTML = '<tr><td colspan="4" class="vazio">Nenhum interesse ainda.</td></tr>';
+            return;
+          }
+          var html = '';
+          lista.forEach(function (d, i) {
+            html += '<tr><td>' + (i + 1) + '</td><td>' + escHtml(d.nome || '—') + '</td><td>' +
+              escHtml(d.email || '') + '</td><td style="font-size:11px;">' +
+              escHtml(String(d.createdAt || '').slice(0, 16).replace('T', ' ')) + '</td></tr>';
+          });
+          tbody.innerHTML = html;
+        } catch (e) {
+          tbody.innerHTML = '<tr><td colspan="4" class="vazio">Erro: ' + escHtml(e.message || e) + '</td></tr>';
+        }
+      }
+      await fill('tuaVezInteresseCurso', tCurso);
+      await fill('tuaVezInteresseJogo', tJogo);
+    }
+
     async function bloquearJogosEmail(email, motivo, origem) {
       email = String(email || '').trim().toLowerCase();
       if (!email) return;
@@ -9819,7 +9988,7 @@ async function carregarBonus100() {
           if (u.missaoSemanalCompleta === true && u.missaoSemanaId === sid) { res.concluidos++; return; }
           alvos.push({ ref: db.collection('usuarios').doc(u._id), dados: {
             missaoLiberada: true, bloqueadoMissaoSemanal: false,
-            missaoBloqueadaApos: false, missaoSemanalCompleta: false, ultimaAtualizacao: agora
+            missaoBloqueadaApos: false, missaoSemanalCompleta: false, missaoConcluida: false, ultimaAtualizacao: agora
           }});
         } else {
           alvos.push({ ref: db.collection('usuarios').doc(u._id), dados: {
@@ -10548,6 +10717,10 @@ async function liberarMissaoUsuario() {
           missaoLiberada: true,
           missaoBloqueadaApos: false,
           missaoSemanalCompleta: false,
+          missaoConcluida: false,
+          missaoInfOk: false,
+          missaoWhatsappOk: false,
+          missaoPerguntasFeitas: 0,
           ultimaAtualizacao: new Date().toISOString()
         });
         if (typeof mostrarAviso === 'function') mostrarAviso('Missão libertada para ' + email);

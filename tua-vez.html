@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="pt-MZ">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Tua Vez – Desafio MOZ</title>
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-32.png">
+  <meta name="theme-color" content="#06080e">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+  <script>
+    if (typeof window.__DESAFIO_MOZ_FIREBASE__ === 'undefined') {
+      window.__DESAFIO_MOZ_FIREBASE__ = true;
+      var firebaseConfig = {
+        apiKey: "AIzaSyDONfggnmf9OJX_AgfvcHTRf6tsuKD5nrA",
+        authDomain: "desafio-moz-61b70.firebaseapp.com",
+        projectId: "desafio-moz-61b70",
+        storageBucket: "desafio-moz-61b70.firebasestorage.app",
+        messagingSenderId: "945658936331",
+        appId: "1:945658936331:web:7ee4b0e7de1c1daf36db0e",
+        measurementId: "G-G1DZQ1B0DB"
+      };
+      if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+      window.db = firebase.firestore();
+    }
+    var db = window.db;
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@700;800&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg: #07080d;
+      --verde: #00c853;
+      --verde-vivo: #22ff99;
+      --ouro: #ffc94d;
+      --roxo: #a78bfa;
+      --texto: #f4f6fb;
+      --suave: #8e9bb8;
+    }
+    body {
+      min-height: 100vh;
+      font-family: 'Inter', system-ui, sans-serif;
+      color: var(--texto);
+      background: var(--bg);
+      padding: 18px 14px 100px;
+      position: relative;
+      overflow-x: hidden;
+    }
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: -2;
+      background:
+        radial-gradient(circle at 15% 8%, rgba(0,200,83,0.22), transparent 42%),
+        radial-gradient(circle at 90% 5%, rgba(167,139,250,0.16), transparent 40%),
+        radial-gradient(circle at 50% 95%, rgba(255,201,77,0.1), transparent 45%),
+        #07080d;
+    }
+    .hero { text-align: center; margin-bottom: 18px; }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 7px 14px; border-radius: 999px;
+      background: linear-gradient(90deg, rgba(0,200,83,0.2), rgba(167,139,250,0.2));
+      border: 1px solid rgba(34,255,153,0.4);
+      font-size: 11px; font-weight: 700; color: var(--verde-vivo);
+      margin-bottom: 12px;
+      box-shadow: 0 0 22px rgba(34,255,153,0.25);
+    }
+    .hero h1 {
+      font-family: 'Sora', sans-serif;
+      font-size: clamp(24px, 6.5vw, 32px);
+      font-weight: 800; line-height: 1.15; margin-bottom: 8px;
+    }
+    .hero h1 span {
+      background: linear-gradient(90deg, var(--verde-vivo), var(--ouro), var(--roxo));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .hero p { color: var(--suave); font-size: 13.5px; line-height: 1.5; max-width: 420px; margin: 0 auto; }
+
+    .card {
+      background: rgba(18, 22, 31, 0.9);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 20px;
+      padding: 18px 14px;
+      margin-bottom: 14px;
+      position: relative;
+      overflow: hidden;
+    }
+    .card::before {
+      content: '';
+      position: absolute; inset: 0;
+      border-radius: 20px;
+      pointer-events: none;
+      box-shadow: inset 0 0 0 1px rgba(34,255,153,0.12);
+    }
+    .card h2 {
+      font-family: 'Sora', sans-serif;
+      font-size: 15px;
+      margin-bottom: 10px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .card p, .card li { color: var(--suave); font-size: 13.5px; line-height: 1.5; margin-bottom: 8px; }
+    .card strong { color: var(--texto); }
+
+    /* Curso capa */
+    .curso-capa-wrap {
+      position: relative;
+      border-radius: 16px;
+      overflow: hidden;
+      margin-bottom: 14px;
+      background: #0c1018;
+      box-shadow: 0 0 40px rgba(34,255,153,0.2), 0 0 80px rgba(255,201,77,0.1);
+      border: 2px solid rgba(34,255,153,0.35);
+    }
+    .curso-capa-wrap img {
+      width: 100%;
+      height: auto;
+      max-height: none;
+      object-fit: contain;
+      display: block;
+      transition: opacity 0.6s ease;
+    }
+    .curso-preco {
+      text-align: center;
+      margin: 10px 0 6px;
+    }
+    .curso-preco .val {
+      font-family: 'Sora', sans-serif;
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--ouro);
+      text-shadow: 0 0 20px rgba(255,201,77,0.4);
+    }
+    .curso-preco .lbl { font-size: 12px; color: var(--suave); }
+
+    .btn-comprar {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      width: 100%;
+      padding: 16px;
+      border: none; border-radius: 16px;
+      font-weight: 900; font-size: 16px;
+      cursor: pointer;
+      color: #04140a;
+      text-decoration: none;
+      background: linear-gradient(90deg, #FFC94D, #22FF99, #00c853);
+      background-size: 200% 100%;
+      box-shadow: 0 0 28px rgba(34,255,153,0.45), 0 8px 24px rgba(255,201,77,0.25);
+      animation: comprarAura 2.4s ease-in-out infinite;
+    }
+    @keyframes comprarAura {
+      0%, 100% { box-shadow: 0 0 20px rgba(34,255,153,0.35); background-position: 0% 50%; }
+      50% { box-shadow: 0 0 40px rgba(255,201,77,0.55), 0 0 60px rgba(34,255,153,0.35); background-position: 100% 50%; }
+    }
+
+    .equipa-banner {
+      text-align: center;
+      padding: 16px 12px;
+      margin-bottom: 14px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, rgba(0,200,83,0.18), rgba(255,201,77,0.12), rgba(167,139,250,0.15));
+      border: 1px solid rgba(34,255,153,0.45);
+      box-shadow: 0 0 36px rgba(34,255,153,0.2);
+      animation: equipaGlow 3s ease-in-out infinite;
+    }
+    @keyframes equipaGlow {
+      0%, 100% { box-shadow: 0 0 24px rgba(34,255,153,0.15); }
+      50% { box-shadow: 0 0 48px rgba(34,255,153,0.4), 0 0 60px rgba(255,201,77,0.2); }
+    }
+    .equipa-banner .t1 {
+      font-family: 'Sora', sans-serif;
+      font-size: 17px; font-weight: 800;
+      background: linear-gradient(90deg, #22ff99, #ffc94d);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      margin-bottom: 6px;
+    }
+    .equipa-banner .t2 { font-size: 13px; color: var(--suave); line-height: 1.45; margin: 0; }
+
+    .pacotes { display: grid; gap: 12px; margin-top: 8px; }
+    a.pacote {
+      background: rgba(8,12,18,0.95);
+      border: 1px solid rgba(34,255,153,0.2);
+      border-radius: 16px;
+      padding: 16px 14px;
+      display: flex; justify-content: space-between; align-items: center; gap: 12px;
+      text-decoration: none; color: inherit;
+      box-shadow: 0 0 20px rgba(0,200,83,0.08);
+      transition: transform 0.15s, border-color 0.2s, box-shadow 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+    a.pacote::after {
+      content: 'Ver →';
+      position: absolute; bottom: 8px; right: 12px;
+      font-size: 11px; font-weight: 700; color: var(--verde-vivo); opacity: 0.85;
+    }
+    a.pacote:active { transform: scale(0.98); }
+    a.pacote:hover {
+      border-color: rgba(34,255,153,0.55);
+      box-shadow: 0 8px 28px rgba(0,200,83,0.2);
+      transform: translateY(-2px);
+    }
+    .pacote .info h3 { font-size: 15px; font-weight: 800; margin-bottom: 4px; color: var(--texto); }
+    .pacote .info .nome-pacote {
+      font-size: 11px; font-weight: 800; letter-spacing: 0.04em;
+      color: var(--ouro); margin-bottom: 4px; text-transform: uppercase;
+    }
+    .pacote .info p { font-size: 12.5px; color: var(--suave); margin: 0; padding-bottom: 14px; }
+    .pacote .preco {
+      font-family: 'Sora', sans-serif;
+      font-size: 18px; font-weight: 800;
+      color: var(--verde-vivo);
+      white-space: nowrap;
+      text-shadow: 0 0 16px rgba(34,255,153,0.4);
+    }
+
+    .form-row { margin-bottom: 12px; }
+    .form-row label {
+      display: block; font-size: 12px; font-weight: 600;
+      color: var(--verde-vivo); margin-bottom: 5px;
+    }
+    .form-row input, .form-row textarea, .form-row select {
+      width: 100%;
+      padding: 12px 12px;
+      background: rgba(5,8,14,0.9);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      color: var(--texto);
+      font-size: 14px;
+      outline: none;
+      font-family: inherit;
+    }
+    .form-row textarea { min-height: 80px; resize: vertical; }
+    .form-row input:focus, .form-row textarea:focus { border-color: rgba(34,255,153,0.5); }
+
+    .btn-enviar {
+      width: 100%; padding: 14px; border: none; border-radius: 12px;
+      font-weight: 800; font-size: 14px; cursor: pointer;
+      color: #04140a;
+      background: linear-gradient(90deg, var(--verde), var(--verde-vivo));
+      box-shadow: 0 6px 20px rgba(0,200,83,0.3);
+    }
+    .btn-enviar:disabled { opacity: 0.55; cursor: not-allowed; }
+
+    .btn-wa {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      width: 100%; margin-top: 12px; padding: 14px;
+      border-radius: 14px; font-weight: 800; font-size: 14px;
+      text-decoration: none; color: #fff;
+      background: linear-gradient(90deg, #25D366, #128C7E);
+      box-shadow: 0 6px 22px rgba(37,211,102,0.4);
+    }
+
+    .aviso {
+      font-size: 13px; padding: 11px 12px; border-radius: 12px;
+      margin-top: 10px; display: none; line-height: 1.4;
+    }
+    .aviso.ok { display: block; background: rgba(0,200,83,0.12); border: 1px solid rgba(0,200,83,0.35); color: var(--verde-vivo); }
+    .aviso.err { display: block; background: rgba(255,80,80,0.1); border: 1px solid rgba(255,80,80,0.3); color: #ff8a80; }
+    .aviso.info { display: block; background: rgba(255,201,77,0.1); border: 1px solid rgba(255,201,77,0.3); color: var(--ouro); }
+
+    .bloco-aura-pedido {
+      text-align: center;
+      padding: 16px 12px;
+      margin-bottom: 16px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, rgba(255,201,77,0.18), rgba(34,255,153,0.1), rgba(167,139,250,0.12));
+      border: 1px solid rgba(255,201,77,0.5);
+      box-shadow: 0 0 36px rgba(255,201,77,0.22);
+      animation: pedidoGlow 2.8s ease-in-out infinite;
+    }
+    @keyframes pedidoGlow {
+      0%, 100% { box-shadow: 0 0 22px rgba(255,201,77,0.18); }
+      50% { box-shadow: 0 0 48px rgba(255,201,77,0.4), 0 0 60px rgba(34,255,153,0.15); }
+    }
+    .bloco-aura-pedido .titulo-aura {
+      font-family: 'Sora', sans-serif;
+      font-size: 15px; font-weight: 800;
+      background: linear-gradient(90deg, #ffc94d, #22ff99);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+      line-height: 1.35;
+    }
+    .bloco-aura-pedido p {
+      font-size: 13px; color: var(--suave); line-height: 1.5; margin: 0;
+    }
+    .bloco-aura-pedido strong { color: #f4f6fb; }
+
+    .card-aura-ouro {
+      border: 1px solid rgba(255,201,77,0.35) !important;
+      box-shadow: 0 0 28px rgba(255,201,77,0.12);
+    }
+    .card-aura-verde {
+      border: 1px solid rgba(34,255,153,0.35) !important;
+      box-shadow: 0 0 28px rgba(34,255,153,0.15);
+      background: linear-gradient(160deg, rgba(0,200,83,0.1), rgba(18,22,31,0.95)) !important;
+    }
+    .card-aura-roxo {
+      border: 1px solid rgba(167,139,250,0.4) !important;
+      box-shadow: 0 0 28px rgba(167,139,250,0.15);
+      background: linear-gradient(160deg, rgba(124,58,237,0.12), rgba(18,22,31,0.95)) !important;
+    }
+
+    .bloco-servico { text-align: center; padding: 6px 2px 4px; }
+    .bloco-servico .ico-serv {
+      font-size: 32px; margin-bottom: 8px;
+      filter: drop-shadow(0 0 12px rgba(34,255,153,0.4));
+    }
+    .bloco-servico .tag-serv {
+      display: inline-block;
+      font-size: 10px; font-weight: 800; letter-spacing: 0.08em;
+      padding: 4px 10px; border-radius: 999px; margin-bottom: 10px;
+      background: rgba(255,255,255,0.06);
+      color: var(--ouro);
+      border: 1px solid rgba(255,201,77,0.4);
+    }
+    .bloco-servico h3 {
+      font-family: 'Sora', sans-serif;
+      font-size: 16px; margin-bottom: 8px; color: var(--texto);
+      line-height: 1.35;
+    }
+    .bloco-servico p {
+      font-size: 13.5px; color: var(--suave); line-height: 1.5;
+      margin-bottom: 14px;
+    }
+    .bloco-servico strong { color: #f4f6fb; }
+    .btn-wa-serv {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      width: 100%; padding: 14px;
+      border-radius: 14px; font-weight: 800; font-size: 14px;
+      text-decoration: none; color: #fff;
+      background: linear-gradient(90deg, #25D366, #128C7E);
+      box-shadow: 0 0 24px rgba(37,211,102,0.4);
+      animation: waPulse 2.5s ease-in-out infinite;
+    }
+    @keyframes waPulse {
+      0%, 100% { box-shadow: 0 0 16px rgba(37,211,102,0.3); }
+      50% { box-shadow: 0 0 32px rgba(37,211,102,0.55); }
+    }
+
+    .breve {
+      background: linear-gradient(135deg, rgba(167,139,250,0.15), rgba(255,201,77,0.1));
+      border: 1px solid rgba(167,139,250,0.4);
+      border-radius: 16px;
+      padding: 16px;
+      text-align: center;
+      box-shadow: 0 0 30px rgba(167,139,250,0.15);
+    }
+    .breve .tag {
+      display: inline-block; font-size: 11px; font-weight: 800;
+      padding: 4px 10px; border-radius: 999px; margin-bottom: 8px;
+      background: rgba(167,139,250,0.2); color: var(--roxo);
+      border: 1px solid rgba(167,139,250,0.45);
+    }
+    .breve-capa {
+      width: 100%;
+      border-radius: 14px;
+      overflow: hidden;
+      margin: 10px 0 12px;
+      border: 2px solid rgba(167,139,250,0.45);
+      box-shadow: 0 0 28px rgba(124,58,237,0.35);
+      background: #0c1018;
+    }
+    .breve-capa img {
+      width: 100%;
+      height: auto;
+      object-fit: contain;
+      display: block;
+    }
+    .breve h3 { font-family: 'Sora', sans-serif; font-size: 16px; margin-bottom: 6px; }
+    .breve p { font-size: 13px; color: var(--suave); margin-bottom: 12px; }
+
+    .btn-interesse {
+      width: 100%; padding: 13px; border: none; border-radius: 12px;
+      font-weight: 800; font-size: 14px; cursor: pointer;
+      color: #fff;
+      background: linear-gradient(90deg, #7c3aed, #a78bfa);
+      box-shadow: 0 6px 20px rgba(124,58,237,0.35);
+    }
+
+    .menu-baixo {
+      position: fixed; bottom: 0; left: 0; width: 100%;
+      background: rgba(12,14,20,0.97);
+      border-top: 1px solid rgba(0,200,83,0.25);
+      display: flex; justify-content: space-around;
+      padding: 10px 0 12px; z-index: 100;
+      backdrop-filter: blur(10px);
+    }
+    .menu-baixo a {
+      color: #777; text-decoration: none; text-align: center;
+      font-size: 10px; font-weight: 500; width: 48px;
+      display: flex; flex-direction: column; align-items: center; gap: 2px;
+    }
+    .menu-baixo a.ativo { color: var(--verde-vivo); }
+    .menu-baixo a i { font-size: 17px; display: block; margin-bottom: 2px; }
+  </style>
+</head>
+<body>
+
+  <div class="hero">
+    <div class="hero-badge"><i class="fas fa-bolt"></i> NOVO · Aprende e cria o teu site</div>
+    <h1>É a <span>Tua Vez</span></h1>
+    <p>Aprende a fazer sites, encomenda o teu à equipa Desafio MOZ, ou regista interesse nos próximos cursos.</p>
+  </div>
+
+  <!-- ========== CURSO 300 MT ========== -->
+  <div class="card" id="sec-curso">
+    <h2>📚 Curso: Como o site é feito</h2>
+    <p>Neste curso vais ter a noção de <strong>como um site é construído</strong> — do zero até ficar online. Ideal para quem quer entender o processo e depois criar o seu.</p>
+
+    <div class="curso-capa-wrap">
+      <img id="curso-capa" src="https://i.supaimg.com/9447b725-0914-4700-9681-fccbd9cb5399/094cf20e-7d26-4fd0-b981-1ab4a61ad99a.jpg" alt="Capa do curso">
+    </div>
+
+    <div class="curso-preco">
+      <div class="val">300 MT</div>
+      <div class="lbl">Preço único · acesso ao curso</div>
+    </div>
+
+    <p style="text-align:center;font-size:13px;margin-bottom:12px;">
+      Interessado? Fala connosco no WhatsApp para comprar e receber o acesso.
+    </p>
+
+    <a class="btn-comprar" href="https://wa.link/inp42c" target="_blank" rel="noopener" onclick="registarInteresseCurso()">
+      <i class="fas fa-shopping-bag"></i> COMPRAR CURSO · 300 MT
+    </a>
+  </div>
+
+  <!-- ========== CURSO BREVE JOGO ========== -->
+  <div class="card">
+    <div class="breve">
+      <span class="tag">EM BREVE</span>
+      <h3>Como fazer o teu jogo e faturar no mercado</h3>
+      <div class="breve-capa">
+        <img src="https://i.supaimg.com/9447b725-0914-4700-9681-fccbd9cb5399/579d0dfc-64ba-43cb-b4aa-5d871a006aff.jpg" alt="Capa do curso de jogos">
+      </div>
+      <p>Curso para criar um jogo só com o telemóvel e começar a faturar. A equipa está a preparar. Deixa o teu interesse — quando estiver pronto, contactamos-te.</p>
+      <button type="button" class="btn-interesse" id="btn-interesse-jogo" onclick="registarInteresseJogo()">
+        🎮 Quero este curso de jogos
+      </button>
+      <div class="aviso" id="aviso-jogo"></div>
+    </div>
+  </div>
+
+  <!-- ========== PACOTES EQUIPA ========== -->
+  <div class="card" id="sec-equipa">
+    <h2>🛠️ A equipa cria o site por ti</h2>
+    <div class="equipa-banner">
+      <div class="t1">A equipa Desafio MOZ faz o site por ti</div>
+      <p class="t2">Não precisas de saber programar. Tu defines a ideia — <strong style="color:#f4f6fb;">nós construímos</strong>. Toca num pacote para ver tudo o que inclui e comprar.</p>
+    </div>
+    <div class="pacotes">
+      <a class="pacote" href="tua-vez-pacote.html?p=start">
+        <div class="info">
+          <div class="nome-pacote">Pacote Start</div>
+          <h3>Site de 1 página</h3>
+          <p>Ideal para cabeleireiro, lanchonete, restaurante…</p>
+        </div>
+        <div class="preco">50 MT</div>
+      </a>
+      <a class="pacote" href="tua-vez-pacote.html?p=pro">
+        <div class="info">
+          <div class="nome-pacote">Pacote Pro</div>
+          <h3>Várias páginas</h3>
+          <p>Sobre, serviços, contacto — site completo</p>
+        </div>
+        <div class="preco">100 MT</div>
+      </a>
+      <a class="pacote" href="tua-vez-pacote.html?p=shop">
+        <div class="info">
+          <div class="nome-pacote">Pacote Shop</div>
+          <h3>Com cadastro</h3>
+          <p>Visitantes entram e <strong>compram</strong> no teu site</p>
+        </div>
+        <div class="preco">200 MT</div>
+      </a>
+      <a class="pacote" href="tua-vez-pacote.html?p=afiliado">
+        <div class="info">
+          <div class="nome-pacote">Pacote Afiliado</div>
+          <h3>Cadastro + afiliados</h3>
+          <p>Vende com links e <strong>ganha comissão</strong></p>
+        </div>
+        <div class="preco">500 MT</div>
+      </a>
+    </div>
+  </div>
+
+  <!-- ========== PEDIDO PERSONALIZADO ========== -->
+  <div class="card card-aura-ouro" id="sec-pedido">
+    <h2>✍️ O teu projecto · orçamento</h2>
+    <div class="bloco-aura-pedido">
+      <div class="titulo-aura">Queres ajuda, mas o dinheiro que tens agora é insuficiente?</div>
+      <p>Envia a proposta aos agentes. Eles <strong>avaliam</strong> o teu caso. Se aprovarem, <strong>fazem o teu site</strong> — mesmo que o valor que tens agora seja mais baixo. Não desistas: manda a ideia e o orçamento.</p>
+    </div>
+
+    <div id="pedido-form-area">
+      <div class="form-row">
+        <label>Tipo de site que queres</label>
+        <textarea id="pedido-tipo" placeholder="Ex.: loja online de roupa, página de vendas, blog, portfólio…"></textarea>
+      </div>
+      <div class="form-row">
+        <label>Quanto tens disponível agora (MT)</label>
+        <input type="number" id="pedido-preco" min="1" placeholder="Ex.: 50" inputmode="numeric">
+      </div>
+      <button type="button" class="btn-enviar" id="btn-enviar-pedido" onclick="enviarPedidoSite()">Enviar para a equipa avaliar</button>
+      <div class="aviso" id="aviso-pedido"></div>
+    </div>
+
+    <div id="pedido-status" style="display:none;margin-top:12px;"></div>
+  </div>
+
+  <!-- ========== ACTUALIZAR SITE ========== -->
+  <div class="card card-aura-verde">
+    <div class="bloco-servico">
+      <div class="ico-serv">🚀</div>
+      <div class="tag-serv">ACTUALIZAÇÃO</div>
+      <h3>Já tens um site? Queremos torná-lo 10× mais forte</h3>
+      <p>Tens um site, mas queres uma versão <strong>muito melhor</strong> — mais rápida, mais bonita, mais profissional? Sem problema. Fala com o agente no WhatsApp e a equipa actualiza o teu projecto.</p>
+      <a class="btn-wa-serv" href="https://wa.link/64y9y2" target="_blank" rel="noopener">
+        <i class="fab fa-whatsapp"></i> Quero actualizar o meu site
+      </a>
+    </div>
+  </div>
+
+  <!-- ========== EMPRESAS MZ ========== -->
+  <div class="card card-aura-roxo">
+    <div class="bloco-servico">
+      <div class="ico-serv">🏢</div>
+      <div class="tag-serv">EMPRESAS EM MOÇAMBIQUE</div>
+      <h3>A tua empresa ainda não tem site?</h3>
+      <p>Empresas em Moçambique que <strong>ainda não têm site</strong> mas querem ter presença online — sem problema. Negocia com um dos agentes: a equipa Desafio MOZ cria o site da tua empresa.</p>
+      <a class="btn-wa-serv" href="https://wa.link/3i59wx" target="_blank" rel="noopener">
+        <i class="fab fa-whatsapp"></i> Quero site para a minha empresa
+      </a>
+    </div>
+  </div>
+
+  <div class="menu-baixo">
+    <a href="desafios.html"><i class="fas fa-home"></i> Início</a>
+    <a href="tarefas.html"><i class="fas fa-tasks"></i> Tarefas</a>
+    <a href="saques.html"><i class="fas fa-wallet"></i> Sacar</a>
+    <a href="ofertas.html"><i class="fas fa-gift"></i> Ofertas</a>
+    <a href="tua-vez.html" class="ativo"><i class="fas fa-rocket"></i> Tua vez</a>
+    <a href="online.html"><i class="fas fa-gamepad"></i> Online</a>
+    <a href="perfil.html"><i class="fas fa-cog"></i> Conta</a>
+  </div>
+
+  <script>
+    var CAPAS = [
+      'https://i.supaimg.com/9447b725-0914-4700-9681-fccbd9cb5399/094cf20e-7d26-4fd0-b981-1ab4a61ad99a.jpg',
+      'https://i.supaimg.com/9447b725-0914-4700-9681-fccbd9cb5399/4e87788e-284d-4db4-9347-5e704fe35c12.jpg',
+      'https://i.supaimg.com/9447b725-0914-4700-9681-fccbd9cb5399/2fea293c-f7fc-4814-873d-ae013ad40e84.jpg',
+      'https://i.supaimg.com/9447b725-0914-4700-9681-fccbd9cb5399/664c83c3-782c-4d97-924f-cf01da81169b.jpg'
+    ];
+    var capaIdx = 0;
+    setInterval(function () {
+      capaIdx = (capaIdx + 1) % CAPAS.length;
+      var img = document.getElementById('curso-capa');
+      if (img) {
+        img.style.opacity = '0.3';
+        setTimeout(function () {
+          img.src = CAPAS[capaIdx];
+          img.style.opacity = '1';
+        }, 300);
+      }
+    }, 4000);
+
+    function userSessao() {
+      return {
+        email: (localStorage.getItem('emailUtilizador') || '').trim().toLowerCase(),
+        nome: localStorage.getItem('nomeUtilizador') || ''
+      };
+    }
+
+    function precisaLogin() {
+      var u = userSessao();
+      if (!u.email || u.email === '—') {
+        alert('Faz login na tua conta Desafio MOZ para continuar.');
+        window.location.href = 'criar-conta.html';
+        return null;
+      }
+      return u;
+    }
+
+    async function registarInteresseCurso() {
+      var u = userSessao();
+      if (!u.email || u.email === '—') return; // WhatsApp abre na mesma
+      try {
+        await db.collection('tuaVezInteresseCurso').add({
+          email: u.email,
+          nome: u.nome,
+          curso: 'sites-300mt',
+          preco: 300,
+          createdAt: new Date().toISOString()
+        });
+      } catch (e) { console.warn(e); }
+    }
+
+    async function enviarPedidoSite() {
+      var u = precisaLogin();
+      if (!u) return;
+      var tipo = (document.getElementById('pedido-tipo').value || '').trim();
+      var preco = parseInt(document.getElementById('pedido-preco').value, 10);
+      var aviso = document.getElementById('aviso-pedido');
+      var btn = document.getElementById('btn-enviar-pedido');
+      if (!tipo) {
+        aviso.className = 'aviso err';
+        aviso.textContent = 'Descreve o tipo de site que queres.';
+        return;
+      }
+      if (!preco || preco < 1) {
+        aviso.className = 'aviso err';
+        aviso.textContent = 'Indica um valor em meticais (número).';
+        return;
+      }
+      btn.disabled = true;
+      btn.textContent = 'A enviar...';
+      try {
+        await db.collection('tuaVezPedidosSite').add({
+          email: u.email,
+          nome: u.nome,
+          tipoSite: tipo,
+          orcamento: preco,
+          status: 'pendente',
+          motivo: '',
+          createdAt: new Date().toISOString()
+        });
+        aviso.className = 'aviso ok';
+        aviso.textContent = 'Pedido enviado! A equipa vai avaliar. Se aprovarem, aparece aqui o botão do WhatsApp.';
+        document.getElementById('pedido-tipo').value = '';
+        document.getElementById('pedido-preco').value = '';
+        carregarMeuPedido();
+      } catch (e) {
+        aviso.className = 'aviso err';
+        aviso.textContent = 'Erro: ' + (e.message || e) + ' — tenta de novo.';
+      }
+      btn.disabled = false;
+      btn.textContent = 'Enviar para a equipa avaliar';
+    }
+
+    async function carregarMeuPedido() {
+      var u = userSessao();
+      var box = document.getElementById('pedido-status');
+      if (!u.email || u.email === '—' || !box) return;
+      try {
+        var snap = await db.collection('tuaVezPedidosSite')
+          .where('email', '==', u.email)
+          .limit(20)
+          .get();
+        if (snap.empty) { box.style.display = 'none'; return; }
+        var lista = [];
+        snap.forEach(function (doc) {
+          var d = doc.data() || {};
+          d._id = doc.id;
+          lista.push(d);
+        });
+        lista.sort(function (a, b) {
+          return String(b.createdAt || '').localeCompare(String(a.createdAt || ''));
+        });
+        var d = lista[0];
+        box.style.display = 'block';
+        if (d.status === 'aprovado') {
+          box.innerHTML =
+            '<div class="aviso ok" style="display:block;">✅ A equipa <b>aprovou</b> o teu pedido' +
+            (d.motivo ? ' — ' + String(d.motivo).replace(/</g, '&lt;') : '') +
+            '.</div>' +
+            '<a class="btn-wa" href="https://wa.link/64y9y2" target="_blank" rel="noopener">' +
+            '<i class="fab fa-whatsapp"></i> Falar com a equipa no WhatsApp</a>';
+        } else if (d.status === 'recusado') {
+          box.innerHTML =
+            '<div class="aviso err" style="display:block;">❌ Pedido recusado' +
+            (d.motivo ? ': ' + String(d.motivo).replace(/</g, '&lt;') : '.') +
+            ' Podes enviar um novo pedido com outro orçamento.</div>';
+        } else {
+          box.innerHTML =
+            '<div class="aviso info" style="display:block;">⏳ O teu pedido está <b>a ser avaliado</b> pela equipa. ' +
+            'Tipo: «' + String(d.tipoSite || '').replace(/</g, '&lt;').slice(0, 80) + '» · Orçamento: ' +
+            (d.orcamento || '—') + ' MT</div>';
+        }
+      } catch (e) { console.warn(e); }
+    }
+
+    async function registarInteresseJogo() {
+      var u = precisaLogin();
+      if (!u) return;
+      var aviso = document.getElementById('aviso-jogo');
+      var btn = document.getElementById('btn-interesse-jogo');
+      btn.disabled = true;
+      try {
+        // evita duplicados recentes
+        var ja = await db.collection('tuaVezInteresseJogo')
+          .where('email', '==', u.email)
+          .limit(1)
+          .get();
+        if (!ja.empty) {
+          aviso.className = 'aviso ok';
+          aviso.textContent = 'Já estás na lista de interessados. Quando o curso estiver pronto, contactamos-te.';
+          btn.disabled = false;
+          return;
+        }
+        await db.collection('tuaVezInteresseJogo').add({
+          email: u.email,
+          nome: u.nome,
+          curso: 'jogo-celular',
+          createdAt: new Date().toISOString()
+        });
+        aviso.className = 'aviso ok';
+        aviso.textContent = 'Interessado registado! Quando o curso estiver pronto, a equipa avisa-te.';
+        btn.textContent = '✓ Interesse registado';
+      } catch (e) {
+        aviso.className = 'aviso err';
+        aviso.textContent = 'Erro: ' + (e.message || e);
+        btn.disabled = false;
+      }
+    }
+
+    carregarMeuPedido();
+  </script>
+</body>
+</html>

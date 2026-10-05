@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="pt-MZ">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Pacote – Tua Vez · Desafio MOZ</title>
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-32.png">
+  <meta name="theme-color" content="#06080e">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@700;800&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg: #07080d; --verde: #00c853; --verde-vivo: #22ff99;
+      --ouro: #ffc94d; --roxo: #a78bfa; --texto: #f4f6fb; --suave: #8e9bb8;
+    }
+    body {
+      min-height: 100vh;
+      font-family: 'Inter', system-ui, sans-serif;
+      color: var(--texto);
+      background: var(--bg);
+      padding: 16px 14px 40px;
+    }
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: -1;
+      background:
+        radial-gradient(circle at 20% 0%, rgba(0,200,83,0.22), transparent 45%),
+        radial-gradient(circle at 90% 20%, rgba(255,201,77,0.12), transparent 40%),
+        radial-gradient(circle at 50% 100%, rgba(167,139,250,0.12), transparent 45%),
+        #07080d;
+    }
+    .topo {
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 16px;
+    }
+    .btn-voltar {
+      width: 40px; height: 40px; border-radius: 12px;
+      background: rgba(0,200,83,0.15);
+      border: 1px solid rgba(0,200,83,0.35);
+      color: #00e676;
+      display: flex; align-items: center; justify-content: center;
+      text-decoration: none; font-size: 16px;
+    }
+    .topo h1 {
+      font-family: 'Sora', sans-serif;
+      font-size: 18px; font-weight: 800;
+    }
+    .topo h1 span {
+      background: linear-gradient(90deg, var(--verde-vivo), var(--ouro));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+
+    .hero-pacote {
+      text-align: center;
+      padding: 20px 14px;
+      border-radius: 20px;
+      margin-bottom: 16px;
+      background: linear-gradient(160deg, rgba(18,22,31,0.95), rgba(10,14,22,0.98));
+      border: 2px solid rgba(34,255,153,0.35);
+      box-shadow: 0 0 40px rgba(34,255,153,0.2), 0 0 80px rgba(255,201,77,0.1);
+      animation: heroPulse 3s ease-in-out infinite;
+    }
+    @keyframes heroPulse {
+      0%, 100% { box-shadow: 0 0 30px rgba(34,255,153,0.15); }
+      50% { box-shadow: 0 0 50px rgba(34,255,153,0.35), 0 0 70px rgba(255,201,77,0.15); }
+    }
+    .tag-pacote {
+      display: inline-block;
+      font-size: 11px; font-weight: 800; letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 5px 12px; border-radius: 999px;
+      background: rgba(255,201,77,0.15);
+      color: var(--ouro);
+      border: 1px solid rgba(255,201,77,0.45);
+      margin-bottom: 10px;
+    }
+    .hero-pacote h2 {
+      font-family: 'Sora', sans-serif;
+      font-size: 22px; margin-bottom: 6px;
+    }
+    .preco-grande {
+      font-family: 'Sora', sans-serif;
+      font-size: 36px; font-weight: 800;
+      color: var(--verde-vivo);
+      text-shadow: 0 0 24px rgba(34,255,153,0.45);
+      margin: 8px 0 4px;
+    }
+    .preco-sub { font-size: 12px; color: var(--suave); }
+
+    .capa-pacote {
+      width: 100%;
+      border-radius: 14px;
+      overflow: hidden;
+      margin: 12px 0 8px;
+      border: 2px solid rgba(34,255,153,0.35);
+      box-shadow: 0 0 28px rgba(34,255,153,0.25);
+      background: #0c1018;
+    }
+    .capa-pacote img {
+      width: 100%;
+      height: auto;
+      object-fit: contain;
+      display: block;
+    }
+
+    .card {
+      background: rgba(18,22,31,0.9);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 18px;
+      padding: 18px 14px;
+      margin-bottom: 14px;
+    }
+    .card h3 {
+      font-family: 'Sora', sans-serif;
+      font-size: 15px;
+      color: var(--verde-vivo);
+      margin-bottom: 10px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .card p, .card li {
+      color: var(--suave);
+      font-size: 14px;
+      line-height: 1.55;
+      margin-bottom: 8px;
+    }
+    .card ul { padding-left: 18px; margin: 6px 0 4px; }
+    .card strong { color: var(--texto); }
+
+    .exemplo {
+      background: rgba(0,200,83,0.08);
+      border: 1px solid rgba(0,200,83,0.25);
+      border-radius: 12px;
+      padding: 12px 14px;
+      margin: 8px 0;
+      font-size: 13.5px;
+      color: var(--texto);
+      line-height: 1.5;
+    }
+    .exemplo b { color: var(--ouro); }
+
+    .gancho {
+      text-align: center;
+      padding: 14px;
+      border-radius: 14px;
+      margin: 12px 0;
+      background: linear-gradient(90deg, rgba(255,201,77,0.12), rgba(34,255,153,0.12));
+      border: 1px solid rgba(255,201,77,0.35);
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--texto);
+      line-height: 1.45;
+    }
+
+    .btn-comprar {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      width: 100%;
+      padding: 16px;
+      border: none; border-radius: 16px;
+      font-weight: 900; font-size: 16px;
+      text-decoration: none;
+      color: #04140a;
+      background: linear-gradient(90deg, #FFC94D, #22FF99, #00c853);
+      background-size: 200% 100%;
+      box-shadow: 0 0 28px rgba(34,255,153,0.45);
+      animation: comprarAura 2.4s ease-in-out infinite;
+      margin-top: 8px;
+    }
+    @keyframes comprarAura {
+      0%, 100% { box-shadow: 0 0 20px rgba(34,255,153,0.35); background-position: 0% 50%; }
+      50% { box-shadow: 0 0 40px rgba(255,201,77,0.55); background-position: 100% 50%; }
+    }
+
+    .nota {
+      text-align: center;
+      font-size: 12px;
+      color: #5a6478;
+      margin-top: 12px;
+      line-height: 1.4;
+    }
+    .erro {
+      text-align: center; padding: 40px 20px; color: var(--suave);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="topo">
+    <a href="tua-vez.html#sec-equipa" class="btn-voltar"><i class="fas fa-arrow-left"></i></a>
+    <h1>Pacote <span id="titulo-topo">…</span></h1>
+  </div>
+
+  <div id="conteudo"></div>
+
+  <script>
+    var PACOTES = {
+      start: {
+        nome: 'Start',
+        titulo: 'Site de 1 página',
+        preco: '50 MT',
+        hero: 'O teu negócio online em poucas horas — simples, limpo e a funcionar.',
+        inclui: [
+          'Uma página completa e profissional no telemóvel e no computador',
+          'Botões simples de indicação (WhatsApp, ligação, localização, menu…)',
+          'Cores e textos alinhados com o teu negócio',
+          'A equipa Desafio MOZ faz tudo — tu só defines o que queres mostrar'
+        ],
+        exemplos: [
+          { b: 'Cabeleireiro / barbearia', t: 'Foto, serviços, preços e botão «Marcar no WhatsApp».' },
+          { b: 'Lanchonete / restaurante', t: 'Menu do dia, horário e botão «Encomendar agora».' },
+          { b: 'Loja pequena / serviços', t: 'O que vendes, onde estás e como te contactar em 1 toque.' }
+        ],
+        gancho: 'Por 50 meticais tens presença online. Os clientes encontram-te, tocam no botão e falam contigo — enquanto outros ainda só têm papel na parede.',
+        msgWa: 'Olá! Quero o Pacote Start (50 MT) — site de 1 página. O meu negócio é: ',
+        waLink: 'https://wa.link/gohopq'
+      },
+      pro: {
+        nome: 'Pro',
+        titulo: 'Site com várias páginas',
+        preco: '100 MT',
+        hero: 'Site completo: várias secções, mais autoridade, mais confiança.',
+        inclui: [
+          'Várias páginas (ex.: Início, Sobre, Serviços, Galeria, Contacto)',
+          'Navegação clara no telemóvel',
+          'Botões de contacto e WhatsApp em pontos estratégicos',
+          'Ideal quando queres mostrar mais do que cabe numa só página'
+        ],
+        exemplos: [
+          { b: 'Clínica / consultório', t: 'Páginas de serviços, equipa e marcação.' },
+          { b: 'Escola / curso', t: 'Sobre, turmas, preços e inscrição.' },
+          { b: 'Negócio em crescimento', t: 'Portfolio, depoimentos e contacto profissional.' }
+        ],
+        gancho: 'Quem abre o teu site e vê várias páginas sente que estás a sério. Por 100 MT a equipa monta essa estrutura por ti.',
+        msgWa: 'Olá! Quero o Pacote Pro (100 MT) — site com várias páginas. O que preciso é: ',
+        waLink: 'https://wa.link/hvdpnj'
+      },
+      shop: {
+        nome: 'Shop',
+        titulo: 'Site com cadastro',
+        preco: '200 MT',
+        hero: 'Com 200 meticais terás o teu negócio na Internet.',
+        inclui: [
+          'Área de cadastro / login para os teus clientes',
+          'Espaço para produtos ou serviços à venda',
+          'Fluxo pensado para comprar (pedido / contacto de pagamento)',
+          'A equipa Desafio MOZ monta tudo por ti'
+        ],
+        exemplos: [
+          { b: 'Já tens loja ou negócio?', t: 'Colocas na Internet sem stress — com 200 MT isso é possível.' },
+          { b: 'Queres criar do zero?', t: 'Ainda melhor: começas na Internet do zero, com conta de clientes e vendas.' },
+          { b: 'O teu nome online', t: 'Visitantes entram, registam-se e compram o que ofereces.' }
+        ],
+        gancho: 'Com 200 meticais terás o teu negócio na Internet. Tens uma loja ou um negócio e queres colocá-lo online? Sem problema. Ou queres criar na Internet do zero? Também sem problema. A equipa faz por ti — e o teu nome fica online a vender.',
+        msgWa: 'Olá! Quero o Pacote Shop (200 MT) — site com cadastro. O meu negócio é: ',
+        waLink: 'https://wa.link/avyp9w'
+      },
+      afiliado: {
+        nome: 'Afiliado',
+        titulo: 'Cadastro + links de afiliados',
+        preco: '500 MT',
+        capa: 'https://i.supaimg.com/9447b725-0914-4700-9681-fccbd9cb5399/7e957efa-a958-46ca-884f-4c6f2a1d9b6a.jpg',
+        hero: 'Com 500 MT serás o dono de um grande site de venda de produtos online.',
+        inclui: [
+          'Site grande de vendas: as pessoas entram e abrem conta',
+          'Compram os teus produtos no teu site',
+          'Podem pegar os teus produtos e vender na Internet por ti',
+          'Tu pagas-lhes comissão por cada venda que fizerem',
+          'A equipa Desafio MOZ constrói esta estrutura contigo'
+        ],
+        exemplos: [
+          { b: 'Tu no centro', t: 'O site é teu. Os clientes compram contigo.' },
+          { b: 'Outros vendem por ti', t: 'Alguém partilha o teu produto na Internet — quando vende, ganha comissão; tu ficas com o negócio.' },
+          { b: 'Império em rede', t: 'Quanto mais pessoas venderem os teus produtos, mais o teu império cresce.' }
+        ],
+        gancho: 'Com 500 meticais serás o rei de um grande império. Um site onde as pessoas entram, abrem conta, compram os teus produtos — e ainda podem vender por ti na Internet, enquanto tu pagas a comissão. Isto não é só um site: é o teu império online.',
+        msgWa: 'Olá! Quero o Pacote Afiliado (500 MT) — site de vendas + comissões. Quero: ',
+        waLink: 'https://wa.link/e29qmk'
+      }
+    };
+
+    var params = new URLSearchParams(window.location.search);
+    var key = (params.get('p') || '').toLowerCase();
+    var p = PACOTES[key];
+    var box = document.getElementById('conteudo');
+    var topo = document.getElementById('titulo-topo');
+
+    if (!p) {
+      box.innerHTML = '<div class="erro">Pacote não encontrado.<br><br><a href="tua-vez.html" style="color:#22ff99;">← Voltar a Tua vez</a></div>';
+    } else {
+      document.title = 'Pacote ' + p.nome + ' – Tua Vez · Desafio MOZ';
+      if (topo) topo.textContent = p.nome;
+      var exemplosHtml = p.exemplos.map(function (e) {
+        return '<div class="exemplo"><b>' + e.b + ':</b> ' + e.t + '</div>';
+      }).join('');
+      var incluiHtml = p.inclui.map(function (t) {
+        return '<li>' + t + '</li>';
+      }).join('');
+      var wa = 'https://wa.me/258869517893?text=' + encodeURIComponent(p.msgWa);
+      // usa wa.link oficial do site
+      var waLink = p.waLink || 'https://wa.link/64y9y2';
+
+      var capaHtml = p.capa
+        ? '<div class="capa-pacote"><img src="' + p.capa + '" alt="Capa Pacote ' + p.nome + '"></div>'
+        : '';
+      box.innerHTML =
+        '<div class="hero-pacote">' +
+          '<div class="tag-pacote">Pacote ' + p.nome + '</div>' +
+          '<h2>' + p.titulo + '</h2>' +
+          capaHtml +
+          '<div class="preco-grande">' + p.preco + '</div>' +
+          '<div class="preco-sub">Pago uma vez · equipa Desafio MOZ faz por ti</div>' +
+          '<p style="margin-top:12px;font-size:14px;color:#8e9bb8;line-height:1.5;">' + p.hero + '</p>' +
+        '</div>' +
+        '<div class="card">' +
+          '<h3>✨ O que inclui</h3>' +
+          '<ul>' + incluiHtml + '</ul>' +
+        '</div>' +
+        '<div class="card">' +
+          '<h3>📍 Exemplos reais</h3>' +
+          '<p>Imagina o teu negócio assim:</p>' +
+          exemplosHtml +
+        '</div>' +
+        '<div class="gancho">' + p.gancho + '</div>' +
+        '<div class="card">' +
+          '<h3>🛒 Comprar este pacote</h3>' +
+          '<p>A equipa <strong>cria o site por ti</strong>. Clica em comprar e fala no WhatsApp — combina detalhes e pagamento.</p>' +
+          '<a class="btn-comprar" href="' + waLink + '" target="_blank" rel="noopener">' +
+            '<i class="fas fa-shopping-bag"></i> COMPRAR · ' + p.preco +
+          '</a>' +
+          '<p class="nota">Agente oficial Desafio MOZ · WhatsApp</p>' +
+        '</div>';
+    }
+  </script>
+</body>
+</html>

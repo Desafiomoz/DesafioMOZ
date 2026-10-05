@@ -1147,6 +1147,7 @@
           missoesSemanaisEncontradas: encontradas,
           missaoLiberada: false,
           missaoBloqueadaApos: true,
+          missaoConcluida: true,
           missaoPagamentoTxid: txid,
           missaoPagamentoTel: tel,
           missaoPagamentoMt: 2,
@@ -1196,6 +1197,8 @@
         jaCompletouEstaSemana = true;
         userData.missaoSemanalCompleta = true;
         userData.missaoBloqueadaApos = true;
+        userData.missaoLiberada = false;
+        userData.missaoConcluida = true;
         userData.pontos = novos;
 
         esconderCardsMissaoExtra();
@@ -1207,7 +1210,7 @@
         }
         document.getElementById('status-banner').className = 'status-banner status-done';
         document.getElementById('status-banner').textContent =
-          '🔒 Missão concluída nesta conta! +150 pts. Outras contas não são afectadas. O calendário voltou para ti.';
+          '🔒 Missão concluída nesta conta! +150 pts. Ficaste bloqueado — só o admin pode libertar para fazeres de novo.';
         var cardPrev = document.getElementById('card-previsoes');
         if (cardPrev) cardPrev.style.display = 'block';
         alert('✅ +150 pontos na tua conta!');
@@ -1241,6 +1244,7 @@ async function finalizarMissao() {
           missoesSemanaisEncontradas: encontradas,
           missaoLiberada: false,
           missaoBloqueadaApos: true,
+          missaoConcluida: true,
           ultimaAtualizacao: new Date().toISOString()
         });
 
@@ -1264,11 +1268,12 @@ async function finalizarMissao() {
         if (cardPrev) cardPrev.style.display = 'block';
         document.getElementById('status-banner').className = 'status-banner status-done';
         document.getElementById('status-banner').textContent =
-          '🔒 Missão concluída na tua conta! Ficaste bloqueado. O calendário voltou — na próxima semana podes tentar de novo.';
+          '🔒 Missão concluída na tua conta! Ficaste bloqueado. Só podes fazer de novo se o admin libertar a tua conta.';
         jaCompletouEstaSemana = true;
         userData.missaoSemanalCompleta = true;
         userData.missaoBloqueadaApos = true;
         userData.missaoLiberada = false;
+        userData.missaoConcluida = true;
       } catch (e) {
         alert('Erro ao guardar: ' + (e.message || e));
       }
@@ -1284,15 +1289,27 @@ async function finalizarMissao() {
     }
 
     async function isMissaoLiberadaParaTodos() {
-      // Por defeito SEMPRE liberada para todos. Timeout 3s para não ficar a processar.
+      // Só liberada se o admin marcar liberadaParaTodos nesta semana. Por defeito: FECHADA.
       try {
         var snap = await withTimeout(db.collection('missaoSemanalConfig').doc(semanaId).get(), 3000);
         if (snap && snap.exists) {
           var d = snap.data() || {};
-          if (d.liberadaParaTodos === false || d.fechada === true) return false;
+          if (d.liberadaParaTodos === true && d.fechada !== true) return true;
+          return false;
         }
       } catch (e) {}
-      return true;
+      return false;
+    }
+
+    /** Já concluiu alguma vez e o admin NÃO libertou de novo → bloqueado */
+    function missaoBloqueadaAposConcluir(u) {
+      if (!u) return false;
+      if (u.missaoLiberada === true) return false; // admin permitiu outra vez
+      var concluiu = u.missaoSemanalCompleta === true
+        || u.missaoBloqueadaApos === true
+        || u.missaoBloqueadaApos === semanaId
+        || u.missaoConcluida === true;
+      return !!concluiu;
     }
 
     function missaoGlobalRef() {
@@ -1404,11 +1421,11 @@ async function finalizarMissao() {
       var liberadaTodos = await isMissaoLiberadaParaTodos();
       var liberadaUser = userData && userData.missaoLiberada === true;
 
-      // Já completou esta semana
-      if (userData && userData.missaoSemanaId === semanaId && userData.missaoSemanalCompleta === true) {
+      // Já concluiu e admin não libertou — bloqueado
+      if (userData && missaoBloqueadaAposConcluir(userData)) {
         document.getElementById('status-banner').className = 'status-banner status-done';
         document.getElementById('status-banner').textContent =
-          '🔒 Já finalizaste a missão desta semana. Volta a ver o calendário para a próxima oportunidade.';
+          '🔒 Já finalizaste a missão nesta conta. Só podes repetir se o admin libertar a tua conta.';
         document.getElementById('zona-acao').innerHTML = '';
         document.getElementById('zona-missao').style.display = 'none';
         document.getElementById('card-previsoes').style.display = 'block';
@@ -1631,12 +1648,13 @@ async function finalizarMissao() {
         } catch (eV) {}
 
         var liberadaTodos = true;
-        try { liberadaTodos = await isMissaoLiberadaParaTodos(); } catch (eL) { liberadaTodos = true; }
+        try { liberadaTodos = await isMissaoLiberadaParaTodos(); } catch (eL) { liberadaTodos = false; }
 
-        if (jaCompletouEstaSemana || userData.missaoBloqueadaApos === semanaId) {
+        // Já concluiu (esta ou outra semana) e admin NÃO libertou → calendário só, sem botão
+        if (missaoBloqueadaAposConcluir(userData) || jaCompletouEstaSemana) {
           document.getElementById('status-banner').className = 'status-banner status-done';
           document.getElementById('status-banner').textContent =
-            '🔒 Já concluíste a missão desta semana nesta conta. O calendário voltou.';
+            '🔒 Já concluíste a missão nesta conta. O calendário voltou. Só podes repetir se o admin libertar a tua conta.';
           document.getElementById('card-previsoes').style.display = 'block';
           document.getElementById('zona-acao').innerHTML = '';
           document.getElementById('zona-missao').style.display = 'none';
