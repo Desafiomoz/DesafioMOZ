@@ -135,6 +135,32 @@
     }
     .curso-preco .lbl { font-size: 12px; color: var(--suave); }
 
+
+    .btn-ver-curso {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      width: 100%;
+      padding: 16px;
+      margin-bottom: 12px;
+      border: 2px solid rgba(167,139,250,0.55);
+      border-radius: 16px;
+      font-weight: 900; font-size: 15px;
+      cursor: pointer;
+      color: #fff;
+      text-decoration: none;
+      background: linear-gradient(105deg, #7c3aed, #a78bfa, #22ff99, #7c3aed);
+      background-size: 250% 100%;
+      box-shadow: 0 0 28px rgba(124,58,237,0.45), 0 0 50px rgba(34,255,153,0.2);
+      animation: verCursoAura 2.2s ease-in-out infinite;
+    }
+    @keyframes verCursoAura {
+      0%, 100% { background-position: 0% 50%; box-shadow: 0 0 22px rgba(124,58,237,0.4), 0 0 40px rgba(34,255,153,0.15); }
+      50% { background-position: 100% 50%; box-shadow: 0 0 40px rgba(167,139,250,0.65), 0 0 70px rgba(34,255,153,0.35); transform: scale(1.015); }
+    }
+    .btn-ver-curso span {
+      font-size: 11px; font-weight: 700; opacity: 0.9;
+      display: block; margin-top: 2px; letter-spacing: 0.02em;
+    }
+
     .btn-comprar {
       display: flex; align-items: center; justify-content: center; gap: 10px;
       width: 100%;
@@ -419,8 +445,15 @@
     </div>
 
     <p style="text-align:center;font-size:13px;margin-bottom:12px;">
-      Interessado? Fala connosco no WhatsApp para comprar e receber o acesso.
+      Vê primeiro uma prévia do curso. No fim, se gostares, compras no WhatsApp.
     </p>
+
+    <a class="btn-ver-curso" href="Curso de site/index.html">
+      <span style="text-align:center;line-height:1.25;">
+        👁️ CLICA AQUI · VÊ O CURSO UM POUCO<br>
+        <span style="font-size:11px;font-weight:700;opacity:0.95;">Só a página de apresentação · grátis</span>
+      </span>
+    </a>
 
     <a class="btn-comprar" href="https://wa.link/inp42c" target="_blank" rel="noopener" onclick="registarInteresseCurso()">
       <i class="fas fa-shopping-bag"></i> COMPRAR CURSO · 300 MT
