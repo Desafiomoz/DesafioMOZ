@@ -2027,8 +2027,6 @@
       </div>
     </div>
 
-    <!-- TUA VEZ: pedidos de site + interesses curso -->
-    <div class="painel" 
     <div class="painel" id="painel-alerta">
       <div class="form-box" style="border:1px solid rgba(255,193,7,0.45);">
         <h3 style="color:#ffc107;"><i class="fas fa-exclamation-triangle"></i> Alerta — investigação de ganhos</h3>
@@ -2077,7 +2075,8 @@
       </div>
     </div>
 
-id="painel-tua-vez">
+    <!-- TUA VEZ: pedidos de site + interesses curso -->
+    <div class="painel" id="painel-tua-vez">
       <div class="form-box">
         <h3><i class="fas fa-rocket"></i> Tua vez — Pedidos de site</h3>
         <p style="font-size:12px;color:#888;margin-bottom:10px;line-height:1.45;">
@@ -3282,6 +3281,7 @@ function mostrarAviso(txt) {
       try { await carregarHomejub(); } catch (e) { console.error(e); }
       atualizarResumo();
       renderRanking();
+      try { carregarAlertasInvestigacao(); } catch (eA) {}
     }
 
     function diaISO(d) {
@@ -11074,7 +11074,7 @@ async function liberarMissaoUsuario() {
           '<td style="font-size:11px;white-space:nowrap;">' + escHtml(desde) + '</td>' +
           '<td class="pts-ok">' + (u.pontos || 0) + '</td>' +
           '<td class="pts-alto">' + (u.roletaGiros || 0) + '</td>' +
-          '<td><button type="button" class="btn-verde" onclick="desactivarAlertaInvestigacao(\'' + emSafe + '\')">✅ Desbloquear</button></td>' +
+          '<td><button type="button" class="btn-verde" data-email="' + emSafe.replace(/"/g,'') + '" onclick="desactivarAlertaInvestigacao(this.getAttribute(\'data-email\'))">✅ Desbloquear</button></td>' +
           '</tr>';
       });
       tbody.innerHTML = html;
