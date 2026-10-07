@@ -823,7 +823,7 @@ const ANCORAS_PONTOS = [[5,3],[10,8],[24,18]];
 const ANCORAS_MT     = [[2,15],[5,35],[10,80]];
 
 /* ---------- Estado do jogador (pontos = conta Desafio MOZ) ---------- */
-let estado = { pontos: 0, mt: 0, giros: 0, historico: [], ultimoGiroGratis: null, garantias: [], totalGirosFeitos: 0, girosPorDia: {}, ultimoGiroAt: null, ganhos: 0, perdas: 0, pontosGanhos: 0, mtGanhos: 0, contagemPremios: {}, girosDificeis: 0, girosPerdedores: 0 };
+let estado = { pontos: 0, mt: 0, giros: 0, historico: [], ultimoGiroGratis: null, garantias: [], totalGirosFeitos: 0, girosPorDia: {}, ultimoGiroAt: null, ganhos: 0, perdas: 0, pontosGanhos: 0, mtGanhos: 0, contagemPremios: {}, girosDificeis: 0, girosPerdedores: 0, origemPontos: 0, origemMetical: 0, origemGratis: 0, origemPremio: 0 };
 
 function carregarEstadoLocal(){
   try {
@@ -913,6 +913,10 @@ async function guardarEstado(){
       roletaUltimos: (estado.historico || []).slice(0, 12),
       roletaGirosDificeis: Number(estado.girosDificeis) || 0,
       roletaGirosPerdedores: Number(estado.girosPerdedores) || 0,
+      roletaOrigemPontos: Number(estado.origemPontos) || 0,
+      roletaOrigemMetical: Number(estado.origemMetical) || 0,
+      roletaOrigemGratis: Number(estado.origemGratis) || 0,
+      roletaOrigemPremio: Number(estado.origemPremio) || 0,
       ultimaAtualizacao: new Date().toISOString()
     });
   } catch(e){ console.warn('guardar roleta', e); }
@@ -967,6 +971,10 @@ async function carregarContaFirebase(){
     if(Array.isArray(d.roletaUltimos) && (!estado.historico || !estado.historico.length)) estado.historico = d.roletaUltimos;
     if(d.roletaGirosDificeis != null) estado.girosDificeis = Number(d.roletaGirosDificeis) || 0;
     if(d.roletaGirosPerdedores != null) estado.girosPerdedores = Number(d.roletaGirosPerdedores) || 0;
+    if(d.roletaOrigemPontos != null) estado.origemPontos = Number(d.roletaOrigemPontos) || 0;
+    if(d.roletaOrigemMetical != null) estado.origemMetical = Number(d.roletaOrigemMetical) || 0;
+    if(d.roletaOrigemGratis != null) estado.origemGratis = Number(d.roletaOrigemGratis) || 0;
+    if(d.roletaOrigemPremio != null) estado.origemPremio = Number(d.roletaOrigemPremio) || 0;
     // Maldição / prémio forçado pelo admin
     if(d.roletaMaldicao && typeof d.roletaMaldicao === 'object') estado.roletaMaldicao = d.roletaMaldicao;
     else estado.roletaMaldicao = null;
@@ -991,6 +999,7 @@ async function reclamarGiroGratisSeDisponivel(){
   if(giroGratisDisponivel()){
     var n = 3;
     estado.giros = (Number(estado.giros) || 0) + n;
+    estado.origemGratis = (Number(estado.origemGratis) || 0) + n;
     estado.ultimoGiroGratis = hojeISO();
     if(!estado.garantias) estado.garantias = [];
     function perdaLocal(){
@@ -1277,6 +1286,7 @@ async function comprarComPontos(custoPontos, giros){
   if(estado.pontos < custoPontos){ mostrarToast('Não tens pontos suficientes.'); return; }
   estado.pontos -= custoPontos;
   estado.giros += giros;
+  estado.origemPontos = (Number(estado.origemPontos) || 0) + giros;
   var plano = montarListaPremiosPontos(custoPontos, giros);
   if(plano && plano.lista && plano.lista.length){
     if(!estado.garantias) estado.garantias = [];
@@ -1429,6 +1439,10 @@ async function snapshotRoletaAntes(){
       if(d.roletaTotalGiros != null) o.totalGiros = Number(d.roletaTotalGiros) || 0;
       if(d.roletaGirosDificeis != null) o.girosDificeis = Number(d.roletaGirosDificeis) || 0;
       if(d.roletaGirosPerdedores != null) o.girosPerdedores = Number(d.roletaGirosPerdedores) || 0;
+      if(d.roletaOrigemPontos != null) o.origemPontos = Number(d.roletaOrigemPontos) || 0;
+      if(d.roletaOrigemMetical != null) o.origemMetical = Number(d.roletaOrigemMetical) || 0;
+      if(d.roletaOrigemGratis != null) o.origemGratis = Number(d.roletaOrigemGratis) || 0;
+      if(d.roletaOrigemPremio != null) o.origemPremio = Number(d.roletaOrigemPremio) || 0;
       o.pontosGastos = Number(d.roletaPontosGastos) || 0;
       o.girosPorPontos = Number(d.roletaGirosPorPontos) || 0;
     }
@@ -1554,6 +1568,7 @@ async function ckVerificarPagamento(){
         // evita corrida: marca logo antes de somar
         ckMarcarCreditadoLocal(ckChargeId);
         estado.giros = girosAntes + esperados;
+        estado.origemMetical = (Number(estado.origemMetical) || 0) + esperados;
         registarGarantiasMetical(ckPendente.valorMT, esperados);
         await guardarEstado();
       } else {
@@ -2016,6 +2031,7 @@ function registarGarantiasMetical(valorMT, girosComprados){
 
 async function creditarGirosMetical(valorMT, giros){
   estado.giros = (Number(estado.giros) || 0) + giros;
+  estado.origemMetical = (Number(estado.origemMetical) || 0) + (Number(giros) || 0);
   var plano = registarGarantiasMetical(valorMT, giros);
   await guardarEstado();
   atualizarUI();
@@ -2152,6 +2168,7 @@ document.getElementById('btn-girar').addEventListener('click', async ()=>{
   if(premio.tipo==='mt') estado.pontos += premio.valor * PTS_POR_MT; // MT → pontos na conta
   if(premio.tipo==='giros'){
     estado.giros += premio.valor;
+    estado.origemPremio = (Number(estado.origemPremio) || 0) + (Number(premio.valor) || 0);
     // Giros ganhos na roleta: ao usar, não ganham nada
     estado.girosPerdedores = (Number(estado.girosPerdedores) || 0) + premio.valor;
   }

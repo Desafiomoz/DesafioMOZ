@@ -1149,7 +1149,8 @@
         <h3><i class="fas fa-dharmachakra"></i> Roleta — actividade dos jogadores</h3>
         <p style="font-size:12px;color:#888;margin-bottom:12px;">
           Quantas vezes cada utilizador girou, se girou <b>hoje</b>, giros restantes e último giro.
-          (Dados gravados a partir desta actualização do jogo.)
+          <br><b>Origem dos giros:</b> Pts = compra com pontos · MT = compra e-Mola/M-Pesa · Grátis = 3/dia · Prémio = +2/+6 ganhos na roleta.
+          (Origem começa a contar a partir desta actualização.)
         </p>
         <div class="resumo" style="margin-bottom:14px;">
           <div class="resumo-card"><div class="num" id="roleta-jogadores">0</div><div class="lbl">Jogadores</div></div>
@@ -1181,7 +1182,7 @@
               </tr>
             </thead>
             <tbody id="tbody-roleta-users">
-              <tr><td colspan="13" class="vazio">Clica em Actualizar roleta.</td></tr>
+              <tr><td colspan="14" class="vazio">Clica em Actualizar roleta.</td></tr>
             </tbody>
           </table>
         </div>
@@ -5453,7 +5454,7 @@ async function ajustarPontosUtilizador() {
 
       if (tbodyU) {
         if (!jogadores.length) {
-          tbodyU.innerHTML = '<tr><td colspan="13" class="vazio">Ainda sem actividade de giros nos utilizadores.</td></tr>';
+          tbodyU.innerHTML = '<tr><td colspan="14" class="vazio">Ainda sem actividade de giros nos utilizadores.</td></tr>';
         } else {
           var hu = '';
           jogadores.forEach(function (u, i) {
@@ -5471,11 +5472,17 @@ async function ajustarPontosUtilizador() {
             var topPrem = Object.keys(cont).map(function (k) { return { k: k, n: Number(cont[k]) || 0 }; })
               .sort(function (a, b) { return b.n - a.n; }).slice(0, 3)
               .map(function (x) { return x.k + '×' + x.n; }).join(', ') || '—';
+            var op = Number(u.roletaOrigemPontos || 0);
+            var om = Number(u.roletaOrigemMetical || 0);
+            var og = Number(u.roletaOrigemGratis || 0);
+            var opr = Number(u.roletaOrigemPremio || 0);
+            var origemTxt = op + ' pts · ' + om + ' MT · ' + og + ' grátis · ' + opr + ' prémio';
             hu += '<tr data-busca-user="' + escHtml(((u.nome || '') + ' ' + (u.email || '')).toLowerCase()) + '">' +
               '<td>' + (i + 1) + '</td>' +
               '<td>' + escHtml(u.nome || '—') + '</td>' +
               '<td>' + escHtml(u.email || '—') + '</td>' +
               '<td class="pts-ok">' + (u.roletaGiros || 0) + '</td>' +
+              '<td style="font-size:11px;line-height:1.35;color:#ccc;" title="Pontos / Metical / Grátis diário / Prémio +2+6">' + origemTxt + '</td>' +
               '<td class="pts-alto">' + (u.roletaTotalGiros || 0) + '</td>' +
               '<td class="pts-ok">' + ganhos + '</td>' +
               '<td class="pts-baixo">' + perdas + '</td>' +
