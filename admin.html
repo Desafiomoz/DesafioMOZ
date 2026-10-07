@@ -2914,6 +2914,29 @@
           <button type="button" class="btn-verde" style="width:auto;padding:10px 14px;" onclick="(function(){var e=(document.getElementById('rt-blk-email').value||'').trim();if(!e)return alert('E-mail');desbloquearJogosEmail(e);setTimeout(carregarBloqueadosJogos,700);})()">✅ Desbloquear</button>
         </div>
       </div>
+
+      <div class="form-box" style="border:1px solid rgba(255,201,77,0.5);">
+        <h3 style="color:#FFD700;"><i class="fas fa-plus-minus"></i> Ajustar giros da roleta (+ / −)</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:12px;line-height:1.45;">
+          Aumenta ou diminui os <b>giros</b> da roleta na conta do jogador.
+          Ex.: quantidade <b>10</b> + Adicionar → +10 giros · − Retirar → remove até ao saldo (não fica negativo).
+        </p>
+        <div class="form-grid">
+          <div class="form-row">
+            <label>E-mail do jogador</label>
+            <input type="email" id="rt-giros-email" placeholder="email@gmail.com" onblur="verSaldoGirosRoleta()">
+          </div>
+          <div class="form-row">
+            <label>Quantidade</label>
+            <input type="number" id="rt-giros-qtd" min="1" step="1" value="1" placeholder="Ex: 5">
+          </div>
+        </div>
+        <p id="rt-giros-saldo" style="font-size:13px;color:#ccc;margin:8px 0 12px;">Saldo actual de giros: —</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button type="button" class="btn-verde" style="flex:1;padding:14px;font-size:15px;" onclick="ajustarGirosRoletaAdmin(1)">➕ Adicionar giros</button>
+          <button type="button" class="btn-vermelho" style="flex:1;padding:14px;font-size:15px;width:auto;" onclick="ajustarGirosRoletaAdmin(-1)">➖ Retirar giros</button>
+        </div>
+      </div>
     </div>
 
     <div class="painel" id="painel-pagamentos">
@@ -10990,6 +11013,84 @@ async function liberarMissaoUsuario() {
     }
 
 
+
+
+    async function verSaldoGirosRoleta() {
+      var email = (document.getElementById('rt-giros-email') && document.getElementById('rt-giros-email').value || '').trim().toLowerCase();
+      var el = document.getElementById('rt-giros-saldo');
+      if (!el) return;
+      if (!email || email.indexOf('@') === -1) {
+        el.textContent = 'Saldo actual de giros: —';
+        return;
+      }
+      el.textContent = 'A carregar...';
+      try {
+        var snap = await db.collection('usuarios').where('email', '==', email).limit(1).get();
+        if (snap.empty) {
+          snap = await db.collection('usuarios').where('email', '==', (document.getElementById('rt-giros-email').value || '').trim()).limit(1).get();
+        }
+        if (snap.empty) {
+          el.textContent = 'Utilizador não encontrado.';
+          return;
+        }
+        var d = snap.docs[0].data() || {};
+        var g = Number(d.roletaGiros) || 0;
+        el.innerHTML = 'Saldo actual de giros: <b style="color:#FFD700;font-size:16px;">' + g + '</b>';
+      } catch (e) {
+        el.textContent = 'Erro: ' + (e.message || e);
+      }
+    }
+
+    async function ajustarGirosRoletaAdmin(sinal) {
+      var email = (document.getElementById('rt-giros-email') && document.getElementById('rt-giros-email').value || '').trim().toLowerCase();
+      var qtd = parseInt(document.getElementById('rt-giros-qtd') && document.getElementById('rt-giros-qtd').value, 10);
+      if (!email || email.indexOf('@') === -1) return alert('E-mail inválido.');
+      if (!qtd || qtd < 1) return alert('Quantidade deve ser pelo menos 1.');
+      var delta = (sinal >= 0 ? 1 : -1) * qtd;
+      var accao = delta > 0 ? ('adicionar +' + qtd + ' giros') : ('retirar ' + qtd + ' giros');
+      if (!confirm(accao + ' a ' + email + '?')) return;
+      try {
+        var snap = await db.collection('usuarios').where('email', '==', email).limit(1).get();
+        if (snap.empty) {
+          snap = await db.collection('usuarios').where('email', '==', (document.getElementById('rt-giros-email').value || '').trim()).limit(1).get();
+        }
+        if (snap.empty) return alert('Utilizador não encontrado.');
+        var ref = snap.docs[0].ref;
+        var d = snap.docs[0].data() || {};
+        var atual = Number(d.roletaGiros) || 0;
+        var novo = atual + delta;
+        if (novo < 0) novo = 0;
+        var payload = {
+          roletaGiros: novo,
+          ultimaAtualizacao: new Date().toISOString()
+        };
+        // Registo de origem admin (não conta como compra do jogador)
+        if (delta > 0) {
+          payload.roletaOrigemAdmin = (Number(d.roletaOrigemAdmin) || 0) + (novo - atual);
+        }
+        await ref.update(payload);
+        try {
+          await db.collection('roletaAjustesAdmin').add({
+            email: email,
+            nome: d.nome || '',
+            delta: delta,
+            antes: atual,
+            depois: novo,
+            em: new Date().toISOString(),
+            via: 'admin_rt_compras'
+          });
+        } catch (eLog) {}
+        if (typeof mostrarAviso === 'function') {
+          mostrarAviso('Giros actualizados: ' + atual + ' → ' + novo + ' (' + (delta > 0 ? '+' : '') + delta + ')');
+        } else {
+          alert('Giros: ' + atual + ' → ' + novo);
+        }
+        verSaldoGirosRoleta();
+        try { await carregarTudo(); } catch (eT) {}
+      } catch (e) {
+        alert('Erro: ' + (e.message || e));
+      }
+    }
 
     async function activarAlertaInvestigacao() {
       var email = (document.getElementById('alerta-email').value || '').trim().toLowerCase();
