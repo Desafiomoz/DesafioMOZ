@@ -915,11 +915,10 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
                     // Bloqueio de conta (termos / privacidade) — prioridade máxima
                     if (u.contaBloqueada === true || u.contaBloqueada === 'true' || u.contaBloqueada === 1) {
                         mostrarAvisoContaBloqueada(u.contaBloqueadaMotivo || '');
-                    } else if (u.alertaInvestigacao === true || u.alertaInvestigacao === 'true' || u.alertaInvestigacao === 1) {
-                        mostrarAvisoAlertaInvestigacao(u.alertaInvestigacaoMotivo || '');
                     } else if (u.jogosBloqueado === true || u.jogosBloqueado === 'true' || u.jogosBloqueado === 1) {
                         mostrarAvisoJogosBloqueado(u.jogosBloqueadoMotivo || '');
                     }
+                    // alertaInvestigacao: só na roleta (não no Início)
                 }
             } catch (e) {
                 console.warn('Sincronização:', e);

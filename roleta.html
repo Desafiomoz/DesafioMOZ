@@ -922,6 +922,46 @@ async function guardarEstado(){
   } catch(e){ console.warn('guardar roleta', e); }
 }
 
+
+function mostrarAvisoAlertaInvestigacao(motivo) {
+  if (document.getElementById('dm-blk-alerta')) return;
+  if (!document.getElementById('dm-blk-alerta-css')) {
+    var st = document.createElement('style');
+    st.id = 'dm-blk-alerta-css';
+    st.textContent =
+      '#dm-blk-alerta{position:fixed;inset:0;z-index:100000;background:rgba(4,6,12,.94);display:flex;align-items:center;justify-content:center;padding:18px;backdrop-filter:blur(7px);}' +
+      '#dm-blk-alerta .card{max-width:420px;width:100%;border-radius:20px;padding:24px 18px;background:linear-gradient(160deg,#1a1510,#0d1218);border:2px solid rgba(255,193,7,.75);box-shadow:0 0 50px rgba(255,193,7,.4);text-align:center;animation:dmAlertaPulse 2s ease-in-out infinite;}' +
+      '@keyframes dmAlertaPulse{0%,100%{box-shadow:0 0 28px rgba(255,193,7,.35)}50%{box-shadow:0 0 55px rgba(255,193,7,.55)}}' +
+      '#dm-blk-alerta .ico{width:64px;height:64px;margin:0 auto 14px;border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:30px;background:linear-gradient(135deg,#ff9800,#ffc107);box-shadow:0 0 24px rgba(255,193,7,.5);}' +
+      '#dm-blk-alerta h3{margin:0 0 10px;font-size:18px;font-weight:800;color:#ffc107;}' +
+      '#dm-blk-alerta p{margin:0 0 10px;font-size:14px;color:#d5dbe8;line-height:1.5;}' +
+      '#dm-blk-alerta .motivo{font-size:12px;color:#aaa;background:rgba(255,193,7,.08);border:1px solid rgba(255,193,7,.25);border-radius:10px;padding:10px;margin:12px 0;}' +
+      '#dm-blk-alerta a.wa{display:inline-flex;align-items:center;justify-content:center;gap:8px;margin-top:8px;padding:14px 20px;border-radius:14px;font-size:15px;font-weight:800;color:#04140a;text-decoration:none;background:linear-gradient(90deg,#25D366,#128C7E);box-shadow:0 0 20px rgba(37,211,102,.4);}' +
+      '#dm-blk-alerta .aviso-final{margin-top:14px;font-size:12px;color:#ffab40;line-height:1.4;}';
+    document.head.appendChild(st);
+  }
+  var box = document.createElement('div');
+  box.id = 'dm-blk-alerta';
+  var mot = (motivo && String(motivo).trim()) ? String(motivo).trim() : 'A origem de alguns ganhos da tua conta está a ser verificada.';
+  box.innerHTML =
+    '<div class="card">' +
+      '<div class="ico">⚠️</div>' +
+      '<h3>Conta em verificação</h3>' +
+      '<p>A equipa Desafio MOZ está a <b>investigar a origem dos teus ganhos</b> na roleta (pontos ou giros).</p>' +
+      '<div class="motivo">' + String(mot).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div>' +
+      '<p>Enquanto o alerta estiver activo, <b>não podes usar a roleta</b>. Contacta o agente e espera a decisão.</p>' +
+      '<a class="wa" href="https://wa.link/64y9y2" target="_blank" rel="noopener">💬 Contactar agente WhatsApp</a>' +
+      '<div class="aviso-final">Se estiver tudo correcto, a equipa desbloqueia a roleta.</div>' +
+    '</div>';
+  document.body.appendChild(box);
+  // Bloqueia giros enquanto o alerta estiver activo
+  try {
+    var btn = document.getElementById('btn-girar');
+    if (btn) { btn.disabled = true; }
+    window.__roletaAlertaAtivo = true;
+  } catch (eB) {}
+}
+
 async function carregarContaFirebase(){
   if(!EMAIL_UTILIZADOR){
     mostrarToast('Entra na tua conta Desafio MOZ para jogar.');
@@ -978,6 +1018,10 @@ async function carregarContaFirebase(){
     // Maldição / prémio forçado pelo admin
     if(d.roletaMaldicao && typeof d.roletaMaldicao === 'object') estado.roletaMaldicao = d.roletaMaldicao;
     else estado.roletaMaldicao = null;
+    // Alerta de investigação (admin) — só na roleta
+    if(d.alertaInvestigacao === true || d.alertaInvestigacao === 'true' || d.alertaInvestigacao === 1){
+      mostrarAvisoAlertaInvestigacao(d.alertaInvestigacaoMotivo || '');
+    }
     try {
       if(d.roletaReversaoEm){
         var kRev = 'roletaReversaoVisto_' + EMAIL_UTILIZADOR;
@@ -2138,6 +2182,7 @@ async function tocarVitoria(){
 }
 
 document.getElementById('btn-girar').addEventListener('click', async ()=>{
+  if(window.__roletaAlertaAtivo){ mostrarAvisoAlertaInvestigacao('Conta em verificação.'); return; }
   if(estado.giros<=0 || girando) return;
   girando = true;
   try { if(window.DM_presenca) window.DM_presenca.setJogando('roleta'); } catch(e){}
