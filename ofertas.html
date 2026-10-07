@@ -412,11 +412,46 @@
     </a>
     <p class="inf-nota">Ao tocar em Participar vais para a página do programa,<br>onde geras o teu link e segues o ranking.</p>
 
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    <script>
+      if (typeof window.__DESAFIO_MOZ_FIREBASE__ === 'undefined') {
+        window.__DESAFIO_MOZ_FIREBASE__ = true;
+        var firebaseConfig = {
+          apiKey: "AIzaSyDONfggnmf9OJX_AgfvcHTRf6tsuKD5nrA",
+          authDomain: "desafio-moz-61b70.firebaseapp.com",
+          projectId: "desafio-moz-61b70",
+          storageBucket: "desafio-moz-61b70.firebasestorage.app",
+          messagingSenderId: "945658936331",
+          appId: "1:945658936331:web:7ee4b0e7de1c1daf36db0e",
+          measurementId: "G-G1DZQ1B0DB"
+        };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        window.db = firebase.firestore();
+      }
+    </script>
     <script>
         (function () {
-            var email = localStorage.getItem('emailUtilizador') ||
+            var email = (localStorage.getItem('emailUtilizador') ||
                         localStorage.getItem('email') ||
-                        localStorage.getItem('userEmail') || '';
+                        localStorage.getItem('userEmail') || '').trim();
+            var nome = (localStorage.getItem('nomeUtilizador') || localStorage.getItem('nome') || '').trim();
+
+            function registarCliqueOferta(origem) {
+                try {
+                    if (!email || email.indexOf('@') === -1) return;
+                    if (typeof firebase === 'undefined' || !window.db) return;
+                    var agora = new Date();
+                    window.db.collection('ofertasCliques').add({
+                        email: email.toLowerCase(),
+                        nome: nome || '',
+                        origem: origem, // 'cpx' | 'offerwall'
+                        dia: agora.toISOString().slice(0, 10),
+                        hora: agora.toISOString().slice(11, 16),
+                        em: agora.toISOString()
+                    }).catch(function () {});
+                } catch (e) {}
+            }
 
             if (!email) {
                 ['cardCpx', 'cardOfferwall'].forEach(function (id) {
@@ -431,10 +466,19 @@
                 return;
             }
 
+            // CPX Research — regista clique e segue o link normal
+            var cardCpx = document.getElementById('cardCpx');
+            if (cardCpx) {
+                cardCpx.addEventListener('click', function () {
+                    registarCliqueOferta('cpx');
+                });
+            }
+
             var cardOfferwall = document.getElementById('cardOfferwall');
             if (cardOfferwall) {
                 cardOfferwall.addEventListener('click', function (e) {
                     e.preventDefault();
+                    registarCliqueOferta('offerwall');
                     var link = 'https://offerwall.me/ptp/6a7b75baf626f717ba554f0f?user_id=' + encodeURIComponent(email);
                     window.open(link, '_blank');
                 });

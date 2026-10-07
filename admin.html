@@ -234,6 +234,7 @@
     <button class="tab" data-tab="roleta" onclick="mudarTab('roleta')"><i class="fas fa-dharmachakra"></i> Roleta</button>
     <button class="tab" data-tab="online" onclick="mudarTab('online')"><i class="fas fa-signal"></i> Online</button>
     <button class="tab" data-tab="actividade" onclick="mudarTab('actividade')"><i class="fas fa-clipboard-check"></i> Actividade</button>
+    <button class="tab" data-tab="ofertas-cliques" onclick="mudarTab('ofertas-cliques'); try{carregarOfertasCliques();}catch(e){}"><i class="fas fa-mouse-pointer"></i> Ofertas cliques</button>
     <button class="tab" data-tab="origem" onclick="mudarTab('origem')"><i class="fas fa-pie-chart"></i> Origem pts</button>
     <button class="tab" data-tab="chat" onclick="mudarTab('chat')"><i class="fas fa-comments"></i> Chat</button>
     <button class="tab" data-tab="dicas" onclick="mudarTab('dicas')"><i class="fas fa-lightbulb"></i> Dicas</button>
@@ -1469,6 +1470,43 @@
 
 
     <!-- ORIGEM DOS PONTOS -->
+
+    <div class="painel" id="painel-ofertas-cliques">
+      <div class="form-box">
+        <h3><i class="fas fa-mouse-pointer"></i> Cliques em Ofertas (CPX + Offerwall.me)</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:12px;">
+          Quem tocou em <b>CPX Research</b> ou <b>Offerwall me</b> na página Ofertas.
+          Cada toque fica registado (mesmo e-mail pode aparecer várias vezes se clicou várias vezes).
+        </p>
+        <div class="form-grid" style="margin-bottom:12px;">
+          <div class="form-row">
+            <label>Dia</label>
+            <input type="date" id="ofertas-cliques-dia" onchange="carregarOfertasCliques()">
+          </div>
+          <div class="form-row">
+            <label>Filtro</label>
+            <select id="ofertas-cliques-filtro" onchange="carregarOfertasCliques()">
+              <option value="todos">Todos</option>
+              <option value="cpx">Só CPX Research</option>
+              <option value="offerwall">Só Offerwall.me</option>
+            </select>
+          </div>
+        </div>
+        <div class="resumo" style="margin-bottom:14px;" id="ofertas-cliques-resumo"></div>
+        <button type="button" class="btn-cinza" style="margin-bottom:12px;width:auto;padding:8px 14px;" onclick="carregarOfertasCliques()">🔄 Actualizar</button>
+        <div class="tabela-wrap">
+          <table>
+            <thead>
+              <tr><th>#</th><th>Nome</th><th>E-mail</th><th>Oferta</th><th>Hora</th><th>Dia</th></tr>
+            </thead>
+            <tbody id="tbody-ofertas-cliques">
+              <tr><td colspan="6" class="vazio">Clica em Actualizar.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
     <div class="painel" id="painel-origem">
       <div class="form-box">
         <h3><i class="fas fa-pie-chart"></i> Origem dos pontos dos utilizadores</h3>
@@ -11089,6 +11127,77 @@ async function liberarMissaoUsuario() {
         try { await carregarTudo(); } catch (eT) {}
       } catch (e) {
         alert('Erro: ' + (e.message || e));
+      }
+    }
+
+
+    async function carregarOfertasCliques() {
+      var tbody = document.getElementById('tbody-ofertas-cliques');
+      if (!tbody) return;
+      var inp = document.getElementById('ofertas-cliques-dia');
+      if (inp && !inp.value) {
+        try { inp.value = new Date().toISOString().slice(0, 10); } catch (e) {}
+      }
+      var dia = (inp && inp.value) || new Date().toISOString().slice(0, 10);
+      var filtro = (document.getElementById('ofertas-cliques-filtro') && document.getElementById('ofertas-cliques-filtro').value) || 'todos';
+      tbody.innerHTML = '<tr><td colspan="6" class="vazio">A carregar...</td></tr>';
+      try {
+        var lista = [];
+        var snap;
+        try {
+          snap = await db.collection('ofertasCliques').where('dia', '==', dia).limit(500).get();
+        } catch (e1) {
+          snap = await db.collection('ofertasCliques').limit(500).get();
+        }
+        snap.forEach(function (doc) {
+          var d = doc.data() || {};
+          d._id = doc.id;
+          if (!d.dia) d.dia = String(d.em || '').slice(0, 10);
+          if (d.dia && d.dia !== dia) return;
+          var orig = String(d.origem || '').toLowerCase();
+          if (filtro === 'cpx' && orig !== 'cpx') return;
+          if (filtro === 'offerwall' && orig.indexOf('offer') === -1) return;
+          lista.push(d);
+        });
+        lista.sort(function (a, b) {
+          return String(b.em || '').localeCompare(String(a.em || ''));
+        });
+        var nCpx = 0, nOw = 0;
+        lista.forEach(function (d) {
+          var o = String(d.origem || '').toLowerCase();
+          if (o === 'cpx') nCpx++;
+          else nOw++;
+        });
+        var resumo = document.getElementById('ofertas-cliques-resumo');
+        if (resumo) {
+          resumo.innerHTML =
+            '<div class="resumo-card"><div class="num">' + lista.length + '</div><div class="lbl">Total cliques</div></div>' +
+            '<div class="resumo-card"><div class="num">' + nCpx + '</div><div class="lbl">CPX Research</div></div>' +
+            '<div class="resumo-card"><div class="num">' + nOw + '</div><div class="lbl">Offerwall.me</div></div>';
+        }
+        if (!lista.length) {
+          tbody.innerHTML = '<tr><td colspan="6" class="vazio">Nenhum clique em ' + escHtml(dia) + '.</td></tr>';
+          return;
+        }
+        var html = '';
+        lista.forEach(function (d, i) {
+          var orig = String(d.origem || '').toLowerCase();
+          var label = orig === 'cpx' ? 'CPX Research' : (orig.indexOf('offer') !== -1 ? 'Offerwall.me' : escHtml(d.origem || '—'));
+          var tag = orig === 'cpx'
+            ? '<span class="status-tag status-pago">CPX</span>'
+            : '<span class="status-tag status-andamento">Offerwall</span>';
+          html += '<tr>' +
+            '<td>' + (i + 1) + '</td>' +
+            '<td>' + escHtml(d.nome || '—') + '</td>' +
+            '<td>' + escHtml(d.email || '') + '</td>' +
+            '<td>' + tag + ' ' + label + '</td>' +
+            '<td>' + escHtml(d.hora || String(d.em || '').slice(11, 16) || '—') + '</td>' +
+            '<td>' + escHtml(d.dia || '') + '</td>' +
+            '</tr>';
+        });
+        tbody.innerHTML = html;
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="6" class="vazio">Erro: ' + escHtml(e.message || e) + ' — cola a regra ofertasCliques no Firebase.</td></tr>';
       }
     }
 
