@@ -820,6 +820,40 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
     }
 
 
+
+    function mostrarAvisoAlertaInvestigacao(motivo) {
+        if (document.getElementById('dm-blk-alerta') || document.getElementById('dm-blk-conta')) return;
+        if (!document.getElementById('dm-blk-alerta-css')) {
+            var st = document.createElement('style');
+            st.id = 'dm-blk-alerta-css';
+            st.textContent =
+                '#dm-blk-alerta{position:fixed;inset:0;z-index:999999;background:rgba(4,6,12,.94);display:flex;align-items:center;justify-content:center;padding:18px;backdrop-filter:blur(7px);}' +
+                '#dm-blk-alerta .card{max-width:420px;width:100%;border-radius:20px;padding:24px 18px;background:linear-gradient(160deg,#1a1510,#0d1218);border:2px solid rgba(255,193,7,.75);box-shadow:0 0 50px rgba(255,193,7,.4),0 0 80px rgba(255,120,0,.15);text-align:center;animation:dmAlertaPulse 2s ease-in-out infinite;}' +
+                '@keyframes dmAlertaPulse{0%,100%{box-shadow:0 0 28px rgba(255,193,7,.35)}50%{box-shadow:0 0 55px rgba(255,193,7,.55)}}' +
+                '#dm-blk-alerta .ico{width:64px;height:64px;margin:0 auto 14px;border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:30px;background:linear-gradient(135deg,#ff9800,#ffc107);box-shadow:0 0 24px rgba(255,193,7,.5);}' +
+                '#dm-blk-alerta h3{margin:0 0 10px;font-size:18px;font-weight:800;color:#ffc107;}' +
+                '#dm-blk-alerta p{margin:0 0 10px;font-size:14px;color:#d5dbe8;line-height:1.5;}' +
+                '#dm-blk-alerta .motivo{font-size:12px;color:#aaa;background:rgba(255,193,7,.08);border:1px solid rgba(255,193,7,.25);border-radius:10px;padding:10px;margin:12px 0;}' +
+                '#dm-blk-alerta a.wa{display:inline-flex;align-items:center;justify-content:center;gap:8px;margin-top:8px;padding:14px 20px;border-radius:14px;font-size:15px;font-weight:800;color:#04140a;text-decoration:none;background:linear-gradient(90deg,#25D366,#128C7E);box-shadow:0 0 20px rgba(37,211,102,.4);}' +
+                '#dm-blk-alerta .aviso-final{margin-top:14px;font-size:12px;color:#ffab40;line-height:1.4;}';
+            document.head.appendChild(st);
+        }
+        var box = document.createElement('div');
+        box.id = 'dm-blk-alerta';
+        var mot = (motivo && String(motivo).trim()) ? String(motivo).trim() : 'A origem de alguns ganhos da tua conta está a ser verificada.';
+        box.innerHTML =
+            '<div class="card">' +
+              '<div class="ico">⚠️</div>' +
+              '<h3>Conta em verificação</h3>' +
+              '<p>A equipa Desafio MOZ está a <b>investigar a origem dos teus ganhos</b> (pontos ou giros).</p>' +
+              '<div class="motivo">' + mot.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div>' +
+              '<p>Contacta o agente, explica a situação e espera a decisão. Se estiver tudo correcto, a conta será desbloqueada.</p>' +
+              '<a class="wa" href="https://wa.link/64y9y2" target="_blank" rel="noopener">💬 Contactar agente WhatsApp</a>' +
+              '<div class="aviso-final">Enquanto o alerta estiver activo, o uso normal do site fica limitado até a equipa confirmar.</div>' +
+            '</div>';
+        document.body.appendChild(box);
+    }
+
     document.addEventListener('DOMContentLoaded', async function () {
         var nome = localStorage.getItem('nomeUtilizador') || '—';
         var tel = localStorage.getItem('telUtilizador') || '—';
@@ -881,6 +915,8 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
                     // Bloqueio de conta (termos / privacidade) — prioridade máxima
                     if (u.contaBloqueada === true || u.contaBloqueada === 'true' || u.contaBloqueada === 1) {
                         mostrarAvisoContaBloqueada(u.contaBloqueadaMotivo || '');
+                    } else if (u.alertaInvestigacao === true || u.alertaInvestigacao === 'true' || u.alertaInvestigacao === 1) {
+                        mostrarAvisoAlertaInvestigacao(u.alertaInvestigacaoMotivo || '');
                     } else if (u.jogosBloqueado === true || u.jogosBloqueado === 'true' || u.jogosBloqueado === 1) {
                         mostrarAvisoJogosBloqueado(u.jogosBloqueadoMotivo || '');
                     }

@@ -247,6 +247,7 @@
     <button class="tab" data-tab="senhas" onclick="mudarTab('senhas')"><i class="fas fa-key"></i> Senhas <span class="badge" id="badge-senhas">0</span></button>
     <button class="tab" data-tab="termos" onclick="mudarTab('termos')"><i class="fas fa-file-contract"></i> Termos</button>
     <button class="tab" data-tab="bloq-conta" onclick="mudarTab('bloq-conta'); try{carregarContasBloqueadas();}catch(e){}"><i class="fas fa-user-slash"></i> Bloqueio conta</button>
+    <button class="tab" data-tab="alerta" onclick="mudarTab('alerta'); try{carregarAlertasInvestigacao();}catch(e){}"><i class="fas fa-exclamation-triangle"></i> Alerta <span class="badge" id="badge-alerta">0</span></button>
     <button class="tab" data-tab="tua-vez" onclick="mudarTab('tua-vez'); try{carregarTuaVezPedidos();carregarTuaVezInteresses();}catch(e){}"><i class="fas fa-rocket"></i> Tua vez <span class="badge" id="badge-tua-vez">0</span></button>
     <button class="tab" data-tab="upgrades" onclick="mudarTab('upgrades'); carregarEmolaUpgrades(); try{carregarBloqueadosUpg();}catch(e){}"><i class="fas fa-rocket"></i> Aumento ganhos</button>
     <button class="tab" data-tab="pag-manual" onclick="mudarTab('pag-manual'); carregarPagManualHist()"><i class="fas fa-hand-holding-usd"></i> Pag. manual</button>
@@ -2027,7 +2028,56 @@
     </div>
 
     <!-- TUA VEZ: pedidos de site + interesses curso -->
-    <div class="painel" id="painel-tua-vez">
+    <div class="painel" 
+    <div class="painel" id="painel-alerta">
+      <div class="form-box" style="border:1px solid rgba(255,193,7,0.45);">
+        <h3 style="color:#ffc107;"><i class="fas fa-exclamation-triangle"></i> Alerta — investigação de ganhos</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:12px;line-height:1.5;">
+          Usa isto quando <b>não consegues explicar de onde vieram os pontos/giros</b> de um utilizador.
+          Enquanto o alerta estiver activo, na página de <b>Início (desafios)</b> aparece um aviso a pedir contacto com o agente.
+          Depois da investigação podes <b>desbloquear</b>.
+        </p>
+        <div class="form-grid">
+          <div class="form-row">
+            <label>E-mail do utilizador</label>
+            <input type="email" id="alerta-email" placeholder="email@gmail.com">
+          </div>
+          <div class="form-row">
+            <label>Motivo (opcional)</label>
+            <input type="text" id="alerta-motivo" placeholder="Ex: giros sem compra registada / pontos sem origem">
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
+          <button type="button" class="btn-laranja" style="flex:1;padding:12px;font-size:13px;" onclick="activarAlertaInvestigacao()">⚠️ Activar alerta</button>
+          <button type="button" class="btn-verde" style="flex:1;padding:12px;font-size:13px;width:auto;" onclick="desactivarAlertaInvestigacao()">✅ Desbloquear</button>
+        </div>
+      </div>
+      <div class="form-box">
+        <h3><i class="fas fa-list"></i> Contas com alerta activo</h3>
+        <button type="button" class="btn-cinza" style="margin-bottom:10px;" onclick="carregarAlertasInvestigacao()">🔄 Actualizar lista</button>
+        <div class="tabela-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Nome</th>
+                <th>E-mail</th>
+                <th>Motivo</th>
+                <th>Desde</th>
+                <th>Pontos</th>
+                <th>Giros</th>
+                <th>Acção</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-alertas">
+              <tr><td colspan="8" class="vazio">Clica em Actualizar lista.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+id="painel-tua-vez">
       <div class="form-box">
         <h3><i class="fas fa-rocket"></i> Tua vez — Pedidos de site</h3>
         <p style="font-size:12px;color:#888;margin-bottom:10px;line-height:1.45;">
@@ -10937,6 +10987,97 @@ async function liberarMissaoUsuario() {
       } catch (e) {
         alert('Erro: ' + (e.message || e));
       }
+    }
+
+
+
+    async function activarAlertaInvestigacao() {
+      var email = (document.getElementById('alerta-email').value || '').trim().toLowerCase();
+      var motivo = (document.getElementById('alerta-motivo').value || '').trim()
+        || 'Origem dos ganhos sob investigação';
+      if (!email || email.indexOf('@') === -1) return alert('E-mail inválido.');
+      if (!confirm('Activar ALERTA de investigação para\n' + email + '\n\nO utilizador verá um aviso na página Início até desbloqueares.')) return;
+      try {
+        var snap = await db.collection('usuarios').where('email', '==', email).limit(1).get();
+        if (snap.empty) {
+          snap = await db.collection('usuarios').where('email', '==', (document.getElementById('alerta-email').value || '').trim()).limit(1).get();
+        }
+        if (snap.empty) return alert('Utilizador não encontrado.');
+        await snap.docs[0].ref.update({
+          alertaInvestigacao: true,
+          alertaInvestigacaoMotivo: motivo,
+          alertaInvestigacaoEm: new Date().toISOString(),
+          ultimaAtualizacao: new Date().toISOString()
+        });
+        if (typeof mostrarAviso === 'function') mostrarAviso('Alerta activo para ' + email);
+        else alert('Alerta activo.');
+        document.getElementById('alerta-email').value = '';
+        document.getElementById('alerta-motivo').value = '';
+        carregarAlertasInvestigacao();
+        try { await carregarTudo(); } catch (e) {}
+      } catch (e) {
+        alert('Erro: ' + (e.message || e));
+      }
+    }
+
+    async function desactivarAlertaInvestigacao(emailFixo) {
+      var email = (emailFixo || (document.getElementById('alerta-email') && document.getElementById('alerta-email').value) || '').trim().toLowerCase();
+      if (!email || email.indexOf('@') === -1) return alert('E-mail inválido.');
+      if (!confirm('Desbloquear alerta de ' + email + '?')) return;
+      try {
+        var snap = await db.collection('usuarios').where('email', '==', email).limit(1).get();
+        if (snap.empty) return alert('Utilizador não encontrado.');
+        await snap.docs[0].ref.update({
+          alertaInvestigacao: false,
+          alertaInvestigacaoMotivo: '',
+          alertaInvestigacaoFim: new Date().toISOString(),
+          ultimaAtualizacao: new Date().toISOString()
+        });
+        if (typeof mostrarAviso === 'function') mostrarAviso('Alerta removido: ' + email);
+        else alert('Desbloqueado.');
+        carregarAlertasInvestigacao();
+        try { await carregarTudo(); } catch (e) {}
+      } catch (e) {
+        alert('Erro: ' + (e.message || e));
+      }
+    }
+
+    function carregarAlertasInvestigacao() {
+      var tbody = document.getElementById('tbody-alertas');
+      if (!tbody) return;
+      var users = (typeof todosUsers !== 'undefined' ? todosUsers : []).filter(function (u) {
+        return u.alertaInvestigacao === true || u.alertaInvestigacao === 'true' || u.alertaInvestigacao === 1;
+      });
+      users.sort(function (a, b) {
+        return String(b.alertaInvestigacaoEm || '').localeCompare(String(a.alertaInvestigacaoEm || ''));
+      });
+      var badge = document.getElementById('badge-alerta');
+      if (badge) {
+        badge.textContent = users.length;
+        badge.style.display = users.length ? 'inline' : 'none';
+      }
+      if (!users.length) {
+        tbody.innerHTML = '<tr><td colspan="8" class="vazio">Nenhuma conta com alerta de investigação.</td></tr>';
+        return;
+      }
+      var html = '';
+      users.forEach(function (u, i) {
+        var em = String(u.email || '').toLowerCase();
+        var emSafe = em.replace(/'/g, "\\'");
+        var desde = u.alertaInvestigacaoEm || '—';
+        if (desde !== '—' && String(desde).length > 19) desde = String(desde).replace('T', ' ').slice(0, 19);
+        html += '<tr>' +
+          '<td>' + (i + 1) + '</td>' +
+          '<td>' + escHtml(u.nome || '—') + '</td>' +
+          '<td>' + escHtml(em) + '</td>' +
+          '<td style="font-size:12px;max-width:180px;">' + escHtml(u.alertaInvestigacaoMotivo || '—') + '</td>' +
+          '<td style="font-size:11px;white-space:nowrap;">' + escHtml(desde) + '</td>' +
+          '<td class="pts-ok">' + (u.pontos || 0) + '</td>' +
+          '<td class="pts-alto">' + (u.roletaGiros || 0) + '</td>' +
+          '<td><button type="button" class="btn-verde" onclick="desactivarAlertaInvestigacao(\'' + emSafe + '\')">✅ Desbloquear</button></td>' +
+          '</tr>';
+      });
+      tbody.innerHTML = html;
     }
 
 
