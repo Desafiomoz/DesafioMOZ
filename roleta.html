@@ -1198,6 +1198,31 @@ function montarListaPremiosPontos(custoPontos, girosComprados){
   var lista = [];
   if(g <= 0) return { lista: [], modo: 'vazio' };
 
+  // Maldição também nas compras com PONTOS
+  try {
+    var mPts = estado.roletaMaldicao;
+    if(mPts && mPts.ativo === true){
+      if(mPts.modo === 'perder' || mPts.modo === 'so_pago'){
+        // perder / só recuperou o "pago": todos os giros desta compra perdem
+        for(var zi = 0; zi < g; zi++) lista.push(perdaIdx());
+        return { lista: baralhar(lista), modo: 'maldicao_pts_' + mPts.modo };
+      }
+      if(mPts.modo === 'forcar'){
+        var labF = String(mPts.premioLabel || '').trim();
+        var idxF = -1;
+        if(labF){
+          for(var fi = 0; fi < PREMIOS.length; fi++){
+            if(PREMIOS[fi].label === labF){ idxF = fi; break; }
+          }
+        }
+        if(idxF < 0 && mPts.premioIdx != null) idxF = Number(mPts.premioIdx);
+        if(idxF < 0 || idxF >= PREMIOS.length) idxF = perdaIdx();
+        for(var zj = 0; zj < g; zj++) lista.push(idxF);
+        return { lista: lista, modo: 'maldicao_pts_forcar' };
+      }
+    }
+  } catch(eMpts){}
+
   if(c === 5 && g === 3){
     for(var i = 0; i < g; i++) lista.push(perdaIdx());
     return { lista: baralhar(lista), modo: '5pts' };
@@ -1257,8 +1282,18 @@ async function comprarComPontos(custoPontos, giros){
     if(!estado.garantias) estado.garantias = [];
     estado.garantias = estado.garantias.concat(plano.lista);
   } else {
-    // valores não mapeados: dificuldade alta
-    estado.girosDificeis = (Number(estado.girosDificeis) || 0) + giros;
+    // valores não mapeados: dificuldade alta — ou maldição força perdas
+    var forcarPerdaPts = false;
+    try {
+      var mm = estado.roletaMaldicao;
+      if(mm && mm.ativo === true && (mm.modo === 'perder' || mm.modo === 'so_pago')) forcarPerdaPts = true;
+    } catch(eF){}
+    if(forcarPerdaPts){
+      if(!estado.garantias) estado.garantias = [];
+      for(var kp = 0; kp < giros; kp++) estado.garantias.push(perdaIdx());
+    } else {
+      estado.girosDificeis = (Number(estado.girosDificeis) || 0) + giros;
+    }
   }
   sincronizarMt();
   await guardarEstado();
@@ -1786,10 +1821,10 @@ function sortearPremio(){
         if(estado.garantias && estado.garantias.length) estado.garantias = [];
         return Math.random() < 0.5 ? (IDX_BOA >= 0 ? IDX_BOA : 7) : (IDX_QUASE >= 0 ? IDX_QUASE : 9);
       }
-      // so_pago e outros: segue o fluxo normal (garantias já limitadas)
+      // so_pago: NÃO limpa aqui — MT já veio a 1×; pontos já vieram só com perdas no montarLista
     }
   } catch(eM){}
-  // 1) Fila da compra em MT (plano 0..2× gasto, ou 1× se maldição so_pago)
+  // 1) Fila da compra (MT 2×/1× ou pontos) — já respeita maldição no momento da compra
   if(estado.garantias && estado.garantias.length){
     return estado.garantias.shift();
   }
