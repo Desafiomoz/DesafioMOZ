@@ -1186,6 +1186,67 @@
           </table>
         </div>
 
+
+        <h3 style="color:#ff6b6b;font-size:14px;margin:22px 0 10px;"><i class="fas fa-skull-crossbones"></i> Maldição da roleta</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:12px;">
+          Controla os prémios deste jogador na roleta:
+          <br>• <b>Não ganha nada</b> — só BOA SORTE / QUASE (ignora a garantia do dobro).
+          <br>• <b>Só o valor pago (1×)</b> — compra 2 MT → no máximo ~2 MT nos giros (não 4). Compra 5 → ~5, não 10.
+          <br>• <b>Sempre ganha X</b> — todos os giros caem no prémio que escolheres.
+          <br>Usa <b>Retirar maldição</b> para voltar ao sistema normal (dobro 2×).
+        </p>
+        <div class="form-grid">
+          <div class="form-row">
+            <label>E-mail do jogador</label>
+            <input type="email" id="maldicao-email" placeholder="jogador@gmail.com">
+          </div>
+          <div class="form-row">
+            <label>Modo</label>
+            <select id="maldicao-modo">
+              <option value="perder">Não ganha nada (sempre perde)</option>
+              <option value="so_pago">Só o valor pago (1×, sem dobro)</option>
+              <option value="forcar">Sempre ganha o prémio abaixo</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <label>Prémio forçado (só se modo = sempre ganha)</label>
+          <select id="maldicao-premio">
+            <option value="1 MT">1 MT</option>
+            <option value="5 MT">5 MT</option>
+            <option value="10 MT">10 MT</option>
+            <option value="20 PTS">20 PTS</option>
+            <option value="100 PTS">100 PTS</option>
+            <option value="500 PTS">500 PTS</option>
+            <option value="1000 PTS">1000 PTS</option>
+            <option value="+2 GIROS">+2 GIROS</option>
+            <option value="+6 GIROS">+6 GIROS</option>
+            <option value="50 MT">50 MT</option>
+          </select>
+        </div>
+        <div class="form-grid">
+          <button type="button" class="btn-laranja" style="width:100%;padding:12px;" onclick="aplicarMaldicaoRoleta()">☠️ Aplicar maldição</button>
+          <button type="button" class="btn-verde" style="width:100%;padding:12px;" onclick="retirarMaldicaoRoleta()">✨ Retirar maldição</button>
+        </div>
+        <button type="button" class="btn-cinza" style="width:100%;margin-top:10px;padding:10px;" onclick="carregarMaldicoesRoleta()">🔄 Lista de amaldiçoados</button>
+        <div class="tabela-wrap" style="margin-top:12px;">
+          <table>
+            <thead>
+              <tr>
+                <th>E-mail</th>
+                <th>Nome</th>
+                <th>Modo</th>
+                <th>Prémio</th>
+                <th>Desde</th>
+                <th>Acção</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-maldicao-roleta">
+              <tr><td colspan="6" class="vazio">Clica em Lista de amaldiçoados.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
         <h3 style="color:#00e676;font-size:14px;margin:22px 0 10px;"><i class="fas fa-list-ol"></i> Histórico giro a giro</h3>
         <p style="font-size:12px;color:#888;margin-bottom:10px;">
           Cada giro usado e o resultado (ganhou ou perdeu). Filtra por e-mail para ver só um jogador.
@@ -1313,12 +1374,14 @@
                 <th>E-mail</th>
                 <th>Página</th>
                 <th>A jogar</th>
-                <th>Última actividade</th>
+                <th>Última entrada</th>
+                <th>Há quanto tempo</th>
+                <th>Intervalo até voltar</th>
                 <th>Pontos</th>
               </tr>
             </thead>
             <tbody id="tbody-online">
-              <tr><td colspan="7" class="vazio">Clica em Actualizar presença.</td></tr>
+              <tr><td colspan="9" class="vazio">Clica em Actualizar presença.</td></tr>
             </tbody>
           </table>
         </div>
@@ -3135,7 +3198,7 @@ function mostrarAviso(txt) {
           try { renderEntraramHojeAdmin(); } catch (eH) {}
         }
         if (nome === 'actividade') try { renderActividadeAdmin(); } catch (eA) {}
-        if (nome === 'roleta') try { carregarRoletaAdmin(); carregarRoletaPontosAdmin(); carregarRoletaHistoricoAdmin(); } catch (eR) {}
+        if (nome === 'roleta') try { carregarRoletaAdmin(); carregarRoletaPontosAdmin(); carregarRoletaHistoricoAdmin(); carregarMaldicoesRoleta(); } catch (eR) {}
         if (nome === 'origem') try { renderOrigemPontosAdmin(); } catch (eOg) {}
         if (nome === 'dicas') try { carregarDicasAdmin(); } catch (eD) {}
         if (nome === 'pedidos-dicas') try { carregarPedidosDicasAdmin(); } catch (ePD) {}
@@ -5256,6 +5319,111 @@ async function ajustarPontosUtilizador() {
       }
     }
 
+
+    async function aplicarMaldicaoRoleta() {
+      var email = (document.getElementById('maldicao-email').value || '').trim().toLowerCase();
+      var modo = (document.getElementById('maldicao-modo').value || 'perder');
+      var premio = (document.getElementById('maldicao-premio').value || '1 MT');
+      if (!email || email.indexOf('@') === -1) return alert('E-mail inválido.');
+      if (!confirm('Aplicar maldição a ' + email + '?\nModo: ' + modo + (modo === 'forcar' ? ('\nPrémio: ' + premio) : (modo === 'so_pago' ? '\n(só recupera o valor pago, sem dobro)' : '\n(sempre perde)')))) return;
+      try {
+        var snap = await db.collection('usuarios').where('email', '==', email).limit(1).get();
+        if (snap.empty) {
+          var norm = email;
+          snap = await db.collection('usuarios').where('email', '==', norm).limit(1).get();
+        }
+        if (snap.empty) return alert('Utilizador não encontrado.');
+        var modoFinal = 'perder';
+        if (modo === 'forcar') modoFinal = 'forcar';
+        else if (modo === 'so_pago') modoFinal = 'so_pago';
+        var payload = {
+          roletaMaldicao: {
+            ativo: true,
+            modo: modoFinal,
+            premioLabel: modoFinal === 'forcar' ? premio : null,
+            multiplicadorMax: modoFinal === 'so_pago' ? 1 : (modoFinal === 'perder' ? 0 : 2),
+            criadoEm: new Date().toISOString(),
+            porAdmin: true
+          },
+          ultimaAtualizacao: new Date().toISOString()
+        };
+        await snap.docs[0].ref.update(payload);
+        if (typeof mostrarAviso === 'function') mostrarAviso('Maldição aplicada a ' + email);
+        else alert('Maldição aplicada.');
+        carregarMaldicoesRoleta();
+      } catch (e) {
+        alert('Erro: ' + (e.message || e));
+      }
+    }
+
+    async function retirarMaldicaoRoleta(emailParam) {
+      var email = (emailParam || (document.getElementById('maldicao-email') && document.getElementById('maldicao-email').value) || '').trim().toLowerCase();
+      if (!email || email.indexOf('@') === -1) return alert('E-mail inválido.');
+      if (!confirm('Retirar maldição de ' + email + '? Volta ao sistema normal da roleta.')) return;
+      try {
+        var snap = await db.collection('usuarios').where('email', '==', email).limit(1).get();
+        if (snap.empty) return alert('Utilizador não encontrado.');
+        await snap.docs[0].ref.update({
+          roletaMaldicao: { ativo: false, modo: null, premioLabel: null, removidoEm: new Date().toISOString() },
+          ultimaAtualizacao: new Date().toISOString()
+        });
+        if (typeof mostrarAviso === 'function') mostrarAviso('Maldição retirada de ' + email);
+        else alert('Maldição retirada.');
+        carregarMaldicoesRoleta();
+      } catch (e) {
+        alert('Erro: ' + (e.message || e));
+      }
+    }
+
+    async function carregarMaldicoesRoleta() {
+      var tbody = document.getElementById('tbody-maldicao-roleta');
+      if (!tbody) return;
+      tbody.innerHTML = '<tr><td colspan="6" class="vazio">A carregar...</td></tr>';
+      try {
+        var users = (typeof todosUsers !== 'undefined' ? todosUsers : []);
+        var lista = users.filter(function (u) {
+          return u.roletaMaldicao && u.roletaMaldicao.ativo === true;
+        });
+        if (!lista.length) {
+          // tenta query directa
+          try {
+            var snap = await db.collection('usuarios').limit(500).get();
+            lista = [];
+            snap.forEach(function (doc) {
+              var d = doc.data() || {};
+              if (d.roletaMaldicao && d.roletaMaldicao.ativo === true) {
+                d.email = d.email || doc.id;
+                lista.push(d);
+              }
+            });
+          } catch (e2) {}
+        }
+        if (!lista.length) {
+          tbody.innerHTML = '<tr><td colspan="6" class="vazio">Nenhum jogador amaldiçoado.</td></tr>';
+          return;
+        }
+        var html = '';
+        lista.forEach(function (u) {
+          var m = u.roletaMaldicao || {};
+          var em = String(u.email || '').toLowerCase();
+          var emSafe = em.replace(/'/g, "\\'");
+          var modoTxt = m.modo === 'forcar' ? ('Sempre ganha: ' + (m.premioLabel || '—')) : (m.modo === 'so_pago' ? 'Só 1× valor pago' : 'Não ganha nada');
+          var desde = m.criadoEm ? String(m.criadoEm).replace('T', ' ').slice(0, 19) : '—';
+          html += '<tr>' +
+            '<td>' + escHtml(em) + '</td>' +
+            '<td>' + escHtml(u.nome || '—') + '</td>' +
+            '<td><span class="status-tag status-bloqueado">' + escHtml(m.modo === 'forcar' ? 'Forçar' : (m.modo === 'so_pago' ? '1× pago' : 'Perder')) + '</span></td>' +
+            '<td>' + escHtml(m.modo === 'forcar' ? (m.premioLabel || '—') : '—') + '</td>' +
+            '<td style="font-size:11px;">' + escHtml(desde) + '</td>' +
+            '<td><button type="button" class="btn-verde" onclick="retirarMaldicaoRoleta(\'' + emSafe + '\')">Retirar</button></td>' +
+            '</tr>';
+        });
+        tbody.innerHTML = html;
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="6" class="vazio">Erro: ' + escHtml(e.message || e) + '</td></tr>';
+      }
+    }
+
     async function carregarRoletaAdmin() {
       var hoje = new Date().toISOString().slice(0, 10);
       var tbodyU = document.getElementById('tbody-roleta-users');
@@ -5471,7 +5639,7 @@ async function ajustarPontosUtilizador() {
       if (el3) el3.textContent = nRol;
       if (el4) el4.textContent = nHom;
       if (!lista.length) {
-        tbody.innerHTML = '<tr><td colspan="7" class="vazio">Ninguém online nos últimos 3 minutos.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" class="vazio">Ninguém online nos últimos 3 minutos.</td></tr>';
         return;
       }
       var html = '';
@@ -5482,6 +5650,14 @@ async function ajustarPontosUtilizador() {
         else if (j === 'homejub') jogTxt = '<span class="status-tag status-andamento">Homejub</span>';
         var quando = u.ultimaPresenca || '—';
         if (quando !== '—' && String(quando).length > 19) quando = String(quando).replace('T', ' ').slice(0, 19);
+        var ha = (typeof haQuantoTempoISO === 'function') ? haQuantoTempoISO(u.ultimaPresenca) : '—';
+        var interv = '—';
+        if (u.intervaloUltimaEntradaMs != null) interv = formatarDuracaoMs(Number(u.intervaloUltimaEntradaMs));
+        else if (u.ultimaPresencaAnterior && u.ultimaPresenca) {
+          try {
+            interv = formatarDuracaoMs(new Date(u.ultimaPresenca).getTime() - new Date(u.ultimaPresencaAnterior).getTime());
+          } catch (eI) {}
+        }
         html += '<tr data-busca-online="' + escHtml(((u.nome || '') + ' ' + (u.email || '') + ' ' + (u.paginaActual || '')).toLowerCase()) + '">' +
           '<td>' + (i + 1) + '</td>' +
           '<td>' + escHtml(u.nome || '—') + '</td>' +
@@ -5489,10 +5665,36 @@ async function ajustarPontosUtilizador() {
           '<td><code>' + escHtml(u.paginaActual || '—') + '</code></td>' +
           '<td>' + jogTxt + '</td>' +
           '<td style="font-size:11px;white-space:nowrap;">' + escHtml(quando) + '</td>' +
+          '<td style="font-size:12px;color:#00e676;font-weight:700;">' + escHtml(ha) + '</td>' +
+          '<td style="font-size:11px;color:#ffc107;">' + escHtml(interv) + '</td>' +
           '<td class="pts-ok">' + (u.pontos || 0) + '</td>' +
           '</tr>';
       });
       tbody.innerHTML = html;
+    }
+
+    
+    function formatarDuracaoMs(ms) {
+      if (ms == null || !isFinite(ms) || ms < 0) return '—';
+      var s = Math.floor(ms / 1000);
+      if (s < 60) return s + ' s';
+      var m = Math.floor(s / 60);
+      if (m < 60) return m + ' min';
+      var h = Math.floor(m / 60);
+      var mr = m % 60;
+      if (h < 48) return h + ' h' + (mr ? ' ' + mr + ' min' : '');
+      var d = Math.floor(h / 24);
+      var hr = h % 24;
+      return d + ' d' + (hr ? ' ' + hr + ' h' : '');
+    }
+
+    function haQuantoTempoISO(iso) {
+      if (!iso) return '—';
+      try {
+        var t = new Date(iso).getTime();
+        if (!isFinite(t)) return '—';
+        return formatarDuracaoMs(Date.now() - t);
+      } catch (e) { return '—'; }
     }
 
     function filtrarOnlineAdmin() {

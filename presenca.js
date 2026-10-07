@@ -59,13 +59,30 @@
     try {
       if (!docRef) docRef = await resolverDoc(db, email);
       if (!docRef) return;
+      var agoraIso = new Date().toISOString();
       var payload = {
-        ultimaPresenca: new Date().toISOString(),
+        ultimaPresenca: agoraIso,
         paginaActual: pagina,
-        ultimaAtualizacao: new Date().toISOString()
+        ultimaAtualizacao: agoraIso
       };
       if (jogando) payload.emJogo = String(jogando);
       else payload.emJogo = null;
+      // Guarda a presença anterior para o admin ver o intervalo entre visitas
+      try {
+        var snapU = await docRef.get();
+        if (snapU.exists) {
+          var ant = snapU.data() || {};
+          var prev = ant.ultimaPresenca || null;
+          if (prev && String(prev) !== agoraIso) {
+            // só actualiza anterior se passou > 5 min (nova "entrada")
+            var gapMs = Date.now() - new Date(prev).getTime();
+            if (isFinite(gapMs) && gapMs > 5 * 60 * 1000) {
+              payload.ultimaPresencaAnterior = prev;
+              payload.intervaloUltimaEntradaMs = gapMs;
+            }
+          }
+        }
+      } catch (eAnt) {}
       await docRef.update(payload);
     } catch (e) {
       console.warn('[presenca] update', e);

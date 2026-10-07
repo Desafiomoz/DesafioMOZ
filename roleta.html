@@ -967,6 +967,9 @@ async function carregarContaFirebase(){
     if(Array.isArray(d.roletaUltimos) && (!estado.historico || !estado.historico.length)) estado.historico = d.roletaUltimos;
     if(d.roletaGirosDificeis != null) estado.girosDificeis = Number(d.roletaGirosDificeis) || 0;
     if(d.roletaGirosPerdedores != null) estado.girosPerdedores = Number(d.roletaGirosPerdedores) || 0;
+    // Maldição / prémio forçado pelo admin
+    if(d.roletaMaldicao && typeof d.roletaMaldicao === 'object') estado.roletaMaldicao = d.roletaMaldicao;
+    else estado.roletaMaldicao = null;
     try {
       if(d.roletaReversaoEm){
         var kRev = 'roletaReversaoVisto_' + EMAIL_UTILIZADOR;
@@ -1760,7 +1763,33 @@ async function registarGiroNoFirebase(premio){
 }
 
 function sortearPremio(){
-  // 1) Fila da compra em MT (plano 0..2× gasto)
+  // 0) Maldição / forçar prémio (admin)
+  //    - forcar: todos os giros caem no prémio escolhido
+  //    - perder: nunca ganha (ignora também as garantias 2× da compra MT)
+  //    - so_pago: NÃO intercepta aqui — as garantias MT já foram montadas a 1×
+  try {
+    var m = estado.roletaMaldicao;
+    if(m && m.ativo === true){
+      if(m.modo === 'forcar'){
+        var lab = String(m.premioLabel || '').trim();
+        var idxF = -1;
+        if(lab){
+          for(var fi=0; fi<PREMIOS.length; fi++){
+            if(PREMIOS[fi].label === lab){ idxF = fi; break; }
+          }
+        }
+        if(idxF < 0 && m.premioIdx != null) idxF = Number(m.premioIdx);
+        if(idxF >= 0 && idxF < PREMIOS.length) return idxF;
+      }
+      if(m.modo === 'perder'){
+        // limpa garantias MT para não receber o dobro
+        if(estado.garantias && estado.garantias.length) estado.garantias = [];
+        return Math.random() < 0.5 ? (IDX_BOA >= 0 ? IDX_BOA : 7) : (IDX_QUASE >= 0 ? IDX_QUASE : 9);
+      }
+      // so_pago e outros: segue o fluxo normal (garantias já limitadas)
+    }
+  } catch(eM){}
+  // 1) Fila da compra em MT (plano 0..2× gasto, ou 1× se maldição so_pago)
   if(estado.garantias && estado.garantias.length){
     return estado.garantias.shift();
   }
@@ -1841,19 +1870,47 @@ function valorPremioEmMT(idx){
    Ex.: 2 MT → 4 (sorte até 7) | 5 → 10 (até 13) | 50 → 100 (até 103) */
 function escolherAlvoMT(valorPago){
   var x = Math.max(1, Math.floor(Number(valorPago) || 0));
-  var base = x * 2;
-  var max = base + 3;
+  // Maldição: admin limita o multiplicador da garantia MT
+  var mult = 2;
+  var bonusSorte = 3; // com sorte até 2× + 3
+  try {
+    var m = estado.roletaMaldicao;
+    if(m && m.ativo === true){
+      if(m.modo === 'perder') return 0;
+      if(m.modo === 'so_pago'){
+        // Só recupera o que pagou (1×), sem bónus de sorte
+        mult = 1;
+        bonusSorte = 0;
+      } else if(m.multiplicadorMax != null && Number(m.multiplicadorMax) >= 0){
+        mult = Number(m.multiplicadorMax);
+        if(mult <= 1) bonusSorte = 0;
+      }
+    }
+  } catch(eA){}
+  var base = Math.floor(x * mult);
+  var max = base + bonusSorte;
+  if(max <= 0) return 0;
+  if(bonusSorte <= 0) return base;
   var r = Math.random();
   if(r < 0.55) return base;
-  if(r < 0.78) return base + 1;
-  if(r < 0.92) return base + 2;
+  if(r < 0.78) return Math.min(max, base + 1);
+  if(r < 0.92) return Math.min(max, base + 2);
   return max;
 }
 
 function montarListaPremiosMT(valorMT, girosComprados){
   var pago = Math.max(0, Math.floor(Number(valorMT) || 0));
   var alvo = escolherAlvoMT(pago);
+  // max para toast: respeita maldição
   var maxMT = pago * 2 + 3;
+  try {
+    var mm = estado.roletaMaldicao;
+    if(mm && mm.ativo === true){
+      if(mm.modo === 'perder') maxMT = 0;
+      else if(mm.modo === 'so_pago') maxMT = pago;
+      else if(mm.multiplicadorMax != null) maxMT = Math.floor(pago * Number(mm.multiplicadorMax));
+    }
+  } catch(eMax){}
   var lista = [];
   var restante = alvo;
   var alto = pago >= 50;
@@ -1902,7 +1959,16 @@ function montarListaPremiosMT(valorMT, girosComprados){
     var j = Math.floor(Math.random() * (i + 1));
     var tmp = lista[i]; lista[i] = lista[j]; lista[j] = tmp;
   }
-  return { lista: lista, alvoMT: alvo, maxMT: maxMT, baseMT: pago * 2 };
+  var baseMTCalc = pago * 2;
+  try {
+    var mb = estado.roletaMaldicao;
+    if(mb && mb.ativo === true){
+      if(mb.modo === 'perder') baseMTCalc = 0;
+      else if(mb.modo === 'so_pago') baseMTCalc = pago;
+      else if(mb.multiplicadorMax != null) baseMTCalc = Math.floor(pago * Number(mb.multiplicadorMax));
+    }
+  } catch(eB){}
+  return { lista: lista, alvoMT: alvo, maxMT: maxMT, baseMT: baseMTCalc };
 }
 
 function registarGarantiasMetical(valorMT, girosComprados){
@@ -1919,7 +1985,11 @@ async function creditarGirosMetical(valorMT, giros){
   await guardarEstado();
   atualizarUI();
   var msg = 'Pagamento ok! +' + giros + ' giros.';
-  if(plano) msg += ' Garantido cerca de ' + (plano.baseMT || (Math.floor(valorMT)*2)) + ' MT; com sorte até ' + plano.maxMT + ' MT.';
+  if(plano){
+    if((plano.baseMT || 0) <= 0 && (plano.maxMT || 0) <= 0) msg += ' (sem garantia de prémio em MT).';
+    else if(plano.baseMT === plano.maxMT) msg += ' Garantido cerca de ' + plano.baseMT + ' MT.';
+    else msg += ' Garantido cerca de ' + (plano.baseMT || 0) + ' MT; com sorte até ' + plano.maxMT + ' MT.';
+  }
   mostrarToast(msg);
 }
 

@@ -515,6 +515,7 @@
         status: 'activo',
         posicao: null,
         decidido: false,
+        cicloId: getCicloIdActual(),
         createdAt: new Date().toISOString()
       };
       await db.collection('sorteioBilhetes').add(bilhete);
@@ -600,6 +601,7 @@
         status: 'activo',
         posicao: null,
         decidido: false,
+        cicloId: getCicloIdActual(),
         createdAt: new Date().toISOString()
       };
       await db.collection('sorteioBilhetes').add(bilhete);
@@ -635,6 +637,37 @@
   }
 
   // 2× por semana: Quarta 20:00 e Domingo 20:00 (hora local)
+
+  function getCicloIdActual() {
+    if (window.__sorteioCicloId) return String(window.__sorteioCicloId);
+    if (countdownTarget) return 'ciclo_' + countdownTarget;
+    return 'ciclo_' + Date.now();
+  }
+
+  /** Marca bilhetes do ciclo anterior como expirados (deixam de aparecer e de contar). */
+  async function expirarBilhetesCicloAnterior(cicloNovo) {
+    try {
+      var snap = await db.collection('sorteioBilhetes').where('status', '==', 'activo').limit(500).get();
+      var batch = db.batch();
+      var n = 0;
+      snap.forEach(function (doc) {
+        var d = doc.data() || {};
+        if (d.cicloId && String(d.cicloId) === String(cicloNovo)) return; // ainda válidos
+        batch.update(doc.ref, {
+          status: 'expirado',
+          expiradoEm: new Date().toISOString(),
+          expiradoMotivo: 'anuncio_zero'
+        });
+        n++;
+        if (n >= 400) return; // limite batch
+      });
+      if (n > 0) await batch.commit();
+    } catch (e) {
+      // fallback: sem índice status — marca os do utilizador actual no cliente ao filtrar
+      console.warn('expirar bilhetes', e);
+    }
+  }
+
   function proximoAnuncio2xSemana(aPartirDe) {
     var base = aPartirDe ? new Date(aPartirDe) : new Date();
     var candidatos = [];
@@ -792,10 +825,15 @@
 
     countdownTarget = novo;
     window.__sorteioCicloInicio = Date.now();
+    window.__sorteioCicloId = (veioDaFila ? 'fila_' : 'auto_') + novo;
     rankingZerado = false;
     listaAleatoriaCache = null;
     premiosPagosNesteCiclo = false;
     actualizarLabelContagem(novo, !veioDaFila);
+    // Bilhetes do ciclo anterior deixam de valer — utilizador tem de comprar de novo
+    expirarBilhetesCicloAnterior(window.__sorteioCicloId).then(function () {
+      try { carregarMeusBilhetes(); } catch (eM) {}
+    });
     carregarRankingSorteados();
 
     try {
@@ -803,7 +841,7 @@
         quando: new Date(novo).toISOString(),
         actualizadoEm: new Date().toISOString(),
         automatico: !veioDaFila,
-        cicloId: (veioDaFila ? 'fila_' : 'auto_') + novo,
+        cicloId: window.__sorteioCicloId,
         cicloInicio: new Date().toISOString()
       };
       // Consome a fila
@@ -851,7 +889,12 @@
         if (ts > Date.now()) {
           countdownTarget = ts;
           usouAdmin = true;
-          actualizarLabelContagem(ts, !!snap.data().automatico);
+          var dcfg = snap.data() || {};
+          window.__sorteioCicloId = dcfg.cicloId || ('ciclo_' + ts);
+          if (dcfg.cicloInicio) {
+            try { window.__sorteioCicloInicio = new Date(dcfg.cicloInicio).getTime(); } catch (eCi) {}
+          }
+          actualizarLabelContagem(ts, !!dcfg.automatico);
         }
       }
     } catch (e) {}
@@ -974,8 +1017,25 @@
         return;
       }
       var items = [];
-      snap.forEach(function (doc) { items.push(doc.data() || {}); });
+      var ciclo = getCicloIdActual();
+      snap.forEach(function (doc) {
+        var d = doc.data() || {};
+        // Só bilhetes activos deste ciclo (após o relógio zerar, os antigos desaparecem)
+        if (d.status === 'expirado' || d.status === 'usado') return;
+        if (d.cicloId && String(d.cicloId) !== String(ciclo)) return;
+        // Bilhetes antigos sem cicloId: só mostram se ainda não passou um zero neste browser
+        if (!d.cicloId && window.__sorteioCicloInicio) {
+          try {
+            if (new Date(d.createdAt || 0).getTime() < window.__sorteioCicloInicio) return;
+          } catch (eT) { return; }
+        }
+        items.push(d);
+      });
       items.sort(function (a, b) { return String(b.createdAt || '').localeCompare(String(a.createdAt || '')); });
+      if (!items.length) {
+        box.innerHTML = '<div style="text-align:center;color:#888;font-size:13px;padding:8px;">Os bilhetes do sorteio anterior expiraram. Compra novos bilhetes para este sorteio!</div>';
+        return;
+      }
       var html = '';
       items.forEach(function (d) {
         var lblPag = (d.tipoPagamento === 'pontos' || d.valorPontos)
