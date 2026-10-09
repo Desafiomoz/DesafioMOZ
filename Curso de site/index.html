@@ -321,7 +321,7 @@
   /* ---------- FINAL CTA ---------- */
 
   section.final{
-    padding: 88px 0 96px;
+    padding: 88px 0 48px;
     text-align: left;
   }
 
@@ -331,6 +331,78 @@
   }
 
   section.final .lede{ margin-bottom: 30px; }
+
+  /* ---------- EQUIPA / ENCOMENDAR ---------- */
+  section.equipa{
+    position: relative;
+    padding: 48px 0 96px;
+    overflow: hidden;
+  }
+  section.equipa::before{
+    content: "";
+    position: absolute;
+    top: 40%; left: 50%;
+    width: 700px; height: 700px;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(circle, rgba(232,93,61,0.14) 0%, rgba(217,169,68,0.08) 40%, transparent 70%);
+    pointer-events: none;
+  }
+  .equipa-box{
+    position: relative;
+    border: 1px solid rgba(217,169,68,0.35);
+    border-radius: 14px;
+    padding: 36px 28px;
+    background: linear-gradient(160deg, rgba(22,41,43,0.95), rgba(15,27,30,0.98));
+    box-shadow:
+      0 0 0 1px rgba(245,241,232,0.04),
+      0 20px 60px -20px rgba(0,0,0,0.55),
+      0 0 80px rgba(217,169,68,0.12);
+  }
+  .equipa-tag{
+    display: inline-block;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--gold);
+    border: 1px solid rgba(217,169,68,0.45);
+    padding: 5px 12px;
+    border-radius: 999px;
+    margin-bottom: 16px;
+  }
+  .equipa-box h2{
+    font-size: clamp(1.5rem, 3.2vw, 2.1rem);
+    max-width: 18ch;
+    margin-bottom: 12px;
+  }
+  .equipa-box h2 em{
+    font-style: normal;
+    color: var(--gold);
+  }
+  .equipa-box .lede{
+    margin-top: 0;
+    margin-bottom: 24px;
+    max-width: 48ch;
+  }
+  .btn-gold{
+    background: var(--gold);
+    color: var(--night);
+    font-weight: 600;
+    padding: 15px 28px;
+    border-radius: 6px;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 1rem;
+    transition: transform 0.15s ease, background 0.15s ease;
+    box-shadow: 0 0 28px rgba(217,169,68,0.35);
+  }
+  .btn-gold:hover{ background: #FBD98A; }
+  .btn-gold:focus-visible{ outline: 3px solid var(--coral); outline-offset: 3px; }
+  .equipa-note{
+    margin-top: 14px;
+    color: var(--paper-dim);
+    font-size: 0.9rem;
+  }
 
   footer{
     border-top: 1px solid rgba(245,241,232,0.08);
@@ -441,6 +513,18 @@
     <p class="lede">Gostaste da prévia? Compra o curso completo e recebe o acesso a todos os módulos e vídeos. A equipa Desafio MOZ entrega-te tudo no WhatsApp.</p>
     <a class="btn" href="https://wa.link/inp42c" target="_blank" rel="noopener">Comprar o curso · 300 MT</a>
     <p class="cta-note" style="margin-top:16px;">Pagamento e acesso via WhatsApp · 300 MT</p>
+  </div>
+</section>
+
+<section class="equipa">
+  <div class="wrap">
+    <div class="equipa-box">
+      <span class="equipa-tag">Sem tempo para criar?</span>
+      <h2>Encomenda o teu site — a equipa <em>cria por ti</em></h2>
+      <p class="lede">Não precisas de saber programar nem de seguir o curso. Imaginas o site, escolhes o pacote, e a equipa Desafio MOZ constrói tudo por ti. Do simples ao império de vendas com comissões.</p>
+      <a class="btn-gold" href="encomendar.html">Ver pacotes de encomenda →</a>
+      <p class="equipa-note">50 · 100 · 200 · 500 MT · fala com o agente no WhatsApp</p>
+    </div>
   </div>
 </section>
 

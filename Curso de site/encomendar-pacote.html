@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="pt-MZ">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pacote – Encomenda · Desafio MOZ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --night: #0F1B1E;
+    --night-2: #16292B;
+    --gold: #D9A944;
+    --coral: #E85D3D;
+    --savanna: #4C8C77;
+    --paper: #F5F1E8;
+    --paper-dim: #C9C2B2;
+  }
+  *{ box-sizing: border-box; }
+  body{
+    margin:0;
+    background: var(--night);
+    color: var(--paper);
+    font-family: 'IBM Plex Sans', sans-serif;
+    line-height: 1.55;
+  }
+  h1, h2, h3{
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    line-height: 1.15;
+    margin: 0;
+    color: var(--paper);
+  }
+  a{ color: inherit; }
+  .wrap{
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 0 22px 48px;
+  }
+  header{ padding: 28px 0 8px; }
+  .back{
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--paper-dim);
+    text-decoration: none;
+    font-size: 0.92rem;
+    margin-bottom: 24px;
+  }
+  .back:hover{ color: var(--gold); }
+  .hero{
+    position: relative;
+    border: 1px solid rgba(217,169,68,0.35);
+    border-radius: 14px;
+    padding: 28px 22px;
+    margin-bottom: 20px;
+    background: linear-gradient(160deg, rgba(22,41,43,0.95), rgba(15,27,30,0.98));
+    box-shadow: 0 0 60px rgba(217,169,68,0.12);
+    overflow: hidden;
+  }
+  .hero::before{
+    content: "";
+    position: absolute;
+    top: -40%; right: -20%;
+    width: 320px; height: 320px;
+    background: radial-gradient(circle, rgba(217,169,68,0.18), transparent 70%);
+    pointer-events: none;
+  }
+  .tag{
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--gold);
+    border: 1px solid rgba(217,169,68,0.45);
+    padding: 5px 12px;
+    border-radius: 999px;
+    margin-bottom: 12px;
+  }
+  .hero h1{ font-size: clamp(1.5rem, 3.5vw, 2rem); margin-bottom: 8px; }
+  .preco{
+    font-family: 'Fraunces', serif;
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: var(--gold);
+    margin: 10px 0 4px;
+  }
+  .preco-sub{ font-size: 0.88rem; color: var(--paper-dim); }
+  .hero-txt{ margin-top: 14px; color: var(--paper-dim); font-size: 1rem; max-width: 48ch; }
+  .capa{
+    width: 100%;
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 14px 0 6px;
+    border: 1px solid rgba(217,169,68,0.25);
+    background: #0c1018;
+  }
+  .capa img{ width: 100%; height: auto; display: block; }
+  .card{
+    background: var(--night-2);
+    border: 1px solid rgba(245,241,232,0.08);
+    border-radius: 12px;
+    padding: 20px 18px;
+    margin-bottom: 14px;
+  }
+  .card h2{
+    font-size: 1.1rem;
+    color: var(--gold);
+    margin-bottom: 12px;
+  }
+  .card ul{ margin: 0; padding-left: 18px; }
+  .card li{
+    color: var(--paper-dim);
+    font-size: 0.98rem;
+    margin-bottom: 8px;
+  }
+  .card li strong, .card strong{ color: var(--paper); }
+  .exemplo{
+    background: rgba(217,169,68,0.08);
+    border: 1px solid rgba(217,169,68,0.22);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin: 8px 0;
+    font-size: 0.95rem;
+    color: var(--paper);
+    line-height: 1.45;
+  }
+  .exemplo b{ color: var(--gold); }
+  .gancho{
+    text-align: center;
+    padding: 16px;
+    border-radius: 12px;
+    margin: 8px 0 16px;
+    background: linear-gradient(100deg, rgba(232,93,61,0.12), rgba(217,169,68,0.14));
+    border: 1px solid rgba(217,169,68,0.35);
+    font-size: 0.98rem;
+    font-weight: 500;
+    color: var(--paper);
+    line-height: 1.5;
+  }
+  .btn{
+    display: block;
+    text-align: center;
+    background: var(--coral);
+    color: var(--night);
+    font-weight: 600;
+    padding: 16px 22px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 1.05rem;
+    box-shadow: 0 0 28px rgba(232,93,61,0.3);
+    transition: background 0.15s;
+  }
+  .btn:hover{ background: var(--gold); }
+  .nota{
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--paper-dim);
+    margin-top: 12px;
+  }
+  .erro{
+    text-align: center;
+    padding: 48px 16px;
+    color: var(--paper-dim);
+  }
+  .erro a{ color: var(--gold); }
+</style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <a class="back" href="encomendar.html">← Todos os pacotes</a>
+    </div>
+  </header>
+  <main class="wrap" id="conteudo"></main>
+
+<script>
+  var PACOTES = {
+    start: {
+      nome: 'Start',
+      titulo: 'Site de 1 página',
+      preco: '50 MT',
+      hero: 'O teu negócio online em poucas horas — simples, limpo e a funcionar.',
+      inclui: [
+        'Uma página completa e profissional no telemóvel e no computador',
+        'Botões simples de indicação (WhatsApp, ligação, localização, menu…)',
+        'Cores e textos alinhados com o teu negócio',
+        'A equipa Desafio MOZ faz tudo — tu só defines o que queres mostrar'
+      ],
+      exemplos: [
+        { b: 'Cabeleireiro / barbearia', t: 'Foto, serviços, preços e botão «Marcar no WhatsApp».' },
+        { b: 'Lanchonete / restaurante', t: 'Menu do dia, horário e botão «Encomendar agora».' },
+        { b: 'Loja pequena / serviços', t: 'O que vendes, onde estás e como te contactar em 1 toque.' }
+      ],
+      gancho: 'Por 50 meticais tens presença online. Os clientes encontram-te, tocam no botão e falam contigo — enquanto outros ainda só têm papel na parede.',
+      waLink: 'https://wa.link/gohopq'
+    },
+    pro: {
+      nome: 'Pro',
+      titulo: 'Site com várias páginas',
+      preco: '100 MT',
+      hero: 'Site completo: várias secções, mais autoridade, mais confiança.',
+      inclui: [
+        'Várias páginas (ex.: Início, Sobre, Serviços, Galeria, Contacto)',
+        'Navegação clara no telemóvel',
+        'Botões de contacto e WhatsApp em pontos estratégicos',
+        'Ideal quando queres mostrar mais do que cabe numa só página'
+      ],
+      exemplos: [
+        { b: 'Clínica / consultório', t: 'Páginas de serviços, equipa e marcação.' },
+        { b: 'Escola / curso', t: 'Sobre, turmas, preços e inscrição.' },
+        { b: 'Negócio em crescimento', t: 'Portfólio, depoimentos e contacto profissional.' }
+      ],
+      gancho: 'Quem abre o teu site e vê várias páginas sente que estás a sério. Por 100 MT a equipa monta essa estrutura por ti.',
+      waLink: 'https://wa.link/hvdpnj'
+    },
+    shop: {
+      nome: 'Shop',
+      titulo: 'Site com cadastro',
+      preco: '200 MT',
+      hero: 'Com 200 meticais terás o teu negócio na Internet.',
+      inclui: [
+        'Área de cadastro / login para os teus clientes',
+        'Espaço para produtos ou serviços à venda',
+        'Fluxo pensado para comprar (pedido / contacto de pagamento)',
+        'A equipa Desafio MOZ monta tudo por ti'
+      ],
+      exemplos: [
+        { b: 'Já tens loja ou negócio?', t: 'Colocas na Internet sem stress — com 200 MT isso é possível.' },
+        { b: 'Queres criar do zero?', t: 'Ainda melhor: começas na Internet do zero, com conta de clientes e vendas.' },
+        { b: 'O teu nome online', t: 'Visitantes entram, registam-se e compram o que ofereces.' }
+      ],
+      gancho: 'Com 200 meticais terás o teu negócio na Internet. Tens uma loja ou um negócio e queres colocá-lo online? Sem problema. Ou queres criar na Internet do zero? Também sem problema.',
+      waLink: 'https://wa.link/avyp9w'
+    },
+    afiliado: {
+      nome: 'Afiliado',
+      titulo: 'Cadastro + links de afiliados',
+      preco: '500 MT',
+      capa: 'https://i.supaimg.com/9447b725-0914-4700-9681-fccbd9cb5399/7e957efa-a958-46ca-884f-4c6f2a1d9b6a.jpg',
+      hero: 'Com 500 MT serás o dono de um grande site de venda de produtos online.',
+      inclui: [
+        'Site grande de vendas: as pessoas entram e abrem conta',
+        'Compram os teus produtos no teu site',
+        'Podem pegar os teus produtos e vender na Internet por ti',
+        'Tu pagas-lhes comissão por cada venda que fizerem',
+        'A equipa Desafio MOZ constrói esta estrutura contigo'
+      ],
+      exemplos: [
+        { b: 'Tu no centro', t: 'O site é teu. Os clientes compram contigo.' },
+        { b: 'Outros vendem por ti', t: 'Alguém partilha o teu produto — quando vende, ganha comissão; tu ficas com o negócio.' },
+        { b: 'Império em rede', t: 'Quanto mais pessoas venderem os teus produtos, mais o teu império cresce.' }
+      ],
+      gancho: 'Com 500 meticais serás o rei de um grande império. Um site onde as pessoas entram, abrem conta, compram — e ainda podem vender por ti na Internet.',
+      waLink: 'https://wa.link/e29qmk'
+    }
+  };
+
+  var key = (new URLSearchParams(window.location.search).get('p') || '').toLowerCase();
+  var p = PACOTES[key];
+  var box = document.getElementById('conteudo');
+
+  if (!p) {
+    box.innerHTML = '<div class="erro">Pacote não encontrado.<br><br><a href="encomendar.html">← Ver todos os pacotes</a></div>';
+  } else {
+    document.title = 'Pacote ' + p.nome + ' – Encomenda · Desafio MOZ';
+    var exemplosHtml = p.exemplos.map(function (e) {
+      return '<div class="exemplo"><b>' + e.b + ':</b> ' + e.t + '</div>';
+    }).join('');
+    var incluiHtml = p.inclui.map(function (t) {
+      return '<li>' + t + '</li>';
+    }).join('');
+    var capaHtml = p.capa
+      ? '<div class="capa"><img src="' + p.capa + '" alt="Capa Pacote ' + p.nome + '"></div>'
+      : '';
+
+    box.innerHTML =
+      '<div class="hero">' +
+        '<span class="tag">Pacote ' + p.nome + '</span>' +
+        '<h1>' + p.titulo + '</h1>' +
+        capaHtml +
+        '<div class="preco">' + p.preco + '</div>' +
+        '<div class="preco-sub">Pago uma vez · a equipa Desafio MOZ faz por ti</div>' +
+        '<p class="hero-txt">' + p.hero + '</p>' +
+      '</div>' +
+      '<div class="card">' +
+        '<h2>O que inclui</h2>' +
+        '<ul>' + incluiHtml + '</ul>' +
+      '</div>' +
+      '<div class="card">' +
+        '<h2>Exemplos reais</h2>' +
+        '<p style="color:var(--paper-dim);font-size:0.95rem;margin:0 0 8px;">Imagina o teu negócio assim:</p>' +
+        exemplosHtml +
+      '</div>' +
+      '<div class="gancho">' + p.gancho + '</div>' +
+      '<div class="card">' +
+        '<h2>Comprar este pacote</h2>' +
+        '<p style="color:var(--paper-dim);font-size:0.95rem;margin:0 0 14px;">A equipa <strong style="color:var(--paper)">cria o site por ti</strong>. Clica e fala no WhatsApp — combina detalhes e pagamento.</p>' +
+        '<a class="btn" href="' + p.waLink + '" target="_blank" rel="noopener">Comprar · ' + p.preco + ' no WhatsApp</a>' +
+        '<p class="nota">Agente oficial Desafio MOZ</p>' +
+      '</div>';
+  }
+</script>
+</body>
+</html>

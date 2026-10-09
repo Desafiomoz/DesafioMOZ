@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="pt-MZ">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Encomenda o teu site · Desafio MOZ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --night: #0F1B1E;
+    --night-2: #16292B;
+    --gold: #D9A944;
+    --coral: #E85D3D;
+    --savanna: #4C8C77;
+    --paper: #F5F1E8;
+    --paper-dim: #C9C2B2;
+  }
+  *{ box-sizing: border-box; }
+  body{
+    margin:0;
+    background: var(--night);
+    color: var(--paper);
+    font-family: 'IBM Plex Sans', sans-serif;
+    line-height: 1.55;
+  }
+  h1, h2, h3{
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    line-height: 1.15;
+    margin: 0;
+    color: var(--paper);
+  }
+  a{ color: inherit; }
+  .wrap{
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 0 22px;
+  }
+  header{
+    padding: 28px 0 12px;
+  }
+  .back{
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--paper-dim);
+    text-decoration: none;
+    font-size: 0.92rem;
+    margin-bottom: 28px;
+  }
+  .back:hover{ color: var(--gold); }
+  .brand{
+    font-family: 'Fraunces', serif;
+    font-weight: 700;
+    font-size: 1.05rem;
+    margin-bottom: 20px;
+    display: block;
+  }
+  .brand span{ color: var(--gold); }
+  h1{
+    font-size: clamp(1.8rem, 4vw, 2.4rem);
+    max-width: 16ch;
+    margin-bottom: 12px;
+  }
+  h1 em{ font-style: normal; color: var(--gold); }
+  .intro{
+    color: var(--paper-dim);
+    font-size: 1.05rem;
+    max-width: 42ch;
+    margin-bottom: 36px;
+  }
+  .lista{ display: grid; gap: 14px; padding-bottom: 80px; }
+  a.pacote{
+    display: block;
+    text-decoration: none;
+    background: var(--night-2);
+    border: 1px solid rgba(245,241,232,0.1);
+    border-radius: 12px;
+    padding: 20px 18px;
+    transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+  a.pacote::before{
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 100% 0%, rgba(217,169,68,0.12), transparent 55%);
+    pointer-events: none;
+  }
+  a.pacote:hover{
+    border-color: rgba(217,169,68,0.45);
+    box-shadow: 0 12px 40px -16px rgba(0,0,0,0.6), 0 0 40px rgba(217,169,68,0.1);
+    transform: translateY(-2px);
+  }
+  .pacote .tag{
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 6px;
+  }
+  .pacote .row{
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  .pacote h2{ font-size: 1.25rem; margin-bottom: 6px; }
+  .pacote p{
+    margin: 0;
+    color: var(--paper-dim);
+    font-size: 0.95rem;
+    max-width: 36ch;
+  }
+  .pacote .preco{
+    font-family: 'Fraunces', serif;
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--gold);
+    white-space: nowrap;
+  }
+  .pacote .ver{
+    margin-top: 12px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--coral);
+  }
+  footer{
+    border-top: 1px solid rgba(245,241,232,0.08);
+    padding: 24px 0 36px;
+    color: var(--paper-dim);
+    font-size: 0.85rem;
+  }
+</style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <a class="back" href="index.html">← Voltar à prévia do curso</a>
+      <span class="brand">Desafio<span>.</span>MOZ</span>
+      <h1>Encomenda o teu site — a equipa <em>cria por ti</em></h1>
+      <p class="intro">Escolhe o pacote. Vês o que inclui. Depois falas com o agente no WhatsApp e a equipa constrói o site por ti.</p>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="lista">
+      <a class="pacote" href="encomendar-pacote.html?p=start">
+        <div class="tag">Pacote Start</div>
+        <div class="row">
+          <div>
+            <h2>Site de 1 página</h2>
+            <p>Ideal para cabeleireiro, lanchonete, restaurante, serviços locais.</p>
+          </div>
+          <div class="preco">50 MT</div>
+        </div>
+        <div class="ver">Ver detalhes e comprar →</div>
+      </a>
+
+      <a class="pacote" href="encomendar-pacote.html?p=pro">
+        <div class="tag">Pacote Pro</div>
+        <div class="row">
+          <div>
+            <h2>Várias páginas</h2>
+            <p>Sobre, serviços, contacto — site completo com mais autoridade.</p>
+          </div>
+          <div class="preco">100 MT</div>
+        </div>
+        <div class="ver">Ver detalhes e comprar →</div>
+      </a>
+
+      <a class="pacote" href="encomendar-pacote.html?p=shop">
+        <div class="tag">Pacote Shop</div>
+        <div class="row">
+          <div>
+            <h2>Com cadastro</h2>
+            <p>Visitantes entram, registam-se e compram no teu site.</p>
+          </div>
+          <div class="preco">200 MT</div>
+        </div>
+        <div class="ver">Ver detalhes e comprar →</div>
+      </a>
+
+      <a class="pacote" href="encomendar-pacote.html?p=afiliado">
+        <div class="tag">Pacote Afiliado</div>
+        <div class="row">
+          <div>
+            <h2>Vendas + comissões</h2>
+            <p>Grande site de produtos: outros vendem por ti e tu pagas comissão.</p>
+          </div>
+          <div class="preco">500 MT</div>
+        </div>
+        <div class="ver">Ver detalhes e comprar →</div>
+      </a>
+    </div>
+  </main>
+
+  <footer>
+    <div class="wrap">Desafio MOZ — a equipa cria o site dos teus sonhos.</div>
+  </footer>
+</body>
+</html>
