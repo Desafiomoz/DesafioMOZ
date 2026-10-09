@@ -491,14 +491,19 @@
           ultimoCheckin: hojeStr,
           ultimaAtualizacao: new Date().toISOString()
         });
+        // Histórico diário (admin) — email a partir do doc ou localStorage
         try {
           var ptsChk = Number(ptsCheckinDia) || 3;
-          var emChk = String(email || '').trim().toLowerCase();
-          if (typeof DM_histPontos === 'function') {
-            await DM_histPontos(db, emChk, ptsChk, 'checkin', 'Check-in diário +' + ptsChk + ' pts');
-          } else {
+          var emChk = String(
+            (data && data.email) ||
+            localStorage.getItem('emailUtilizador') ||
+            ''
+          ).trim().toLowerCase();
+          if (emChk && ptsChk > 0) {
             await db.collection('historicoPontos').add({
-              email: emChk, pontos: ptsChk, origem: 'checkin',
+              email: emChk,
+              pontos: ptsChk,
+              origem: 'checkin',
               detalhe: 'Check-in diário +' + ptsChk + ' pts',
               dia: hojeStr || new Date().toISOString().slice(0, 10),
               createdAt: new Date().toISOString()
