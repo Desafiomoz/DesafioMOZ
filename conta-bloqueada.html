@@ -176,6 +176,10 @@
     <div class="motivo" id="motivo-box">
       <b>Motivo:</b> <span id="motivo-texto">A tua conta foi bloqueada pela equipa do Desafio MOZ.</span>
     </div>
+    <div class="motivo" id="detalhe-pagamento" style="display:none;border-color:rgba(255,201,77,0.45);background:rgba(255,201,77,0.08);">
+      <b style="color:#ffc94d;">Pagamento em causa:</b>
+      <div id="detalhe-pagamento-texto" style="margin-top:8px;font-size:14px;line-height:1.5;color:#eee;"></div>
+    </div>
 
     <div class="regras">
       <p style="margin-bottom:8px;"><strong style="color:#fff;">O que isto significa</strong></p>
@@ -361,6 +365,39 @@
       var motivo = userData.contaBloqueadaMotivo || userData.jogosBloqueadoMotivo ||
         'A tua conta foi bloqueada por violação das regras ou abuso de confiança.';
       document.getElementById('motivo-texto').textContent = motivo;
+
+      // Valor + compra do ID suspeito
+      var detBox = document.getElementById('detalhe-pagamento');
+      var detTxt = document.getElementById('detalhe-pagamento-texto');
+      if (detBox && detTxt) {
+        var tx = userData.contaBloqueadaTxId || '';
+        var mt = userData.contaBloqueadaValorMt || '';
+        var item = userData.contaBloqueadaItem || '';
+        var jogo = userData.contaBloqueadaJogo || '';
+        var partes = [];
+        if (tx) partes.push('<div><span style="color:#aaa;">ID:</span> <b style="color:#ffc94d;font-family:monospace;">' + String(tx).replace(/</g,'') + '</b></div>');
+        if (mt) partes.push('<div><span style="color:#aaa;">Valor:</span> <b style="color:#22FF99;font-size:18px;">' + String(mt).replace(/</g,'') + ' MT</b></div>');
+        if (item) partes.push('<div><span style="color:#aaa;">Compra:</span> <b>' + String(item).replace(/</g,'') + '</b></div>');
+        if (jogo) partes.push('<div><span style="color:#aaa;">Área:</span> ' + String(jogo).replace(/</g,'') + '</div>');
+        if (partes.length) {
+          detTxt.innerHTML = partes.join('');
+          detBox.style.display = 'block';
+        } else {
+          var mMt = String(motivo).match(/([0-9]+(?:[.,][0-9]+)?)\s*MT/i);
+          var mItem = String(motivo).match(/compra de\s+([^·(]+)/i);
+          var mId = String(motivo).match(/(PP[A-Za-z0-9.]+)/i);
+          if (mMt || mItem || mId) {
+            var html = '';
+            if (mId) html += '<div><span style="color:#aaa;">ID:</span> <b style="color:#ffc94d;font-family:monospace;">' + mId[1] + '</b></div>';
+            if (mMt) html += '<div><span style="color:#aaa;">Valor:</span> <b style="color:#22FF99;font-size:18px;">' + mMt[1] + ' MT</b></div>';
+            if (mItem) html += '<div><span style="color:#aaa;">Compra:</span> <b>' + mItem[1].trim() + '</b></div>';
+            detTxt.innerHTML = html;
+            detBox.style.display = 'block';
+          } else {
+            detBox.style.display = 'none';
+          }
+        }
+      }
 
       var msg = (userData.contaBloqueadaMsg || '').trim();
       if (msg) {

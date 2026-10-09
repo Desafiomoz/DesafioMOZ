@@ -8723,7 +8723,7 @@ async function carregarBonus100() {
             '<td style="font-size:11px;white-space:nowrap;">' + escHtml(String(d.createdAt || '').slice(0, 19).replace('T', ' ')) + '</td>' +
             '<td style="white-space:nowrap;">' +
               '<button type="button" class="btn-verde" style="width:auto;padding:5px 10px;font-size:11px;margin:2px;" onclick="confirmarEmolaId(\'' + idSafe + '\')">✅ Confirmar</button> ' +
-              (em ? '<button type="button" class="btn-vermelho" onclick="bloquearJogosEmail(\'' + emSafe + '\',\'ID e-Mola suspeito: ' + idSafe + '\',\'pagamento\')">🚫 Bloquear</button>' : '') +
+              (em ? '<button type="button" class="btn-vermelho" onclick="bloquearJogosEmail(\'' + emSafe + '\',\'ID e-Mola suspeito: ' + idSafe + (d.mt ? (' · ' + d.mt + ' MT') : '') + (d.descricao || d.item ? (' · compra de ' + String(d.descricao || d.item).replace(/'/g,'')) : '') + (d.jogo ? (' (' + String(d.jogo).replace(/'/g,'') + ')') : '') + '\',\'pagamento\',{txId:\'' + idSafe + '\',valorMt:\'' + String(d.mt||'').replace(/'/g,'') + '\',item:\'' + String(d.descricao||d.item||'').replace(/'/g,'') + '\',jogo:\'' + String(d.jogo||'').replace(/'/g,'') + '\'})">🚫 Bloquear</button>' : '') +
             '</td></tr>';
         }
 
@@ -8743,7 +8743,7 @@ async function carregarBonus100() {
             '<td style="font-size:11px;white-space:nowrap;">' + escHtml(String(d.confirmadoEm || '').slice(0, 19).replace('T', ' ') || '—') + '</td>' +
             '<td style="white-space:nowrap;">' +
               '<button type="button" class="btn-laranja" style="width:auto;padding:5px 8px;font-size:11px;" onclick="desconfirmarEmolaId(\'' + idSafe + '\')">↩ Pendente</button> ' +
-              (em ? '<button type="button" class="btn-vermelho" onclick="bloquearJogosEmail(\'' + emSafe + '\',\'ID e-Mola suspeito: ' + idSafe + '\',\'pagamento\')">🚫</button>' : '') +
+              (em ? '<button type="button" class="btn-vermelho" onclick="bloquearJogosEmail(\'' + emSafe + '\',\'ID e-Mola suspeito: ' + idSafe + (d.mt ? (' · ' + d.mt + ' MT') : '') + (d.descricao || d.item ? (' · compra de ' + String(d.descricao || d.item).replace(/'/g,'')) : '') + (d.jogo ? (' (' + String(d.jogo).replace(/'/g,'') + ')') : '') + '\',\'pagamento\',{txId:\'' + idSafe + '\',valorMt:\'' + String(d.mt||'').replace(/'/g,'') + '\',item:\'' + String(d.descricao||d.item||'').replace(/'/g,'') + '\',jogo:\'' + String(d.jogo||'').replace(/'/g,'') + '\'})">🚫</button>' : '') +
             '</td></tr>';
         }
 
@@ -9612,12 +9612,29 @@ async function bloquearContaEmail() {
       await fill('tuaVezInteresseJogo', tJogo);
     }
 
-    async function bloquearJogosEmail(email, motivo, origem) {
+    async function bloquearJogosEmail(email, motivo, origem, extra) {
       email = String(email || '').trim().toLowerCase();
       if (!email) return;
       motivo = motivo || 'ID de transacção e-Mola falso / abuso';
       origem = origem || inferirOrigemBloqueio(motivo);
-      if (!confirm('Bloquear ' + email + '?\nNo próximo acesso vai para a página de conta bloqueada (segunda chance de pagar + ID).')) return;
+      extra = extra || {};
+      var txId = String(extra.txId || extra.tx || '').trim();
+      var valorMt = extra.valorMt != null && extra.valorMt !== '' ? String(extra.valorMt) : (extra.mt != null ? String(extra.mt) : '');
+      var item = String(extra.item || extra.descricao || '').trim();
+      var jogo = String(extra.jogo || extra.origemLabel || '').trim();
+      // Se o motivo só tem o ID, completa com valor e compra
+      if (txId && motivo.indexOf(txId) >= 0) {
+        if (valorMt && motivo.indexOf(valorMt + ' MT') < 0 && motivo.indexOf(valorMt + 'MT') < 0) {
+          motivo += ' · ' + valorMt + ' MT';
+        }
+        if (item && motivo.toLowerCase().indexOf(item.toLowerCase()) < 0) {
+          motivo += ' · compra de ' + item;
+        }
+        if (jogo && motivo.toLowerCase().indexOf(jogo.toLowerCase()) < 0) {
+          motivo += ' (' + jogo + ')';
+        }
+      }
+      if (!confirm('Bloquear ' + email + '?\n' + motivo + '\n\nNo próximo acesso vai para a página de conta bloqueada.')) return;
       try {
         var uref = await encontrarUserRefPorEmail(email);
         if (!uref) return alert('Utilizador não encontrado: ' + email);
@@ -9626,12 +9643,15 @@ async function bloquearContaEmail() {
           jogosBloqueadoEm: new Date().toISOString(),
           jogosBloqueadoMotivo: motivo,
           jogosBloqueadoOrigem: origem,
-          // Mesmo fluxo da aba "Bloqueio conta" → conta-bloqueada.html
           contaBloqueada: true,
           contaBloqueadaEm: new Date().toISOString(),
           contaBloqueadaMotivo: motivo,
           contaBloqueadaTipo: 'pagamento',
-          contaBloqueadaMsg: 'Pagamento com ID suspeito ou abuso. Tens UMA segunda chance: paga na e-Mola (869517893), cola o ID correcto (começa por PP) e mostra o comprovativo na página. Se não pagares ou colocares outro ID falso, a conta será apagada sem nova chance.',
+          contaBloqueadaTxId: txId || null,
+          contaBloqueadaValorMt: valorMt || null,
+          contaBloqueadaItem: item || null,
+          contaBloqueadaJogo: jogo || null,
+          contaBloqueadaMsg: 'Pagamento com ID suspeito ou abuso' + (valorMt ? (' · ' + valorMt + ' MT') : '') + (item ? (' · compra de ' + item) : '') + '. Tens UMA segunda chance: paga na e-Mola (869517893), cola o ID correcto (começa por PP) e mostra o comprovativo na página. Se não pagares ou colocares outro ID falso, a conta será apagada sem nova chance.',
           contaMarcadaEliminacao: false,
           ultimaAtualizacao: new Date().toISOString()
         };
@@ -9954,7 +9974,19 @@ async function bloquearContaEmail() {
     function pgDesconfirmar(chave) { return pgMarcar(chave, false); }
 
     async function pgBloquear(email, tx, origemBloq) {
-      await bloquearJogosEmail(email, 'ID e-Mola suspeito: ' + tx, origemBloq);
+      var r = (pgLista || []).find(function (x) {
+        return String(x.email || '').toLowerCase() === String(email || '').toLowerCase() && String(x.tx || '') === String(tx || '');
+      });
+      if (!r) r = (pgLista || []).find(function (x) { return String(x.tx || '') === String(tx || ''); });
+      var mt = r && r.mt != null && r.mt !== '' ? r.mt : '';
+      var item = r ? String(r.item || '') : '';
+      var oLab = '';
+      try { oLab = r && PG_ORIGENS[r.origem] ? PG_ORIGENS[r.origem].label : (r ? (r.origem || '') : ''); } catch (e0) {}
+      var motivo = 'ID e-Mola suspeito: ' + (tx || '—');
+      if (mt) motivo += ' · ' + mt + ' MT';
+      if (item) motivo += ' · compra de ' + item;
+      if (oLab) motivo += ' (' + oLab + ')';
+      await bloquearJogosEmail(email, motivo, origemBloq, { txId: tx, valorMt: mt, item: item, jogo: oLab });
       try { await carregarTudo(); } catch (e) {}
       renderPagamentosEmola();
     }
