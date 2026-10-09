@@ -567,7 +567,7 @@
       <div class="ic">💵</div>
       <div class="txt">
         <h3>Comprar giros com metical</h3>
-        <p>Mínimo <span class="destaque">2 MT</span>. <b>Garantia:</b> cerca de <b>2 × o que pagaste</b> em prémios (ex.: 2→4; 5→10; 50→100). Com <b>sorte</b> até <b>+3 MT</b> (2→7; 5→13; 50→103). Os prémios saem em ordem aleatória. Giros +2/+6, quando usados, <b>não dão prémio</b>.</p>
+        <p>Mínimo <span class="destaque">2 MT</span>. <b>Garantia:</b> ganhas exactamente <b>2 × o que pagaste</b> em prémios (ex.: 2→4; 5→10; 50→100). <b>Nunca mais do que o dobro.</b> Os prémios saem em ordem aleatória. Giros +2/+6, quando usados, <b>não dão prémio</b>.</p>
       </div>
     </div>
     <div class="regra-cartao verde">
@@ -1999,51 +1999,45 @@ function valorPremioEmMT(idx){
   return 0;
 }
 
-/* Compra em MT: garantia 2×X. Com sorte até 2×X + 3.
-   Ex.: 2 MT → 4 (sorte até 7) | 5 → 10 (até 13) | 50 → 100 (até 103) */
+/* Compra em MT: ganho EXACTO 2×X (sem mais).
+   Ex.: 2 MT → 4 | 5 → 10 | 50 → 100. Nunca ultrapassa o dobro. */
 function escolherAlvoMT(valorPago){
   var x = Math.max(1, Math.floor(Number(valorPago) || 0));
   // Maldição: admin limita o multiplicador da garantia MT
   var mult = 2;
-  var bonusSorte = 3; // com sorte até 2× + 3
   try {
     var m = estado.roletaMaldicao;
     if(m && m.ativo === true){
       if(m.modo === 'perder') return 0;
       if(m.modo === 'so_pago'){
-        // Só recupera o que pagou (1×), sem bónus de sorte
+        // Só recupera o que pagou (1×)
         mult = 1;
-        bonusSorte = 0;
       } else if(m.multiplicadorMax != null && Number(m.multiplicadorMax) >= 0){
         mult = Number(m.multiplicadorMax);
-        if(mult <= 1) bonusSorte = 0;
       }
     }
   } catch(eA){}
+  // Sempre exactamente mult × pago (máximo 2× sem maldição)
+  if(mult > 2) mult = 2;
   var base = Math.floor(x * mult);
-  var max = base + bonusSorte;
-  if(max <= 0) return 0;
-  if(bonusSorte <= 0) return base;
-  var r = Math.random();
-  if(r < 0.55) return base;
-  if(r < 0.78) return Math.min(max, base + 1);
-  if(r < 0.92) return Math.min(max, base + 2);
-  return max;
+  return base > 0 ? base : 0;
 }
 
 function montarListaPremiosMT(valorMT, girosComprados){
   var pago = Math.max(0, Math.floor(Number(valorMT) || 0));
   var alvo = escolherAlvoMT(pago);
-  // max para toast: respeita maldição
-  var maxMT = pago * 2 + 3;
+  // max = exactamente 2× (ou o que a maldição permitir, nunca acima de 2×)
+  var maxMT = pago * 2;
   try {
     var mm = estado.roletaMaldicao;
     if(mm && mm.ativo === true){
       if(mm.modo === 'perder') maxMT = 0;
       else if(mm.modo === 'so_pago') maxMT = pago;
-      else if(mm.multiplicadorMax != null) maxMT = Math.floor(pago * Number(mm.multiplicadorMax));
+      else if(mm.multiplicadorMax != null) maxMT = Math.min(pago * 2, Math.floor(pago * Number(mm.multiplicadorMax)));
     }
   } catch(eMax){}
+  // Nunca ultrapassar o dobro
+  if(alvo > maxMT) alvo = maxMT;
   var lista = [];
   var restante = alvo;
   var alto = pago >= 50;
@@ -2264,18 +2258,27 @@ document.getElementById('btn-girar').addEventListener('click', async ()=>{
   sincronizarMt();
   await guardarEstado();
   try {
-    if(ptsRoletaGanho > 0 && estado.email){
+    var emRoleta = String(
+      EMAIL_UTILIZADOR ||
+      localStorage.getItem('emailUtilizador') ||
+      localStorage.getItem('email') ||
+      ''
+    ).trim().toLowerCase();
+    if(ptsRoletaGanho > 0 && emRoleta){
       if(typeof DM_histPontos === 'function'){
-        await DM_histPontos(db, estado.email, ptsRoletaGanho, 'roleta', 'Roleta: ' + (premio.label || ''));
-      } else if(window.db){
+        await DM_histPontos(db, emRoleta, ptsRoletaGanho, 'roleta', 'Roleta: ' + (premio.label || ''));
+      } else if(typeof db !== 'undefined' && db){
         await db.collection('historicoPontos').add({
-          email: String(estado.email).toLowerCase(), pontos: ptsRoletaGanho, origem: 'roleta',
-          detalhe: 'Roleta: ' + (premio.label || ''), dia: new Date().toISOString().slice(0,10),
+          email: emRoleta,
+          pontos: ptsRoletaGanho,
+          origem: 'roleta',
+          detalhe: 'Roleta: ' + (premio.label || ''),
+          dia: new Date().toISOString().slice(0, 10),
           createdAt: new Date().toISOString()
         });
       }
     }
-  } catch(eH){}
+  } catch(eH){ console.warn('hist roleta', eH); }
   try { localStorage.setItem('pontosUtilizador', String(estado.pontos)); } catch(e){}
 
   estado.historico.unshift({
