@@ -490,6 +490,16 @@
           ultimoCheckin: hojeStr,
           ultimaAtualizacao: new Date().toISOString()
         });
+        try {
+          if (typeof DM_histPontos === 'function') {
+            await DM_histPontos(db, email, (ptsCheckinDia || 3), 'checkin', 'Check-in diário +' + (ptsCheckinDia || 3) + ' pts');
+          } else {
+            await db.collection('historicoPontos').add({
+              email: email, pontos: (ptsCheckinDia || 3), origem: 'checkin',
+              detalhe: 'Check-in diário', dia: hojeStr, createdAt: new Date().toISOString()
+            });
+          }
+        } catch (eH) {}
 
         if (data.indicadoPor) { await creditarBonusMarcoIndicacao(data.indicadoPor, pontosAtuais, novosPontos); }
 
@@ -516,5 +526,6 @@
 
 <script>window.__DM_PRESENCA__ = { pagina: 'checkin', jogando: null };</script>
 <script src="presenca.js?v=1"></script>
+<script src="historico-pontos.js?v=1"></script>
 </body>
 </html>

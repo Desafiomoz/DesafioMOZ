@@ -2209,8 +2209,9 @@ document.getElementById('btn-girar').addEventListener('click', async ()=>{
   const premio = PREMIOS[indice];
   await tocarVitoria();
 
-  if(premio.tipo==='pontos') estado.pontos += premio.valor;
-  if(premio.tipo==='mt') estado.pontos += premio.valor * PTS_POR_MT; // MT → pontos na conta
+  var ptsRoletaGanho = 0;
+  if(premio.tipo==='pontos'){ estado.pontos += premio.valor; ptsRoletaGanho = premio.valor; }
+  if(premio.tipo==='mt'){ estado.pontos += premio.valor * PTS_POR_MT; ptsRoletaGanho = premio.valor * PTS_POR_MT; }
   if(premio.tipo==='giros'){
     estado.giros += premio.valor;
     estado.origemPremio = (Number(estado.origemPremio) || 0) + (Number(premio.valor) || 0);
@@ -2219,6 +2220,19 @@ document.getElementById('btn-girar').addEventListener('click', async ()=>{
   }
   sincronizarMt();
   await guardarEstado();
+  try {
+    if(ptsRoletaGanho > 0 && estado.email){
+      if(typeof DM_histPontos === 'function'){
+        await DM_histPontos(db, estado.email, ptsRoletaGanho, 'roleta', 'Roleta: ' + (premio.label || ''));
+      } else if(window.db){
+        await db.collection('historicoPontos').add({
+          email: String(estado.email).toLowerCase(), pontos: ptsRoletaGanho, origem: 'roleta',
+          detalhe: 'Roleta: ' + (premio.label || ''), dia: new Date().toISOString().slice(0,10),
+          createdAt: new Date().toISOString()
+        });
+      }
+    }
+  } catch(eH){}
   try { localStorage.setItem('pontosUtilizador', String(estado.pontos)); } catch(e){}
 
   estado.historico.unshift({
@@ -2282,5 +2296,6 @@ document.getElementById('btn-fechar-premio').addEventListener('click', ()=>{
 
 <script>window.__DM_PRESENCA__ = { pagina: 'roleta', jogando: 'roleta' };</script>
 <script src="presenca.js?v=1"></script>
+<script src="historico-pontos.js?v=1"></script>
 </body>
 </html>

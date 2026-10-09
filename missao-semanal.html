@@ -1186,6 +1186,7 @@
           await db.collection('historicoPontos').add({
             email: email, pontos: ptsExtra, origem: 'missao_semanal',
             detalhe: 'Missão semanal completa +150 pts',
+            dia: new Date().toISOString().slice(0,10),
             createdAt: new Date().toISOString()
           });
         } catch (eH) {}
@@ -1725,5 +1726,6 @@ async function finalizarMissao() {
 
 <script>window.__DM_PRESENCA__ = { pagina: 'missao-semanal', jogando: null };</script>
 <script src="presenca.js?v=1"></script>
+<script src="historico-pontos.js?v=1"></script>
 </body>
 </html>

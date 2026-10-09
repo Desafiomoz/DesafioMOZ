@@ -541,6 +541,7 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
                     pontosIndicacao: (indData.pontosIndicacao || 0) + bonus,
                     ultimaAtualizacao: new Date().toISOString()
                 });
+                try { if (typeof DM_histPontos === 'function') await DM_histPontos(db, indData.email || '', bonus, 'convite', 'Bónus marco indicação +' + bonus + ' pts'); } catch(eH) {}
             } catch (e) { console.error('bonus marco indicador', e); }
         }
 
@@ -1172,6 +1173,7 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
                     anunciosTarefasHist: hist,
                     ultimaAtualizacao: new Date().toISOString()
                 });
+                try { if (typeof DM_histPontos === 'function') await DM_histPontos(db, email, pts, 'desafio', 'Anúncio tarefa +' + pts + ' pts'); } catch(eH) {}
                 if (dados.indicadoPor) { await creditarBonusMarcoIndicacao(dados.indicadoPor, dados.pontos || 0, novos); }
                 localStorage.setItem('pontosUtilizador', String(novos));
                 alert('Ganhou +' + pts + ' pontos! Total: ' + novos);
@@ -1190,6 +1192,7 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
 <script>
   window.__DM_NOTIF__ = { mencao: true, idle: true, idleSegundos: 20, idleMaxDia: 2 };
 </script>
+<script src="historico-pontos.js?v=1"></script>
 <script src="notificacoes-chat.js?v=5"></script>
 
 

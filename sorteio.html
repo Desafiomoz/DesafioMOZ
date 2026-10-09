@@ -239,6 +239,32 @@
 
     #zona-pag { display: none; }
     .loading { text-align: center; padding: 40px; color: #888; }
+  
+    /* Aviso ganhou / perdeu */
+    #aviso-sorteio-overlay{
+      position:fixed;inset:0;z-index:90;display:none;
+      align-items:center;justify-content:center;
+      background:rgba(0,0,0,0.85);backdrop-filter:blur(6px);
+      padding:18px;
+    }
+    #aviso-sorteio-overlay.ativo{display:flex;}
+    .aviso-sorteio-box{
+      width:min(360px,94vw);border-radius:20px;padding:24px 18px;text-align:center;
+      background:linear-gradient(160deg,#1a1428,#0e1118);
+      border:2px solid rgba(255,201,77,0.5);
+      box-shadow:0 0 50px rgba(255,201,77,0.35);
+    }
+    .aviso-sorteio-box.perdeu{border-color:rgba(140,150,170,0.4);box-shadow:0 0 30px rgba(0,0,0,0.4);}
+    .aviso-sorteio-box .emj{font-size:48px;margin-bottom:8px;}
+    .aviso-sorteio-box h3{margin:0 0 8px;font-size:18px;color:#FFD700;}
+    .aviso-sorteio-box.perdeu h3{color:#aaa;}
+    .aviso-sorteio-box p{margin:0 0 10px;font-size:14px;color:#c5cdd8;line-height:1.5;}
+    .aviso-sorteio-box .premio-big{font-size:22px;font-weight:900;color:#22FF99;margin:8px 0 14px;}
+    .aviso-sorteio-box button{
+      width:100%;padding:13px;border:none;border-radius:12px;font-weight:800;font-size:15px;
+      background:linear-gradient(90deg,#FFC94D,#22FF99);color:#04140a;cursor:pointer;
+    }
+
   </style>
 </head>
 <body>
@@ -248,6 +274,17 @@
     <div>
       <h1>Sorteio Desafio MOZ</h1>
       <p>Compra bilhetes · quanto mais forte, mais chance</p>
+    </div>
+  </div>
+
+  
+  <div id="aviso-sorteio-overlay">
+    <div class="aviso-sorteio-box" id="aviso-sorteio-box">
+      <div class="emj" id="aviso-emj">🏆</div>
+      <h3 id="aviso-titulo">Parabéns!</h3>
+      <p id="aviso-texto"></p>
+      <div class="premio-big" id="aviso-premio"></div>
+      <button type="button" id="aviso-btn-ok" onclick="fecharAvisoSorteio()">Continuar</button>
     </div>
   </div>
 
@@ -515,7 +552,6 @@
         status: 'activo',
         posicao: null,
         decidido: false,
-        cicloId: getCicloIdActual(),
         createdAt: new Date().toISOString()
       };
       await db.collection('sorteioBilhetes').add(bilhete);
@@ -601,7 +637,6 @@
         status: 'activo',
         posicao: null,
         decidido: false,
-        cicloId: getCicloIdActual(),
         createdAt: new Date().toISOString()
       };
       await db.collection('sorteioBilhetes').add(bilhete);
@@ -637,37 +672,6 @@
   }
 
   // 2× por semana: Quarta 20:00 e Domingo 20:00 (hora local)
-
-  function getCicloIdActual() {
-    if (window.__sorteioCicloId) return String(window.__sorteioCicloId);
-    if (countdownTarget) return 'ciclo_' + countdownTarget;
-    return 'ciclo_' + Date.now();
-  }
-
-  /** Marca bilhetes do ciclo anterior como expirados (deixam de aparecer e de contar). */
-  async function expirarBilhetesCicloAnterior(cicloNovo) {
-    try {
-      var snap = await db.collection('sorteioBilhetes').where('status', '==', 'activo').limit(500).get();
-      var batch = db.batch();
-      var n = 0;
-      snap.forEach(function (doc) {
-        var d = doc.data() || {};
-        if (d.cicloId && String(d.cicloId) === String(cicloNovo)) return; // ainda válidos
-        batch.update(doc.ref, {
-          status: 'expirado',
-          expiradoEm: new Date().toISOString(),
-          expiradoMotivo: 'anuncio_zero'
-        });
-        n++;
-        if (n >= 400) return; // limite batch
-      });
-      if (n > 0) await batch.commit();
-    } catch (e) {
-      // fallback: sem índice status — marca os do utilizador actual no cliente ao filtrar
-      console.warn('expirar bilhetes', e);
-    }
-  }
-
   function proximoAnuncio2xSemana(aPartirDe) {
     var base = aPartirDe ? new Date(aPartirDe) : new Date();
     var candidatos = [];
@@ -774,9 +778,13 @@
               lugar: L,
               pontos: pts,
               premioLabel: PREMIOS_SORTEIO_LBL[L] || '',
-              em: new Date().toISOString()
-            }
+              em: new Date().toISOString(),
+              visto: false,
+              cicloId: window.__sorteioCicloId || ''
+            },
+            sorteioPerdeuAviso: null
           });
+          try { if (typeof DM_histPontos === 'function') await DM_histPontos(db, info.email, pts, 'sorteio', 'Prémio ' + L + 'º lugar: ' + (PREMIOS_SORTEIO_LBL[L] || pts + ' pts')); } catch(eH) {}
           await pagRef.set({
             email: info.email,
             lugar: L,
@@ -798,6 +806,40 @@
           // continua para os outros lugares
         }
       }
+
+      // Avisar quem tinha bilhete e NÃO ficou nos 10
+      try {
+        var emailsGanhadores = {};
+        Object.keys(porLugar).forEach(function (k) {
+          if (porLugar[k] && porLugar[k].email) {
+            emailsGanhadores[String(porLugar[k].email).toLowerCase()] = true;
+          }
+        });
+        var snapAll = await db.collection('sorteioBilhetes').limit(500).get();
+        var emailsBilhete = {};
+        snapAll.forEach(function (doc) {
+          var d = doc.data() || {};
+          if (d.expirado) return;
+          var em = String(d.email || '').toLowerCase();
+          if (em) emailsBilhete[em] = true;
+        });
+        var ciclo = window.__sorteioCicloId || ('ciclo_' + Date.now());
+        for (var emL in emailsBilhete) {
+          if (!emailsBilhete.hasOwnProperty(emL)) continue;
+          if (emailsGanhadores[emL]) continue;
+          try {
+            var uS = await db.collection('usuarios').where('email', '==', emL).limit(1).get();
+            if (uS.empty) continue;
+            await uS.docs[0].ref.update({
+              sorteioPerdeuAviso: {
+                visto: false,
+                cicloId: ciclo,
+                em: new Date().toISOString()
+              }
+            });
+          } catch (eOneL) {}
+        }
+      } catch (eLose) { console.warn('aviso perdeu', eLose); }
     } catch (e) {
       premiosPagosNesteCiclo = false; // permite tentar de novo noutro visitante
     }
@@ -825,15 +867,10 @@
 
     countdownTarget = novo;
     window.__sorteioCicloInicio = Date.now();
-    window.__sorteioCicloId = (veioDaFila ? 'fila_' : 'auto_') + novo;
     rankingZerado = false;
     listaAleatoriaCache = null;
     premiosPagosNesteCiclo = false;
     actualizarLabelContagem(novo, !veioDaFila);
-    // Bilhetes do ciclo anterior deixam de valer — utilizador tem de comprar de novo
-    expirarBilhetesCicloAnterior(window.__sorteioCicloId).then(function () {
-      try { carregarMeusBilhetes(); } catch (eM) {}
-    });
     carregarRankingSorteados();
 
     try {
@@ -841,7 +878,7 @@
         quando: new Date(novo).toISOString(),
         actualizadoEm: new Date().toISOString(),
         automatico: !veioDaFila,
-        cicloId: window.__sorteioCicloId,
+        cicloId: (veioDaFila ? 'fila_' : 'auto_') + novo,
         cicloInicio: new Date().toISOString()
       };
       // Consome a fila
@@ -889,12 +926,7 @@
         if (ts > Date.now()) {
           countdownTarget = ts;
           usouAdmin = true;
-          var dcfg = snap.data() || {};
-          window.__sorteioCicloId = dcfg.cicloId || ('ciclo_' + ts);
-          if (dcfg.cicloInicio) {
-            try { window.__sorteioCicloInicio = new Date(dcfg.cicloInicio).getTime(); } catch (eCi) {}
-          }
-          actualizarLabelContagem(ts, !!dcfg.automatico);
+          actualizarLabelContagem(ts, !!snap.data().automatico);
         }
       }
     } catch (e) {}
@@ -1017,25 +1049,8 @@
         return;
       }
       var items = [];
-      var ciclo = getCicloIdActual();
-      snap.forEach(function (doc) {
-        var d = doc.data() || {};
-        // Só bilhetes activos deste ciclo (após o relógio zerar, os antigos desaparecem)
-        if (d.status === 'expirado' || d.status === 'usado') return;
-        if (d.cicloId && String(d.cicloId) !== String(ciclo)) return;
-        // Bilhetes antigos sem cicloId: só mostram se ainda não passou um zero neste browser
-        if (!d.cicloId && window.__sorteioCicloInicio) {
-          try {
-            if (new Date(d.createdAt || 0).getTime() < window.__sorteioCicloInicio) return;
-          } catch (eT) { return; }
-        }
-        items.push(d);
-      });
+      snap.forEach(function (doc) { items.push(doc.data() || {}); });
       items.sort(function (a, b) { return String(b.createdAt || '').localeCompare(String(a.createdAt || '')); });
-      if (!items.length) {
-        box.innerHTML = '<div style="text-align:center;color:#888;font-size:13px;padding:8px;">Os bilhetes do sorteio anterior expiraram. Compra novos bilhetes para este sorteio!</div>';
-        return;
-      }
       var html = '';
       items.forEach(function (d) {
         var lblPag = (d.tipoPagamento === 'pontos' || d.valorPontos)
@@ -1053,6 +1068,85 @@
       box.innerHTML = '<div style="text-align:center;color:#888;font-size:13px;">—</div>';
     }
   }
+
+
+  async function verificarAvisoSorteio() {
+    try {
+      if (!userData || !email) return;
+      var up = userData.ultimoPremioSorteio;
+      if (up && up.lugar && !up.visto) {
+        mostrarAvisoSorteio({
+          ganhou: true,
+          lugar: up.lugar,
+          premio: up.premioLabel || (up.pontos + ' pontos'),
+          pontos: up.pontos,
+          em: up.em
+        });
+        return;
+      }
+      // Perdeu: tinha bilhete e o anúncio já zerou sem posição
+      if (userData.sorteioPerdeuAviso && !userData.sorteioPerdeuAviso.visto) {
+        var a = userData.sorteioPerdeuAviso;
+        mostrarAvisoSorteio({
+          ganhou: false,
+          ciclo: a.cicloId || '',
+          em: a.em
+        });
+      }
+    } catch (e) { console.warn('aviso sorteio', e); }
+  }
+
+  function mostrarAvisoSorteio(info) {
+    var ov = document.getElementById('aviso-sorteio-overlay');
+    var box = document.getElementById('aviso-sorteio-box');
+    if (!ov || !box) return;
+    box.classList.toggle('perdeu', !info.ganhou);
+    if (info.ganhou) {
+      document.getElementById('aviso-emj').textContent = '🏆';
+      document.getElementById('aviso-titulo').textContent = 'Ganhaste no sorteio!';
+      var lugar = info.lugar || '?';
+      var quando = '';
+      try {
+        if (info.em) quando = new Date(info.em).toLocaleString('pt-MZ');
+      } catch (e) {}
+      document.getElementById('aviso-texto').innerHTML =
+        'Ficaste em <b style="color:#FFD700;">' + lugar + 'º lugar</b> neste anúncio de resultados.' +
+        (quando ? '<br><small style="color:#888;">Anúncio: ' + quando + '</small>' : '');
+      document.getElementById('aviso-premio').textContent = info.premio || '';
+      document.getElementById('aviso-premio').style.display = 'block';
+    } else {
+      document.getElementById('aviso-emj').textContent = '🎫';
+      document.getElementById('aviso-titulo').textContent = 'Resultado do sorteio';
+      document.getElementById('aviso-texto').textContent =
+        'Neste anúncio não ficaste entre os 10 premiados. Compra bilhetes para o próximo e tenta de novo!';
+      document.getElementById('aviso-premio').style.display = 'none';
+    }
+    ov.classList.add('ativo');
+    window.__avisoSorteioInfo = info;
+  }
+
+  async function fecharAvisoSorteio() {
+    var ov = document.getElementById('aviso-sorteio-overlay');
+    if (ov) ov.classList.remove('ativo');
+    try {
+      if (!docRef) return;
+      var info = window.__avisoSorteioInfo || {};
+      if (info.ganhou) {
+        await docRef.update({
+          'ultimoPremioSorteio.visto': true,
+          'ultimoPremioSorteio.vistoEm': new Date().toISOString()
+        });
+        if (userData && userData.ultimoPremioSorteio) userData.ultimoPremioSorteio.visto = true;
+      } else {
+        await docRef.update({
+          'sorteioPerdeuAviso.visto': true,
+          'sorteioPerdeuAviso.vistoEm': new Date().toISOString()
+        });
+        if (userData && userData.sorteioPerdeuAviso) userData.sorteioPerdeuAviso.visto = true;
+      }
+    } catch (e) { console.warn(e); }
+  }
+
 
   async function carregar() {
     try {
@@ -1090,6 +1184,7 @@
       carregarCountdown();
       carregarMeusBilhetes();
       carregarRankingSorteados();
+      verificarAvisoSorteio();
     } catch (e) {
       document.getElementById('loading').textContent = 'Erro: ' + (e.message || e);
     }
@@ -1097,6 +1192,7 @@
   carregar();
 </script>
 <script>window.__DM_PRESENCA__ = { pagina: 'sorteio', jogando: null };</script>
+<script src="historico-pontos.js?v=1"></script>
 <script src="presenca.js?v=1"></script>
 </body>
 </html>

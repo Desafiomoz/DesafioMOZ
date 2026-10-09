@@ -179,6 +179,18 @@
           ultimaPesquisaProgEm: new Date().toISOString(),
           ultimaAtualizacao: new Date().toISOString()
         });
+        try {
+          var ganho = (pesquisa.pontos || 0);
+          if (typeof DM_histPontos === 'function') {
+            await DM_histPontos(db, email, ganho, 'pesquisa', 'Pesquisa programada: ' + (pesquisa.titulo || pesquisaId));
+          } else {
+            await db.collection('historicoPontos').add({
+              email: String(email).toLowerCase(), pontos: ganho, origem: 'pesquisa',
+              detalhe: 'Pesquisa: ' + (pesquisa.titulo || pesquisaId),
+              dia: new Date().toISOString().slice(0,10), createdAt: new Date().toISOString()
+            });
+          }
+        } catch (eH) {}
 
         if (dados.indicadoPor) { await creditarBonusMarcoIndicacao(dados.indicadoPor, dados.pontos || 0, pts); }
 
@@ -303,5 +315,6 @@
 
     iniciar();
   </script>
+<script src="historico-pontos.js?v=1"></script>
 </body>
 </html>

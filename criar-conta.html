@@ -13,6 +13,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+  <script src="historico-pontos.js?v=1"></script>
 
   <script>
     if (typeof window.__DESAFIO_MOZ_FIREBASE__ === 'undefined') {
@@ -507,14 +508,22 @@
       await ref.update(upd);
       if (novosPremios > 0) {
         try {
-          await db.collection('historicoPontos').add({
-            email: String(d.email || '').toLowerCase(),
-            pontos: novosPremios * 1600,
-            origem: 'influencer',
-            detalhe: 'Prémio influencer: ' + (novosPremios * 200) + ' MT por atingir ' + contados + ' convites',
-            createdAt: new Date().toISOString()
-          });
+          if (typeof DM_histPontos === 'function') {
+            await DM_histPontos(db, d.email || '', novosPremios * 1600, 'influencer', 'Prémio influencer: ' + (novosPremios * 200) + ' MT por atingir ' + contados + ' convites');
+          } else {
+            await db.collection('historicoPontos').add({
+              email: String(d.email || '').toLowerCase(),
+              pontos: novosPremios * 1600,
+              origem: 'influencer',
+              detalhe: 'Prémio influencer: ' + (novosPremios * 200) + ' MT por atingir ' + contados + ' convites',
+              dia: new Date().toISOString().slice(0, 10),
+              createdAt: new Date().toISOString()
+            });
+          }
         } catch (eH) { console.warn('historico influencer', eH); }
+      }
+      if (d.influencerBoostPts === true) {
+        try { if (typeof DM_histPontos === 'function') await DM_histPontos(db, d.email || '', 1, 'influencer', 'Boost +1 pt por registo no link'); } catch (eB) {}
       }
       localStorage.removeItem('infPendente');
     } catch (e) {
@@ -729,6 +738,7 @@
                   updG.convitesExtra = false;
                 }
                 await indSnapG.docs[0].ref.update(updG);
+                try { if (typeof DM_histPontos === 'function') await DM_histPontos(db, indDataG.email || '', ptsInvG, 'convite', 'Convite novo utilizador +' + ptsInvG + ' pts'); } catch(eH) {}
               }
             }
             localStorage.removeItem('refPendente');
@@ -959,6 +969,7 @@
                 updInd.convitesExtra = false;
               }
               await indRef.update(updInd);
+              try { if (typeof DM_histPontos === 'function') await DM_histPontos(db, indData.email || '', ptsInviter, 'convite', 'Convite novo utilizador +' + ptsInviter + ' pts'); } catch(eH) {}
             }
           }
         } catch (eInd) { console.error(eInd); }

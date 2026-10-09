@@ -236,6 +236,7 @@
     <button class="tab" data-tab="actividade" onclick="mudarTab('actividade')"><i class="fas fa-clipboard-check"></i> Actividade</button>
     <button class="tab" data-tab="ofertas-cliques" onclick="mudarTab('ofertas-cliques'); try{carregarOfertasCliques();}catch(e){}"><i class="fas fa-mouse-pointer"></i> Ofertas cliques</button>
     <button class="tab" data-tab="origem" onclick="mudarTab('origem')"><i class="fas fa-pie-chart"></i> Origem pts</button>
+    <button class="tab" data-tab="hist-diario" onclick="mudarTab('hist-diario')"><i class="fas fa-calendar-day"></i> Histórico diário</button>
     <button class="tab" data-tab="chat" onclick="mudarTab('chat')"><i class="fas fa-comments"></i> Chat</button>
     <button class="tab" data-tab="dicas" onclick="mudarTab('dicas')"><i class="fas fa-lightbulb"></i> Dicas</button>
     <button class="tab" data-tab="pub-dicas" onclick="mudarTab('pub-dicas')"><i class="fas fa-pen"></i> Publicar dica</button>
@@ -1552,6 +1553,77 @@
       </div>
     </div>
 
+
+
+    <!-- HISTÓRICO DIÁRIO DE PONTOS -->
+    <div class="painel" id="painel-hist-diario">
+      <div class="form-box">
+        <h3><i class="fas fa-calendar-day"></i> Histórico diário por utilizador</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:12px;line-height:1.45;">
+          Escolhe o <strong>e-mail</strong> e o <strong>dia</strong> (ou o mês inteiro) para ver quantos pontos ganhou e
+          <strong>de onde</strong>: check-in, pesquisas, missão semanal, convite, influencer, desafios, sorteio, Homejub, roleta, etc.
+          <br><span style="color:#ffcf4d;">Nota:</span> registos completos a partir desta actualização. Dias antigos podem aparecer incompletos.
+        </p>
+        <div class="form-grid" style="margin-bottom:12px;">
+          <div class="form-row">
+            <label>E-mail do utilizador</label>
+            <input type="email" id="hd-email" placeholder="ex: joao@gmail.com" list="hd-emails-list">
+            <datalist id="hd-emails-list"></datalist>
+          </div>
+          <div class="form-row">
+            <label>Dia (AAAA-MM-DD)</label>
+            <input type="date" id="hd-dia">
+          </div>
+          <div class="form-row">
+            <label>Ou mês inteiro (AAAA-MM)</label>
+            <input type="month" id="hd-mes">
+          </div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;">
+          <button type="button" class="btn-verde" onclick="carregarHistoricoDiario()">🔍 Ver histórico</button>
+          <button type="button" class="btn-laranja" onclick="hdUsarHoje()">Hoje</button>
+          <button type="button" class="btn-laranja" onclick="hdUsarOntem()">Ontem</button>
+        </div>
+        <div class="resumo" id="hd-resumo" style="margin-bottom:14px;display:none;">
+          <div class="resumo-card"><div class="num" id="hd-total">0</div><div class="lbl">Total pts no período</div></div>
+          <div class="resumo-card"><div class="num" id="hd-n-reg">0</div><div class="lbl">Registos</div></div>
+          <div class="resumo-card"><div class="num" id="hd-n-fontes">0</div><div class="lbl">Fontes diferentes</div></div>
+        </div>
+        <h4 style="color:#00e676;font-size:13px;margin:0 0 8px;">Por origem</h4>
+        <div class="tabela-wrap" style="margin-bottom:16px;">
+          <table>
+            <thead>
+              <tr>
+                <th>Origem</th>
+                <th>Pontos</th>
+                <th>N.º de vezes</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-hd-origens">
+              <tr><td colspan="3" class="vazio">Escolhe e-mail e dia, depois Ver histórico.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <h4 style="color:#00e676;font-size:13px;margin:0 0 8px;">Detalhe (cada ganho)</h4>
+        <div class="tabela-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Hora</th>
+                <th>Dia</th>
+                <th>Origem</th>
+                <th>Pontos</th>
+                <th>Detalhe</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-hd-detalhe">
+              <tr><td colspan="6" class="vazio">—</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
 
     <div class="painel" id="painel-dicas">
       <div class="form-box">
@@ -3333,6 +3405,7 @@ function mostrarAviso(txt) {
         if (nome === 'actividade') try { renderActividadeAdmin(); } catch (eA) {}
         if (nome === 'roleta') try { carregarRoletaAdmin(); carregarRoletaPontosAdmin(); carregarRoletaHistoricoAdmin(); carregarMaldicoesRoleta(); } catch (eR) {}
         if (nome === 'origem') try { renderOrigemPontosAdmin(); } catch (eOg) {}
+        if (nome === 'hist-diario') try { hdPreparar(); } catch (eHD) {}
         if (nome === 'dicas') try { carregarDicasAdmin(); } catch (eD) {}
         if (nome === 'pedidos-dicas') try { carregarPedidosDicasAdmin(); } catch (ePD) {}
         if (nome === 'notif-admin') try { carregarNotifAdminHist(); } catch (eN) {}
@@ -9994,6 +10067,154 @@ async function bloquearContaEmail() {
       await desbloquearJogosEmail(email);
       try { await carregarTudo(); } catch (e) {}
       renderPagamentosEmola();
+    }
+
+
+    // ===== HISTÓRICO DIÁRIO =====
+    var HD_LABELS = {
+      checkin: '📅 Check-in diário',
+      pesquisa: '📋 Pesquisa',
+      missao_semanal: '🏆 Missão semanal',
+      convite: '👥 Convite / indicação',
+      influencer: '⭐ Influencer',
+      homejub: '🎮 Homejub',
+      roleta: '🎡 Roleta',
+      sorteio: '🎟️ Sorteio',
+      desafio: '🎯 Desafio do dia',
+      cpx: '🔎 CPX Research',
+      offerwall: '🎁 Offerwall',
+      admin: '🛠️ Admin',
+      bonus: '🎁 Bónus',
+      outro: '• Outro'
+    };
+    function hdLabel(o) {
+      return HD_LABELS[o] || ('• ' + (o || 'outro'));
+    }
+    function hdPreparar() {
+      try {
+        var hoje = new Date().toISOString().slice(0, 10);
+        var el = document.getElementById('hd-dia');
+        if (el && !el.value) el.value = hoje;
+        var list = document.getElementById('hd-emails-list');
+        if (list && todosUsers && todosUsers.length) {
+          list.innerHTML = todosUsers.slice(0, 400).map(function (u) {
+            return '<option value="' + escHtml(String(u.email || '')) + '">';
+          }).join('');
+        }
+      } catch (e) {}
+    }
+    function hdUsarHoje() {
+      var el = document.getElementById('hd-dia');
+      if (el) el.value = new Date().toISOString().slice(0, 10);
+      var m = document.getElementById('hd-mes');
+      if (m) m.value = '';
+    }
+    function hdUsarOntem() {
+      var d = new Date();
+      d.setDate(d.getDate() - 1);
+      var el = document.getElementById('hd-dia');
+      if (el) el.value = d.toISOString().slice(0, 10);
+      var m = document.getElementById('hd-mes');
+      if (m) m.value = '';
+    }
+    async function carregarHistoricoDiario() {
+      var email = (document.getElementById('hd-email') && document.getElementById('hd-email').value || '').trim().toLowerCase();
+      var dia = (document.getElementById('hd-dia') && document.getElementById('hd-dia').value || '').trim();
+      var mes = (document.getElementById('hd-mes') && document.getElementById('hd-mes').value || '').trim();
+      var tOrig = document.getElementById('tbody-hd-origens');
+      var tDet = document.getElementById('tbody-hd-detalhe');
+      var resumo = document.getElementById('hd-resumo');
+      if (!email) {
+        alert('Escreve o e-mail do utilizador.');
+        return;
+      }
+      if (!dia && !mes) {
+        alert('Escolhe um dia ou um mês.');
+        return;
+      }
+      if (tOrig) tOrig.innerHTML = '<tr><td colspan="3" class="vazio">A carregar...</td></tr>';
+      if (tDet) tDet.innerHTML = '<tr><td colspan="6" class="vazio">A carregar...</td></tr>';
+      try {
+        var lista = [];
+        // Query por e-mail (filtro dia no cliente — evita índice composto)
+        var snap;
+        try {
+          snap = await db.collection('historicoPontos').where('email', '==', email).limit(500).get();
+        } catch (e1) {
+          snap = await db.collection('historicoPontos').limit(800).get();
+        }
+        snap.forEach(function (doc) {
+          var d = doc.data() || {};
+          var em = String(d.email || '').toLowerCase();
+          if (em !== email) return;
+          var dDia = d.dia || String(d.createdAt || '').slice(0, 10);
+          if (dia && dDia !== dia) return;
+          if (mes && dDia.indexOf(mes) !== 0) return;
+          lista.push({
+            id: doc.id,
+            pontos: Number(d.pontos) || 0,
+            origem: d.origem || 'outro',
+            detalhe: d.detalhe || '',
+            dia: dDia,
+            createdAt: d.createdAt || ''
+          });
+        });
+        lista.sort(function (a, b) {
+          return String(b.createdAt || '').localeCompare(String(a.createdAt || ''));
+        });
+
+        var porOrigem = {};
+        var total = 0;
+        lista.forEach(function (r) {
+          total += r.pontos;
+          if (!porOrigem[r.origem]) porOrigem[r.origem] = { pts: 0, n: 0 };
+          porOrigem[r.origem].pts += r.pontos;
+          porOrigem[r.origem].n += 1;
+        });
+        var fontes = Object.keys(porOrigem);
+        if (resumo) resumo.style.display = 'flex';
+        var elT = document.getElementById('hd-total');
+        var elN = document.getElementById('hd-n-reg');
+        var elF = document.getElementById('hd-n-fontes');
+        if (elT) elT.textContent = String(total);
+        if (elN) elN.textContent = String(lista.length);
+        if (elF) elF.textContent = String(fontes.length);
+
+        if (tOrig) {
+          if (!fontes.length) {
+            tOrig.innerHTML = '<tr><td colspan="3" class="vazio">Sem registos neste período. (Ganhos só ficam completos após a actualização do histórico.)</td></tr>';
+          } else {
+            fontes.sort(function (a, b) { return porOrigem[b].pts - porOrigem[a].pts; });
+            tOrig.innerHTML = fontes.map(function (o) {
+              return '<tr><td>' + escHtml(hdLabel(o)) + '</td>' +
+                '<td style="color:#FFD700;font-weight:800;">+' + porOrigem[o].pts + '</td>' +
+                '<td>' + porOrigem[o].n + '</td></tr>';
+            }).join('');
+          }
+        }
+        if (tDet) {
+          if (!lista.length) {
+            tDet.innerHTML = '<tr><td colspan="6" class="vazio">Nenhum ganho registado para este e-mail neste dia/mês.</td></tr>';
+          } else {
+            tDet.innerHTML = lista.map(function (r, i) {
+              var hora = String(r.createdAt || '').slice(11, 19) || '—';
+              return '<tr>' +
+                '<td>' + (i + 1) + '</td>' +
+                '<td style="font-size:12px;white-space:nowrap;">' + escHtml(hora) + '</td>' +
+                '<td style="font-size:12px;">' + escHtml(r.dia) + '</td>' +
+                '<td>' + escHtml(hdLabel(r.origem)) + '</td>' +
+                '<td style="color:#FFD700;font-weight:800;">+' + r.pontos + '</td>' +
+                '<td style="font-size:12px;color:#aaa;">' + escHtml(r.detalhe || '—') + '</td>' +
+              '</tr>';
+            }).join('');
+          }
+        }
+      } catch (e) {
+        if (tOrig) tOrig.innerHTML = '<tr><td colspan="3" class="vazio">Erro: ' + escHtml(e.message || e) + '</td></tr>';
+        if (tDet) tDet.innerHTML = '<tr><td colspan="6" class="vazio">Erro</td></tr>';
+        alert('Erro ao carregar histórico: ' + (e.message || e) +
+          '\n\nRegra Firebase sugerida:\nmatch /historicoPontos/{doc} { allow read, write: if true; }');
+      }
     }
 
     // ===== ABA BLOQUEADOS (todos os bloqueios num só lugar) =====

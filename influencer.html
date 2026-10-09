@@ -753,6 +753,7 @@
 
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+  <script src="historico-pontos.js?v=1"></script>
   <script>
 (function () {
   if (typeof window.__DESAFIO_MOZ_FIREBASE__ === 'undefined') {
@@ -819,13 +820,18 @@
         ultimaAtualizacao: new Date().toISOString()
       });
       try {
-        await db.collection('historicoPontos').add({
-          email: String(data.email || email || '').toLowerCase(),
-          pontos: pts,
-          origem: 'influencer',
-          detalhe: 'Prémio influencer (automático): ' + (faltam * 200) + ' MT — ' + total + ' convites',
-          createdAt: new Date().toISOString()
-        });
+        if (typeof DM_histPontos === 'function') {
+          await DM_histPontos(db, data.email || email || '', pts, 'influencer', 'Prémio influencer: ' + (faltam * 200) + ' MT — ' + total + ' convites');
+        } else {
+          await db.collection('historicoPontos').add({
+            email: String(data.email || email || '').toLowerCase(),
+            pontos: pts,
+            origem: 'influencer',
+            detalhe: 'Prémio influencer (automático): ' + (faltam * 200) + ' MT — ' + total + ' convites',
+            dia: new Date().toISOString().slice(0, 10),
+            createdAt: new Date().toISOString()
+          });
+        }
       } catch (eH) {}
       var again = await docRef.get();
       var novo = again.data() || data;

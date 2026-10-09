@@ -288,7 +288,18 @@
           ultimaAtualizacao: new Date().toISOString()
         });
 
-        if (userData.indicadoPor) { await creditarBonusMarcoIndicacao(userData.indicadoPor, pontosAtuais, novosPontos); }
+                try {
+          if (typeof DM_histPontos === 'function') {
+            await DM_histPontos(db, email, 5, 'pesquisa', 'Pesquisa opinião +5');
+          } else {
+            await db.collection('historicoPontos').add({
+              email: String(email).toLowerCase(), pontos: 5, origem: 'pesquisa',
+              detalhe: 'Pesquisa opinião +5', dia: new Date().toISOString().slice(0,10), createdAt: new Date().toISOString()
+            });
+          }
+        } catch (eH) {}
+
+if (userData.indicadoPor) { await creditarBonusMarcoIndicacao(userData.indicadoPor, pontosAtuais, novosPontos); }
 
         localStorage.setItem('pesquisaOpiniaoCompleta', 'true');
         localStorage.setItem('pontosUtilizador', String(novosPontos));
@@ -310,5 +321,6 @@
       }
     }
   </script>
+<script src="historico-pontos.js?v=1"></script>
 </body>
 </html>
