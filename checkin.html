@@ -13,6 +13,7 @@
 
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+  <script src="historico-pontos.js?v=2"></script>
   <script>
     if (typeof window.__DESAFIO_MOZ_FIREBASE__ === 'undefined') {
       window.__DESAFIO_MOZ_FIREBASE__ = true;
@@ -491,15 +492,19 @@
           ultimaAtualizacao: new Date().toISOString()
         });
         try {
+          var ptsChk = Number(ptsCheckinDia) || 3;
+          var emChk = String(email || '').trim().toLowerCase();
           if (typeof DM_histPontos === 'function') {
-            await DM_histPontos(db, email, (ptsCheckinDia || 3), 'checkin', 'Check-in diário +' + (ptsCheckinDia || 3) + ' pts');
+            await DM_histPontos(db, emChk, ptsChk, 'checkin', 'Check-in diário +' + ptsChk + ' pts');
           } else {
             await db.collection('historicoPontos').add({
-              email: email, pontos: (ptsCheckinDia || 3), origem: 'checkin',
-              detalhe: 'Check-in diário', dia: hojeStr, createdAt: new Date().toISOString()
+              email: emChk, pontos: ptsChk, origem: 'checkin',
+              detalhe: 'Check-in diário +' + ptsChk + ' pts',
+              dia: hojeStr || new Date().toISOString().slice(0, 10),
+              createdAt: new Date().toISOString()
             });
           }
-        } catch (eH) {}
+        } catch (eH) { console.warn('hist checkin', eH); }
 
         if (data.indicadoPor) { await creditarBonusMarcoIndicacao(data.indicadoPor, pontosAtuais, novosPontos); }
 
@@ -526,6 +531,5 @@
 
 <script>window.__DM_PRESENCA__ = { pagina: 'checkin', jogando: null };</script>
 <script src="presenca.js?v=1"></script>
-<script src="historico-pontos.js?v=1"></script>
 </body>
 </html>

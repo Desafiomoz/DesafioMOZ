@@ -396,6 +396,7 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+<script src="historico-pontos.js?v=2"></script>
 <script>
     if (typeof window.__DESAFIO_MOZ_FIREBASE__ === 'undefined') {
         window.__DESAFIO_MOZ_FIREBASE__ = true;
@@ -431,6 +432,19 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
                 pontosIndicacao: (indData.pontosIndicacao || 0) + bonus,
                 ultimaAtualizacao: new Date().toISOString()
             });
+            try {
+              if (typeof DM_histPontos === 'function') {
+                await DM_histPontos(db, indData.email || '', bonus, 'convite', 'Bónus marco indicação +' + bonus + ' pts');
+              } else {
+                await db.collection('historicoPontos').add({
+                  email: String(indData.email || '').toLowerCase(),
+                  pontos: bonus, origem: 'convite',
+                  detalhe: 'Bónus marco indicação +' + bonus + ' pts',
+                  dia: new Date().toISOString().slice(0, 10),
+                  createdAt: new Date().toISOString()
+                });
+              }
+            } catch (eH) {}
         } catch (e) { console.error('bonus marco indicador', e); }
     }
 
@@ -712,6 +726,24 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
                 desafiosProgramadosFeitos: feitos,
                 ultimaAtualizacao: new Date().toISOString()
             });
+            // Registo no histórico diário (admin)
+            try {
+              var ptsAdd = Number(pts) || 0;
+              if (ptsAdd > 0) {
+                if (typeof DM_histPontos === 'function') {
+                  await DM_histPontos(db, emailUtilizador, ptsAdd, 'desafio', 'Desafio programado +' + ptsAdd + ' pts');
+                } else {
+                  await db.collection('historicoPontos').add({
+                    email: String(emailUtilizador || '').toLowerCase(),
+                    pontos: ptsAdd,
+                    origem: 'desafio',
+                    detalhe: 'Desafio programado +' + ptsAdd + ' pts',
+                    dia: new Date().toISOString().slice(0, 10),
+                    createdAt: new Date().toISOString()
+                  });
+                }
+              }
+            } catch (eH) { console.warn('hist desafio', eH); }
             if (dados.indicadoPor) { await creditarBonusMarcoIndicacao(dados.indicadoPor, dados.pontos || 0, novosPts); }
             if (userDataCache) userDataCache.desafiosProgramadosFeitos = feitos;
             atualizarPontosUI(novosPts);
