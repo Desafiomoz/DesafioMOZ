@@ -928,7 +928,9 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
                         u.contaBloqueada === true || u.contaBloqueada === 'true' || u.contaBloqueada === 1 ||
                         u.jogosBloqueado === true || u.jogosBloqueado === 'true' || u.jogosBloqueado === 1;
                     if (bloqueado) {
-                        ocultarPontosBloqueado();
+                        // Qualquer bloqueio (conta ou pagamentos) → página conta-bloqueada
+                        window.location.href = 'conta-bloqueada.html';
+                        return;
                     } else if (u.pontos != null) {
                         atualizarPontosUI(u.pontos);
                     }
@@ -936,12 +938,6 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
                         jaFezYoutube = true;
                         var cardYt = document.getElementById('card-youtube');
                         if (cardYt) cardYt.style.display = 'none';
-                    }
-                    // Bloqueio de conta (termos / privacidade) — prioridade máxima
-                    if (u.contaBloqueada === true || u.contaBloqueada === 'true' || u.contaBloqueada === 1) {
-                        mostrarAvisoContaBloqueada(u.contaBloqueadaMotivo || '');
-                    } else if (u.jogosBloqueado === true || u.jogosBloqueado === 'true' || u.jogosBloqueado === 1) {
-                        mostrarAvisoJogosBloqueado(u.jogosBloqueadoMotivo || '');
                     }
                     // alertaInvestigacao: só na roleta (não no Início)
                 }

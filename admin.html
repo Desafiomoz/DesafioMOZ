@@ -9617,20 +9617,42 @@ async function bloquearContaEmail() {
       if (!email) return;
       motivo = motivo || 'ID de transacção e-Mola falso / abuso';
       origem = origem || inferirOrigemBloqueio(motivo);
-      if (!confirm('Bloquear jogos para ' + email + '?\nO utilizador deixa de entrar em Online/Homejub/Roleta.')) return;
+      if (!confirm('Bloquear ' + email + '?\nNo próximo acesso vai para a página de conta bloqueada (segunda chance de pagar + ID).')) return;
       try {
         var uref = await encontrarUserRefPorEmail(email);
         if (!uref) return alert('Utilizador não encontrado: ' + email);
-        await uref.set({
+        var payload = {
           jogosBloqueado: true,
           jogosBloqueadoEm: new Date().toISOString(),
           jogosBloqueadoMotivo: motivo,
           jogosBloqueadoOrigem: origem,
+          // Mesmo fluxo da aba "Bloqueio conta" → conta-bloqueada.html
+          contaBloqueada: true,
+          contaBloqueadaEm: new Date().toISOString(),
+          contaBloqueadaMotivo: motivo,
+          contaBloqueadaTipo: 'pagamento',
+          contaBloqueadaMsg: 'Pagamento com ID suspeito ou abuso. Tens UMA segunda chance: paga na e-Mola (869517893), cola o ID correcto (começa por PP) e mostra o comprovativo na página. Se não pagares ou colocares outro ID falso, a conta será apagada sem nova chance.',
+          contaMarcadaEliminacao: false,
           ultimaAtualizacao: new Date().toISOString()
-        }, { merge: true });
-        if (typeof mostrarAviso === 'function') mostrarAviso('Jogos bloqueados para ' + email);
+        };
+        // Só reinicia segunda chance se ainda não usou
+        try {
+          var snapU = await uref.get();
+          var dU = snapU.exists ? (snapU.data() || {}) : {};
+          if (dU.segundaChanceUsada !== true) {
+            payload.segundaChanceUsada = false;
+            payload.segundaChancePendente = false;
+            payload.segundaChanceRecusada = false;
+          }
+        } catch (eR) {
+          payload.segundaChanceUsada = false;
+          payload.segundaChancePendente = false;
+        }
+        await uref.set(payload, { merge: true });
+        if (typeof mostrarAviso === 'function') mostrarAviso('Bloqueado → página conta bloqueada: ' + email);
         carregarBloqueadosJogos();
         try { carregarAbaBloqueados(); } catch (eB) {}
+        try { carregarContasBloqueadas(); } catch (eC) {}
       } catch (e) {
         alert('Erro: ' + (e.message || e));
       }
@@ -9654,9 +9676,15 @@ async function bloquearContaEmail() {
           jogosBloqueadoEm: firebase.firestore.FieldValue.delete(),
           jogosBloqueadoMotivo: firebase.firestore.FieldValue.delete(),
           jogosBloqueadoOrigem: firebase.firestore.FieldValue.delete(),
+          contaBloqueada: false,
+          contaBloqueadaMotivo: firebase.firestore.FieldValue.delete(),
+          contaBloqueadaMsg: firebase.firestore.FieldValue.delete(),
+          contaBloqueadaTipo: firebase.firestore.FieldValue.delete(),
+          segundaChancePendente: false,
+          contaMarcadaEliminacao: false,
           ultimaAtualizacao: new Date().toISOString()
         }, { merge: true });
-        if (typeof mostrarAviso === 'function') mostrarAviso('Jogos desbloqueados: ' + email);
+        if (typeof mostrarAviso === 'function') mostrarAviso('Desbloqueado (jogos + conta): ' + email);
         carregarBloqueadosJogos();
         try { carregarAbaBloqueados(); } catch (eB) {}
       } catch (e) {
