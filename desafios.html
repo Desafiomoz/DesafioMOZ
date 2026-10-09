@@ -447,7 +447,25 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
         return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
 
+    var contaBloqueadaActiva = false;
+
+    function ocultarPontosBloqueado() {
+        contaBloqueadaActiva = true;
+        var el = document.getElementById('pontos-display');
+        if (el) el.textContent = '•••• Pontos';
+        var valorEl = document.querySelector('.saldo .valor');
+        if (valorEl) {
+            valorEl.setAttribute('data-original', valorEl.textContent || '');
+            valorEl.textContent = 'Conta bloqueada — saldo oculto';
+            valorEl.style.color = '#ff8a80';
+        }
+    }
+
     function atualizarPontosUI(pts) {
+        if (contaBloqueadaActiva) {
+            ocultarPontosBloqueado();
+            return;
+        }
         document.getElementById('pontos-display').textContent = pts + ' Pontos';
         localStorage.setItem('pontosUtilizador', String(pts));
     }
@@ -906,7 +924,14 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
                 if (u && uref) {
                     docRef = uref;
                     userDataCache = u;
-                    if (u.pontos != null) atualizarPontosUI(u.pontos);
+                    var bloqueado =
+                        u.contaBloqueada === true || u.contaBloqueada === 'true' || u.contaBloqueada === 1 ||
+                        u.jogosBloqueado === true || u.jogosBloqueado === 'true' || u.jogosBloqueado === 1;
+                    if (bloqueado) {
+                        ocultarPontosBloqueado();
+                    } else if (u.pontos != null) {
+                        atualizarPontosUI(u.pontos);
+                    }
                     if (u.desafioYoutubeCompleto === true) {
                         jaFezYoutube = true;
                         var cardYt = document.getElementById('card-youtube');
