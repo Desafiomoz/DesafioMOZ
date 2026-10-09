@@ -823,7 +823,7 @@ const ANCORAS_PONTOS = [[5,3],[10,8],[24,18]];
 const ANCORAS_MT     = [[2,15],[5,35],[10,80]];
 
 /* ---------- Estado do jogador (pontos = conta Desafio MOZ) ---------- */
-let estado = { pontos: 0, mt: 0, giros: 0, historico: [], ultimoGiroGratis: null, garantias: [], totalGirosFeitos: 0, girosPorDia: {}, ultimoGiroAt: null, ganhos: 0, perdas: 0, pontosGanhos: 0, mtGanhos: 0, contagemPremios: {}, girosDificeis: 0, girosPerdedores: 0, origemPontos: 0, origemMetical: 0, origemGratis: 0, origemPremio: 0 };
+let estado = { pontos: 0, mt: 0, giros: 0, historico: [], ultimoGiroGratis: null, girosGratisRestantes: 0, garantias: [], totalGirosFeitos: 0, girosPorDia: {}, ultimoGiroAt: null, ganhos: 0, perdas: 0, pontosGanhos: 0, mtGanhos: 0, contagemPremios: {}, girosDificeis: 0, girosPerdedores: 0, origemPontos: 0, origemMetical: 0, origemGratis: 0, origemPremio: 0 };
 
 function carregarEstadoLocal(){
   try {
@@ -833,6 +833,7 @@ function carregarEstadoLocal(){
       if(Array.isArray(o.historico)) estado.historico = o.historico;
       if(o.giros != null) estado.giros = Number(o.giros) || 0;
       if(o.ultimoGiroGratis) estado.ultimoGiroGratis = o.ultimoGiroGratis;
+      if(o.girosGratisRestantes != null) estado.girosGratisRestantes = Number(o.girosGratisRestantes) || 0;
       if(Array.isArray(o.garantias)) estado.garantias = o.garantias;
       if(o.totalGirosFeitos != null) estado.totalGirosFeitos = Number(o.totalGirosFeitos) || 0;
       if(o.girosPorDia && typeof o.girosPorDia === 'object') estado.girosPorDia = o.girosPorDia;
@@ -860,6 +861,7 @@ function guardarEstadoLocal(){
       giros: estado.giros,
       historico: estado.historico || [],
       ultimoGiroGratis: estado.ultimoGiroGratis || null,
+      girosGratisRestantes: Number(estado.girosGratisRestantes) || 0,
       garantias: estado.garantias || [],
       totalGirosFeitos: estado.totalGirosFeitos || 0,
       girosPorDia: estado.girosPorDia || {},
@@ -902,6 +904,7 @@ async function guardarEstado(){
       pontos: Number(estado.pontos) || 0,
       roletaGiros: Number(estado.giros) || 0,
       roletaUltimoGiroGratis: estado.ultimoGiroGratis || null,
+      roletaGirosGratisRestantes: Number(estado.girosGratisRestantes) || 0,
       roletaTotalGiros: Number(estado.totalGirosFeitos) || 0,
       roletaGirosPorDia: estado.girosPorDia || {},
       roletaUltimoGiroAt: estado.ultimoGiroAt || null,
@@ -1000,6 +1003,9 @@ async function carregarContaFirebase(){
       estado.giros = girosServidor;
     }
     if(d.roletaUltimoGiroGratis) estado.ultimoGiroGratis = d.roletaUltimoGiroGratis;
+    if(d.roletaGirosGratisRestantes != null) estado.girosGratisRestantes = Number(d.roletaGirosGratisRestantes) || 0;
+    // Expira grátis de dias anteriores (não acumulam)
+    try { expirarGirosGratisAntigos(); } catch(eExp){}
     if(d.roletaTotalGiros != null) estado.totalGirosFeitos = Number(d.roletaTotalGiros) || 0;
     if(d.roletaGirosPorDia && typeof d.roletaGirosPorDia === 'object') estado.girosPorDia = d.roletaGirosPorDia;
     if(d.roletaUltimoGiroAt) estado.ultimoGiroAt = d.roletaUltimoGiroAt;
@@ -1039,10 +1045,37 @@ async function carregarContaFirebase(){
   }
 }
 
+/** Remove giros grátis não usados de dias anteriores (não acumulam). */
+function expirarGirosGratisAntigos(){
+  var hoje = hojeISO();
+  // Se o último claim não foi hoje, os grátis restantes expiram
+  if(estado.ultimoGiroGratis && estado.ultimoGiroGratis !== hoje){
+    var rest = Number(estado.girosGratisRestantes) || 0;
+    if(rest > 0){
+      estado.giros = Math.max(0, (Number(estado.giros) || 0) - rest);
+      estado.girosGratisRestantes = 0;
+    }
+  }
+  // Se nunca claimou mas há saldo "grátis" inconsistente, zera o contador
+  if(!estado.ultimoGiroGratis){
+    estado.girosGratisRestantes = 0;
+  }
+}
+
 async function reclamarGiroGratisSeDisponivel(){
+  // Sempre expira grátis de ontem antes de decidir
+  expirarGirosGratisAntigos();
+
   if(giroGratisDisponivel()){
     var n = 3;
+    // Garante que não ficam grátis antigos a somar
+    var restAntigo = Number(estado.girosGratisRestantes) || 0;
+    if(restAntigo > 0){
+      estado.giros = Math.max(0, (Number(estado.giros) || 0) - restAntigo);
+      estado.girosGratisRestantes = 0;
+    }
     estado.giros = (Number(estado.giros) || 0) + n;
+    estado.girosGratisRestantes = n; // exactamente 3 — não acumulam
     estado.origemGratis = (Number(estado.origemGratis) || 0) + n;
     estado.ultimoGiroGratis = hojeISO();
     if(!estado.garantias) estado.garantias = [];
@@ -1061,9 +1094,11 @@ async function reclamarGiroGratisSeDisponivel(){
       var b = Math.floor(Math.random() * (a + 1));
       var t = listaG[a]; listaG[a] = listaG[b]; listaG[b] = t;
     }
+    // Substitui garantias de grátis antigos: mantém só as de compra + as 3 novas
+    // (as garantias grátis antigas já não fazem sentido se os giros expiraram)
     estado.garantias = (estado.garantias || []).concat(listaG);
     await guardarEstado();
-    mostrarToast('Ganhaste 3 giros grátis hoje! 🎁 (difíceis — no máx. 1 MT)');
+    mostrarToast('Ganhaste 3 giros grátis hoje! 🎁 (não acumulam — usá-los hoje)');
   }
 }
 
@@ -1074,7 +1109,11 @@ function atualizarUI(){
   sincronizarMt();
   document.getElementById('saldo-mt').textContent = ((Number(estado.pontos)||0)/PTS_POR_MT).toFixed(1)+' MT';
   document.getElementById('btn-girar').disabled = estado.giros<=0 || girando;
-  document.getElementById('estado-gratis').textContent = giroGratisDisponivel() ? 'disponível' : 'já usado hoje';
+  var restG = Number(estado.girosGratisRestantes) || 0;
+  var txtGratis = giroGratisDisponivel()
+    ? 'disponível (3 hoje)'
+    : (restG > 0 ? ('hoje: ' + restG + ' por usar') : 'já usado hoje');
+  document.getElementById('estado-gratis').textContent = txtGratis;
   renderHistorico();
   atualizarCalculoCustom();
 }
@@ -2195,6 +2234,10 @@ document.getElementById('btn-girar').addEventListener('click', async ()=>{
   await desbloquearElemento('som-giro');
 
   estado.giros -= 1;
+  // Consome primeiro os giros grátis do dia (expiram se não usados)
+  if((Number(estado.girosGratisRestantes) || 0) > 0){
+    estado.girosGratisRestantes = Math.max(0, (Number(estado.girosGratisRestantes) || 0) - 1);
+  }
   registarGiroFeito();
   await guardarEstado();
   atualizarUI();
@@ -2296,6 +2339,6 @@ document.getElementById('btn-fechar-premio').addEventListener('click', ()=>{
 
 <script>window.__DM_PRESENCA__ = { pagina: 'roleta', jogando: 'roleta' };</script>
 <script src="presenca.js?v=1"></script>
-<script src="historico-pontos.js?v=1"></script>
+<script src="historico-pontos.js?v=2"></script>
 </body>
 </html>
