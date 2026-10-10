@@ -163,6 +163,25 @@
     .exemplo-id {
       font-size: 11px; color: #666; margin: -6px 0 12px;
     }
+    .btn-wa {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      width: 100%; padding: 14px 16px; margin: 14px 0 4px;
+      border: none; border-radius: 14px;
+      background: linear-gradient(135deg, #25D366, #128C7E);
+      color: #fff; font-weight: 800; font-size: 15px;
+      text-decoration: none; cursor: pointer;
+      box-shadow: 0 6px 22px rgba(37, 211, 102, 0.4);
+    }
+    .btn-wa i { font-size: 20px; }
+    .wa-box {
+      background: rgba(37, 211, 102, 0.1);
+      border: 1px solid rgba(37, 211, 102, 0.4);
+      border-radius: 14px; padding: 14px;
+      margin: 14px 0 6px; text-align: center;
+    }
+    .wa-box p {
+      font-size: 13px; color: #c8e6c9; line-height: 1.45; margin-bottom: 10px;
+    }
   </style>
 </head>
 <body>
@@ -194,6 +213,15 @@
       <p style="font-size:14px;font-weight:700;color:#ffc94d;margin-bottom:12px;">
         <i class="fas fa-key"></i> Segunda chance — pagamento e-Mola
       </p>
+
+      <div class="wa-box">
+        <p><i class="fab fa-whatsapp" style="color:#25D366;"></i> Dúvidas ou já pagaste? Fala com o <b style="color:#fff;">agente do Desafio MOZ</b> no WhatsApp. Envia o comprovativo se precisares de ajuda.</p>
+        <a class="btn-wa" href="https://wa.link/64y9y2" target="_blank" rel="noopener">
+          <i class="fab fa-whatsapp"></i>
+          <span>Falar com o agente<span style="display:block;font-size:11px;font-weight:600;opacity:.9;">WhatsApp · resposta rápida</span></span>
+        </a>
+      </div>
+
       <label>Transfere para este número (e-Mola)</label>
       <div class="num-row">
         <input type="text" id="num-emola" value="869517893" readonly>
@@ -216,6 +244,10 @@
 
     <div class="zona-fim" id="zona-fim">
       <p id="fim-texto">Já usaste a segunda chance ou a conta está marcada para eliminação. Sem nova oportunidade. Contacta o agente só se a equipa pedir.</p>
+      <a class="btn-wa" href="https://wa.link/64y9y2" target="_blank" rel="noopener" style="margin-top:12px;">
+        <i class="fab fa-whatsapp"></i>
+        <span>Falar com o agente no WhatsApp</span>
+      </a>
     </div>
 
     <a class="sair" href="#" onclick="sair();return false;">Sair / trocar de conta</a>
