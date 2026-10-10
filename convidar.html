@@ -205,6 +205,30 @@
       display: none;
     }
 
+
+    .btn-ig { background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); }
+    .rank-box { margin-top: 8px; }
+    .rank-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 8px; border-radius: 12px; margin-bottom: 6px;
+      background: rgba(0,200,83,0.08); border: 1px solid rgba(0,200,83,0.2);
+    }
+    .rank-item.top1 { background: rgba(255,215,0,0.12); border-color: rgba(255,215,0,0.4); }
+    .rank-pos {
+      width: 28px; height: 28px; border-radius: 8px;
+      background: rgba(0,200,83,0.25); color: #00e676;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 12px; flex-shrink: 0;
+    }
+    .rank-item.top1 .rank-pos { background: linear-gradient(135deg,#FFD700,#ff9a3c); color:#2a1d00; }
+    .rank-nome { flex: 1; font-weight: 700; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .rank-pts { font-weight: 800; color: #FFD700; font-size: 14px; }
+    .btn-rank {
+      display: block; text-align: center; margin-top: 12px; padding: 12px;
+      border-radius: 12px; font-weight: 800; font-size: 13px; text-decoration: none;
+      color: #04140a; background: linear-gradient(90deg, #FFC94D, #22FF99);
+      box-shadow: 0 0 18px rgba(255,201,77,0.3);
+    }
     .loading { text-align: center; padding: 40px; color: #aaa; }
   </style>
 </head>
@@ -214,7 +238,7 @@
     <a href="tarefas.html" class="btn-voltar"><i class="fas fa-arrow-left"></i></a>
     <div>
       <h1>Convidar Amigo</h1>
-      <p>Ganhe pontos por cada amigo — e continue a ganhar</p>
+      <p>Amigos e seguidores · pontos + até 200 MT no influencer</p>
     </div>
   </div>
 
@@ -243,29 +267,29 @@
   <div id="conteudo" style="display:none;">
     <div class="card">
       <div class="premio">
-        <div class="pts">+10</div>
-        <div class="lbl">pontos por cada amigo que se cadastrar pelo seu link (máx. 5 convites)</div>
+        <div class="pts" style="color:#FFD700;">200 MT</div>
+        <div class="lbl">a cada 1000 convites no teu link de <b style="color:#FFC94D;">Influencer</b> · e <b style="color:#22FF99;">100 MT</b> se o convidado sacar</div>
       </div>
 
       <div class="stats">
         <div class="stat">
           <div class="num" id="total-convidados">0</div>
-          <div class="txt">Amigos convidados</div>
+          <div class="txt">Convites (contagem)</div>
         </div>
         <div class="stat">
           <div class="num" id="pts-indicacao">0</div>
-          <div class="txt">Pontos ganhos</div>
+          <div class="txt">Prémios (ciclos)</div>
         </div>
       </div>
 
-      <div class="label-link">O seu link único</div>
+      <div class="label-link">O teu link de Influencer</div>
       <div class="link-box">
         <input type="text" id="link-indicacao" readonly>
         <button type="button" class="btn-copiar" onclick="copiarLink()">Copiar</button>
       </div>
       <div class="msg-copia" id="msg-copia">✅ Link copiado!</div>
 
-      <div class="partilhar-titulo">Partilhar em</div>
+      <div class="partilhar-titulo">Envia o link aos amigos e seguidores</div>
       <div class="botoes-share">
         <a class="btn-share btn-wa" id="btn-whatsapp" target="_blank" rel="noopener">
           <i class="fab fa-whatsapp"></i> WhatsApp
@@ -276,121 +300,132 @@
         <a class="btn-share btn-tg" id="btn-telegram" target="_blank" rel="noopener">
           <i class="fab fa-telegram-plane"></i> Telegram
         </a>
-        <button type="button" class="btn-share btn-mais" onclick="partilharNativo()">
-          <i class="fas fa-share-alt"></i> Mais
-        </button>
+        <a class="btn-share btn-ig" id="btn-instagram" href="#" onclick="partilharInstagram();return false;">
+          <i class="fab fa-instagram"></i> Instagram
+        </a>
       </div>
+    </div>
+
+    <div class="card">
+      <h3 style="color:#00e676;font-size:15px;margin-bottom:12px;"><i class="fas fa-trophy"></i> Ranking de convites</h3>
+      <p style="font-size:12px;color:#aaa;margin-bottom:12px;line-height:1.4;">Quem está em primeiro a trazer pessoas para o Desafio MOZ. Toca para ver o programa completo.</p>
+      <div class="rank-box" id="lista-ranking">
+        <div style="text-align:center;color:#666;font-size:13px;padding:12px;">A carregar ranking...</div>
+      </div>
+      <a class="btn-rank" href="influencer.html">Ver página Influencer e ranking completo →</a>
     </div>
 
     <div class="card como-funciona">
       <h3>Como funciona</h3>
       <div class="passo-item">
         <div class="passo-num">1</div>
-        <div class="passo-txt">Copie ou partilhe o seu link único com amigos e família.</div>
+        <div class="passo-txt">Copia ou partilha o teu <b style="color:#FFC94D;">link de Influencer</b> no WhatsApp, Facebook, Telegram ou Instagram.</div>
       </div>
       <div class="passo-item">
         <div class="passo-num">2</div>
-        <div class="passo-txt">O amigo abre o link e cria uma conta no Desafio MOZ.</div>
+        <div class="passo-txt">Cada pessoa que se registar com o teu link conta para a tua meta.</div>
       </div>
       <div class="passo-item">
         <div class="passo-num">3</div>
-        <div class="passo-txt">Quando ele se cadastrar, recebes automaticamente <strong style="color:#FFD700">+20 pontos</strong> e ele começa com <strong style="color:#FFD700">+10 pontos</strong> de bónus.</div>
+        <div class="passo-txt">Se o convidado <b style="color:#22FF99;">sacar</b>, podes receber <b style="color:#FFD700;">100 MT</b> (admin confirma).</div>
       </div>
       <div class="passo-item">
         <div class="passo-num">4</div>
-        <div class="passo-txt">A partir daí, sempre que o seu amigo acumular <strong>mais 100 pontos</strong> (chegar aos 100, depois aos 200, 300...), você ganha automaticamente <strong style="color:#FFD700">+10 pontos</strong> — sem tirar nada dos pontos dele.</div>
+        <div class="passo-txt">Aos <b>1000</b> na contagem recebes <b style="color:#FFD700;">200 MT</b> na carteira do Desafio MOZ.</div>
       </div>
-
-      <p style="text-align:center;margin:0 0 14px;">
-        <a href="aumento-ganhos.html" style="display:inline-block;padding:11px 16px;border-radius:12px;font-weight:800;font-size:13px;text-decoration:none;color:#04140a;background:linear-gradient(90deg,#22FF99,#FFC94D);">✨ Aumentar ganhos nos convites</a>
-      </p>
       <div class="aviso">
-        ⚠️ Só conta se o amigo se cadastrar pelo <strong>seu</strong> link. Cada amigo só pode ser indicado uma vez, se os seus convidados mostrarem um bom desempenho você tem chance dos seus convites virarem disponíveis o mas rápido possível na sua conta, mas os +10 pontos a cada marco de 100 continuam enquanto ele estiver ativo na plataforma. Podes convidar <strong>sem limite</strong> de amigos.
+        ⚠️ Não percas tempo — convida amigos e seguidores. Só conta quem se cadastrar pelo <strong>teu</strong> link de influencer.
       </div>
     </div>
   </div>
 
-  <script>
-    /*
-     * ============================================================
-     *  LINK BASE DO SITE
-     *  Quando o site estiver no ar, substitua a linha abaixo
-     *  pelo endereço real, por exemplo:
-     *  var LINK_BASE = 'https://desafio-moz.com';
-     * ============================================================
-     */
-    var LINK_BASE = ''; // ← COLOQUE AQUI O LINK DO SITE (ex: https://seudominio.com)
-
-    var codigoIndicacao = '';
+    <script>
+    var LINK_BASE = '';
+    var codigoInfluencer = '';
     var docRef = null;
 
-    function hashCode(str) {
-      var hash = 0;
-      for (var i = 0; i < str.length; i++) {
-        hash = ((hash << 5) - hash) + str.charCodeAt(i);
-        hash |= 0;
-      }
-      return Math.abs(hash);
-    }
-
-    function gerarCodigo(email) {
-      return 'MOZ' + hashCode(email).toString(36).toUpperCase().substring(0, 8);
+    function gerarCodigoInf(nome, email) {
+      var base = (nome || email || 'INF').replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 4);
+      if (base.length < 2) base = 'INF';
+      return base + Math.random().toString(36).slice(2, 6).toUpperCase();
     }
 
     function obterLinkBase() {
-      if (LINK_BASE && LINK_BASE.trim() !== '') {
-        return LINK_BASE.replace(/\/$/, '');
-      }
+      if (LINK_BASE && LINK_BASE.trim() !== '') return LINK_BASE.replace(/\/$/, '');
       if (window.location.protocol === 'http:' || window.location.protocol === 'https:') {
-        var path = window.location.pathname;
-        var dir = path.substring(0, path.lastIndexOf('/') + 1);
-        return window.location.origin + dir.replace(/\/$/, '');
+        return window.location.origin;
       }
-      return 'https://SEU-SITE.com';
+      return 'https://desafiomoz.pages.dev';
     }
 
-    function montarLink(codigo) {
-      return obterLinkBase() + '/criar-conta.html?ref=' + encodeURIComponent(codigo);
+    function montarLinkInf(codigo) {
+      return obterLinkBase() + '/index.html?inf=' + encodeURIComponent(codigo);
     }
 
     function atualizarUI(link) {
       document.getElementById('link-indicacao').value = link;
-
-      var texto = encodeURIComponent('Junta-te ao Desafio MOZ e começa a ganhar pontos! 💰\n' + link);
+      var texto = encodeURIComponent('Entra no Desafio MOZ e ganha dinheiro real em Moçambique 🇲🇿\nUsa o meu link:\n' + link);
       document.getElementById('btn-whatsapp').href = 'https://wa.me/?text=' + texto;
       document.getElementById('btn-facebook').href = 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(link);
-      document.getElementById('btn-telegram').href = 'https://t.me/share/url?url=' + encodeURIComponent(link) + '&text=' + encodeURIComponent('Junta-te ao Desafio MOZ!');
+      document.getElementById('btn-telegram').href = 'https://t.me/share/url?url=' + encodeURIComponent(link) + '&text=' + encodeURIComponent('Entra no Desafio MOZ!');
     }
 
     function copiarLink() {
       var input = document.getElementById('link-indicacao');
       input.select();
       input.setSelectionRange(0, 99999);
-      try {
-        navigator.clipboard.writeText(input.value);
-      } catch (e) {
-        document.execCommand('copy');
-      }
+      try { navigator.clipboard.writeText(input.value); } catch (e) { document.execCommand('copy'); }
       var msg = document.getElementById('msg-copia');
       msg.style.display = 'block';
       setTimeout(function () { msg.style.display = 'none'; }, 2500);
     }
 
+    function partilharInstagram() {
+      copiarLink();
+      alert('Link copiado! Abre o Instagram e cola na bio ou nos stories.');
+    }
+
     function partilharNativo() {
       var link = document.getElementById('link-indicacao').value;
       if (navigator.share) {
-        navigator.share({
-          title: 'Desafio MOZ',
-          text: 'Junta-te ao Desafio MOZ e começa a ganhar pontos!',
-          url: link
-        }).catch(function () {});
+        navigator.share({ title: 'Desafio MOZ', text: 'Entra no Desafio MOZ!', url: link }).catch(function () {});
       } else {
         copiarLink();
       }
     }
 
+    function esc(s) {
+      return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    async function carregarRanking() {
+      var lista = document.getElementById('lista-ranking');
+      if (!lista) return;
+      try {
+        var snap = await db.collection('usuarios').orderBy('influencerConvidados', 'desc').limit(5).get();
+        var html = '';
+        var i = 0;
+        snap.forEach(function (doc) {
+          var d = doc.data() || {};
+          var n = Number(d.influencerConvidados || 0);
+          if (n <= 0 && !d.codigoInfluencer) return;
+          i++;
+          var medal = i === 1 ? '🥇' : (i === 2 ? '🥈' : (i === 3 ? '🥉' : String(i)));
+          var nome = d.nome || (d.email ? String(d.email).split('@')[0] : 'Influencer');
+          var cls = i === 1 ? ' top1' : '';
+          html += '<div class="rank-item' + cls + '">' +
+            '<div class="rank-pos">' + medal + '</div>' +
+            '<div class="rank-nome">' + esc(nome) + '</div>' +
+            '<div class="rank-pts">' + n + '</div></div>';
+        });
+        lista.innerHTML = html || '<div style="text-align:center;color:#666;font-size:13px;padding:12px;">Ainda ninguém no ranking. Sê o primeiro!</div>';
+      } catch (e) {
+        lista.innerHTML = '<div style="text-align:center;color:#666;font-size:13px;padding:12px;">Ranking em breve. Abre a página Influencer.</div>';
+      }
+    }
+
     async function carregar() {
-      var email = localStorage.getItem('emailUtilizador');
+      var email = (localStorage.getItem('emailUtilizador') || '').trim().toLowerCase();
       if (!email) {
         alert('Sessão expirada. Faça login novamente.');
         window.location.href = 'criar-conta.html';
@@ -398,11 +433,10 @@
       }
 
       try {
-        var snap = await db.collection('usuarios')
-          .where('email', '==', email)
-          .limit(1)
-          .get();
-
+        var snap = await db.collection('usuarios').where('email', '==', email).limit(1).get();
+        if (snap.empty) {
+          snap = await db.collection('usuarios').where('email', '==', localStorage.getItem('emailUtilizador')).limit(1).get();
+        }
         if (snap.empty) {
           alert('Utilizador não encontrado.');
           window.location.href = 'criar-conta.html';
@@ -410,88 +444,32 @@
         }
 
         docRef = snap.docs[0].ref;
-        var data = snap.docs[0].data();
+        var data = snap.docs[0].data() || {};
 
-        codigoIndicacao = data.codigoIndicacao || localStorage.getItem('codigoIndicacao') || gerarCodigo(email);
+        codigoInfluencer = data.codigoInfluencer || '';
+        if (!codigoInfluencer) {
+          codigoInfluencer = gerarCodigoInf(data.nome, data.email || email);
+          var existe = await db.collection('usuarios').where('codigoInfluencer', '==', codigoInfluencer).limit(1).get();
+          if (!existe.empty) codigoInfluencer = gerarCodigoInf(data.nome, email + Date.now());
+          await docRef.update({
+            codigoInfluencer: codigoInfluencer,
+            influencerConvidados: data.influencerConvidados || 0,
+            influencerPremios: data.influencerPremios || 0
+          });
+        }
 
-        if (!data.codigoIndicacao) {
-          await docRef.update({ codigoIndicacao: codigoIndicacao });
-        }
-        localStorage.setItem('codigoIndicacao', codigoIndicacao);
-
-        var totalConv = data.totalConvidados || 0;
-        var ptsInd = data.pontosIndicacao || 0;
-        var regrasNovas = data.conviteRegrasNovas === true;
-        // Regras antigas: máx 5 convites no total. Regras novas (+20 pts): máx 5 convites contados
-        // a partir da actualização (ou do último desbloqueio do admin).
-        var baseNovas = 0, usadosNovos = 0, limiteAtingido = false;
-        if (regrasNovas) {
-          if (data.convitesBaseNovas === undefined || data.convitesBaseNovas === null) {
-            // utilizador que actualizou antes desta regra: conta a partir de agora
-            baseNovas = totalConv;
-            try { await docRef.update({ convitesBaseNovas: baseNovas }); } catch (eB) {}
-          } else {
-            baseNovas = Number(data.convitesBaseNovas) || 0;
-          }
-          usadosNovos = Math.max(0, totalConv - baseNovas);
-          limiteAtingido = usadosNovos >= 5;
-        } else {
-          limiteAtingido = totalConv >= 5 && data.convitesExtra !== true;
-        }
-        var bloqueado = data.ocultarConvidar === true || limiteAtingido;
-        if (limiteAtingido && data.ocultarConvidar !== true) {
-          // regista o bloqueio para o admin ver e para o cadastro respeitar
-          try { await docRef.update({ ocultarConvidar: true }); } catch (eO) {}
-        }
+        var total = Number(data.influencerConvidados || 0);
+        var premios = Number(data.influencerPremios || 0);
 
         document.getElementById('loading').style.display = 'none';
+        document.getElementById('msg-bloqueado').style.display = 'none';
+        document.getElementById('conteudo').style.display = 'block';
+        document.getElementById('total-convidados').textContent = total;
+        document.getElementById('pts-indicacao').textContent = premios;
 
-        if (bloqueado) {
-          document.getElementById('total-convidados-bloq').textContent = totalConv;
-          document.getElementById('pts-indicacao-bloq').textContent = ptsInd;
-          var msgEl = document.getElementById('msg-bloqueado-texto');
-          if (regrasNovas) {
-            msgEl.textContent = limiteAtingido
-              ? 'Usaste os teus 5 convites. Para convidar mais pessoas, aguarda o desbloqueio do administrador.'
-              : 'Convites não disponíveis de momento. Aguarde ter acesso novamente.';
-          } else if (data.ocultarConvidar === true) {
-            msgEl.textContent = 'Convites não disponíveis de momento. Aguarde ter acesso novamente.';
-          } else {
-            msgEl.innerHTML = 'Usaste os teus 5 convites. Vai a <a href="aumento-ganhos.html" style="color:#00e676">Aumenta os teus ganhos</a> e toca em <b>Actualizar link de convite</b> (grátis) para ganhar +20 pts por amigo (mais 5 convites).';
-          }
-          document.getElementById('msg-bloqueado').style.display = 'block';
-          document.getElementById('conteudo').style.display = 'none';
-        } else {
-          document.getElementById('total-convidados').textContent = totalConv;
-          document.getElementById('pts-indicacao').textContent = ptsInd;
-          // textos conforme regras
-          var ptsEl = document.querySelector('.premio .pts');
-          var lblEl = document.querySelector('.premio .lbl');
-          if (ptsEl) ptsEl.textContent = regrasNovas ? '+20' : '+10';
-          if (lblEl) {
-            lblEl.textContent = regrasNovas
-              ? 'pontos por cada amigo que se cadastrar pelo teu link · máx. 5 convites'
-              : 'pontos por cada amigo que se cadastrar pelo seu link (máx. 5 convites)';
-          }
-          var passo3 = document.querySelectorAll('.passo-txt');
-          if (passo3 && passo3[2]) {
-            passo3[2].innerHTML = regrasNovas
-              ? 'Quando ele se cadastrar, recebes automaticamente <strong style="color:#FFD700">+20 pontos</strong> e ele começa com <strong style="color:#FFD700">+10 pontos</strong> de bónus.'
-              : 'Quando ele se cadastrar, você recebe automaticamente <strong style="color:#FFD700">+10 pontos</strong> e ele começa com <strong style="color:#FFD700">+5 pontos</strong> de bónus.';
-          }
-          var avisoLim = document.querySelector('.aviso');
-          if (avisoLim) {
-            if (regrasNovas) {
-              avisoLim.innerHTML = '⚠️ Só conta se o amigo se cadastrar pelo <strong>teu</strong> link. Tens no máximo <strong>5 convites</strong> (usaste ' + usadosNovos + '/5). Depois dos 5, o link bloqueia até o administrador desbloquear. O bónus +10 a cada 100 pontos do amigo continua.';
-            } else {
-              avisoLim.innerHTML = '⚠️ Só conta se o amigo se cadastrar pelo <strong>teu</strong> link. Tens no máximo <strong>5 convites</strong>. Para passar a +20 pts por amigo (máx. 5 convites), actualiza em <a href="aumento-ganhos.html" style="color:#00e676">Aumenta os teus ganhos</a> (grátis).';
-            }
-          }
-          var link = montarLink(codigoIndicacao);
-          atualizarUI(link);
-          document.getElementById('msg-bloqueado').style.display = 'none';
-          document.getElementById('conteudo').style.display = 'block';
-        }
+        var link = montarLinkInf(codigoInfluencer);
+        atualizarUI(link);
+        await carregarRanking();
       } catch (erro) {
         console.error(erro);
         document.getElementById('loading').textContent = 'Erro: ' + (erro.message || erro);
@@ -500,5 +478,6 @@
 
     carregar();
   </script>
+
 </body>
 </html>

@@ -252,6 +252,45 @@
             line-height: 1.5;
         }
 
+
+        /* Anúncio aumento — ecrã cheio na mesma página (play no mesmo clique) */
+        .anuncio-full{
+            position:fixed;inset:0;z-index:10000000;
+            background:rgba(4,6,12,.96);display:flex;flex-direction:column;align-items:center;justify-content:center;
+            padding:12px;overflow-y:auto;
+            opacity:0;visibility:hidden;pointer-events:none;
+            transition:opacity .2s;
+        }
+        .anuncio-full.show{
+            opacity:1;visibility:visible;pointer-events:auto;
+        }
+        .anuncio-full .box{
+            width:100%;max-width:440px;border-radius:20px;overflow:hidden;
+            background:linear-gradient(160deg,#1a2030,#0e121a);
+            border:1px solid rgba(168,85,247,.45);
+            box-shadow:0 0 40px rgba(168,85,247,.35);
+        }
+        .anuncio-full .at{text-align:center;padding:14px 12px 8px}
+        .anuncio-full .at .tag{
+            display:inline-block;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
+            color:#04140a;background:linear-gradient(90deg,#FFC94D,#22FF99);padding:4px 12px;border-radius:99px;margin-bottom:8px;
+        }
+        .anuncio-full .at h3{font-size:16px;color:#fff;margin-bottom:4px}
+        .anuncio-full .at p{font-size:12px;color:#8E9BB8}
+        .anuncio-full .vw{position:relative;width:100%;padding-bottom:56.25%;background:#000}
+        .anuncio-full .vw #yt-aumento-player,.anuncio-full .vw #yt-aumento-iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:#000}
+        .anuncio-full .st{text-align:center;padding:10px;font-size:13px;color:#22FF99;font-weight:600}
+        .anuncio-full .acoes{padding:0 12px 14px;display:flex;flex-direction:column;gap:8px}
+        .anuncio-full .btn-curso{
+            display:block;text-align:center;text-decoration:none;padding:12px;border-radius:12px;
+            font-weight:800;font-size:13px;color:#04140a;background:linear-gradient(90deg,#22FF99,#FFC94D);
+        }
+        .anuncio-full .btn-go{
+            display:none;width:100%;border:none;border-radius:12px;padding:13px;font-weight:800;
+            font-size:14px;cursor:pointer;color:#fff;background:linear-gradient(90deg,#a855f7,#3b9eff);
+        }
+        .anuncio-full .btn-go.show{display:block!important;margin-top:8px;font-size:15px;padding:15px;box-shadow:0 0 24px rgba(168,85,247,.5)}
+
         .menu-baixo {
             position: fixed;
             bottom: 0;
@@ -356,7 +395,7 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
             </div>
             <div class="tarefa-acao" style="position:relative;">
                 <div class="pontos" style="color:#FFC94D;">Boost</div>
-                <button class="btn-fazer" style="background:linear-gradient(90deg,#22FF99,#FFC94D);color:#04140a;font-weight:800;box-shadow:0 0 18px rgba(34,255,153,0.4);" onclick="window.location.href='aumento-ganhos.html'">Ver pacotes</button>
+                <button class="btn-fazer" style="background:linear-gradient(90deg,#22FF99,#FFC94D);color:#04140a;font-weight:800;box-shadow:0 0 18px rgba(34,255,153,0.4);" onclick="abrirAnuncioVideo(event,'M5ruuiihjqc','aumento-ganhos.html')">Ver pacotes</button>
             </div>
         </div>
 
@@ -456,15 +495,15 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
         <!-- EXTRA -->
         <div class="sec-titulo"><i class="fas fa-star"></i> Tarefas Extra</div>
 
-        <div class="tarefa-card" id="card-convidar-amigo">
-            <div class="tarefa-icon icon-extra">👥</div>
+        <div class="tarefa-card" id="card-convidar-amigo" style="border:1px solid rgba(255,201,77,0.45);box-shadow:0 0 28px rgba(255,201,77,0.22);background:linear-gradient(145deg,rgba(60,30,10,0.45),rgba(8,42,38,0.5));">
+            <div class="tarefa-icon icon-extra" style="background:linear-gradient(135deg,#FFC94D,#22FF99);box-shadow:0 0 18px rgba(255,201,77,0.45);">👥</div>
             <div class="tarefa-info">
-                <h3 id="convidar-titulo">Convidar amigo</h3>
-                <p id="convidar-desc">Ganha +20 pts quando ele se cadastrar (sem limite)</p>
+                <h3 id="convidar-titulo" style="color:#FFC94D;">Convida amigos e seguidores</h3>
+                <p id="convidar-desc">Ganha pontos ao registo · <b style="color:#22FF99;">100 MT</b> se o convidado sacar · meta influencer <b style="color:#FFD700;">200 MT</b></p>
             </div>
             <div class="tarefa-ganho">
-                <div class="pontos" id="convidar-pts">+10 Pts</div>
-                <button class="btn-fazer" id="btn-convidar" onclick="window.location.href='convidar.html'">Convidar</button>
+                <div class="pontos" id="convidar-pts" style="color:#FFD700;">+200 MT</div>
+                <button class="btn-fazer" id="btn-convidar" style="background:linear-gradient(90deg,#FFC94D,#22FF99);color:#04140a;font-weight:800;" onclick="window.location.href='convidar.html'">Convidar</button>
             </div>
         </div>
 
@@ -476,7 +515,7 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
             </div>
             <div class="tarefa-ganho">
                 <div class="pontos" id="checkin-pts">+3 Pts</div>
-                <button class="btn-fazer" onclick="window.location.href='checkin.html'">Fazer</button>
+                <button class="btn-fazer" onclick="abrirAnuncioVideo(event,'Iu2M-BaiS84','checkin.html')">Fazer</button>
             </div>
         </div>
 
@@ -494,11 +533,28 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
 
     </div>
 
+
+    <!-- Anúncio Aumento de ganhos (play no mesmo clique) -->
+    <div class="anuncio-full" id="anuncio-aumento-full">
+        <div class="box">
+            <div class="at">
+                <span class="tag">Anúncio</span>
+                <h3>A equipa cria o site para ti · ou cria tu mesmo</h3>
+                <p>O vídeo inicia sozinho. No fim entras em Aumenta os teus ganhos.</p>
+            </div>
+            <div class="vw" id="yt-aumento-box"></div>
+            <div class="st" id="anuncio-aumento-status">A iniciar anúncio…</div>
+            <div class="acoes">
+                <a class="btn-curso" href="https://desafiomoz.pages.dev/Curso%20de%20site/index.html" target="_blank" rel="noopener">Clica aqui — curso / encomendar site</a>
+                <button type="button" class="btn-go" id="anuncio-aumento-go" onclick="irAumentoGanhos()">Continuar →</button>
+            </div>
+        </div>
+    </div>
+
     <div class="menu-baixo">
         <a href="desafios.html"><i class="fas fa-home"></i> Início</a>
         <a href="tarefas.html" class="ativo"><i class="fas fa-tasks"></i> Tarefas</a>
         <a href="saques.html"><i class="fas fa-wallet"></i> Sacar</a>
-        <a href="ofertas.html"><i class="fas fa-gift"></i> Ofertas</a>
         <a href="tua-vez.html"><i class="fas fa-rocket"></i> Tua vez</a>
         <a href="online.html"><i class="fas fa-gamepad"></i> Online</a>
         <a href="perfil.html"><i class="fas fa-cog"></i> Conta</a>
@@ -890,27 +946,23 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
                         (function () {
                             var cardConv = document.getElementById('card-convidar-amigo');
                             if (!cardConv) return;
-                            var totalConv = userData.totalConvidados || 0;
-                            var regrasNovas = userData.conviteRegrasNovas === true;
+                            // Sempre 200 MT (programa influencer) — nunca mostrar +20 / +10 pts
                             try {
                               var cpEl = document.getElementById('convidar-pts');
-                              if (cpEl) cpEl.textContent = regrasNovas ? '+20 Pts' : '+10 Pts';
+                              if (cpEl) cpEl.textContent = '+200 MT';
+                              var titulo = document.getElementById('convidar-titulo');
+                              var desc = document.getElementById('convidar-desc');
+                              if (titulo) titulo.textContent = 'Convida amigos e seguidores';
+                              if (desc) {
+                                desc.innerHTML = 'Ganha <b style="color:#FFD700;">200 MT</b> a cada 1000 no link influencer · <b style="color:#22FF99;">100 MT</b> se o convidado sacar';
+                                desc.style.color = '';
+                              }
+                              var btn = document.getElementById('btn-convidar');
+                              if (btn) {
+                                btn.textContent = 'Convidar';
+                                btn.style.opacity = '1';
+                              }
                             } catch (eCp) {}
-                            var bloqueado = userData.ocultarConvidar === true || (!regrasNovas && totalConv >= 5 && userData.convitesExtra !== true);
-                            var titulo = document.getElementById('convidar-titulo');
-                            var desc = document.getElementById('convidar-desc');
-                            var btn = document.getElementById('btn-convidar');
-                            if (bloqueado) {
-                                if (titulo) titulo.textContent = 'Convites não disponíveis';
-                                if (desc) {
-                                    desc.textContent = 'Convites não disponíveis de momento. Aguarde ter acesso novamente.';
-                                    desc.style.color = '#ffab40';
-                                }
-                                if (btn) {
-                                    btn.textContent = 'Ver';
-                                    btn.style.opacity = '0.7';
-                                }
-                            }
                         })();
                         if (userData.ocultarPesquisas === true) {
                             ocultarTodasPesquisas('As pesquisas estão bloqueadas para a sua conta. Contacte o suporte se for um erro.');
@@ -1284,6 +1336,208 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
   }
 })();
 </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+(function () {
+  var VIDEO_ID = 'M5ruuiihjqc';
+  var DESTINO = 'aumento-ganhos.html';
+  var acabou = false;
+  var timers = [];
+  var ytPlayer = null;
+
+  function limparTimers() {
+    timers.forEach(function (t) {
+      try {
+        if (t && t.__clear) t.__clear();
+        else clearTimeout(t);
+      } catch (e) {}
+    });
+    timers = [];
+  }
+
+  function irDestino() {
+    window.__DM_ANUNCIO_ATIVO__ = false;
+    try {
+      var em = localStorage.getItem('emailUtilizador') || sessionStorage.getItem('emailUtilizador') || '';
+      if (em) {
+        localStorage.setItem('emailUtilizador', em);
+        sessionStorage.setItem('emailUtilizador', em);
+      }
+    } catch (e) {}
+    window.location.href = DESTINO;
+  }
+  window.irAumentoGanhos = irDestino;
+
+  function mostrarContinuar(msg) {
+    var btn = document.getElementById('anuncio-aumento-go');
+    if (btn) {
+      btn.classList.add('show');
+      btn.style.display = 'block';
+      btn.onclick = function (e) {
+        if (e) e.preventDefault();
+        irDestino();
+      };
+    }
+    if (msg) {
+      var st = document.getElementById('anuncio-aumento-status');
+      if (st) st.textContent = msg;
+    }
+  }
+
+  function onFim() {
+    if (acabou) return;
+    acabou = true;
+    limparTimers();
+    mostrarContinuar('Anúncio no fim — continua');
+    timers.push(setTimeout(irDestino, 1500));
+  }
+
+  function nearEndCheck() {
+    if (acabou || !ytPlayer) return;
+    try {
+      if (typeof ytPlayer.getCurrentTime !== 'function') return;
+      var cur = ytPlayer.getCurrentTime();
+      var dur = ytPlayer.getDuration();
+      if (dur > 5 && cur > 0 && (dur - cur) <= 10) {
+        mostrarContinuar('Anúncio quase no fim — podes continuar');
+      }
+    } catch (e) {}
+  }
+
+  function ligarApiNoIframe() {
+    if (!window.YT || !window.YT.Player) return;
+    var el = document.getElementById('yt-aumento-iframe');
+    if (!el) return;
+    try {
+      ytPlayer = new YT.Player('yt-aumento-iframe', {
+        events: {
+          onStateChange: function (e) {
+            if (e.data === 0) onFim();
+          },
+          onReady: function () {
+            var iv = setInterval(function () {
+              if (acabou) { clearInterval(iv); return; }
+              nearEndCheck();
+            }, 1000);
+            timers.push({ __clear: function () { clearInterval(iv); } });
+          }
+        }
+      });
+    } catch (e) {}
+  }
+
+  function ensureYtApi(cb) {
+    if (window.YT && window.YT.Player) { cb(); return; }
+    var prev = window.onYouTubeIframeAPIReady;
+    window.onYouTubeIframeAPIReady = function () {
+      if (typeof prev === 'function') try { prev(); } catch (e) {}
+      cb();
+    };
+    if (!document.getElementById('yt-api-dm-ad')) {
+      var s = document.createElement('script');
+      s.id = 'yt-api-dm-ad';
+      s.src = 'https://www.youtube.com/iframe_api';
+      document.head.appendChild(s);
+    }
+  }
+
+  window.addEventListener('message', function (e) {
+    if (acabou) return;
+    var d = e.data;
+    if (d == null) return;
+    try {
+      if (typeof d === 'string') {
+        if (d.indexOf('{') === -1) return;
+        d = JSON.parse(d);
+      }
+    } catch (err) { return; }
+    if (d.event === 'onStateChange' && (d.info === 0 || d.info === '0')) onFim();
+  });
+
+  /**
+   * Anúncio em vídeo antes de abrir uma página.
+   * @param {Event} ev
+   * @param {string} videoId  id do YouTube (ex: Iu2M-BaiS84)
+   * @param {string} destino  página a seguir (ex: checkin.html)
+   */
+  window.abrirAnuncioVideo = function (ev, videoId, destino) {
+    if (ev) {
+      try { ev.preventDefault(); ev.stopPropagation(); } catch (e) {}
+    }
+    VIDEO_ID = videoId || 'M5ruuiihjqc';
+    DESTINO = destino || 'aumento-ganhos.html';
+    acabou = false;
+    limparTimers();
+    ytPlayer = null;
+
+    var ov = document.getElementById('anuncio-aumento-full');
+    var st = document.getElementById('anuncio-aumento-status');
+    var btn = document.getElementById('anuncio-aumento-go');
+    var box = document.getElementById('yt-aumento-box');
+
+    window.__DM_ANUNCIO_ATIVO__ = true;
+    try { if (typeof window.__DM_ESCONDER_TOASTS__ === 'function') window.__DM_ESCONDER_TOASTS__(); } catch (e) {}
+
+    if (ov) ov.classList.add('show');
+    if (btn) {
+      btn.classList.remove('show');
+      btn.style.display = 'none';
+    }
+    if (st) st.textContent = 'Anúncio a decorrer…';
+
+    if (!box) {
+      mostrarContinuar('Erro — toca para continuar');
+      return;
+    }
+
+    box.innerHTML = '';
+    var iframe = document.createElement('iframe');
+    iframe.id = 'yt-aumento-iframe';
+    iframe.setAttribute('allow', 'autoplay; encrypted-media; picture-in-picture; fullscreen');
+    iframe.setAttribute('allowfullscreen', 'true');
+    iframe.setAttribute('playsinline', 'true');
+    iframe.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;border:0;background:#000';
+    iframe.src = 'https://www.youtube.com/embed/' + VIDEO_ID +
+      '?autoplay=1&playsinline=1&rel=0&modestbranding=1&controls=1&enablejsapi=1&origin=' +
+      encodeURIComponent(window.location.origin || '');
+    box.appendChild(iframe);
+
+    ensureYtApi(function () {
+      setTimeout(ligarApiNoIframe, 800);
+    });
+
+    timers.push(setTimeout(function () {
+      if (!acabou) mostrarContinuar('Se o anúncio já terminou, continua');
+    }, 300000));
+  };
+
+  // Compatibilidade com nome antigo
+  window.abrirAnuncioAumento = function (ev) {
+    window.abrirAnuncioVideo(ev, 'M5ruuiihjqc', 'aumento-ganhos.html');
+  };
+})();
+</script>
+
+
+
+
+
+
+
+
+
 
 
 <script>window.__DM_PRESENCA__ = { pagina: 'tarefas', jogando: null };</script>

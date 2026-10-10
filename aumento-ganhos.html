@@ -201,6 +201,48 @@
       box-shadow:0 8px 24px rgba(0,200,83,.4);
     }
     .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+    .anuncio-video{
+      margin-bottom:18px;border-radius:22px;overflow:hidden;
+      background:linear-gradient(160deg,rgba(40,20,60,.95),rgba(14,18,28,.98));
+      border:1px solid rgba(168,85,247,.45);
+      box-shadow:0 0 36px rgba(168,85,247,.28),0 12px 32px rgba(0,0,0,.4);
+      position:relative;
+    }
+    .anuncio-video .anuncio-topo{
+      padding:14px 14px 10px;text-align:center;
+    }
+    .anuncio-video .anuncio-topo .tag{
+      display:inline-block;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
+      color:#04140a;background:linear-gradient(90deg,#FFC94D,#22FF99);
+      padding:5px 12px;border-radius:99px;margin-bottom:8px;
+      box-shadow:0 0 16px rgba(255,201,77,.35);
+    }
+    .anuncio-video .anuncio-topo h3{
+      font-family:'Sora',sans-serif;font-size:16px;font-weight:800;margin-bottom:4px;
+      background:linear-gradient(90deg,#fff,#a855f7,#FFC94D);
+      -webkit-background-clip:text;background-clip:text;color:transparent;
+    }
+    .anuncio-video .anuncio-topo p{font-size:12.5px;color:var(--suave);line-height:1.4}
+    .video-wrap{
+      position:relative;width:100%;padding-bottom:56.25%;height:0;overflow:hidden;
+      background:#000;
+    }
+    .video-wrap iframe{
+      position:absolute;inset:0;width:100%;height:100%;border:0;
+    }
+    .anuncio-cta{
+      display:block;margin:12px 14px 16px;text-align:center;text-decoration:none;
+      padding:14px 16px;border-radius:14px;font-family:'Sora',sans-serif;font-weight:800;font-size:14px;
+      color:#04140a;background:linear-gradient(90deg,#22FF99,#FFC94D);
+      box-shadow:0 0 24px rgba(34,255,153,.4),0 6px 18px rgba(0,0,0,.3);
+      animation:pulseCta 2s ease-in-out infinite;
+    }
+    .anuncio-cta i{margin-right:6px}
+    @keyframes pulseCta{
+      0%,100%{box-shadow:0 0 24px rgba(34,255,153,.35),0 6px 18px rgba(0,0,0,.3);transform:scale(1)}
+      50%{box-shadow:0 0 36px rgba(255,201,77,.5),0 8px 22px rgba(0,0,0,.35);transform:scale(1.02)}
+    }
     .loading{text-align:center;padding:40px;color:var(--suave)}
   </style>
 </head>
@@ -210,7 +252,7 @@
       <a href="tarefas.html" class="btn-voltar"><i class="fas fa-arrow-left"></i></a>
       <div>
         <h1>Aumenta os teus ganhos</h1>
-        <p>Check-in · Convites · Influencer</p>
+        <p>Check-in diário com mais pontos</p>
       </div>
     </div>
 
@@ -247,50 +289,6 @@
           </div>
           <button type="button" class="btn-comprar" onclick="abrirPagamento('checkin_16_vitalicio',5,'Check-in +16 pts vitalício')">Pagar 5 MT na e-Mola</button>
         </div>
-      </div>
-
-      <!-- CONVITES — actualizar regras (grátis) -->
-      <div class="sec">
-        <div class="sec-titulo"><i class="fas fa-user-plus"></i> Link de convite</div>
-        <div class="pacote" id="pkg-upd-convite" style="border-color:rgba(34,255,153,.4);">
-          <div class="pacote-topo">
-            <div class="pacote-ico">🎁</div>
-            <div>
-              <h3>Actualizar regras de convite</h3>
-              <div class="desc" id="desc-upd-convite" style="margin-bottom:8px;">
-                <b style="color:var(--suave)">Agora (antigo):</b> +10 pts por amigo · amigo começa com +5 · máx. 5 convites.<br><br>
-                <b style="color:var(--ouro)">Depois de actualizar (grátis):</b> +<b>20 pontos</b> por amigo · amigo inicia com <b>+10</b> · máx. <b>5 convites</b>. Depois dos 5, o link fica bloqueado até o administrador desbloquear.<br>
-                O bónus a cada 100 pts do amigo (+10 para ti) continua.
-              </div>
-              <span class="tag-ativo" id="tag-upd-convite">✅ Já actualizado</span>
-              <button type="button" class="btn-comprar" id="btn-upd-convite" onclick="actualizarConvite()">Actualizar link de convite (grátis)</button>
-              <a href="convidar.html" style="display:block;text-align:center;margin-top:10px;font-size:12px;color:var(--vivo);">Ver o meu link →</a>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- INFLUENCER — actualizar regras (grátis) -->
-      <div class="sec">
-        <div class="sec-titulo"><i class="fas fa-star"></i> Link de influencer</div>
-        <div class="pacote rosa" id="pkg-upd-inf">
-          <div class="pacote-topo">
-            <div class="pacote-ico">⭐</div>
-            <div>
-              <h3>Actualizar regras de influencer</h3>
-              <div class="desc" id="desc-upd-inf" style="margin-bottom:8px;">
-                <b style="color:var(--suave)">Agora (antigo):</b> contagem para a meta de 1000 → 200 MT. Sem bónus extra no saque do convidado.<br><br>
-                <b style="color:var(--ouro)">Depois de actualizar (grátis):</b> cada convidado recebe <b>+20 pts</b> ao registar · se o convidado <b>sacar</b>, podes receber <b>100 MT</b> (admin aprova).<br>
-                A meta 1000 → 200 MT mantém-se.
-              </div>
-              <span class="tag-ativo" id="tag-upd-inf">✅ Já actualizado</span>
-              <button type="button" class="btn-comprar" id="btn-upd-inf" style="background:linear-gradient(90deg,var(--rosa),var(--roxo));color:#fff;" onclick="actualizarInfluencer()">Actualizar link de influencer (grátis)</button>
-              <a href="influencer.html" style="display:block;text-align:center;margin-top:10px;font-size:12px;color:var(--vivo);">Ir ao programa Influencer →</a>
-            </div>
-          </div>
-        </div>
-      </div>
-
       </div>
     </div>
   </div>
@@ -333,7 +331,15 @@
   <script>
   (function () {
     var EMOLA_NUM = '869517893';
-    var email = (localStorage.getItem('emailUtilizador') || '').trim().toLowerCase();
+    function lerEmailGuardado() {
+      var keys = ['emailUtilizador', 'email', 'userEmail', 'dmEmail'];
+      for (var i = 0; i < keys.length; i++) {
+        var v = (localStorage.getItem(keys[i]) || sessionStorage.getItem(keys[i]) || '').trim();
+        if (v && v.indexOf('@') !== -1) return v.toLowerCase();
+      }
+      return '';
+    }
+    var email = lerEmailGuardado();
     var userRef = null;
     var userData = {};
     var pkgActual = null;
@@ -375,22 +381,6 @@
       // check-in
       if (d.checkinBoostVitalicio === true && Number(d.checkinPtsDia) >= 16) {
         marcarActivo('pkg-checkin-16', true);
-      }
-      // Convite actualizado?
-      if (d.conviteRegrasNovas === true) {
-        marcarActivo('pkg-upd-convite', true);
-        var b1 = document.getElementById('btn-upd-convite');
-        if (b1) { b1.disabled = true; b1.textContent = 'Já actualizado'; }
-        var d1 = document.getElementById('desc-upd-convite');
-        if (d1) d1.innerHTML = '<b style="color:var(--vivo)">Regras novas activas:</b> +20 pts por amigo · amigo +10 · máx. 5 convites (depois o link bloqueia até o administrador desbloquear).';
-      }
-      // Influencer actualizado?
-      if (d.influencerRegrasNovas === true) {
-        marcarActivo('pkg-upd-inf', true);
-        var b2 = document.getElementById('btn-upd-inf');
-        if (b2) { b2.disabled = true; b2.textContent = 'Já actualizado'; }
-        var d2 = document.getElementById('desc-upd-inf');
-        if (d2) d2.innerHTML = '<b style="color:var(--vivo)">Regras novas activas:</b> convidado +20 pts · 100 MT se o convidado sacar (admin aprova) · meta 1000 → 200 MT.';
       }
     }
 
@@ -565,71 +555,40 @@
     }
     window.enviarPagamento = enviarPagamento;
 
-
-    async function actualizarConvite() {
-      if (!email || !userRef) { alert('Faz login primeiro.'); return; }
-      if (userData.conviteRegrasNovas === true) {
-        toast('Já tinhas as regras novas de convite.');
-        return;
-      }
-      var btn = document.getElementById('btn-upd-convite');
-      if (btn) { btn.disabled = true; btn.textContent = 'A actualizar...'; }
-      try {
-        await userRef.update({
-          conviteRegrasNovas: true,
-          ocultarConvidar: false,
-          convitesExtra: false,
-          convitesBaseNovas: Number(userData.totalConvidados) || 0,
-          ultimaAtualizacao: new Date().toISOString()
-        });
-        userData.conviteRegrasNovas = true;
-        userData.convitesBaseNovas = Number(userData.totalConvidados) || 0;
-        actualizarEstados();
-        toast('✅ Convites actualizados! +20 pts por amigo, máx. 5 convites.');
-      } catch (e) {
-        alert('Erro: ' + (e.message || e));
-        if (btn) { btn.disabled = false; btn.textContent = 'Actualizar link de convite (grátis)'; }
-      }
-    }
-    window.actualizarConvite = actualizarConvite;
-
-    async function actualizarInfluencer() {
-      if (!email || !userRef) { alert('Faz login primeiro.'); return; }
-      if (userData.influencerRegrasNovas === true) {
-        toast('Já tinhas as regras novas de influencer.');
-        return;
-      }
-      var btn = document.getElementById('btn-upd-inf');
-      if (btn) { btn.disabled = true; btn.textContent = 'A actualizar...'; }
-      try {
-        await userRef.update({
-          influencerRegrasNovas: true,
-          ultimaAtualizacao: new Date().toISOString()
-        });
-        userData.influencerRegrasNovas = true;
-        actualizarEstados();
-        toast('✅ Influencer actualizado! +20 pts ao convidado · 100 MT no saque.');
-      } catch (e) {
-        alert('Erro: ' + (e.message || e));
-        if (btn) { btn.disabled = false; btn.textContent = 'Actualizar link de influencer (grátis)'; }
-      }
-    }
-    window.actualizarInfluencer = actualizarInfluencer;
-
     async function init() {
+      email = lerEmailGuardado();
       if (!email) {
-        document.getElementById('loading').textContent = 'Faz login para ver os pacotes.';
-        setTimeout(function () { window.location.href = 'criar-conta.html'; }, 1500);
+        // Espera um pouco — o storage pode ainda estar a carregar após o anúncio
+        document.getElementById('loading').textContent = 'A verificar sessão…';
+        await new Promise(function (r) { setTimeout(r, 600); });
+        email = lerEmailGuardado();
+      }
+      if (!email) {
+        document.getElementById('loading').innerHTML =
+          'Sessão não encontrada.<br><a href="tarefas.html" style="color:#22FF99">Voltar às tarefas</a> · ' +
+          '<a href="criar-conta.html" style="color:#FFC94D">Login</a>';
         return;
       }
       try {
         var snap = await db.collection('usuarios').where('email', '==', email).limit(1).get();
         if (snap.empty) {
-          document.getElementById('loading').textContent = 'Conta não encontrada.';
-          return;
+          snap = await db.collection('usuarios').where('email', '==', email.toLowerCase()).limit(1).get();
         }
-        userRef = snap.docs[0].ref;
-        userData = snap.docs[0].data() || {};
+        if (snap.empty) {
+          // tenta doc id = email
+          var d1 = await db.collection('usuarios').doc(email).get();
+          if (d1.exists) {
+            userRef = d1.ref;
+            userData = d1.data() || {};
+          } else {
+            document.getElementById('loading').innerHTML =
+              'Conta não encontrada.<br><a href="tarefas.html" style="color:#22FF99">Voltar às tarefas</a>';
+            return;
+          }
+        } else {
+          userRef = snap.docs[0].ref;
+          userData = snap.docs[0].data() || {};
+        }
         document.getElementById('user-chip').textContent = (userData.nome || email) + ' · ' + (userData.pontos || 0) + ' pts';
         document.getElementById('loading').style.display = 'none';
         document.getElementById('conteudo').style.display = 'block';

@@ -130,7 +130,28 @@
     return b;
   }
 
+  function anuncioActivo() {
+    if (window.__DM_ANUNCIO_ATIVO__ === true) return true;
+    try {
+      var a = document.getElementById('anuncio-aumento-full');
+      if (a && a.classList.contains('show')) return true;
+    } catch (e) {}
+    return false;
+  }
+
+  function esconderToastsAgora() {
+    try {
+      ['dm-toast-mencao', 'dm-toast-idle', 'dm-toast-backdrop'].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) el.classList.remove('mostrar');
+      });
+    } catch (e) {}
+  }
+  window.__DM_ESCONDER_TOASTS__ = esconderToastsAgora;
+
   function mostrarToast(idEl, html, ms) {
+    // Nunca por cima de anúncios / vídeo
+    if (anuncioActivo()) return;
     injetaCSS();
     var backdrop = ensureBackdrop();
     var el = document.getElementById(idEl);
@@ -280,6 +301,7 @@
     if (idleCount() >= max) return;
     var segs = Number(cfg.idleSegundos) || 20;
     setTimeout(function () {
+      if (anuncioActivo()) return; // não interrompe anúncio
       if (idleCount() >= max) return;
       bumpIdle();
       toastIdle();

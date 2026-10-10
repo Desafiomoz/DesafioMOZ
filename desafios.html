@@ -300,7 +300,83 @@
         .menu-baixo a { color: var(--texto-claro); text-decoration: none; text-align: center; font-size: 10px; width: 48px; }
         .menu-baixo a.ativo { color: var(--verde-claro); }
         .menu-baixo i { font-size: 18px; display: block; margin-bottom: 3px; }
-    </style>
+    
+        /* Ofertas permanentes (CPX + Offerwall) — sempre visíveis */
+        .oferta-perm-sec {
+            margin: 18px 0 8px;
+        }
+        .oferta-perm-titulo {
+            font-size: 15px; font-weight: 800; color: #FFC94D;
+            display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
+            text-shadow: 0 0 14px rgba(255,201,77,0.35);
+        }
+        .oferta-perm-aviso {
+            font-size: 12.5px; color: #d5dbe8; line-height: 1.45;
+            background: linear-gradient(135deg, rgba(255,201,77,0.14), rgba(34,255,153,0.1));
+            border: 1px solid rgba(255,201,77,0.45);
+            border-radius: 14px; padding: 12px 14px; margin-bottom: 12px;
+            box-shadow: 0 0 24px rgba(255,201,77,0.2);
+            animation: ofPermPulse 2.4s ease-in-out infinite;
+        }
+        .oferta-perm-aviso b { color: #FFC94D; }
+        @keyframes ofPermPulse {
+            0%,100% { box-shadow: 0 0 16px rgba(255,201,77,0.18); }
+            50% { box-shadow: 0 0 32px rgba(34,255,153,0.35), 0 0 40px rgba(255,201,77,0.25); }
+        }
+        .cartao-oferta-perm {
+            display: block; text-decoration: none; color: inherit;
+            background: linear-gradient(160deg, rgba(40,28,55,0.95), rgba(18,24,36,0.98));
+            border: 1.5px solid rgba(168,85,247,0.45);
+            border-radius: 18px; padding: 16px; margin-bottom: 12px;
+            position: relative; overflow: hidden;
+            box-shadow: 0 0 28px rgba(168,85,247,0.22), 0 8px 24px rgba(0,0,0,0.3);
+            transition: transform .15s;
+        }
+        .cartao-oferta-perm:active { transform: scale(0.985); }
+        .cartao-oferta-perm.cpx {
+            border-color: rgba(0,200,83,0.5);
+            box-shadow: 0 0 28px rgba(0,200,83,0.25), 0 8px 24px rgba(0,0,0,0.3);
+            background: linear-gradient(160deg, rgba(8,42,38,0.55), rgba(18,24,36,0.98));
+        }
+        .cartao-oferta-perm::before {
+            content: ""; position: absolute; inset: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
+            animation: ofShine 3.5s linear infinite; pointer-events: none;
+        }
+        @keyframes ofShine {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        .cartao-oferta-perm .of-topo { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; position: relative; z-index: 1; }
+        .cartao-oferta-perm .of-logo {
+            width: 54px; height: 54px; border-radius: 14px; background: #fff;
+            display: flex; align-items: center; justify-content: center; overflow: hidden;
+            border: 2px solid rgba(34,255,153,0.35); flex-shrink: 0;
+            box-shadow: 0 0 16px rgba(34,255,153,0.3);
+        }
+        .cartao-oferta-perm .of-logo img { width: 100%; height: 100%; object-fit: contain; padding: 5px; }
+        .cartao-oferta-perm h3 { font-size: 15px; font-weight: 800; margin-bottom: 3px; color: #fff; }
+        .cartao-oferta-perm p { font-size: 12.5px; color: #A8B0C8; line-height: 1.4; }
+        .cartao-oferta-perm .of-badge {
+            display: inline-flex; align-items: center; gap: 5px; margin-top: 6px;
+            font-size: 11px; font-weight: 700; color: #22FF99;
+            background: rgba(34,255,153,0.12); border: 1px solid rgba(34,255,153,0.35);
+            padding: 3px 10px; border-radius: 99px;
+        }
+        .cartao-oferta-perm .of-btn {
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            width: 100%; padding: 13px; border: none; border-radius: 12px;
+            font-size: 14px; font-weight: 800; color: #04140a; cursor: pointer;
+            background: linear-gradient(90deg, #22FF99, #FFC94D);
+            box-shadow: 0 6px 20px rgba(34,255,153,0.35);
+            position: relative; z-index: 1;
+        }
+        .cartao-oferta-perm.ow .of-btn {
+            background: linear-gradient(90deg, #a855f7, #3b9eff, #22FF99);
+            color: #fff; box-shadow: 0 6px 20px rgba(168,85,247,0.4);
+        }
+
+</style>
 <style>/* Brilho extra - efeito de aura no site */
 body{filter:brightness(1.16) saturate(1.1);}</style>
 </head>
@@ -344,51 +420,81 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
 </div>
 
 <div class="sec-titulo"><i class="fas fa-calendar-day"></i> Desafios do Dia</div>
-<p class="aviso-regras">
-  ⚠️ Se não cumprir as regras dos desafios (ex.: fingir inscrição ou não ver os anúncios), <strong>os pontos serão diminuídos</strong> pelos agentes do site.
-</p>
 
-<!-- DESAFIO YOUTUBE - CANAL CANCELADO -->
-<div class="cartao-yt" id="card-youtube" style="opacity:0.85;border-color:rgba(255,80,80,0.35);">
+<div class="sec-titulo" style="color:#FFC94D;"><i class="fas fa-bolt"></i> Ganha mais pontos hoje</div>
+  <div class="oferta-perm-aviso">
+    <b>👉 CLICA AGORA e ganha mais pontos hoje!</b><br>
+    Não ignores estas ofertas — cada pesquisa e cada oferta completa soma pontos na tua conta.
+    Estão <b>sempre disponíveis</b>. Toca no botão verde/roxo em baixo e começa já.
+  </div>
+
+  <a href="disponivel.html" class="cartao-oferta-perm cpx" id="card-cpx-perm">
+    <div class="of-topo">
+      <div class="of-logo">
+        <img src="https://i.supaimg.com/9447b725-0914-4700-9681-fccbd9cb5399/27d1b877-62c3-4d81-b5e8-67b946eb7178.png" alt="CPX" onerror="this.style.display='none'">
+      </div>
+      <div>
+        <h3>CPX Research</h3>
+        <p>Responde a pesquisas e inquéritos rápidos e ganha pontos na hora</p>
+        <span class="of-badge"><i class="fas fa-infinity"></i> Sempre disponível</span>
+      </div>
+    </div>
+    <div class="of-btn"><i class="fas fa-clipboard-list"></i> CLICA AQUI · responder e ganhar pontos</div>
+  </a>
+
+  <a href="#" class="cartao-oferta-perm ow" id="card-offerwall-perm">
+    <div class="of-topo">
+      <div class="of-logo">
+        <img src="https://i.supaimg.com/9447b725-0914-4700-9681-fccbd9cb5399/58e2d968-b142-4f96-9070-498810fbd91b.jpg" alt="Offerwall" onerror="this.style.display='none'">
+      </div>
+      <div>
+        <h3>Offerwall me</h3>
+        <p>Completa ofertas e tarefas e ganha pontos extra na tua conta</p>
+        <span class="of-badge"><i class="fas fa-infinity"></i> Sempre disponível</span>
+      </div>
+    </div>
+    <div class="of-btn"><i class="fas fa-external-link-alt"></i> CLICA AQUI · ver ofertas e ganhar pontos</div>
+  </a>
+</div>
+
+<!-- DESAFIO YOUTUBE - NOVO CANAL -->
+<div class="cartao-yt" id="card-youtube">
     <div class="cartao-yt-topo">
         <img src="https://i.supaimg.com/b173afd9-4344-4026-a5d7-6a53e4b6efdc/8f054a24-2746-4a43-9f1c-354584289dc3.png"
              alt="Desafio MOZ" class="yt-logo"
              onerror="this.src='https://www.youtube.com/s/desktop/favicon.ico'">
         <div class="yt-info">
-            <h3><i class="fab fa-youtube" style="color:#888;"></i> Canal Desafio MOZ</h3>
-            <p style="color:#ff8a80;">Canal cancelado no YouTube — desafio indisponível.</p>
-            <div class="yt-ganho" style="background:rgba(255,80,80,0.12);border-color:rgba(255,80,80,0.35);color:#ff8a80;">Indisponível</div>
+            <h3><i class="fab fa-youtube" style="color:#ff0000;"></i> Novo canal Desafio MOZ</h3>
+            <p>Segue o canal oficial no YouTube e ganha pontos</p>
+            <div class="yt-ganho">+10 Pts</div>
         </div>
     </div>
     <div class="yt-botoes">
-        <button type="button" class="btn-yt" id="btn-abrir-yt" disabled
-            style="background:rgba(80,80,90,0.5);color:#aaa;cursor:not-allowed;box-shadow:none;">
-            <i class="fas fa-ban"></i> Canal cancelado
+        <button type="button" class="btn-yt btn-yt-inscrever" id="btn-abrir-yt" onclick="abrirCanalYoutube()">
+            <i class="fab fa-youtube"></i> Seguir o canal
         </button>
-        <button type="button" class="btn-yt btn-yt-confirmar" id="btn-confirmar-yt" style="display:none;" disabled></button>
-        <button type="button" class="btn-yt btn-yt-feito" id="btn-feito-yt" style="display:none;" disabled></button>
+        <button type="button" class="btn-yt btn-yt-confirmar" id="btn-confirmar-yt" onclick="confirmarInscricao()">
+            <i class="fas fa-check"></i> Já segui — receber +10 pontos
+        </button>
+        <button type="button" class="btn-yt btn-yt-feito" id="btn-feito-yt">
+            <i class="fas fa-check-double"></i> Concluído
+        </button>
     </div>
-    <p class="yt-aviso" id="yt-aviso" style="color:#ffab40;">
-        O canal oficial foi removido / Este desafio está <strong>cancelado</strong> e não dá pontos. Continue com as outras tarefas e jogos.
+    <p class="yt-aviso" id="yt-aviso">
+        1) Toca em <strong>Seguir o canal</strong> · 2) Inscreve-te no YouTube · 3) Volta e confirma para receber <strong>+10 pontos</strong>.
     </p>
 </div>
 
 <!-- Desafios programados pelo Admin (máx. 4 por dia; extras após 10h) -->
 <div id="lista-desafios-prog"></div>
-<div id="msg-desafios-vazio" style="display:none;background:rgba(21,21,31,0.95);border:1px dashed rgba(0,200,83,0.35);border-radius:16px;padding:28px 18px;text-align:center;margin-bottom:14px;">
-    <div style="font-size:36px;margin-bottom:10px;">📭</div>
-    <h3 style="font-size:16px;color:#00e676;margin-bottom:8px;">Desafios indisponíveis</h3>
-    <p style="font-size:13px;color:#aaa;line-height:1.5;" id="msg-desafios-vazio-texto">
-        Concluiu os desafios disponíveis por agora.<br>
-        Aguarde a aparição de novos desafios.
-    </p>
+<div id="msg-desafios-vazio" style="display:none;">
+    <!-- Mantido oculto de propósito — YouTube + CPX/Offerwall ficam sempre visíveis -->
 </div>
 
 <div class="menu-baixo">
     <a href="desafios.html" class="ativo"><i class="fas fa-home"></i> Início</a>
     <a href="tarefas.html"><i class="fas fa-tasks"></i> Tarefas</a>
     <a href="saques.html"><i class="fas fa-wallet"></i> Sacar</a>
-    <a href="ofertas.html"><i class="fas fa-gift"></i> Ofertas</a>
     <a href="tua-vez.html"><i class="fas fa-rocket"></i> Tua vez</a>
     <a href="online.html"><i class="fas fa-gamepad"></i> Online</a>
         <a href="perfil.html"><i class="fas fa-cog"></i> Conta</a>
@@ -448,7 +554,7 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
         } catch (e) { console.error('bonus marco indicador', e); }
     }
 
-    var YOUTUBE_URL = 'https://www.youtube.com/channel/UC6KpSZ7bKAFw7jgR03cTkMg';
+    var YOUTUBE_URL = 'https://www.youtube.com/@Desafio-moz';
     var PONTOS_YT = 10;
     var emailUtilizador = '';
     var docRef = null;
@@ -497,7 +603,7 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
                 card.style.opacity = '0';
                 setTimeout(function () {
                     card.style.display = 'none';
-                    if (userDataCache) userDataCache.desafioYoutubeCompleto = true;
+                    if (userDataCache) userDataCache.desafioYoutubeAtCanal2026 = true;
                     carregarDesafiosProgramados();
                 }, 400);
             }
@@ -523,13 +629,70 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
     }
 
     function abrirCanalYoutube() {
-        alert('Canal cancelado no YouTube. Este desafio está indisponível.');
-        return;
+        if (jaFezYoutube) return;
+        abriuCanal = true;
+        window.open(YOUTUBE_URL, '_blank');
+        var btnC = document.getElementById('btn-confirmar-yt');
+        if (btnC) btnC.classList.add('show');
+        var av = document.getElementById('yt-aviso');
+        if (av) av.textContent = 'Depois de te inscreveres no canal, volta aqui e toca em «Já segui — receber +10 pontos».';
     }
 
     async function confirmarInscricao() {
-        alert('Canal cancelado no YouTube. Este desafio não dá pontos.');
-        return;
+        if (jaFezYoutube) return;
+        if (!abriuCanal) {
+            alert('Primeiro toca em «Seguir o canal» para abrir o YouTube.');
+            return;
+        }
+        var email = (localStorage.getItem('emailUtilizador') || emailUtilizador || '').trim();
+        if (!email || email === '—') {
+            alert('Faz login para receber os pontos.');
+            window.location.href = 'criar-conta.html';
+            return;
+        }
+        var btn = document.getElementById('btn-confirmar-yt');
+        if (btn) { btn.disabled = true; btn.textContent = 'A guardar...'; }
+        try {
+            if (!docRef) {
+                var snap = await db.collection('usuarios').where('email', '==', email).limit(1).get();
+                if (snap.empty) {
+                    snap = await db.collection('usuarios').where('email', '==', email.toLowerCase()).limit(1).get();
+                }
+                if (snap.empty) throw new Error('Conta não encontrada');
+                docRef = snap.docs[0].ref;
+                userDataCache = snap.docs[0].data() || {};
+            }
+            if (userDataCache && userDataCache.desafioYoutubeAtCanal2026 === true) {
+                jaFezYoutube = true;
+                mostrarEstadoFeito();
+                return;
+            }
+            var ptsAntes = Number((userDataCache && userDataCache.pontos) || localStorage.getItem('pontosUtilizador') || 0);
+            var ptsDepois = ptsAntes + PONTOS_YT;
+            await docRef.update({
+                pontos: ptsDepois,
+                desafioYoutubeAtCanal2026: true,
+                desafioYoutubeEm: new Date().toISOString(),
+                ultimaAtualizacao: new Date().toISOString()
+            });
+            try {
+                if (typeof DM_histPontos === 'function') {
+                    await DM_histPontos(db, email, PONTOS_YT, 'desafio', 'YouTube: seguir canal +' + PONTOS_YT + ' pts');
+                }
+            } catch (eH) {}
+            if (userDataCache && userDataCache.indicadoPor) {
+                try { await creditarBonusMarcoIndicacao(userDataCache.indicadoPor, ptsAntes, ptsDepois); } catch (eM) {}
+            }
+            jaFezYoutube = true;
+            atualizarPontosUI(ptsDepois);
+            mostrarEstadoFeito();
+        } catch (e) {
+            alert('Erro: ' + (e.message || e));
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-check"></i> Já segui — receber +10 pontos';
+            }
+        }
     }
 
 
@@ -652,35 +815,9 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
     }
 
     function atualizarMsgDesafiosVazio(adicionadas) {
+        // Nunca mostrar "desafios indisponíveis" — CPX/Offerwall e YouTube (se pendente) ficam sempre
         var msg = document.getElementById('msg-desafios-vazio');
-        var txt = document.getElementById('msg-desafios-vazio-texto');
-        if (!msg) return;
-
-        var ytVisivel = false;
-        var cardYt = document.getElementById('card-youtube');
-        if (cardYt && cardYt.style.display !== 'none' && !jaFezYoutube) {
-            ytVisivel = true;
-        }
-
-        // Conta cartões programados ainda no DOM (não só os acabados de adicionar)
-        var zona = document.getElementById('lista-desafios-prog');
-        var progVisiveis = 0;
-        if (zona) {
-            zona.querySelectorAll('.cartao-yt').forEach(function (c) {
-                if (c.style.display !== 'none' && c.style.opacity !== '0') progVisiveis++;
-            });
-        }
-        var total = (ytVisivel ? 1 : 0) + progVisiveis;
-
-        if (total === 0) {
-            msg.style.display = 'block';
-            if (txt) {
-                txt.innerHTML = 'Concluiu os desafios disponíveis por agora.<br>' +
-                    'Aguarde a aparição de novos desafios.';
-            }
-        } else {
-            msg.style.display = 'none';
-        }
+        if (msg) msg.style.display = 'none';
     }
 
     function abrirDesafioLink(id, link) {
@@ -966,10 +1103,26 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
                     } else if (u.pontos != null) {
                         atualizarPontosUI(u.pontos);
                     }
-                    if (u.desafioYoutubeCompleto === true) {
+                    if (u.desafioYoutubeAtCanal2026 === true) {
                         jaFezYoutube = true;
                         var cardYt = document.getElementById('card-youtube');
                         if (cardYt) cardYt.style.display = 'none';
+                    } else {
+                        // Canal novo: mostra sempre até o utilizador concluir (não usa flags antigas)
+                        jaFezYoutube = false;
+                        var cardYt2 = document.getElementById('card-youtube');
+                        if (cardYt2) {
+                            cardYt2.style.display = 'block';
+                            cardYt2.style.opacity = '1';
+                            var btnA = document.getElementById('btn-abrir-yt');
+                            if (btnA) btnA.style.display = '';
+                            var btnC = document.getElementById('btn-confirmar-yt');
+                            if (btnC) { btnC.classList.remove('show'); btnC.disabled = false; }
+                            var btnF = document.getElementById('btn-feito-yt');
+                            if (btnF) btnF.classList.remove('show');
+                            var av = document.getElementById('yt-aviso');
+                            if (av) av.innerHTML = '1) Toca em <strong>Seguir o canal</strong> · 2) Inscreve-te no YouTube · 3) Volta e confirma para receber <strong>+10 pontos</strong>.';
+                        }
                     }
                     // alertaInvestigacao: só na roleta (não no Início)
                 }
@@ -1349,6 +1502,70 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
   document.addEventListener('visibilitychange', function () {
     if (!document.hidden) setTimeout(actualizar, 300);
   });
+})();
+</script>
+
+
+<script>
+/* Cliques CPX / Offerwall — permanente nos desafios */
+(function () {
+  function emailUser() {
+    try {
+      return (localStorage.getItem('emailUtilizador') || localStorage.getItem('email') || '').trim();
+    } catch (e) { return ''; }
+  }
+  function nomeUser() {
+    try {
+      return (localStorage.getItem('nomeUtilizador') || localStorage.getItem('nome') || '').trim();
+    } catch (e) { return ''; }
+  }
+  function registar(origem) {
+    try {
+      var email = emailUser();
+      if (!email || email.indexOf('@') === -1) return;
+      if (typeof firebase === 'undefined' || !window.db) return;
+      var agora = new Date();
+      window.db.collection('ofertasCliques').add({
+        email: email.toLowerCase(),
+        nome: nomeUser() || '',
+        origem: origem,
+        dia: agora.toISOString().slice(0, 10),
+        hora: agora.toISOString().slice(11, 16),
+        em: agora.toISOString(),
+        pagina: 'desafios'
+      }).catch(function () {});
+    } catch (e) {}
+  }
+  function bind() {
+    var cpx = document.getElementById('card-cpx-perm');
+    if (cpx) {
+      cpx.addEventListener('click', function (e) {
+        var em = emailUser();
+        if (!em || em.indexOf('@') === -1) {
+          e.preventDefault();
+          window.location.href = 'criar-conta.html';
+          return;
+        }
+        registar('cpx');
+      });
+    }
+    var ow = document.getElementById('card-offerwall-perm');
+    if (ow) {
+      ow.addEventListener('click', function (e) {
+        e.preventDefault();
+        var em = emailUser();
+        if (!em || em.indexOf('@') === -1) {
+          window.location.href = 'criar-conta.html';
+          return;
+        }
+        registar('offerwall');
+        var link = 'https://offerwall.me/ptp/6a7b75baf626f717ba554f0f?user_id=' + encodeURIComponent(em);
+        window.open(link, '_blank');
+      });
+    }
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bind);
+  else bind();
 })();
 </script>
 
