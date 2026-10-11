@@ -406,35 +406,43 @@
     }
 
 
-    /* Anúncios em sequência ao entrar */
+    /* Anúncios: só o vídeo, ecrã limpo */
     .anuncio-full{
       position:fixed;inset:0;z-index:10000000;
-      background:rgba(4,6,12,.97);display:flex;flex-direction:column;align-items:center;justify-content:center;
-      padding:12px;overflow-y:auto;
+      background:#000;display:flex;align-items:center;justify-content:center;
+      padding:0;margin:0;overflow:hidden;
       opacity:0;visibility:hidden;pointer-events:none;transition:opacity .25s;
     }
     .anuncio-full.show{opacity:1;visibility:visible;pointer-events:auto}
     .anuncio-full .box{
-      width:100%;max-width:440px;border-radius:20px;overflow:hidden;
-      background:linear-gradient(160deg,#1a2030,#0e121a);
-      border:1px solid rgba(168,85,247,.45);
-      box-shadow:0 0 40px rgba(168,85,247,.35);
+      width:100%;height:100%;max-width:none;border-radius:0;overflow:hidden;
+      background:#000;border:none;box-shadow:none;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      position:relative;
     }
-    .anuncio-full .at{text-align:center;padding:14px 12px 8px}
-    .anuncio-full .at .tag{
-      display:inline-block;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
-      color:#04140a;background:linear-gradient(90deg,#FFC94D,#22FF99);padding:4px 12px;border-radius:99px;margin-bottom:8px;
+    .anuncio-full .at,.anuncio-full .st{display:none!important}
+    .anuncio-full .vw{
+      position:relative;width:100%;height:100%;padding-bottom:0;background:#000;margin:0;
     }
-    .anuncio-full .at h3{font-size:15px;color:#fff;margin-bottom:4px;font-family:'Sora',sans-serif}
-    .anuncio-full .at p{font-size:12px;color:#8E9BB8}
-    .anuncio-full .vw{position:relative;width:100%;padding-bottom:56.25%;background:#000}
+    .anuncio-full .vw.vw-short{
+      width:100%;max-width:100vw;
+      height:100%;max-height:100vh;
+      aspect-ratio:auto;
+      border-radius:0;overflow:hidden;box-shadow:none;
+    }
+    .anuncio-full .vw.vw-normal{
+      width:100%;max-width:100vw;height:auto;max-height:100vh;
+      aspect-ratio:16/9;
+    }
     .anuncio-full .vw iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
-    .anuncio-full .st{text-align:center;padding:10px;font-size:13px;color:#22FF99;font-weight:600;min-height:40px}
-    .anuncio-full .acoes{padding:0 12px 14px;display:flex;flex-direction:column;gap:8px}
+    .anuncio-full .acoes{
+      position:absolute;left:0;right:0;bottom:18px;z-index:5;
+      padding:0 16px;display:flex;justify-content:center;pointer-events:none;
+    }
     .anuncio-full .btn-go{
-      display:none;width:100%;border:none;border-radius:12px;padding:14px;font-weight:800;
+      display:none;pointer-events:auto;width:auto;min-width:200px;border:none;border-radius:14px;padding:14px 22px;font-weight:800;
       font-size:14px;cursor:pointer;color:#fff;background:linear-gradient(90deg,#a855f7,#3b9eff);
-      box-shadow:0 0 24px rgba(168,85,247,.45);
+      box-shadow:0 0 24px rgba(168,85,247,.5);
     }
     .anuncio-full .btn-go.show{display:block!important}
 
@@ -956,6 +964,14 @@
     }
 
     if (!box) return;
+    var outer = box.closest('.box');
+    if (item.short) {
+      box.classList.add('vw-short');
+      box.classList.remove('vw-normal');
+    } else {
+      box.classList.remove('vw-short');
+      box.classList.add('vw-normal');
+    }
     box.innerHTML = '';
     var iframe = document.createElement('iframe');
     iframe.id = 'yt-tuavez-iframe';
@@ -963,7 +979,7 @@
     iframe.setAttribute('allowfullscreen', 'true');
     iframe.setAttribute('playsinline', 'true');
     iframe.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;border:0;background:#000';
-    // Shorts e vídeos normais usam o mesmo embed
+    // Short: formato vertical 9:16 | vídeo normal: 16:9
     iframe.src = 'https://www.youtube.com/embed/' + item.id +
       '?autoplay=1&playsinline=1&rel=0&modestbranding=1&controls=1&enablejsapi=1&origin=' +
       encodeURIComponent(window.location.origin || '');
