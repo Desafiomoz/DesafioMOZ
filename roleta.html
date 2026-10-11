@@ -754,16 +754,16 @@ let userRef = null;
 const PREMIOS = [
   {label:"1000 PTS", tipo:"pontos", valor:1000, peso:1,   cor:0xFFD24D, emoji:"👑"}, // ~0,05%
   {label:"500 PTS",  tipo:"pontos", valor:500,  peso:1,   cor:0x22FF99, emoji:"🌟"}, // ~0,05%
-  {label:"10 MT",     tipo:"mt",     valor:10,   peso:2,   cor:0xFF7A45, emoji:"💵"}, // ~0,1%
-  {label:"1 MT",      tipo:"mt",     valor:1,    peso:100, cor:0x4FC3F7, emoji:"💸"}, // ~5%
-  {label:"5 MT",      tipo:"mt",     valor:5,    peso:12,  cor:0xFFD24D, emoji:"💰"}, // ~0,6%
+  {label:"10 MT",     tipo:"mt",     valor:10,   peso:0,   cor:0xFF7A45, emoji:"💵"}, // bloqueado fora da garantia
+  {label:"1 MT",      tipo:"mt",     valor:1,    peso:15,  cor:0x4FC3F7, emoji:"💸"}, // raro fora da garantia
+  {label:"5 MT",      tipo:"mt",     valor:5,    peso:0,   cor:0xFFD24D, emoji:"💰"}, // bloqueado fora da garantia
   {label:"100 PTS",  tipo:"pontos", valor:100,  peso:3,   cor:0x22FF99, emoji:"✨"}, // ~0,15%
   {label:"+2 GIROS",  tipo:"giros",  valor:2,    peso:90,  cor:0xB388FF, emoji:"🎡"}, // ~4,5%
   {label:"BOA SORTE", tipo:"nada",   valor:0,    peso:800, cor:0x3A4250, emoji:"🍀"}, // ~40%
   {label:"+6 GIROS",  tipo:"giros",  valor:6,    peso:2,   cor:0xB388FF, emoji:"🎡"}, // ~0,1% muito difícil
   {label:"QUASE!",    tipo:"nada",   valor:0,    peso:800, cor:0x3A4250, emoji:"😅"}, // ~40%
   {label:"20 PTS",   tipo:"pontos", valor:20,   peso:70,  cor:0x22FF99, emoji:"✨"}, // ~3,5%
-  {label:"50 MT",     tipo:"mt",     valor:50,   peso:1,   cor:0xFFD24D, emoji:"🏆"}  // ~0,05%
+  {label:"50 MT",     tipo:"mt",     valor:50,   peso:0,   cor:0xFFD24D, emoji:"🏆"}  // bloqueado fora da garantia
 ];
 const N = PREMIOS.length;
 const ANGULO_FATIA = (Math.PI*2)/N;
@@ -823,7 +823,7 @@ const ANCORAS_PONTOS = [[5,3],[10,8],[24,18]];
 const ANCORAS_MT     = [[2,15],[5,35],[10,80]];
 
 /* ---------- Estado do jogador (pontos = conta Desafio MOZ) ---------- */
-let estado = { pontos: 0, mt: 0, giros: 0, historico: [], ultimoGiroGratis: null, girosGratisRestantes: 0, garantias: [], totalGirosFeitos: 0, girosPorDia: {}, ultimoGiroAt: null, ganhos: 0, perdas: 0, pontosGanhos: 0, mtGanhos: 0, contagemPremios: {}, girosDificeis: 0, girosPerdedores: 0, origemPontos: 0, origemMetical: 0, origemGratis: 0, origemPremio: 0 };
+let estado = { pontos: 0, mt: 0, giros: 0, historico: [], ultimoGiroGratis: null, girosGratisRestantes: 0, garantias: [], totalGirosFeitos: 0, girosPorDia: {}, ultimoGiroAt: null, ganhos: 0, perdas: 0, pontosGanhos: 0, mtGanhos: 0, contagemPremios: {}, girosDificeis: 0, girosPerdedores: 0, origemPontos: 0, origemMetical: 0, origemGratis: 0, origemPremio: 0, mtOrcamentoRestante: 0 };
 
 function carregarEstadoLocal(){
   try {
@@ -845,6 +845,7 @@ function carregarEstadoLocal(){
       if(o.contagemPremios && typeof o.contagemPremios === 'object') estado.contagemPremios = o.contagemPremios;
       if(o.girosDificeis != null) estado.girosDificeis = Number(o.girosDificeis) || 0;
       if(o.girosPerdedores != null) estado.girosPerdedores = Number(o.girosPerdedores) || 0;
+      if(o.mtOrcamentoRestante != null) estado.mtOrcamentoRestante = Number(o.mtOrcamentoRestante) || 0;
     }
   } catch(e){}
 }
@@ -862,6 +863,7 @@ function guardarEstadoLocal(){
       historico: estado.historico || [],
       ultimoGiroGratis: estado.ultimoGiroGratis || null,
       girosGratisRestantes: Number(estado.girosGratisRestantes) || 0,
+      mtOrcamentoRestante: Number(estado.mtOrcamentoRestante) || 0,
       garantias: estado.garantias || [],
       totalGirosFeitos: estado.totalGirosFeitos || 0,
       girosPorDia: estado.girosPorDia || {},
@@ -905,6 +907,7 @@ async function guardarEstado(){
       roletaGiros: Number(estado.giros) || 0,
       roletaUltimoGiroGratis: estado.ultimoGiroGratis || null,
       roletaGirosGratisRestantes: Number(estado.girosGratisRestantes) || 0,
+      roletaMtOrcamento: Number(estado.mtOrcamentoRestante) || 0,
       roletaTotalGiros: Number(estado.totalGirosFeitos) || 0,
       roletaGirosPorDia: estado.girosPorDia || {},
       roletaUltimoGiroAt: estado.ultimoGiroAt || null,
@@ -1004,6 +1007,7 @@ async function carregarContaFirebase(){
     }
     if(d.roletaUltimoGiroGratis) estado.ultimoGiroGratis = d.roletaUltimoGiroGratis;
     if(d.roletaGirosGratisRestantes != null) estado.girosGratisRestantes = Number(d.roletaGirosGratisRestantes) || 0;
+    if(d.roletaMtOrcamento != null) estado.mtOrcamentoRestante = Number(d.roletaMtOrcamento) || 0;
     // Expira grátis de dias anteriores (não acumulam)
     try { expirarGirosGratisAntigos(); } catch(eExp){}
     if(d.roletaTotalGiros != null) estado.totalGirosFeitos = Number(d.roletaTotalGiros) || 0;
@@ -2025,77 +2029,108 @@ function escolherAlvoMT(valorPago){
 
 function montarListaPremiosMT(valorMT, girosComprados){
   var pago = Math.max(0, Math.floor(Number(valorMT) || 0));
+  var girosComprados = Math.max(1, Math.floor(Number(girosComprados) || 0));
+  // Alvo EXACTO = 2 × pago (maldição pode baixar, nunca subir)
   var alvo = escolherAlvoMT(pago);
-  // max = exactamente 2× (ou o que a maldição permitir, nunca acima de 2×)
   var maxMT = pago * 2;
   try {
     var mm = estado.roletaMaldicao;
     if(mm && mm.ativo === true){
-      if(mm.modo === 'perder') maxMT = 0;
-      else if(mm.modo === 'so_pago') maxMT = pago;
-      else if(mm.multiplicadorMax != null) maxMT = Math.min(pago * 2, Math.floor(pago * Number(mm.multiplicadorMax)));
+      if(mm.modo === 'perder'){ alvo = 0; maxMT = 0; }
+      else if(mm.modo === 'so_pago'){ alvo = pago; maxMT = pago; }
+      else if(mm.multiplicadorMax != null){
+        var m = Number(mm.multiplicadorMax);
+        if(m > 2) m = 2;
+        if(m < 0) m = 0;
+        alvo = Math.floor(pago * m);
+        maxMT = alvo;
+      }
     }
   } catch(eMax){}
-  // Nunca ultrapassar o dobro
   if(alvo > maxMT) alvo = maxMT;
+  if(alvo < 0) alvo = 0;
+
   var lista = [];
   var restante = alvo;
-  var alto = pago >= 50;
 
-  var pecas = alto
-    ? [
-        {idx: IDX_50_MT, v: 50},
-        {idx: IDX_10_MT, v: 10},
-        {idx: IDX_5_MT, v: 5},
-        {idx: IDX_100_PTS, v: 12},
-        {idx: IDX_1_MT, v: 1},
-        {idx: IDX_20_PTS, v: 2}
-      ].filter(function(p){ return p.idx >= 0; })
-    : [
-        {idx: IDX_1_MT, v: 1},
-        {idx: IDX_20_PTS, v: 2}
-      ].filter(function(p){ return p.idx >= 0; });
+  // Peças de MT reais (nunca pontos — pontos rebentavam o teto no saldo)
+  // Compras altas: pode sair 50 / 10 / 5 / 1 nos giros
+  // Compras baixas: só 1 MT
+  var pecas;
+  if(pago >= 50){
+    pecas = [
+      {idx: IDX_50_MT, v: 50},
+      {idx: IDX_10_MT, v: 10},
+      {idx: IDX_5_MT, v: 5},
+      {idx: IDX_1_MT, v: 1}
+    ].filter(function(p){ return p.idx >= 0; });
+  } else if(pago >= 10){
+    pecas = [
+      {idx: IDX_10_MT, v: 10},
+      {idx: IDX_5_MT, v: 5},
+      {idx: IDX_1_MT, v: 1}
+    ].filter(function(p){ return p.idx >= 0; });
+  } else if(pago >= 5){
+    pecas = [
+      {idx: IDX_5_MT, v: 5},
+      {idx: IDX_1_MT, v: 1}
+    ].filter(function(p){ return p.idx >= 0; });
+  } else {
+    pecas = [{idx: IDX_1_MT, v: 1}].filter(function(p){ return p.idx >= 0; });
+  }
 
   var guard = 0;
-  while(restante > 0 && lista.length < girosComprados && guard++ < 500){
+  while(restante > 0 && lista.length < girosComprados && guard++ < 800){
     var candidatas = pecas.filter(function(p){ return p.v <= restante; });
     if(!candidatas.length) break;
+    // Preferir peças maiores ~55% das vezes (mais 5/10/50 em compras altas)
     var escolhida = (Math.random() < 0.55) ? candidatas[0] : candidatas[Math.floor(Math.random() * candidatas.length)];
     lista.push(escolhida.idx);
     restante -= escolhida.v;
   }
+  // Completar com 1 MT se ainda faltar valor e houver giros
   while(restante >= 1 && lista.length < girosComprados && IDX_1_MT >= 0){
     lista.push(IDX_1_MT);
     restante -= 1;
   }
 
-  var livres = girosComprados - lista.length;
-  for(var k = 0; k < livres; k++){
+  // Resto dos giros: perder ou +giros (sem MT extra)
+  while(lista.length < girosComprados){
     var u = Math.random();
-    if(u < 0.14 && IDX_6_GIROS >= 0) lista.push(IDX_6_GIROS);
-    else if(u < 0.32 && IDX_2_GIROS >= 0) lista.push(IDX_2_GIROS);
-    else if(u < 0.66) lista.push(IDX_QUASE >= 0 ? IDX_QUASE : 9);
+    if(u < 0.12 && IDX_6_GIROS >= 0) lista.push(IDX_6_GIROS);
+    else if(u < 0.28 && IDX_2_GIROS >= 0) lista.push(IDX_2_GIROS);
+    else if(u < 0.64) lista.push(IDX_QUASE >= 0 ? IDX_QUASE : 9);
     else lista.push(IDX_BOA >= 0 ? IDX_BOA : 7);
   }
-  while(lista.length < girosComprados){
-    lista.push(Math.random() < 0.5 ? (IDX_BOA >= 0 ? IDX_BOA : 7) : (IDX_QUASE >= 0 ? IDX_QUASE : 9));
-  }
   if(lista.length > girosComprados) lista = lista.slice(0, girosComprados);
+
+  // Validação: total MT NUNCA > maxMT (2×)
+  var totalMT = 0;
+  for(var vi = 0; vi < lista.length; vi++) totalMT += valorPremioEmMTReal(lista[vi]);
+  if(totalMT > maxMT){
+    for(var ri = 0; ri < lista.length && totalMT > maxMT; ri++){
+      var v = valorPremioEmMTReal(lista[ri]);
+      if(v > 0){
+        totalMT -= v;
+        lista[ri] = Math.random() < 0.5 ? (IDX_BOA >= 0 ? IDX_BOA : 7) : (IDX_QUASE >= 0 ? IDX_QUASE : 9);
+      }
+    }
+  }
 
   for(var i = lista.length - 1; i > 0; i--){
     var j = Math.floor(Math.random() * (i + 1));
     var tmp = lista[i]; lista[i] = lista[j]; lista[j] = tmp;
   }
-  var baseMTCalc = pago * 2;
-  try {
-    var mb = estado.roletaMaldicao;
-    if(mb && mb.ativo === true){
-      if(mb.modo === 'perder') baseMTCalc = 0;
-      else if(mb.modo === 'so_pago') baseMTCalc = pago;
-      else if(mb.multiplicadorMax != null) baseMTCalc = Math.floor(pago * Number(mb.multiplicadorMax));
-    }
-  } catch(eB){}
-  return { lista: lista, alvoMT: alvo, maxMT: maxMT, baseMT: baseMTCalc };
+  return { lista: lista, alvoMT: alvo, maxMT: maxMT, baseMT: alvo };
+}
+
+function valorPremioEmMTReal(idx){
+  // Só conta prémios tipo MT reais (não pontos convertidos)
+  if(idx === IDX_1_MT) return 1;
+  if(idx === IDX_5_MT) return 5;
+  if(idx === IDX_10_MT) return 10;
+  if(idx === IDX_50_MT) return 50;
+  return 0;
 }
 
 function registarGarantiasMetical(valorMT, girosComprados){
@@ -2110,12 +2145,15 @@ async function creditarGirosMetical(valorMT, giros){
   estado.giros = (Number(estado.giros) || 0) + giros;
   estado.origemMetical = (Number(estado.origemMetical) || 0) + (Number(giros) || 0);
   var plano = registarGarantiasMetical(valorMT, giros);
+  // Orçamento de MT a entregar = no máximo 2× o pago (exactamente o alvo do plano)
+  var orc = (plano && plano.alvoMT != null) ? Number(plano.alvoMT) : (Math.floor(Number(valorMT) || 0) * 2);
+  estado.mtOrcamentoRestante = (Number(estado.mtOrcamentoRestante) || 0) + Math.max(0, orc);
   await guardarEstado();
   atualizarUI();
   var msg = 'Pagamento ok! +' + giros + ' giros.';
   if(plano){
     if((plano.baseMT || 0) <= 0 && (plano.maxMT || 0) <= 0) msg += ' (sem garantia de prémio em MT).';
-    else if(plano.baseMT === plano.maxMT) msg += ' Garantido cerca de ' + plano.baseMT + ' MT.';
+    else if(plano.baseMT === plano.maxMT) msg += ' Garantia exacta: ' + plano.baseMT + ' MT nos giros (2×).';
     else msg += ' Garantido cerca de ' + (plano.baseMT || 0) + ' MT; com sorte até ' + plano.maxMT + ' MT.';
   }
   mostrarToast(msg);
@@ -2248,7 +2286,33 @@ document.getElementById('btn-girar').addEventListener('click', async ()=>{
 
   var ptsRoletaGanho = 0;
   if(premio.tipo==='pontos'){ estado.pontos += premio.valor; ptsRoletaGanho = premio.valor; }
-  if(premio.tipo==='mt'){ estado.pontos += premio.valor * PTS_POR_MT; ptsRoletaGanho = premio.valor * PTS_POR_MT; }
+  if(premio.tipo==='mt'){
+    var orcRest = Number(estado.mtOrcamentoRestante) || 0;
+    var mtVal = Number(premio.valor) || 0;
+    // Se há orçamento de compra em MT: nunca entregar mais do que o dobro restante
+    if(orcRest > 0){
+      if(mtVal > orcRest){
+        mtVal = orcRest; // corta para o que falta (ex.: 5→1 se só resta 1)
+      }
+      estado.mtOrcamentoRestante = Math.max(0, orcRest - mtVal);
+      if(mtVal <= 0){
+        // sem orçamento → trata como perda
+        premio = { label:'QUASE!', tipo:'nada', valor:0, emoji:'😅' };
+      } else {
+        estado.pontos += mtVal * PTS_POR_MT;
+        ptsRoletaGanho = mtVal * PTS_POR_MT;
+        premio = { label: mtVal + ' MT', tipo:'mt', valor: mtVal, emoji: premio.emoji || '💸' };
+      }
+    } else {
+      // Sem orçamento de compra: só permite 1 MT (giros grátis); bloqueia 5/10/50
+      if(mtVal > 1){
+        premio = { label:'QUASE!', tipo:'nada', valor:0, emoji:'😅' };
+      } else {
+        estado.pontos += mtVal * PTS_POR_MT;
+        ptsRoletaGanho = mtVal * PTS_POR_MT;
+      }
+    }
+  }
   if(premio.tipo==='giros'){
     estado.giros += premio.valor;
     estado.origemPremio = (Number(estado.origemPremio) || 0) + (Number(premio.valor) || 0);
