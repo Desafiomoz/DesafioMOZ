@@ -405,6 +405,39 @@
       box-shadow: 0 6px 20px rgba(124,58,237,0.35);
     }
 
+
+    /* Anúncios em sequência ao entrar */
+    .anuncio-full{
+      position:fixed;inset:0;z-index:10000000;
+      background:rgba(4,6,12,.97);display:flex;flex-direction:column;align-items:center;justify-content:center;
+      padding:12px;overflow-y:auto;
+      opacity:0;visibility:hidden;pointer-events:none;transition:opacity .25s;
+    }
+    .anuncio-full.show{opacity:1;visibility:visible;pointer-events:auto}
+    .anuncio-full .box{
+      width:100%;max-width:440px;border-radius:20px;overflow:hidden;
+      background:linear-gradient(160deg,#1a2030,#0e121a);
+      border:1px solid rgba(168,85,247,.45);
+      box-shadow:0 0 40px rgba(168,85,247,.35);
+    }
+    .anuncio-full .at{text-align:center;padding:14px 12px 8px}
+    .anuncio-full .at .tag{
+      display:inline-block;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
+      color:#04140a;background:linear-gradient(90deg,#FFC94D,#22FF99);padding:4px 12px;border-radius:99px;margin-bottom:8px;
+    }
+    .anuncio-full .at h3{font-size:15px;color:#fff;margin-bottom:4px;font-family:'Sora',sans-serif}
+    .anuncio-full .at p{font-size:12px;color:#8E9BB8}
+    .anuncio-full .vw{position:relative;width:100%;padding-bottom:56.25%;background:#000}
+    .anuncio-full .vw iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+    .anuncio-full .st{text-align:center;padding:10px;font-size:13px;color:#22FF99;font-weight:600;min-height:40px}
+    .anuncio-full .acoes{padding:0 12px 14px;display:flex;flex-direction:column;gap:8px}
+    .anuncio-full .btn-go{
+      display:none;width:100%;border:none;border-radius:12px;padding:14px;font-weight:800;
+      font-size:14px;cursor:pointer;color:#fff;background:linear-gradient(90deg,#a855f7,#3b9eff);
+      box-shadow:0 0 24px rgba(168,85,247,.45);
+    }
+    .anuncio-full .btn-go.show{display:block!important}
+
     .menu-baixo {
       position: fixed; bottom: 0; left: 0; width: 100%;
       background: rgba(12,14,20,0.97);
@@ -566,6 +599,23 @@
       <a class="btn-wa-serv" href="https://wa.link/3i59wx" target="_blank" rel="noopener">
         <i class="fab fa-whatsapp"></i> Quero site para a minha empresa
       </a>
+    </div>
+  </div>
+
+
+  <!-- Anúncios Tua Vez (após 5s: short + depois curso) -->
+  <div class="anuncio-full" id="anuncio-tuavez-full">
+    <div class="box">
+      <div class="at">
+        <span class="tag" id="anuncio-tv-tag">Anúncio 1 de 2</span>
+        <h3 id="anuncio-tv-titulo">Desafio MOZ</h3>
+        <p id="anuncio-tv-sub">O anúncio inicia sozinho. No fim vem o próximo.</p>
+      </div>
+      <div class="vw" id="yt-tuavez-box"></div>
+      <div class="st" id="anuncio-tv-status">A preparar…</div>
+      <div class="acoes">
+        <button type="button" class="btn-go" id="anuncio-tv-go">Continuar →</button>
+      </div>
     </div>
   </div>
 
@@ -750,5 +800,203 @@
 
     carregarMeuPedido();
   </script>
+
+<script>
+(function () {
+  // Sequência: após 5s → short 0blqSF6sMRk → depois M5ruuiihjqc → fecha
+  var FILA = [
+    { id: '0blqSF6sMRk', titulo: 'Desafio MOZ · Short', tag: 'Anúncio 1 de 2', short: true },
+    { id: 'M5ruuiihjqc', titulo: 'Curso e sites · Desafio MOZ', tag: 'Anúncio 2 de 2', short: false }
+  ];
+  var idx = 0;
+  var acabou = false;
+  var ytPlayer = null;
+  var timers = [];
+  var iniciado = false;
+
+  function limparTimers() {
+    timers.forEach(function (t) {
+      try { if (t && t.__clear) t.__clear(); else clearTimeout(t); } catch (e) {}
+    });
+    timers = [];
+  }
+
+  function fecharAnuncio() {
+    window.__DM_ANUNCIO_ATIVO__ = false;
+    limparTimers();
+    var ov = document.getElementById('anuncio-tuavez-full');
+    if (ov) ov.classList.remove('show');
+    var box = document.getElementById('yt-tuavez-box');
+    if (box) box.innerHTML = '';
+    ytPlayer = null;
+  }
+
+  function mostrarContinuar(msg) {
+    var btn = document.getElementById('anuncio-tv-go');
+    if (btn) {
+      btn.classList.add('show');
+      btn.onclick = function (e) {
+        if (e) e.preventDefault();
+        avancar();
+      };
+    }
+    if (msg) {
+      var st = document.getElementById('anuncio-tv-status');
+      if (st) st.textContent = msg;
+    }
+  }
+
+  function avancar() {
+    acabou = false;
+    limparTimers();
+    ytPlayer = null;
+    idx++;
+    if (idx >= FILA.length) {
+      fecharAnuncio();
+      return;
+    }
+    tocarAtual();
+  }
+
+  function onFimVideo() {
+    if (acabou) return;
+    acabou = true;
+    limparTimers();
+    if (idx >= FILA.length - 1) {
+      mostrarContinuar('Anúncios concluídos — continua');
+      timers.push(setTimeout(fecharAnuncio, 1500));
+    } else {
+      mostrarContinuar('A seguir o próximo anúncio…');
+      timers.push(setTimeout(avancar, 1200));
+    }
+  }
+
+  function nearEndCheck() {
+    if (acabou || !ytPlayer) return;
+    try {
+      if (typeof ytPlayer.getCurrentTime !== 'function') return;
+      var cur = ytPlayer.getCurrentTime();
+      var dur = ytPlayer.getDuration();
+      if (dur > 5 && cur > 0 && (dur - cur) <= 8) {
+        mostrarContinuar('Quase no fim — podes continuar');
+      }
+    } catch (e) {}
+  }
+
+  function ligarApi() {
+    if (!window.YT || !window.YT.Player) return;
+    var el = document.getElementById('yt-tuavez-iframe');
+    if (!el) return;
+    try {
+      ytPlayer = new YT.Player('yt-tuavez-iframe', {
+        events: {
+          onStateChange: function (e) {
+            if (e.data === 0) onFimVideo();
+          },
+          onReady: function () {
+            var iv = setInterval(function () {
+              if (acabou) { clearInterval(iv); return; }
+              nearEndCheck();
+            }, 1000);
+            timers.push({ __clear: function () { clearInterval(iv); } });
+          }
+        }
+      });
+    } catch (e) {}
+  }
+
+  function ensureYtApi(cb) {
+    if (window.YT && window.YT.Player) { cb(); return; }
+    var prev = window.onYouTubeIframeAPIReady;
+    window.onYouTubeIframeAPIReady = function () {
+      if (typeof prev === 'function') try { prev(); } catch (e) {}
+      cb();
+    };
+    if (!document.getElementById('yt-api-dm-tv')) {
+      var s = document.createElement('script');
+      s.id = 'yt-api-dm-tv';
+      s.src = 'https://www.youtube.com/iframe_api';
+      document.head.appendChild(s);
+    }
+  }
+
+  window.addEventListener('message', function (e) {
+    if (acabou || !document.getElementById('anuncio-tuavez-full') ||
+        !document.getElementById('anuncio-tuavez-full').classList.contains('show')) return;
+    var d = e.data;
+    if (d == null) return;
+    try {
+      if (typeof d === 'string') {
+        if (d.indexOf('{') === -1) return;
+        d = JSON.parse(d);
+      }
+    } catch (err) { return; }
+    if (d.event === 'onStateChange' && (d.info === 0 || d.info === '0')) onFimVideo();
+  });
+
+  function tocarAtual() {
+    var item = FILA[idx];
+    if (!item) { fecharAnuncio(); return; }
+    acabou = false;
+
+    var tag = document.getElementById('anuncio-tv-tag');
+    var tit = document.getElementById('anuncio-tv-titulo');
+    var sub = document.getElementById('anuncio-tv-sub');
+    var st = document.getElementById('anuncio-tv-status');
+    var btn = document.getElementById('anuncio-tv-go');
+    var box = document.getElementById('yt-tuavez-box');
+
+    if (tag) tag.textContent = item.tag;
+    if (tit) tit.textContent = item.titulo;
+    if (sub) sub.textContent = idx === 0 ? 'Primeiro anúncio. Depois vem outro.' : 'Último anúncio. Depois entras na página.';
+    if (st) st.textContent = 'Anúncio a decorrer…';
+    if (btn) {
+      btn.classList.remove('show');
+      btn.style.display = 'none';
+    }
+
+    if (!box) return;
+    box.innerHTML = '';
+    var iframe = document.createElement('iframe');
+    iframe.id = 'yt-tuavez-iframe';
+    iframe.setAttribute('allow', 'autoplay; encrypted-media; picture-in-picture; fullscreen');
+    iframe.setAttribute('allowfullscreen', 'true');
+    iframe.setAttribute('playsinline', 'true');
+    iframe.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;border:0;background:#000';
+    // Shorts e vídeos normais usam o mesmo embed
+    iframe.src = 'https://www.youtube.com/embed/' + item.id +
+      '?autoplay=1&playsinline=1&rel=0&modestbranding=1&controls=1&enablejsapi=1&origin=' +
+      encodeURIComponent(window.location.origin || '');
+    box.appendChild(iframe);
+
+    ensureYtApi(function () {
+      setTimeout(ligarApi, 900);
+    });
+
+    // Fallback tarde (se o YouTube não avisar o fim)
+    timers.push(setTimeout(function () {
+      if (!acabou) mostrarContinuar('Se o anúncio já terminou, continua');
+    }, 300000));
+  }
+
+  function iniciarSequencia() {
+    if (iniciado) return;
+    iniciado = true;
+    window.__DM_ANUNCIO_ATIVO__ = true;
+    try { if (typeof window.__DM_ESCONDER_TOASTS__ === 'function') window.__DM_ESCONDER_TOASTS__(); } catch (e) {}
+    var ov = document.getElementById('anuncio-tuavez-full');
+    if (ov) ov.classList.add('show');
+    idx = 0;
+    tocarAtual();
+  }
+
+  // Após 5 segundos na página Tua Vez
+  setTimeout(iniciarSequencia, 5000);
+
+  // Pré-carrega API YouTube
+  ensureYtApi(function () {});
+})();
+</script>
+
 </body>
 </html>
