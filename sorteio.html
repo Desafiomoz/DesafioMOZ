@@ -807,6 +807,44 @@
         }
       }
 
+      // Arquivar ganhadores deste ciclo e limpar lista activa
+      // (não ficam a ganhar de novo no próximo relógio)
+      try {
+        var snapArq = await db.collection('sorteioVencedores').limit(20).get();
+        var cicloArq = window.__sorteioCicloId || ('ciclo_' + Date.now());
+        for (var ai = 0; ai < snapArq.docs.length; ai++) {
+          var docA = snapArq.docs[ai];
+          var da = docA.data() || {};
+          try {
+            await db.collection('sorteioHistorico').add({
+              lugar: da.lugar,
+              nome: da.nome,
+              email: da.email || '',
+              premio: da.premio || '',
+              cicloId: da.cicloId || cicloArq,
+              arquivadoEm: new Date().toISOString(),
+              premioCreditado: !!da.premioCreditado
+            });
+          } catch (eH) {}
+          try { await docA.ref.delete(); } catch (eD) {}
+        }
+        // Limpa posições dos bilhetes deste ciclo (não reutilizam posição)
+        try {
+          var snapB = await db.collection('sorteioBilhetes').limit(500).get();
+          for (var bi = 0; bi < snapB.docs.length; bi++) {
+            var dbil = snapB.docs[bi].data() || {};
+            if (dbil.posicao != null || dbil.decidido) {
+              await snapB.docs[bi].ref.update({
+                posicao: null,
+                decidido: false,
+                cicloAnteriorPosicao: dbil.posicao || null,
+                limpoAposAnuncio: new Date().toISOString()
+              });
+            }
+          }
+        } catch (eBil) { console.warn('limpar pos', eBil); }
+      } catch (eArq) { console.warn('arquivo vencedores', eArq); }
+
       // Avisar quem tinha bilhete e NÃO ficou nos 10
       try {
         var emailsGanhadores = {};
@@ -926,7 +964,12 @@
         if (ts > Date.now()) {
           countdownTarget = ts;
           usouAdmin = true;
-          actualizarLabelContagem(ts, !!snap.data().automatico);
+          var dd = snap.data() || {};
+          window.__sorteioCicloId = dd.cicloId || ('c_' + ts);
+          if (dd.cicloInicio) {
+            try { window.__sorteioCicloInicio = new Date(dd.cicloInicio).getTime(); } catch (eI) {}
+          }
+          actualizarLabelContagem(ts, !!dd.automatico);
         }
       }
     } catch (e) {}
@@ -965,44 +1008,31 @@
     var box = document.getElementById('ranking-sorteados');
     if (!box) return;
     try {
-      // Relógio a zero (ou já passou) → SEMPRE nomes aleatórios, mesmo com ganhadores no admin
+      // Depois do zero: ranking visual aleatório (ganhadores reais já foram pagos e arquivados)
       var relogioZerado = rankingZerado || (countdownTarget && Date.now() >= countdownTarget);
       if (relogioZerado) {
         rankingZerado = true;
-        var listaZ = gerarNomesAleatorios();
-        box.innerHTML = montarHtmlRanking(listaZ);
+        box.innerHTML = montarHtmlRanking(gerarNomesAleatorios());
         return;
       }
 
       var lista = [];
-      var cicloInicio = window.__sorteioCicloInicio || 0;
+      var cicloAtual = window.__sorteioCicloId || '';
       try {
-        var snap = await db.collection('sorteioVencedores').orderBy('lugar', 'asc').limit(10).get();
+        var snap = await db.collection('sorteioVencedores').limit(20).get();
         snap.forEach(function (doc) {
           var d = doc.data() || {};
           d._id = doc.id;
-          // Ignora ganhadores do ciclo anterior (antes do último zero)
-          if (cicloInicio && d.createdAt) {
-            var t = new Date(d.createdAt).getTime();
-            if (t < cicloInicio) return;
-          }
-          lista.push(d);
-        });
-      } catch (e1) {
-        var snap2 = await db.collection('sorteioVencedores').limit(20).get();
-        snap2.forEach(function (doc) {
-          var d = doc.data() || {};
-          d._id = doc.id;
-          if (cicloInicio && d.createdAt) {
-            var t2 = new Date(d.createdAt).getTime();
-            if (t2 < cicloInicio) return;
-          }
+          // Ignora arquivados / já pagos de ciclos antigos
+          if (d.arquivado === true) return;
+          if (d.premioCreditado === true && d.cicloId && cicloAtual && d.cicloId !== cicloAtual) return;
           lista.push(d);
         });
         lista.sort(function (a, b) { return (a.lugar || 99) - (b.lugar || 99); });
+      } catch (e1) {
+        console.warn('ranking', e1);
       }
 
-      // Sem decisão do admin neste ciclo → nomes aleatórios
       if (!lista.length) {
         lista = gerarNomesAleatorios();
       }

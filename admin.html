@@ -11027,19 +11027,50 @@ async function bloquearContaEmail() {
       var v = inp ? parseInt(inp.value, 10) : NaN;
       if (isNaN(v) || v < 1 || v > 10) return alert('Posicao entre 1 e 10.');
       try {
+        // Carrega bilhete para nome/email
+        var bilheteSnap = await db.collection('sorteioBilhetes').doc(id).get();
+        var bil = bilheteSnap.exists ? (bilheteSnap.data() || {}) : {};
         await db.collection('sorteioBilhetes').doc(id).update({ posicao: v, decidido: true, decididoEm: new Date().toISOString() });
-        // Premio so e creditado quando o relogio do anuncio chega a zero (pagina sorteio)
-        if (typeof mostrarAviso === 'function') mostrarAviso('Posicao ' + v + ' guardada. Premio sera creditado quando a contagem chegar a zero.');
-        else alert('Posicao ' + v + ' guardada. Premio no zero do relogio.');
+        // Publica já no ranking do CICLO ACTUAL (só este tempo — prémio no zero do relógio)
+        var cicloId = 'atual';
+        try {
+          var cfg = await db.collection('sorteioConfig').doc('proximo').get();
+          if (cfg.exists && cfg.data().cicloId) cicloId = cfg.data().cicloId;
+          else if (cfg.exists && cfg.data().quando) cicloId = 'c_' + new Date(cfg.data().quando).getTime();
+        } catch (eC) {}
+        var nomeV = bil.nome || (String(bil.email || '').split('@')[0]) || 'Utilizador';
+        await db.collection('sorteioVencedores').doc('lugar_' + v).set({
+          lugar: v,
+          nome: nomeV,
+          email: String(bil.email || '').toLowerCase(),
+          premio: (typeof PREMIOS_SORTEIO !== 'undefined' && PREMIOS_SORTEIO[v]) ? PREMIOS_SORTEIO[v] : '',
+          forca: bil.forca || 0,
+          valorMt: bil.valorMt || 0,
+          txid: bil.txid || '',
+          bilheteId: id,
+          cicloId: cicloId,
+          createdAt: new Date().toISOString(),
+          premioCreditado: false,
+          manual: false
+        }, { merge: true });
+        if (typeof mostrarAviso === 'function') mostrarAviso('Posição ' + v + ' → ranking do app. Prémio só quando o relógio zerar (só neste ciclo).');
+        else alert('Posição ' + v + ' no ranking. Prémio no zero do relógio.');
         carregarSorteioBilhetes();
+        try { carregarRankingAdminSorteio(); } catch (eR) {}
       } catch (e) {
         alert('Erro: ' + (e.message || e));
       }
     }
 
     async function publicarRankingSorteio() {
-      if (!confirm('Publicar ranking no app?\n\nOs premios so serao creditados nas carteiras quando o relogio do anuncio chegar a zero.')) return;
+      if (!confirm('Publicar ranking no app?\n\nOs premios so serao creditados nas carteiras quando o relogio do anuncio chegar a zero.\nSó vale para ESTE ciclo (quando zerar, saem da lista).')) return;
       try {
+        try {
+          var cfgP = await db.collection('sorteioConfig').doc('proximo').get();
+          if (cfgP.exists && cfgP.data().cicloId) window.__adminSorteioCicloId = cfgP.data().cicloId;
+          else if (cfgP.exists && cfgP.data().quando) window.__adminSorteioCicloId = 'c_' + new Date(cfgP.data().quando).getTime();
+          else window.__adminSorteioCicloId = 'c_' + Date.now();
+        } catch (eCfg) { window.__adminSorteioCicloId = 'c_' + Date.now(); }
         var snap = await db.collection('sorteioBilhetes').limit(500).get();
         var porLugar = {};
         snap.forEach(function (doc) {
@@ -11050,12 +11081,15 @@ async function bloquearContaEmail() {
               porLugar[p] = {
                 lugar: p,
                 nome: d.nome || (d.email || '').split('@')[0] || 'Utilizador',
-                email: d.email || '',
+                email: String(d.email || '').toLowerCase(),
                 premio: PREMIOS_SORTEIO[p] || '',
                 forca: d.forca || 0,
                 valorMt: d.valorMt || 0,
                 txid: d.txid || '',
-                createdAt: new Date().toISOString()
+                bilheteId: doc.id,
+                cicloId: (window.__adminSorteioCicloId || 'atual'),
+                createdAt: new Date().toISOString(),
+                premioCreditado: false
               };
             }
           }
@@ -11087,12 +11121,20 @@ async function bloquearContaEmail() {
       try {
         // Se o "nome" for um email, usa como email
         if (!emailManual && nome.indexOf('@') !== -1) emailManual = nome.toLowerCase();
+        var cicloM = 'atual';
+        try {
+          var cfgM = await db.collection('sorteioConfig').doc('proximo').get();
+          if (cfgM.exists && cfgM.data().cicloId) cicloM = cfgM.data().cicloId;
+          else if (cfgM.exists && cfgM.data().quando) cicloM = 'c_' + new Date(cfgM.data().quando).getTime();
+        } catch (eM) {}
         await db.collection('sorteioVencedores').doc('lugar_' + lugar).set({
           lugar: lugar,
           nome: nome,
           email: emailManual || '',
           premio: PREMIOS_SORTEIO[lugar] || '',
           createdAt: new Date().toISOString(),
+          cicloId: cicloM,
+          premioCreditado: false,
           manual: true
         }, { merge: true });
         var msg = nome + ' -> lugar ' + lugar + (emailManual ? ' (' + emailManual + ')' : '');
@@ -11131,14 +11173,15 @@ async function bloquearContaEmail() {
         snap.forEach(function (doc) { var d = doc.data() || {}; d._id = doc.id; lista.push(d); });
         lista.sort(function (a, b) { return (a.lugar || 99) - (b.lugar || 99); });
         if (!lista.length) {
-          tbody.innerHTML = '<tr><td colspan="5" class="vazio">Vazio — app mostra nomes aleatorios.</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="5" class="vazio">Vazio — app mostra nomes aleatórios até escolheres ganhadores.</td></tr>';
           return;
         }
         var html = '';
         lista.forEach(function (d) {
-          html += '<tr><td><b>' + (d.lugar || '—') + '</b></td><td>' + escHtml(d.nome || '—') + '</td>';
+          var pago = d.premioCreditado ? ' <span class="status-tag status-pago">pago</span>' : ' <span class="status-tag status-pendente">só neste ciclo</span>';
+          html += '<tr><td><b>' + (d.lugar || '—') + 'º</b></td><td>' + escHtml(d.nome || '—') + pago + '</td>';
           html += '<td style="color:#FFD700;">' + escHtml(d.premio || '') + '</td><td>' + escHtml(d.email || '—') + '</td>';
-          html += '<td><button type="button" class="btn-vermelho" onclick="apagarVencedorSorteio(\'' + (d._id || '') + '\')">Apagar</button></td></tr>';
+          html += '<td><button type="button" class="btn-vermelho" onclick="apagarVencedorSorteio(\'' + String(d._id || '').replace(/'/g, '') + '\')">Apagar</button></td></tr>';
         });
         tbody.innerHTML = html;
       } catch (e) {
