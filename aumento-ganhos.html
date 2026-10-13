@@ -376,10 +376,19 @@
       }
     }
 
+    function jaTemCheckinBoost() {
+      var d = userData || {};
+      // Qualquer compra antiga (5 MT) ou nova (10 MT) conta — não pode pagar de novo
+      if (d.checkinBoostVitalicio === true) return true;
+      if (Number(d.checkinPtsDia) >= 16) return true;
+      if (d.checkinBoostTipo === '16_vitalicio') return true;
+      return false;
+    }
+
     function actualizarEstados() {
       var d = userData || {};
-      // check-in
-      if (d.checkinBoostVitalicio === true && Number(d.checkinPtsDia) >= 16) {
+      // check-in já pago (5 MT antigo ou 10 MT novo) → bloqueado
+      if (jaTemCheckinBoost()) {
         marcarActivo('pkg-checkin-16', true);
       }
     }
@@ -388,6 +397,11 @@
       if (!email) {
         alert('Faz login primeiro.');
         window.location.href = 'criar-conta.html';
+        return;
+      }
+      if ((pkg === 'checkin_16_vitalicio' || pkg === 'checkin_vitalicio') && jaTemCheckinBoost()) {
+        alert('Já tens o check-in de 2 MT/dia activo. Não precisas de pagar de novo.');
+        actualizarEstados();
         return;
       }
       pkgActual = pkg;
@@ -421,11 +435,15 @@
       var detalhe = pkg;
 
       if (pkg === 'checkin_16_vitalicio' || pkg === 'checkin_vitalicio') {
+        // Quem já pagou (5 MT ou 10 MT) NÃO pode activar outra vez
+        if (jaTemCheckinBoost()) {
+          throw new Error('Já tens este bónus activo. Cada conta só paga uma vez.');
+        }
         upd.checkinBoostVitalicio = true;
         upd.checkinPtsDia = 16;
         upd.checkinBoostTipo = '16_vitalicio';
         upd.checkinBoostAte = null;
-        detalhe = 'Check-in +16 pts / dia vitalício';
+        detalhe = 'Check-in +2 MT (16 pts) / dia vitalício';
       } else {
         throw new Error('Pacote desconhecido');
       }
