@@ -1474,7 +1474,17 @@ function totalObjetivoNoNivel(n){
 }
 
 const NIVEIS = {
-  1: { jogadas: 18, objetivos: [ {tipo:3, alvo:10}, {tipo:4, alvo:6} ] } // nível fácil, à mão
+  1: { jogadas: 18, objetivos: [ {tipo:3, alvo:10}, {tipo:4, alvo:6} ] }, // nível fácil, à mão
+  // Nível 29: objectivo do círculo mostra 58, mas só se pode recolher 56 → impossível concluir
+  29: {
+    jogadas: 42,
+    objetivos: [
+      { tipo: 6, alvo: 58 },
+      { tipo: 5, alvo: 58 }, // círculo/anel
+      { tipo: 2, alvo: 59 }
+    ],
+    impossivel: { tipo: 5, maxReal: 56 }
+  }
 };
 function configDoNivel(n){
   if(NIVEIS[n]) return NIVEIS[n];
@@ -2018,6 +2028,13 @@ async function resolverCascata(marcados, multiplicador){
   objetivoAtual.forEach(o=>{
     if(contagemTipos[o.tipo]){
       o.atual = Math.min(o.alvo, o.atual + contagemTipos[o.tipo]);
+      // Nível 29: círculo (tipo 5) nunca passa de 56 mesmo com objectivo 58
+      try {
+        var cfgImp = (typeof configDoNivel === 'function') ? configDoNivel(nivelAtual) : null;
+        if(cfgImp && cfgImp.impossivel && o.tipo === cfgImp.impossivel.tipo){
+          o.atual = Math.min(o.atual, Number(cfgImp.impossivel.maxReal) || 56);
+        }
+      } catch(eImp){}
     }
   });
   atualizarObjetivosUI();
