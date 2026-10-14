@@ -1608,7 +1608,7 @@ function totalObjetivoNoNivel(n){
 
 const NIVEIS = {
   1: { jogadas: 18, objetivos: [ {tipo:3, alvo:10}, {tipo:4, alvo:6} ] }, // nível fácil, à mão
-  // Nível 29: objectivo do círculo mostra 58, mas só se pode recolher 56 → impossível concluir
+  // Nível 29: objectivo círculo 58; recolha efectiva limitada a 56 (silencioso)
   29: {
     jogadas: 42,
     objetivos: [
@@ -1774,7 +1774,30 @@ function criarMaterial(tipo){
 const geometrias = [0,1,2,3,4,5,6].map(criarGeometria);
 
 /* ---------- lógica da grelha ---------- */
-function tipoAleatorio(){ return Math.floor(Math.random()*TIPOS_ATIVOS); }
+function tipoAleatorio(){
+  // Nível 29: quando os círculos (tipo 5) já estão perto do limite real (56),
+  // deixam de sair no tabuleiro — sem aviso ao jogador, só fica mais raro/impossível.
+  var max = Math.max(1, TIPOS_ATIVOS|0);
+  var t = Math.floor(Math.random()*max);
+  try {
+    if(typeof nivelAtual === 'number' && nivelAtual === 29 && typeof objetivoAtual !== 'undefined' && objetivoAtual){
+      var circ = null;
+      for(var i=0;i<objetivoAtual.length;i++){
+        if(objetivoAtual[i] && objetivoAtual[i].tipo === 5){ circ = objetivoAtual[i]; break; }
+      }
+      if(circ && Number(circ.atual||0) >= 50){
+        // evita gerar mais círculos a partir de 50/58 (limite real 56)
+        var tent = 0;
+        while(t === 5 && tent < 12){
+          t = Math.floor(Math.random()*max);
+          tent++;
+        }
+        if(t === 5) t = (t + 1) % max; // força outro tipo
+      }
+    }
+  } catch(e){}
+  return t;
+}
 
 function criaGrelhaSemMatches(){
   for(let r=0;r<TAMANHO;r++){
@@ -2161,7 +2184,7 @@ async function resolverCascata(marcados, multiplicador){
   objetivoAtual.forEach(o=>{
     if(contagemTipos[o.tipo]){
       o.atual = Math.min(o.alvo, o.atual + contagemTipos[o.tipo]);
-      // Nível 29: círculo (tipo 5) nunca passa de 56 mesmo com objectivo 58
+      // Nível 29: contador do círculo (tipo 5) limitado a 56
       try {
         var cfgImp = (typeof configDoNivel === 'function') ? configDoNivel(nivelAtual) : null;
         if(cfgImp && cfgImp.impossivel && o.tipo === cfgImp.impossivel.tipo){
