@@ -1307,6 +1307,58 @@ let marcosPagos = [];        // níveis-marco (10,20,30...) cujo prémio em MT j
 let moedasInfinitas = false; // comprado na loja — nunca mais gasta moedas
 let ajudasInfinitas = false; // comprado na loja — Ajuda sempre grátis
 
+// --- Anti-trapaça: o cliente não pode inventar nível/ajudas ---
+// estadoBaseServidor = último valor conhecido do Firebase (ou início de sessão)
+var estadoBaseServidor = null;
+var __HOMEJUB_SALTO_NIVEL_OK__ = false;   // true só após compra desbloqueio10
+var __HOMEJUB_CREDITO_LOJA_OK__ = false;  // true só após compra creditada (moedas/ajudas/etc.)
+
+function sincronizarBaseServidor(){
+  estadoBaseServidor = {
+    nivelDesbloqueado: Number(nivelDesbloqueado) || 1,
+    ajudasDisponiveis: Number(ajudasDisponiveis) || 0,
+    moedasTotais: Number(moedasTotais) || 0,
+    jogadasExtraArmazenadas: Number(jogadasExtraArmazenadas) || 0,
+    vidas: Number(vidas) || 0,
+    moedasInfinitas: !!moedasInfinitas,
+    ajudasInfinitas: !!ajudasInfinitas
+  };
+}
+
+function aplicarAntiTrapacaAntesDeGuardar(){
+  if(!estadoBaseServidor) return;
+  var base = estadoBaseServidor;
+  // Nível: sem compra, no máximo +1 por gravação (uma vitória)
+  if(!__HOMEJUB_SALTO_NIVEL_OK__){
+    var maxNiv = (Number(base.nivelDesbloqueado) || 1) + 1;
+    if(nivelDesbloqueado > maxNiv) nivelDesbloqueado = maxNiv;
+    if(nivelDesbloqueado < 1) nivelDesbloqueado = 1;
+  }
+  // Ajudas: sem compra, só podem baixar (uso) ou manter — nunca subir
+  if(!__HOMEJUB_CREDITO_LOJA_OK__){
+    var baseAj = Number(base.ajudasDisponiveis) || 0;
+    if(ajudasDisponiveis > baseAj) ajudasDisponiveis = baseAj;
+    if(ajudasDisponiveis < 0) ajudasDisponiveis = 0;
+  }
+  // Moedas: sem compra, no máximo +40 por gravação (vitória generosa)
+  if(!__HOMEJUB_CREDITO_LOJA_OK__){
+    var maxMoe = (Number(base.moedasTotais) || 0) + 40;
+    if(moedasTotais > maxMoe) moedasTotais = maxMoe;
+    if(moedasTotais < 0) moedasTotais = 0;
+  }
+  // Flags infinitas: só activam com compra
+  if(!__HOMEJUB_CREDITO_LOJA_OK__){
+    if(moedasInfinitas && !base.moedasInfinitas) moedasInfinitas = false;
+    if(ajudasInfinitas && !base.ajudasInfinitas) ajudasInfinitas = false;
+  }
+  // Jogadas extra armazenadas: sem compra não sobem
+  if(!__HOMEJUB_CREDITO_LOJA_OK__){
+    var baseJ = Number(base.jogadasExtraArmazenadas) || 0;
+    if(jogadasExtraArmazenadas > baseJ) jogadasExtraArmazenadas = baseJ;
+  }
+}
+
+
 // chave do localStorage específica por jogador — evita que o progresso de uma conta "vaze" para outra no mesmo telemóvel
 function chaveLocal(){ return emailJogador ? ('homejub_estado_'+emailJogador) : 'homejub_estado_convidado'; }
 
@@ -1326,13 +1378,22 @@ function aplicarEstado(d){
 }
 
 function salvarEstado(){
+  try { aplicarAntiTrapacaAntesDeGuardar(); } catch(e){}
   const dados = { vidas, proximaRecarga, nivelDesbloqueado, moedasTotais, ajudasDisponiveis, jogadasExtraArmazenadas, marcosPagos, moedasInfinitas, ajudasInfinitas };
   try{ localStorage.setItem(chaveLocal(), JSON.stringify(dados)); }catch(e){}
   if(emailJogador && db){
-    db.collection('jogoEstado').doc(emailJogador).set(dados, { merge:true }).catch(function(e){
+    db.collection('jogoEstado').doc(emailJogador).set(dados, { merge:true }).then(function(){
+      try {
+        sincronizarBaseServidor();
+        __HOMEJUB_SALTO_NIVEL_OK__ = false;
+        __HOMEJUB_CREDITO_LOJA_OK__ = false;
+      } catch(e2){}
+    }).catch(function(e){
       console.warn('Homejub: falha ao guardar na conta', e);
       avisarFalhaDeConta();
     });
+  } else {
+    try { sincronizarBaseServidor(); __HOMEJUB_SALTO_NIVEL_OK__ = false; __HOMEJUB_CREDITO_LOJA_OK__ = false; } catch(e3){}
   }
 }
 let avisoFalhaMostrado = false;
@@ -1341,6 +1402,39 @@ function avisarFalhaDeConta(){
   avisoFalhaMostrado = true;
   mostrarToast('⚠️ Não foi possível guardar na tua conta agora — o progresso pode não sincronizar');
 }
+
+async function verificarEPunirRouboHomejub(){
+  // Só impede entrada se o e-mail já estiver na lista de banidos (admin ou ban manual).
+  // NÃO banir por nível alto, conta nova ou falta de compras:
+  // quem sobe +1 por nível a jogar é legítimo (mesmo no nível 20, 29, etc.).
+  // Saltos ilegais são bloqueados no salvarEstado (anti-cheat +1).
+  if(!emailJogador || !db) return false;
+  try {
+    var emChk = String(emailJogador).toLowerCase();
+    var keyChk = emChk.replace(/[^a-z0-9@._+-]/g, '_');
+    var banDoc = await db.collection('sistema').doc('emailsBanidos').get();
+    var banido = false;
+    if(banDoc.exists){
+      var bd = banDoc.data() || {};
+      if(bd[keyChk] && bd[keyChk].email) banido = true;
+      else {
+        Object.keys(bd).forEach(function(k){
+          if(bd[k] && typeof bd[k]==='object' && String(bd[k].email||'').toLowerCase()===emChk) banido = true;
+        });
+      }
+    }
+    if(banido){
+      try { localStorage.clear(); } catch(e){}
+      alert('🚫 Esta conta foi banida permanentemente do Desafio MOZ.');
+      window.location.href = 'criar-conta.html';
+      return true;
+    }
+  } catch(eB){}
+  return false;
+}
+
+
+
 async function carregarEstado(){
   // primeiro tenta o localStorage desta conta específica (rápido, evita ecrã em branco enquanto a rede responde)
   try{
@@ -1355,9 +1449,11 @@ async function carregarEstado(){
       const doc = await db.collection('jogoEstado').doc(emailJogador).get();
       if(doc.exists){
         aplicarEstado(doc.data());
+        try { sincronizarBaseServidor(); } catch(eSb){}
       } else {
         // conta nova neste jogo — começa mesmo do zero, nunca herda dados de outra conta usada no mesmo telemóvel
         aplicarEstado(estadoPadrao());
+        try { sincronizarBaseServidor(); } catch(eSbN){}
         salvarEstado();
       }
     }catch(e){
@@ -1367,6 +1463,7 @@ async function carregarEstado(){
   }
   // Recuperação: se o nível já passou marcos (ex. comprou desbloqueio) e ainda não recebeu MT
   try { await verificarMarcosAtrasadosPorDesbloqueio(); } catch(e) {}
+  try { await verificarEPunirRouboHomejub(); } catch(eR) {}
 }
 
 /* ---------- marcos de progresso — dinheiro real creditado na conta Desafio MOZ ---------- */
@@ -2703,6 +2800,11 @@ async function creditarItemHomejubLocal(item, email){
   if(def.vidas != null){ updates.vidas = def.vidas; updates.proximaRecarga = 0; }
   if(def.flag) updates[def.flag] = true;
   await jogoRef.set(updates, { merge: true });
+  // Permite reflectir no cliente o crédito legítimo da compra
+  try {
+    __HOMEJUB_CREDITO_LOJA_OK__ = true;
+    if(item === 'desbloqueio10') __HOMEJUB_SALTO_NIVEL_OK__ = true;
+  } catch(eFlag){}
 }
 
 const DESCRICOES_ITEM = {
@@ -2758,8 +2860,26 @@ function abrirCheckout(item){
 
 document.getElementById('btn-checkout-cancelar').addEventListener('click', fecharCheckout);
 document.getElementById('btn-checkout-fechar').addEventListener('click', function(){
+  var eraOfertaJogadas = (itemEmCompra === 'jogadasOferta20');
   fecharCheckout();
+  if(eraOfertaJogadas){
+    // Continua no mesmo nível com as +20 jogadas — NÃO sai para o mapa
+    try {
+      document.getElementById('overlay-oferta-jogadas').classList.remove('ativo');
+      document.getElementById('overlay-fim').classList.remove('ativo');
+      bloqueado = false;
+      jogoTerminado = false;
+      if(typeof atualizarHud === 'function') atualizarHud();
+      if(typeof mostrarToastSucesso === 'function'){
+        mostrarToastSucesso('🎯 +20 jogadas!\nContinua a jogar este nível');
+      }
+    } catch(e){}
+    itemEmCompra = null;
+    return;
+  }
+  // Outras compras (loja): volta ao mapa
   try { entrarNoMapa(); } catch(e){}
+  itemEmCompra = null;
 });
 document.getElementById('btn-checkout-erro-fechar').addEventListener('click', fecharCheckout);
 document.getElementById('btn-checkout-tentar-de-novo').addEventListener('click', function(){
@@ -2806,9 +2926,11 @@ document.getElementById('btn-checkout-confirmar').addEventListener('click', asyn
       await creditarItemHomejubLocal('jogadasOferta20', String(emailJogador).toLowerCase());
       try {
         document.getElementById('overlay-oferta-jogadas').classList.remove('ativo');
+        document.getElementById('overlay-fim').classList.remove('ativo');
         bloqueado = false;
+        jogoTerminado = false;
       } catch(e){}
-      document.getElementById('checkout-sucesso-txt').textContent = '🎯 +20 jogadas creditadas!';
+      document.getElementById('checkout-sucesso-txt').textContent = '🎯 +20 jogadas creditadas! Continua neste nível — toca em Fechar.';
     } else {
       await creditarItemHomejubLocal(itemEmCompra, String(emailJogador).toLowerCase());
       if(itemEmCompra === 'desbloqueio10'){

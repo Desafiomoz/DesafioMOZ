@@ -257,6 +257,7 @@
     <button class="tab" data-tab="rt-compras" onclick="mudarTab('rt-compras'); carregarRtCompras()"><i class="fas fa-undo-alt"></i> Roleta compras</button>
     <button class="tab" data-tab="pagamentos" onclick="mudarTab('pagamentos'); carregarPagamentosEmola()"><i class="fas fa-wallet"></i> Pagamentos <span class="badge" id="badge-pagamentos">0</span></button>
     <button class="tab" data-tab="bloqueados" onclick="mudarTab('bloqueados'); carregarAbaBloqueados()"><i class="fas fa-ban"></i> Bloqueados <span class="badge" id="badge-bloqueados">0</span></button>
+        <button class="tab" data-tab="banidos" onclick="mudarTab('banidos'); try{carregarEmailsBanidos();carregarContasRoubo();}catch(e){}"><i class="fas fa-skull-crossbones"></i> Banidos / Roubo <span class="badge" id="badge-banidos">0</span></button>
     <button class="tab" data-tab="manutencao" onclick="mudarTab('manutencao'); manAbrirAba()"><i class="fas fa-tools"></i> Manutenção <span class="badge" id="badge-manutencao">ON</span></button>
     <button class="tab" data-tab="privado" onclick="mudarTab('privado')"><i class="fas fa-lock"></i> Privado</button>
   </div>
@@ -936,6 +937,11 @@
 
       <div class="form-box" style="border:1px solid rgba(0,200,83,0.4);">
         <h3><i class="fas fa-sliders-h"></i> Controlo total Homejub (nível, moedas, vidas, infinitos)</h3>
+        <div style="margin-bottom:12px;padding:12px;border-radius:10px;background:rgba(255,107,107,0.08);border:1px solid rgba(255,107,107,0.35);">
+          <p style="font-size:12px;color:#ff8a80;margin-bottom:8px;"><b>Roubo / manipulação:</b> banir e-mail + apagar conta (não volta a entrar).</p>
+          <button type="button" class="btn-vermelho" style="width:auto;padding:8px 12px;" onclick="(function(){var e=(document.getElementById('hj-ctrl-email').value||'').trim();if(!e)return alert('Escreve o e-mail em cima');banirHomejubPorRoubo(e);})()">🚫 Banir por roubo (apagar conta)</button>
+        </div>
+
         <p style="font-size:12px;color:#888;margin-bottom:12px;">
           Define o estado exacto do jogo (online ou APK — mesma conta Firebase).<br>Podes <b>aumentar ou diminuir</b> moedas, vidas, ajudas e nível (ex.: pôr <code>0</code> moedas ou <code>1</code> vida).<br>Desligar infinitos: escolhe “Desligar” e aplica — o jogador volta a usar só o número normal.
         </p>
@@ -3180,6 +3186,75 @@
               <tr><th>#</th><th>Nome</th><th>E-mail</th><th>Onde</th><th>Motivo</th><th>Desde</th><th>Acção</th></tr>
             </thead>
             <tbody id="tbody-bloqueados-aba"><tr><td colspan="7" class="vazio">Abre a aba para carregar.</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    
+    <div class="painel" id="painel-banidos">
+      <div class="form-box" style="border:1px solid rgba(255,107,107,0.5);">
+        <h3><i class="fas fa-ban"></i> Banimento permanente por e-mail</h3>
+        <p style="font-size:12px;color:#aaa;margin-bottom:12px;line-height:1.45;">
+          O e-mail banido <b style="color:#ff6b6b;">nunca mais</b> consegue fazer login nem criar conta no Desafio MOZ,
+          até tu removeres o banimento aqui. Usa isto para quem manipula jogos ou rouba pontos.
+        </p>
+        <div class="form-grid">
+          <div class="form-row">
+            <label>E-mail a banir</label>
+            <input type="email" id="ban-email" placeholder="email@gmail.com">
+          </div>
+          <div class="form-row">
+            <label>Motivo</label>
+            <input type="text" id="ban-motivo" placeholder="Ex: manipulação Homejub / roubo de pontos">
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
+          <button type="button" class="btn-vermelho" style="width:auto;padding:12px 16px;" onclick="banirEmailPermanente()">🚫 Banir permanentemente + apagar conta</button>
+          <button type="button" class="btn-verde" style="width:auto;padding:12px 16px;" onclick="desbanirEmail()">✅ Remover banimento</button>
+        </div>
+      </div>
+
+      <div class="form-box">
+        <h3><i class="fas fa-list"></i> E-mails banidos (não entram no site)</h3>
+        <div class="tabela-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>E-mail</th>
+                <th>Motivo</th>
+                <th>Tipo</th>
+                <th>Data</th>
+                <th>Acção</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-emails-banidos">
+              <tr><td colspan="6" class="vazio">A carregar...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="form-box" style="border:1px solid rgba(255,193,7,0.35);">
+        <h3><i class="fas fa-user-slash"></i> Contas apagadas por roubo / manipulação</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:10px;">Histórico automático ou manual — progresso suspeito no Homejub (nível alto / ajudas sem compra).</p>
+        <div class="tabela-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>E-mail / Nome</th>
+                <th>Nível</th>
+                <th>Ajudas</th>
+                <th>Moedas</th>
+                <th>Motivo</th>
+                <th>Quando</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-contas-roubo">
+              <tr><td colspan="7" class="vazio">A carregar...</td></tr>
+            </tbody>
           </table>
         </div>
       </div>
@@ -11890,6 +11965,294 @@ async function liberarMissaoUsuario() {
       tbody.innerHTML = html;
     }
 
+
+    
+
+
+    // ========== BANIMENTO PERMANENTE + ROUBO (sistema/) ==========
+    // Guarda snapshot completo para o DESBANIR restaurar a conta.
+    function _banEmailKey(email) {
+      return String(email || '').trim().toLowerCase().replace(/[^a-z0-9@._+-]/g, '_');
+    }
+
+    async function banirEmailPermanente(emailFixo, motivoFixo, tipoFixo, snapshotFixo) {
+      var email = String(emailFixo || (document.getElementById('ban-email') && document.getElementById('ban-email').value) || '').trim().toLowerCase();
+      var motivo = String(motivoFixo || (document.getElementById('ban-motivo') && document.getElementById('ban-motivo').value) || '').trim()
+        || 'Banimento permanente — manipulação / roubo';
+      var tipo = tipoFixo || 'manual';
+      if (!email || email.indexOf('@') === -1) return alert('E-mail inválido.');
+      if (!emailFixo && !confirm('BANIR permanentemente:\n' + email + '\n\nA conta será guardada para poderes RESTAURAR com Desbanir.\nContinuar?')) return;
+      try {
+        var snapU = await db.collection('usuarios').where('email', '==', email).limit(5).get();
+        var nome = '';
+        var pontos = 0;
+        var usuarioCompleto = null;
+        var userDocId = null;
+        snapU.forEach(function (doc) {
+          var d = doc.data() || {};
+          nome = d.nome || nome;
+          pontos = d.pontos || pontos;
+          if (!usuarioCompleto) {
+            usuarioCompleto = d;
+            userDocId = doc.id;
+          }
+        });
+        var snapJ = null;
+        try { snapJ = await db.collection('jogoEstado').doc(email).get(); } catch (eJ) {}
+        var jogo = (snapJ && snapJ.exists) ? (snapJ.data() || {}) : (snapshotFixo || {});
+
+        var key = _banEmailKey(email);
+        var banPayload = {};
+        banPayload[key] = {
+          email: email,
+          motivo: motivo,
+          tipo: tipo,
+          nome: nome || '',
+          pontosAntes: pontos,
+          nivelAntes: jogo.nivelDesbloqueado || jogo.nivel || null,
+          ajudasAntes: jogo.ajudasDisponiveis != null ? jogo.ajudasDisponiveis : null,
+          moedasAntes: jogo.moedasTotais != null ? jogo.moedasTotais : null,
+          banidoEm: new Date().toISOString(),
+          por: 'admin',
+          // Snapshot completo para restaurar no desbanir
+          snapshotUsuario: usuarioCompleto || { email: email, nome: nome, pontos: pontos },
+          snapshotUsuarioId: userDocId || null,
+          snapshotJogo: jogo || {}
+        };
+        await db.collection('sistema').doc('emailsBanidos').set(banPayload, { merge: true });
+
+        var rouboItem = {
+          email: email,
+          nome: nome || '',
+          motivo: motivo,
+          tipo: tipo,
+          nivel: jogo.nivelDesbloqueado || jogo.nivel || null,
+          ajudas: jogo.ajudasDisponiveis != null ? jogo.ajudasDisponiveis : null,
+          moedas: jogo.moedasTotais != null ? jogo.moedasTotais : null,
+          pontos: pontos,
+          apagadoEm: new Date().toISOString()
+        };
+        try {
+          var rouboRef = db.collection('sistema').doc('contasApagadasRoubo');
+          var rouboSnap = await rouboRef.get();
+          var items = (rouboSnap.exists && Array.isArray(rouboSnap.data().items)) ? rouboSnap.data().items.slice() : [];
+          items.unshift(rouboItem);
+          if (items.length > 150) items = items.slice(0, 150);
+          await rouboRef.set({ items: items, actualizadoEm: new Date().toISOString() }, { merge: true });
+        } catch (eR) { console.warn('roubo hist', eR); }
+
+        // Apaga contas activas (ficam no snapshot do ban)
+        var dels = [];
+        snapU.forEach(function (doc) { dels.push(doc.ref.delete()); });
+        await Promise.all(dels);
+        try { await db.collection('jogoEstado').doc(email).delete(); } catch (e1) {}
+
+        if (typeof mostrarAviso === 'function') mostrarAviso('Banido (com backup para restaurar): ' + email);
+        else alert('Banido: ' + email);
+        try {
+          if (document.getElementById('ban-email')) document.getElementById('ban-email').value = '';
+          if (document.getElementById('ban-motivo')) document.getElementById('ban-motivo').value = '';
+        } catch (e3) {}
+        carregarEmailsBanidos();
+        carregarContasRoubo();
+        try { await carregarTudo(); } catch (e4) {}
+      } catch (e) {
+        alert('Erro ao banir: ' + (e.message || e));
+      }
+    }
+
+    async function desbanirEmail(emailFixo) {
+      var email = String(emailFixo || (document.getElementById('ban-email') && document.getElementById('ban-email').value) || '').trim().toLowerCase();
+      if (!email || email.indexOf('@') === -1) return alert('E-mail inválido.');
+      if (!confirm('Desbanir e RESTAURAR a conta de ' + email + '?\n\nVolta pontos, dados e progresso Homejub guardados no banimento.')) return;
+      try {
+        var key = _banEmailKey(email);
+        var ref = db.collection('sistema').doc('emailsBanidos');
+        var snap = await ref.get();
+        var banData = null;
+        if (snap.exists) {
+          var data = snap.data() || {};
+          if (data[key] && data[key].email) banData = data[key];
+          else {
+            Object.keys(data).forEach(function (k) {
+              if (data[k] && typeof data[k] === 'object' && String(data[k].email || '').toLowerCase() === email) {
+                banData = data[k];
+                key = k;
+              }
+            });
+          }
+        }
+
+        // Restaurar utilizador
+        var u = (banData && banData.snapshotUsuario) ? banData.snapshotUsuario : null;
+        if (u && typeof u === 'object') {
+          u.email = email;
+          u.contaBloqueada = false;
+          u.jogosBloqueado = false;
+          u.status = u.status || 'Ativo';
+          u.ultimaAtualizacao = new Date().toISOString();
+          u.desbanidoEm = new Date().toISOString();
+          // não reintroduzir flags de ban
+          delete u.contaBloqueadaEm;
+          delete u.contaBloqueadaMotivo;
+          // criar de novo
+          var existe = await db.collection('usuarios').where('email', '==', email).limit(1).get();
+          if (existe.empty) {
+            await db.collection('usuarios').add(u);
+          } else {
+            await existe.docs[0].ref.set(u, { merge: true });
+          }
+        } else {
+          // Sem snapshot: conta mínima para poder entrar de novo
+          var existe2 = await db.collection('usuarios').where('email', '==', email).limit(1).get();
+          if (existe2.empty) {
+            await db.collection('usuarios').add({
+              email: email,
+              nome: (banData && banData.nome) || 'Utilizador',
+              pontos: (banData && banData.pontosAntes) || 0,
+              status: 'Ativo',
+              dataCadastro: new Date().toISOString(),
+              desbanidoEm: new Date().toISOString(),
+              notaAdmin: 'Restaurado sem snapshot completo'
+            });
+          }
+        }
+
+        // Restaurar Homejub
+        var j = (banData && banData.snapshotJogo) ? banData.snapshotJogo : null;
+        if (j && typeof j === 'object' && Object.keys(j).length) {
+          j.ultimaSync = new Date().toISOString();
+          await db.collection('jogoEstado').doc(email).set(j, { merge: true });
+        }
+
+        // Remover do ban
+        if (snap.exists && key) {
+          var upd = {};
+          upd[key] = firebase.firestore.FieldValue.delete();
+          await ref.update(upd);
+        }
+        try { await db.collection('emailsBanidos').doc(email).delete(); } catch (eOld) {}
+
+        if (typeof mostrarAviso === 'function') {
+          mostrarAviso('Desbanido e restaurado: ' + email + (u ? ' · pontos e dados recuperados' : ''));
+        } else {
+          alert('Desbanido: ' + email);
+        }
+        carregarEmailsBanidos();
+        carregarContasRoubo();
+        try { await carregarTudo(); } catch (eT) {}
+      } catch (e) {
+        alert('Erro ao desbanir: ' + (e.message || e));
+      }
+    }
+
+    async function carregarEmailsBanidos() {
+      var tbody = document.getElementById('tbody-emails-banidos');
+      if (!tbody) return;
+      tbody.innerHTML = '<tr><td colspan="6" class="vazio">A carregar...</td></tr>';
+      try {
+        var lista = [];
+        try {
+          var snap = await db.collection('sistema').doc('emailsBanidos').get();
+          if (snap.exists) {
+            var data = snap.data() || {};
+            Object.keys(data).forEach(function (k) {
+              var d = data[k];
+              if (d && typeof d === 'object' && d.email) lista.push(d);
+            });
+          }
+        } catch (e1) { console.warn(e1); }
+        try {
+          var snap2 = await db.collection('emailsBanidos').limit(100).get();
+          snap2.forEach(function (doc) {
+            var d = doc.data() || {};
+            d.email = d.email || doc.id;
+            var exists = lista.some(function (x) { return String(x.email).toLowerCase() === String(d.email).toLowerCase(); });
+            if (!exists) lista.push(d);
+          });
+        } catch (e2) {}
+
+        lista.sort(function (a, b) {
+          return String(b.banidoEm || '').localeCompare(String(a.banidoEm || ''));
+        });
+        var badge = document.getElementById('badge-banidos');
+        if (badge) {
+          badge.textContent = lista.length;
+          badge.style.display = lista.length ? 'inline' : 'none';
+        }
+        if (!lista.length) {
+          tbody.innerHTML = '<tr><td colspan="6" class="vazio">Nenhum e-mail banido.</td></tr>';
+          return;
+        }
+        var html = '';
+        lista.forEach(function (d, i) {
+          var em = String(d.email || '').toLowerCase();
+          var emSafe = em.replace(/'/g, "\\'");
+          var temSnap = d.snapshotUsuario ? ' · tem backup' : '';
+          html += '<tr>' +
+            '<td>' + (i + 1) + '</td>' +
+            '<td><strong>' + escHtml(em) + '</strong>' + (d.nome ? '<br><small style="color:#888">' + escHtml(d.nome) + '</small>' : '') +
+            '<br><small style="color:#64b5f6">' + (d.pontosAntes != null ? d.pontosAntes + ' pts' : '') + temSnap + '</small></td>' +
+            '<td style="font-size:12px;max-width:200px;">' + escHtml(d.motivo || '—') + '</td>' +
+            '<td><span class="status-tag ' + (d.tipo === 'auto_roubo' ? 'status-recusado' : 'status-bloqueado') + '">' + escHtml(d.tipo || 'manual') + '</span></td>' +
+            '<td style="font-size:11px;white-space:nowrap;">' + escHtml(String(d.banidoEm || '').slice(0, 19).replace('T', ' ')) + '</td>' +
+            '<td><button type="button" class="btn-verde" onclick="desbanirEmail(\'' + emSafe + '\')">✅ Desbanir + restaurar</button></td>' +
+            '</tr>';
+        });
+        tbody.innerHTML = html;
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="6" class="vazio">Erro: ' + escHtml(e.message || e) + '</td></tr>';
+      }
+    }
+
+    async function carregarContasRoubo() {
+      var tbody = document.getElementById('tbody-contas-roubo');
+      if (!tbody) return;
+      tbody.innerHTML = '<tr><td colspan="7" class="vazio">A carregar...</td></tr>';
+      try {
+        var lista = [];
+        try {
+          var snap = await db.collection('sistema').doc('contasApagadasRoubo').get();
+          if (snap.exists && Array.isArray(snap.data().items)) lista = snap.data().items.slice();
+        } catch (e1) { console.warn(e1); }
+        try {
+          var snap2 = await db.collection('contasApagadasRoubo').limit(50).get();
+          snap2.forEach(function (doc) { lista.push(doc.data() || {}); });
+        } catch (e2) {}
+        lista.sort(function (a, b) {
+          return String(b.apagadoEm || '').localeCompare(String(a.apagadoEm || ''));
+        });
+        if (!lista.length) {
+          tbody.innerHTML = '<tr><td colspan="7" class="vazio">Nenhuma conta apagada por roubo ainda.</td></tr>';
+          return;
+        }
+        var html = '';
+        lista.forEach(function (d, i) {
+          html += '<tr>' +
+            '<td>' + (i + 1) + '</td>' +
+            '<td><strong>' + escHtml(d.email || '—') + '</strong>' + (d.nome ? '<br><small style="color:#888">' + escHtml(d.nome) + '</small>' : '') + '</td>' +
+            '<td class="pts-alto">' + (d.nivel != null ? d.nivel : '—') + '</td>' +
+            '<td>' + (d.ajudas != null ? d.ajudas : '—') + '</td>' +
+            '<td>' + (d.moedas != null ? d.moedas : '—') + '</td>' +
+            '<td style="font-size:12px;max-width:220px;">' + escHtml(d.motivo || '—') + '</td>' +
+            '<td style="font-size:11px;white-space:nowrap;">' + escHtml(String(d.apagadoEm || '').slice(0, 19).replace('T', ' ')) + '</td>' +
+            '</tr>';
+        });
+        tbody.innerHTML = html;
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="7" class="vazio">Erro: ' + escHtml(e.message || e) + '</td></tr>';
+      }
+    }
+
+    async function banirHomejubPorRoubo(email) {
+      email = String(email || '').trim().toLowerCase();
+      if (!email) return;
+      if (!confirm('Apagar conta e BANIR por roubo/manipulação?\n' + email + '\n\nPodes restaurar depois com Desbanir.')) return;
+      var snapJ = null;
+      try { snapJ = await db.collection('jogoEstado').doc(email).get(); } catch (e) {}
+      var jogo = (snapJ && snapJ.exists) ? snapJ.data() : {};
+      await banirEmailPermanente(email, 'Roubo/manipulação Homejub — nível ' + (jogo.nivelDesbloqueado || '?') + ', ajudas ' + (jogo.ajudasDisponiveis || 0), 'auto_roubo', jogo);
+    }
 
     // carregarTudo() agora é chamado pelo onAuthStateChanged, após login confirmado.
   </script>

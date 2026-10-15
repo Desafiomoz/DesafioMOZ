@@ -403,6 +403,32 @@
   var aviso = document.getElementById('aviso-campo');
 
   /** Se a conta estiver bloqueada, vai para a página de bloqueio (não para desafios). */
+
+  /** E-mail banido permanentemente? (lê sistema/emailsBanidos — regras já abertas) */
+  async function emailEstaBanido(email) {
+    email = String(email || '').trim().toLowerCase();
+    if (!email || !db) return false;
+    try {
+      var key = email.replace(/[^a-z0-9@._+-]/g, '_');
+      var doc = await db.collection('sistema').doc('emailsBanidos').get();
+      if (doc.exists) {
+        var data = doc.data() || {};
+        if (data[key] && data[key].email) return data[key];
+        // procura por email em qualquer chave
+        var keys = Object.keys(data);
+        for (var i = 0; i < keys.length; i++) {
+          var d = data[keys[i]];
+          if (d && typeof d === 'object' && String(d.email || '').toLowerCase() === email) return d;
+        }
+      }
+    } catch (e) { console.warn('ban check sistema', e); }
+    try {
+      var doc2 = await db.collection('emailsBanidos').doc(email).get();
+      if (doc2.exists) return doc2.data() || { email: email };
+    } catch (e2) {}
+    return false;
+  }
+
   function redirecionarAposLogin(usuario, novaConta) {
     var u = usuario || {};
     var bloqueado =
@@ -652,6 +678,12 @@
       if (!emailGmailValido(email)) {
         return mostrarAviso('⚠️ Só são aceites contas Google com e-mail <b>@gmail.com</b>.');
       }
+      var banG = await emailEstaBanido(email);
+      if (banG) {
+        try { await authGoogle.signOut(); } catch (eSo) {}
+        return mostrarAviso('🚫 Este e-mail foi <b>banido permanentemente</b> do Desafio MOZ' +
+          (banG.motivo ? ' (' + String(banG.motivo).slice(0, 80) + ')' : '') + '.');
+      }
 
       var procura = await db.collection('usuarios').where('email', '==', email).limit(1).get();
       var usuario;
@@ -788,6 +820,14 @@
     btn.disabled = true;
     btn.textContent = 'A entrar...';
     try {
+      var banInfo = await emailEstaBanido(email);
+      if (banInfo) {
+        btn.disabled = false;
+        btn.textContent = 'Entrar';
+        return mostrarAviso('🚫 Esta conta foi <b>banida permanentemente</b> do Desafio MOZ' +
+          (banInfo.motivo ? ' (' + String(banInfo.motivo).slice(0, 80) + ')' : '') +
+          '. Não podes entrar nem criar conta de novo.');
+      }
       var senhaHash = await hashSenha(senha);
       var procura = await db.collection('usuarios')
         .where('email', '==', email)
@@ -865,6 +905,12 @@
     btn.textContent = 'A processar...';
     mostrarAviso('⏳ A processar...', 'sucesso');
     try {
+      var banCad = await emailEstaBanido(email);
+      if (banCad) {
+        btn.disabled = false;
+        btn.textContent = 'Criar a minha conta';
+        return mostrarAviso('🚫 Este e-mail está <b>banido permanentemente</b> do Desafio MOZ. Não podes criar conta.');
+      }
       var telExiste = await db.collection('usuarios').where('telemovel', '==', telemovel).limit(1).get();
       if (telExiste.empty) {
         // também procura formato antigo sem +258
