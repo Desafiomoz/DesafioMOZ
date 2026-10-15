@@ -438,6 +438,11 @@
       window.location.href = 'conta-bloqueada.html';
       return;
     }
+    // Contas novas já nascem com dadosActualizados; contas antigas têm de actualizar uma vez
+    if (!novaConta && u.dadosActualizados !== true && u.dadosActualizados !== 'true') {
+      window.location.href = 'atualizar-dados.html';
+      return;
+    }
     window.location.href = novaConta ? 'desafios.html?nova=1' : 'desafios.html';
   }
 
@@ -733,6 +738,8 @@
           email: email,
           senha: null,
           loginGoogle: true,
+          dadosActualizados: true,
+          dadosActualizadosEm: new Date().toISOString(),
           pontos: ptsIniG,
           pesquisaDadosCompleta: false,
           pesquisaRapidaCompleta: false,
@@ -983,7 +990,9 @@
         codigoIndicacao: meuCodigo, totalConvidados: 0, pontosIndicacao: 0,
         dataCadastro: new Date().toISOString(),
         aceitouTermos: true,
-        aceitouTermosEm: new Date().toISOString()
+        aceitouTermosEm: new Date().toISOString(),
+        dadosActualizados: true,
+        dadosActualizadosEm: new Date().toISOString()
       };
       if (refCodigo) dadosNovo.indicadoPor = refCodigo;
       if (infCodigo) dadosNovo.indicadoPorInfluencer = infCodigo;
