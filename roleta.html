@@ -752,18 +752,18 @@ let userRef = null;
 /* Boa sorte + Quase muito frequentes.
    MT ≥10 e pontos ≥100 e +6 giros = extremamente raros */
 const PREMIOS = [
-  {label:"1000 PTS", tipo:"pontos", valor:1000, peso:1,   cor:0xFFD24D, emoji:"👑"}, // ~0,05%
-  {label:"500 PTS",  tipo:"pontos", valor:500,  peso:1,   cor:0x22FF99, emoji:"🌟"}, // ~0,05%
-  {label:"10 MT",     tipo:"mt",     valor:10,   peso:0,   cor:0xFF7A45, emoji:"💵"}, // bloqueado fora da garantia
-  {label:"1 MT",      tipo:"mt",     valor:1,    peso:15,  cor:0x4FC3F7, emoji:"💸"}, // raro fora da garantia
-  {label:"5 MT",      tipo:"mt",     valor:5,    peso:0,   cor:0xFFD24D, emoji:"💰"}, // bloqueado fora da garantia
-  {label:"100 PTS",  tipo:"pontos", valor:100,  peso:3,   cor:0x22FF99, emoji:"✨"}, // ~0,15%
-  {label:"+2 GIROS",  tipo:"giros",  valor:2,    peso:90,  cor:0xB388FF, emoji:"🎡"}, // ~4,5%
-  {label:"BOA SORTE", tipo:"nada",   valor:0,    peso:800, cor:0x3A4250, emoji:"🍀"}, // ~40%
-  {label:"+6 GIROS",  tipo:"giros",  valor:6,    peso:2,   cor:0xB388FF, emoji:"🎡"}, // ~0,1% muito difícil
-  {label:"QUASE!",    tipo:"nada",   valor:0,    peso:800, cor:0x3A4250, emoji:"😅"}, // ~40%
-  {label:"20 PTS",   tipo:"pontos", valor:20,   peso:70,  cor:0x22FF99, emoji:"✨"}, // ~3,5%
-  {label:"50 MT",     tipo:"mt",     valor:50,   peso:0,   cor:0xFFD24D, emoji:"🏆"}  // bloqueado fora da garantia
+  {label:"1000 PTS", tipo:"pontos", valor:1000, peso:0,   cor:0xFFD24D, emoji:"👑"}, // BLOQUEADO — nunca no sorteio livre
+  {label:"500 PTS",  tipo:"pontos", valor:500,  peso:0,   cor:0x22FF99, emoji:"🌟"}, // BLOQUEADO
+  {label:"10 MT",     tipo:"mt",     valor:10,   peso:0,   cor:0xFF7A45, emoji:"💵"}, // só garantia 2× compra MT
+  {label:"1 MT",      tipo:"mt",     valor:1,    peso:12,  cor:0x4FC3F7, emoji:"💸"}, // raro (giros grátis máx 1 MT)
+  {label:"5 MT",      tipo:"mt",     valor:5,    peso:0,   cor:0xFFD24D, emoji:"💰"}, // só garantia
+  {label:"100 PTS",  tipo:"pontos", valor:100,  peso:0,   cor:0x22FF99, emoji:"✨"}, // BLOQUEADO no livre
+  {label:"+2 GIROS",  tipo:"giros",  valor:2,    peso:90,  cor:0xB388FF, emoji:"🎡"},
+  {label:"BOA SORTE", tipo:"nada",   valor:0,    peso:820, cor:0x3A4250, emoji:"🍀"},
+  {label:"+6 GIROS",  tipo:"giros",  valor:6,    peso:1,   cor:0xB388FF, emoji:"🎡"},
+  {label:"QUASE!",    tipo:"nada",   valor:0,    peso:820, cor:0x3A4250, emoji:"😅"},
+  {label:"20 PTS",   tipo:"pontos", valor:20,   peso:55,  cor:0x22FF99, emoji:"✨"},
+  {label:"50 MT",     tipo:"mt",     valor:50,   peso:0,   cor:0xFFD24D, emoji:"🏆"}  // só garantia
 ];
 const N = PREMIOS.length;
 const ANGULO_FATIA = (Math.PI*2)/N;
@@ -1028,6 +1028,13 @@ async function carregarContaFirebase(){
     // Maldição / prémio forçado pelo admin
     if(d.roletaMaldicao && typeof d.roletaMaldicao === 'object') estado.roletaMaldicao = d.roletaMaldicao;
     else estado.roletaMaldicao = null;
+    // Maldição "perder": zera garantias e orçamento MT (não ganha 2×)
+    try {
+      if(estado.roletaMaldicao && estado.roletaMaldicao.ativo === true && estado.roletaMaldicao.modo === 'perder'){
+        estado.garantias = [];
+        estado.mtOrcamentoRestante = 0;
+      }
+    } catch(eMal){}
     // Alerta de investigação (admin) — só na roleta
     if(d.alertaInvestigacao === true || d.alertaInvestigacao === 'true' || d.alertaInvestigacao === 1){
       mostrarAvisoAlertaInvestigacao(d.alertaInvestigacaoMotivo || '');
@@ -1899,11 +1906,51 @@ async function registarGiroNoFirebase(premio){
   } catch(e){ console.warn('roletaHistorico', e); }
 }
 
+function perdaIdxSafe(){
+  return Math.random() < 0.5 ? (IDX_BOA >= 0 ? IDX_BOA : 7) : (IDX_QUASE >= 0 ? IDX_QUASE : 9);
+}
+
+/** Nunca devolve prémios proibidos no sorteio livre (1000/500/100 pts, 5/10/50 MT). */
+function sanitizarIdxPremio(idx, origem){
+  idx = Number(idx);
+  if(isNaN(idx) || idx < 0 || idx >= PREMIOS.length) return perdaIdxSafe();
+  var p = PREMIOS[idx];
+  if(!p) return perdaIdxSafe();
+
+  // Maldição "perder" — já tratada antes, mas reforço
+  try {
+    var m = estado.roletaMaldicao;
+    if(m && m.ativo === true && m.modo === 'perder') return perdaIdxSafe();
+  } catch(e){}
+
+  if(p.tipo === 'mt'){
+    var orc = Number(estado.mtOrcamentoRestante) || 0;
+    // Sem orçamento de compra MT: no máximo 1 MT (giros grátis)
+    if(orc <= 0){
+      if(p.valor <= 1 && IDX_1_MT >= 0) return IDX_1_MT;
+      return perdaIdxSafe();
+    }
+    // Com orçamento: nunca mais do que o restante (teto 2× na compra)
+    if(p.valor > orc){
+      if(orc >= 1 && IDX_1_MT >= 0) return IDX_1_MT;
+      return perdaIdxSafe();
+    }
+    return idx;
+  }
+  if(p.tipo === 'pontos'){
+    // Livre / grátis: máximo 20 pts. 100/500/1000 bloqueados.
+    if(p.valor > 20){
+      if(IDX_20_PTS >= 0) return IDX_20_PTS;
+      return perdaIdxSafe();
+    }
+    return idx;
+  }
+  // giros / nada — ok
+  return idx;
+}
+
 function sortearPremio(){
-  // 0) Maldição / forçar prémio (admin)
-  //    - forcar: todos os giros caem no prémio escolhido
-  //    - perder: nunca ganha (ignora também as garantias 2× da compra MT)
-  //    - so_pago: NÃO intercepta aqui — as garantias MT já foram montadas a 1×
+  // 0) Maldição admin
   try {
     var m = estado.roletaMaldicao;
     if(m && m.ativo === true){
@@ -1919,38 +1966,48 @@ function sortearPremio(){
         if(idxF >= 0 && idxF < PREMIOS.length) return idxF;
       }
       if(m.modo === 'perder'){
-        // limpa garantias MT para não receber o dobro
-        if(estado.garantias && estado.garantias.length) estado.garantias = [];
-        return Math.random() < 0.5 ? (IDX_BOA >= 0 ? IDX_BOA : 7) : (IDX_QUASE >= 0 ? IDX_QUASE : 9);
+        // Sempre perde — limpa garantias e orçamento para não furar
+        estado.garantias = [];
+        estado.mtOrcamentoRestante = 0;
+        return perdaIdxSafe();
       }
-      // so_pago: NÃO limpa aqui — MT já veio a 1×; pontos já vieram só com perdas no montarLista
+      // so_pago: garantias já montadas a 1× na compra
     }
   } catch(eM){}
-  // 1) Fila da compra (MT 2×/1× ou pontos) — já respeita maldição no momento da compra
+
+  // 1) Fila da compra (MT 2× ou pontos) — sanitizar cada saída
   if(estado.garantias && estado.garantias.length){
-    return estado.garantias.shift();
+    var gIdx = estado.garantias.shift();
+    return sanitizarIdxPremio(gIdx, 'garantia');
   }
-  // 2) Giros ganhos na roleta (+2 / +6): sempre perdem
+
+  // 2) Giros ganhos na roleta (+2/+6): sempre perdem
   if((Number(estado.girosPerdedores) || 0) > 0){
     estado.girosPerdedores = Math.max(0, (Number(estado.girosPerdedores) || 0) - 1);
-    return Math.random() < 0.5 ? (IDX_BOA >= 0 ? IDX_BOA : 7) : (IDX_QUASE >= 0 ? IDX_QUASE : 9);
+    return perdaIdxSafe();
   }
-  // 3) Compra com PONTOS: tabela difícil (mantém)
+
+  // 3) Compra com PONTOS: tabela difícil (sem 1000/500/100)
   var dificil = (Number(estado.girosDificeis) || 0) > 0;
   if(dificil){
     estado.girosDificeis = Math.max(0, (Number(estado.girosDificeis) || 0) - 1);
     var rd = Math.random() * PESO_TOTAL_DIFICIL;
     for(var i = 0; i < N; i++){
-      if(rd < PESOS_DIFICIL[i]) return i;
+      if(rd < PESOS_DIFICIL[i]) return sanitizarIdxPremio(i, 'dificil');
       rd -= PESOS_DIFICIL[i];
     }
-    return 7;
+    return perdaIdxSafe();
   }
-  // 4) Giro grátis / resto: tabela normal
-  let r = Math.random()*PESO_TOTAL;
-  for(let i=0;i<N;i++){ if(r < PREMIOS[i].peso) return i; r -= PREMIOS[i].peso; }
-  return N-1;
+
+  // 4) Giro grátis / resto: tabela normal (já com pesos 0 nos altos)
+  var r = Math.random() * PESO_TOTAL;
+  for(var j = 0; j < N; j++){
+    if(r < PREMIOS[j].peso) return sanitizarIdxPremio(j, 'livre');
+    r -= PREMIOS[j].peso;
+  }
+  return perdaIdxSafe();
 }
+
 
 /* Acelera no início e abranda no fim — total 8 segundos */
 function easeAceleraTrava(t){
@@ -2285,18 +2342,33 @@ document.getElementById('btn-girar').addEventListener('click', async ()=>{
   await tocarVitoria();
 
   var ptsRoletaGanho = 0;
-  if(premio.tipo==='pontos'){ estado.pontos += premio.valor; ptsRoletaGanho = premio.valor; }
+  // Capo duro: pontos livres nunca > 20; 1000/500/100 bloqueados
+  if(premio.tipo==='pontos'){
+    var pv = Number(premio.valor) || 0;
+    if(pv > 20){
+      premio = { label:'QUASE!', tipo:'nada', valor:0, emoji:'😅' };
+    } else {
+      estado.pontos += pv;
+      ptsRoletaGanho = pv;
+    }
+  }
   if(premio.tipo==='mt'){
     var orcRest = Number(estado.mtOrcamentoRestante) || 0;
     var mtVal = Number(premio.valor) || 0;
-    // Se há orçamento de compra em MT: nunca entregar mais do que o dobro restante
-    if(orcRest > 0){
-      if(mtVal > orcRest){
-        mtVal = orcRest; // corta para o que falta (ex.: 5→1 se só resta 1)
+    // Maldição perder: nunca credita MT
+    try {
+      var mmC = estado.roletaMaldicao;
+      if(mmC && mmC.ativo === true && mmC.modo === 'perder'){
+        mtVal = 0;
+        orcRest = 0;
+        estado.mtOrcamentoRestante = 0;
       }
+    } catch(eC){}
+    // Orçamento = o que falta do 2× (ou 1× se so_pago) da compra em metical
+    if(orcRest > 0){
+      if(mtVal > orcRest) mtVal = orcRest;
       estado.mtOrcamentoRestante = Math.max(0, orcRest - mtVal);
       if(mtVal <= 0){
-        // sem orçamento → trata como perda
         premio = { label:'QUASE!', tipo:'nada', valor:0, emoji:'😅' };
       } else {
         estado.pontos += mtVal * PTS_POR_MT;
@@ -2304,10 +2376,10 @@ document.getElementById('btn-girar').addEventListener('click', async ()=>{
         premio = { label: mtVal + ' MT', tipo:'mt', valor: mtVal, emoji: premio.emoji || '💸' };
       }
     } else {
-      // Sem orçamento de compra: só permite 1 MT (giros grátis); bloqueia 5/10/50
+      // Sem orçamento: só 1 MT no máximo (giros grátis)
       if(mtVal > 1){
         premio = { label:'QUASE!', tipo:'nada', valor:0, emoji:'😅' };
-      } else {
+      } else if(mtVal > 0){
         estado.pontos += mtVal * PTS_POR_MT;
         ptsRoletaGanho = mtVal * PTS_POR_MT;
       }
