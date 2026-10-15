@@ -2773,6 +2773,23 @@
         <button type="button" class="btn-verde" onclick="liberarMissaoUsuario()">🔓 Libertar missão</button>
       </div>
 
+
+      <div class="form-box" style="border:1px solid rgba(0,200,83,0.4);">
+        <h3><i class="fas fa-calendar-check"></i> Check-in vitalício (+16 pts / dia)</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:12px;line-height:1.45;">
+          Se apagaste a conta de alguém que já tinha pago o aumento de check-in, a <b>conta nova com o mesmo e-mail não herda</b> o boost.
+          Usa isto para repor: o e-mail passa a receber <b>16 pontos todos os dias para sempre</b> no check-in diário (em vez de 3).
+        </p>
+        <div class="form-grid">
+          <div class="form-row">
+            <label>E-mail do utilizador</label>
+            <input type="email" id="upg-checkin16-email" placeholder="email@gmail.com">
+          </div>
+        </div>
+        <button type="button" class="btn-verde" onclick="concederCheckin16Vitalicio()">✅ Dar check-in 16 pts vitalício</button>
+        <button type="button" class="btn-cinza" style="width:auto;margin-top:8px;padding:8px 12px;" onclick="removerCheckin16Vitalicio()">↩ Voltar ao check-in base (3 pts)</button>
+      </div>
+
       <div class="form-box" style="border:1px solid rgba(255,107,107,0.35);">
         <h3><i class="fas fa-unlock"></i> Bloquear / Desbloquear jogos (ID falso)</h3>
         <p style="font-size:12px;color:#888;margin-bottom:12px;line-height:1.45;">
@@ -11701,7 +11718,60 @@ async function carregarCliquesMissao() {
       desbloquearJogosEmail(email);
     }
 
-async function liberarMissaoUsuario() {
+
+    async function concederCheckin16Vitalicio() {
+      var email = (document.getElementById('upg-checkin16-email').value || '').trim().toLowerCase();
+      if (!email || email.indexOf('@') === -1) return alert('E-mail inválido.');
+      if (!confirm('Dar check-in VITALÍCIO de 16 pontos/dia a:\n' + email + '\n\n(Em vez dos 3 pontos base, para sempre.)')) return;
+      try {
+        var snap = await db.collection('usuarios').where('email', '==', email).limit(1).get();
+        if (snap.empty) return alert('Utilizador não encontrado. A conta tem de existir (criar conta de novo com este e-mail).');
+        await snap.docs[0].ref.update({
+          checkinBoostVitalicio: true,
+          checkinPtsDia: 16,
+          checkinBoostTipo: '16_vitalicio',
+          checkinBoostAte: null,
+          checkinVitalicio: true,
+          checkinUpgrade: '16',
+          ultimaAtualizacao: new Date().toISOString(),
+          checkinBoostAdminEm: new Date().toISOString(),
+          checkinBoostAdminNota: 'Reposto manualmente no admin (conta recriada / pagamento anterior)'
+        });
+        if (typeof mostrarAviso === 'function') mostrarAviso('Check-in 16 pts vitalício activado: ' + email);
+        else alert('OK: ' + email + ' recebe 16 pts no check-in diário (vitalício).');
+        document.getElementById('upg-checkin16-email').value = '';
+        try { await carregarTudo(); } catch (e) {}
+      } catch (e) {
+        alert('Erro: ' + (e.message || e));
+      }
+    }
+
+    async function removerCheckin16Vitalicio() {
+      var email = (document.getElementById('upg-checkin16-email').value || '').trim().toLowerCase();
+      if (!email || email.indexOf('@') === -1) return alert('E-mail inválido.');
+      if (!confirm('Remover boost de check-in de ' + email + '?\nVolta a 3 pontos por dia.')) return;
+      try {
+        var snap = await db.collection('usuarios').where('email', '==', email).limit(1).get();
+        if (snap.empty) return alert('Utilizador não encontrado.');
+        await snap.docs[0].ref.update({
+          checkinBoostVitalicio: false,
+          checkinPtsDia: 3,
+          checkinBoostTipo: '',
+          checkinBoostAte: null,
+          checkinVitalicio: false,
+          checkinUpgrade: '',
+          ultimaAtualizacao: new Date().toISOString()
+        });
+        if (typeof mostrarAviso === 'function') mostrarAviso('Check-in base (3 pts) restaurado: ' + email);
+        else alert('OK: ' + email + ' voltou a 3 pts/dia.');
+        try { await carregarTudo(); } catch (e) {}
+      } catch (e) {
+        alert('Erro: ' + (e.message || e));
+      }
+    }
+
+
+    async function liberarMissaoUsuario() {
       var email = (document.getElementById('upg-missao-email').value || '').trim().toLowerCase();
       if (!email || email.indexOf('@') === -1) return alert('E-mail inválido.');
       if (!confirm('Libertar missão semanal para ' + email + '?')) return;
