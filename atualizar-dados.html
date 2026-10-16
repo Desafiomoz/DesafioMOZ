@@ -286,17 +286,23 @@
       var doc = await db.collection('sistema').doc('emailsBanidos').get();
       if (doc.exists) {
         var data = doc.data() || {};
-        if (data[key] && data[key].email) return data[key];
+        // só conta se o objecto tiver o campo email (evita lixo / campos apagados a meio)
+        if (data[key] && typeof data[key] === 'object' && data[key].email) {
+          if (String(data[key].email).trim().toLowerCase() === email) return data[key];
+        }
         var keys = Object.keys(data);
         for (var i = 0; i < keys.length; i++) {
           var d = data[keys[i]];
-          if (d && typeof d === 'object' && String(d.email || '').toLowerCase() === email) return d;
+          if (d && typeof d === 'object' && String(d.email || '').trim().toLowerCase() === email) return d;
         }
       }
-    } catch (e) {}
+    } catch (e) { console.warn('ban check sistema', e); }
     try {
       var doc2 = await db.collection('emailsBanidos').doc(email).get();
-      if (doc2.exists) return doc2.data() || { email: email };
+      if (doc2.exists) {
+        var d2 = doc2.data() || {};
+        if (d2.email || d2.motivo || d2.banidoEm) return d2.email ? d2 : { email: email };
+      }
     } catch (e2) {}
     return false;
   }

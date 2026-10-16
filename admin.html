@@ -12358,46 +12358,81 @@ async function carregarCliquesMissao() {
     async function desbanirEmail(emailFixo) {
       var email = String(emailFixo || (document.getElementById('ban-email') && document.getElementById('ban-email').value) || '').trim().toLowerCase();
       if (!email || email.indexOf('@') === -1) return alert('E-mail inválido.');
-      if (!confirm('Desbanir e RESTAURAR a conta de ' + email + '?\n\nVolta pontos, dados e progresso Homejub guardados no banimento.')) return;
+      if (!confirm('Desbanir e RESTAURAR a conta de ' + email + '?\n\nVolta pontos, dados e progresso Homejub.\nDepois pode fazer login de novo.')) return;
       try {
         var key = _banEmailKey(email);
         var ref = db.collection('sistema').doc('emailsBanidos');
         var snap = await ref.get();
         var banData = null;
+        var dataAll = {};
         if (snap.exists) {
-          var data = snap.data() || {};
-          if (data[key] && data[key].email) banData = data[key];
-          else {
-            Object.keys(data).forEach(function (k) {
-              if (data[k] && typeof data[k] === 'object' && String(data[k].email || '').toLowerCase() === email) {
-                banData = data[k];
-                key = k;
-              }
-            });
-          }
+          dataAll = snap.data() || {};
+          if (dataAll[key] && typeof dataAll[key] === 'object') banData = dataAll[key];
+          Object.keys(dataAll).forEach(function (k) {
+            var d = dataAll[k];
+            if (d && typeof d === 'object' && String(d.email || '').trim().toLowerCase() === email) {
+              if (!banData) banData = d;
+            }
+          });
         }
 
-        // Restaurar utilizador
-        var u = (banData && banData.snapshotUsuario) ? banData.snapshotUsuario : null;
-        if (u && typeof u === 'object') {
+        // 1) REMOVER BAN PRIMEIRO (reescreve o doc sem este e-mail — mais fiável que FieldValue.delete)
+        var limpo = {};
+        Object.keys(dataAll).forEach(function (k) {
+          var d = dataAll[k];
+          if (!d || typeof d !== 'object') return;
+          var emK = String(d.email || '').trim().toLowerCase();
+          if (emK === email) return; // remove
+          if (k === key || k === _banEmailKey(email)) return; // remove
+          limpo[k] = d;
+        });
+        await ref.set(limpo); // substitui o documento inteiro — sem vestígios deste e-mail
+
+        // Coleção antiga emailsBanidos
+        try { await db.collection('emailsBanidos').doc(email).delete(); } catch (e1) {}
+        try { await db.collection('emailsBanidos').doc(key).delete(); } catch (e2) {}
+        try { await db.collection('emailsBanidos').doc(_banEmailKey(email)).delete(); } catch (e3) {}
+        try {
+          var qOld = await db.collection('emailsBanidos').where('email', '==', email).limit(20).get();
+          var dels = [];
+          qOld.forEach(function (doc) { dels.push(doc.ref.delete()); });
+          if (dels.length) await Promise.all(dels);
+        } catch (e4) {}
+
+        // 2) RESTAURAR utilizador (limpo de bloqueios)
+        var u = (banData && banData.snapshotUsuario && typeof banData.snapshotUsuario === 'object')
+          ? Object.assign({}, banData.snapshotUsuario) : null;
+        if (u) {
           u.email = email;
           u.contaBloqueada = false;
           u.jogosBloqueado = false;
-          u.status = u.status || 'Ativo';
+          u.alertaInvestigacao = false;
+          u.status = 'Ativo';
           u.ultimaAtualizacao = new Date().toISOString();
           u.desbanidoEm = new Date().toISOString();
-          // não reintroduzir flags de ban
           delete u.contaBloqueadaEm;
           delete u.contaBloqueadaMotivo;
-          // criar de novo
+          delete u.jogosBloqueadoMotivo;
+          delete u.contaMarcadaEliminacao;
+          delete u.segundaChanceRecusada;
+          // garante que não fica a forçar actualizar dados se já tinha
+          if (u.dadosActualizados == null) u.dadosActualizados = true;
           var existe = await db.collection('usuarios').where('email', '==', email).limit(1).get();
           if (existe.empty) {
             await db.collection('usuarios').add(u);
           } else {
             await existe.docs[0].ref.set(u, { merge: true });
+            // força limpar bloqueios mesmo com merge
+            await existe.docs[0].ref.update({
+              contaBloqueada: false,
+              jogosBloqueado: false,
+              alertaInvestigacao: false,
+              status: 'Ativo',
+              desbanidoEm: new Date().toISOString(),
+              ultimaAtualizacao: new Date().toISOString()
+            });
           }
         } else {
-          // Sem snapshot: conta mínima para poder entrar de novo
           var existe2 = await db.collection('usuarios').where('email', '==', email).limit(1).get();
           if (existe2.empty) {
             await db.collection('usuarios').add({
@@ -12405,60 +12440,62 @@ async function carregarCliquesMissao() {
               nome: (banData && banData.nome) || 'Utilizador',
               pontos: (banData && banData.pontosAntes) || 0,
               status: 'Ativo',
+              dadosActualizados: true,
               dataCadastro: new Date().toISOString(),
               desbanidoEm: new Date().toISOString(),
-              notaAdmin: 'Restaurado sem snapshot completo'
+              notaAdmin: 'Restaurado sem snapshot completo — pode precisar recuperar senha'
+            });
+          } else {
+            await existe2.docs[0].ref.update({
+              contaBloqueada: false,
+              jogosBloqueado: false,
+              alertaInvestigacao: false,
+              status: 'Ativo',
+              desbanidoEm: new Date().toISOString(),
+              ultimaAtualizacao: new Date().toISOString()
             });
           }
         }
 
-        // Restaurar Homejub
-        var j = (banData && banData.snapshotJogo) ? banData.snapshotJogo : null;
-        if (j && typeof j === 'object' && Object.keys(j).length) {
+        // 3) Homejub
+        var j = (banData && banData.snapshotJogo && typeof banData.snapshotJogo === 'object')
+          ? Object.assign({}, banData.snapshotJogo) : null;
+        if (j && Object.keys(j).length) {
           j.ultimaSync = new Date().toISOString();
           await db.collection('jogoEstado').doc(email).set(j, { merge: true });
         }
 
-        // Remover do ban — TODAS as chaves com este e-mail (evita ficar "ainda banido")
-        if (snap.exists) {
-          var dataBan = snap.data() || {};
-          var upd = {};
-          var algum = false;
-          Object.keys(dataBan).forEach(function (k) {
-            var d = dataBan[k];
-            if (!d || typeof d !== 'object') return;
-            var emK = String(d.email || '').trim().toLowerCase();
-            if (emK === email || k === key || k === _banEmailKey(email)) {
-              upd[k] = firebase.firestore.FieldValue.delete();
-              algum = true;
-            }
+        // 4) Verificar se o ban sumiu de verdade
+        var conf = await ref.get();
+        var ainda = false;
+        if (conf.exists) {
+          var dc = conf.data() || {};
+          Object.keys(dc).forEach(function (k) {
+            var d = dc[k];
+            if (d && typeof d === 'object' && String(d.email || '').trim().toLowerCase() === email) ainda = true;
+            if (k === key || k === _banEmailKey(email)) ainda = true;
           });
-          if (!algum && key) {
-            upd[key] = firebase.firestore.FieldValue.delete();
-            algum = true;
-          }
-          if (algum) await ref.update(upd);
         }
-        // Limpar coleção antiga emailsBanidos (doc id = email ou chave)
-        try { await db.collection('emailsBanidos').doc(email).delete(); } catch (eOld) {}
-        try { await db.collection('emailsBanidos').doc(_banEmailKey(email)).delete(); } catch (eOld2) {}
         try {
-          var qOld = await db.collection('emailsBanidos').where('email', '==', email).limit(10).get();
-          var dels = [];
-          qOld.forEach(function (doc) { dels.push(doc.ref.delete()); });
-          if (dels.length) await Promise.all(dels);
-        } catch (eOld3) {}
+          var docOld = await db.collection('emailsBanidos').doc(email).get();
+          if (docOld.exists) ainda = true;
+        } catch (eV) {}
 
-        if (typeof mostrarAviso === 'function') {
-          mostrarAviso('Desbanido e restaurado: ' + email + (u ? ' · pontos e dados recuperados' : ''));
+        if (ainda) {
+          alert('A conta foi restaurada no banco, mas o BAN ainda aparece na lista.\n\nPossível problema de regras do Firebase em sistema/emailsBanidos.\nNo Firebase Console apaga manualmente a entrada deste e-mail em sistema → emailsBanidos.');
         } else {
-          alert('Desbanido: ' + email);
+          if (typeof mostrarAviso === 'function') {
+            mostrarAviso('Desbanido e limpo: ' + email + ' — já pode fazer login.');
+          } else {
+            alert('Desbanido com sucesso: ' + email + '\nJá pode fazer login com a senha antiga (ou recuperar senha).');
+          }
         }
         carregarEmailsBanidos();
         carregarContasRoubo();
         try { await carregarTudo(); } catch (eT) {}
       } catch (e) {
         alert('Erro ao desbanir: ' + (e.message || e));
+        console.error(e);
       }
     }
 
