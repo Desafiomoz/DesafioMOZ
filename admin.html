@@ -176,7 +176,7 @@
 
   <script>
     function entrarAdmin() {
-      var email = (document.getElementById('email-admin-input').value || '').trim();
+      var email = (document.getElementById('email-admin-input').value || '').trim().toLowerCase();
       var senha = document.getElementById('senha-admin-input').value;
       var erroEl = document.getElementById('erro-senha-admin');
       var btn = document.getElementById('btn-entrar-admin');
@@ -186,12 +186,38 @@
         erroEl.style.display = 'block';
         return;
       }
+      if (typeof auth === 'undefined' || !auth) {
+        erroEl.textContent = 'Firebase Auth não carregou. Actualiza a página.';
+        erroEl.style.display = 'block';
+        return;
+      }
       btn.disabled = true;
       btn.textContent = 'Entrando...';
       auth.signInWithEmailAndPassword(email, senha)
+        .then(function () {
+          /* onAuthStateChanged trata o resto */
+        })
         .catch(function (e) {
-          erroEl.textContent = 'E-mail ou senha incorretos.';
+          var code = (e && e.code) ? String(e.code) : '';
+          var msg = 'Erro ao entrar.';
+          if (code === 'auth/user-not-found' || code === 'auth/invalid-email') {
+            msg = 'Este e-mail não existe no Firebase Authentication. Cria o utilizador em Authentication → Users.';
+          } else if (code === 'auth/wrong-password' || code === 'auth/invalid-credential' || code === 'auth/invalid-login-credentials') {
+            msg = 'Senha incorrecta para este e-mail. Usa Reset password no Firebase Authentication.';
+          } else if (code === 'auth/operation-not-allowed') {
+            msg = 'Email/Password está DESACTIVADO. Em Authentication → Sign-in method, activa Email/Password.';
+          } else if (code === 'auth/too-many-requests') {
+            msg = 'Muitas tentativas. Espera uns minutos e tenta de novo.';
+          } else if (code === 'auth/network-request-failed') {
+            msg = 'Sem rede / bloqueio. Verifica internet e tenta de novo.';
+          } else if (code) {
+            msg = 'Erro Firebase: ' + code;
+          } else {
+            msg = 'Erro: ' + ((e && e.message) || e);
+          }
+          erroEl.textContent = msg;
           erroEl.style.display = 'block';
+          console.error('Admin login:', e);
         })
         .finally(function () {
           btn.disabled = false;
@@ -8759,7 +8785,7 @@ async function carregarBonus100() {
         if (elN) elN.textContent = nao.length;
         if (nS) nS.textContent = sim.length;
         if (nN) nN.textContent = nao.length;
-        if (badge) badge.textContent = nao.length;
+        if (badge) badge.textContent = String(nao.length);
 
         if (!sim.length) {
           tSim.innerHTML = '<tr><td colspan="5" class="vazio">Ninguém actualizou ainda.</td></tr>';
@@ -8767,7 +8793,8 @@ async function carregarBonus100() {
           var hs = '';
           sim.forEach(function (u, i) {
             var quando = u.dadosActualizadosEm ? String(u.dadosActualizadosEm).slice(0, 19).replace('T', ' ') : '—';
-            hs += '<tr data-busca-dact="' + escHtml((u.nome || '') + ' ' + (u.email || '')).toLowerCase() + '">' +
+            var busca = escHtml((u.nome || '') + ' ' + (u.email || '')).toLowerCase();
+            hs += '<tr data-busca-dact="' + busca + '">' +
               '<td>' + (i + 1) + '</td>' +
               '<td>' + escHtml(u.nome || '—') + '</td>' +
               '<td>' + escHtml(u.email || '—') + '</td>' +
@@ -8783,25 +8810,35 @@ async function carregarBonus100() {
         } else {
           var hn = '';
           nao.forEach(function (u, i) {
-            var em = String(u.email || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-            hn += '<tr data-busca-dact="' + escHtml((u.nome || '') + ' ' + (u.email || '')).toLowerCase() + '">' +
+            var em = String(u.email || '').trim().toLowerCase();
+            var busca = escHtml((u.nome || '') + ' ' + em).toLowerCase();
+            hn += '<tr data-busca-dact="' + busca + '" data-email="' + escHtml(em) + '">' +
               '<td>' + (i + 1) + '</td>' +
               '<td>' + escHtml(u.nome || '—') + '</td>' +
-              '<td>' + escHtml(u.email || '—') + '</td>' +
+              '<td>' + escHtml(em || '—') + '</td>' +
               '<td>' + (u.pontos || 0) + '</td>' +
-              '<td><button type="button" class="btn-verde" style="padding:6px 10px;font-size:12px;" onclick="marcarDadosActualizadosEmail(\'' + em + '\')">Marcar OK</button></td>' +
+              '<td><button type="button" class="btn-verde btn-marcar-dact" style="padding:6px 10px;font-size:12px;">Marcar OK</button></td>' +
               '</tr>';
           });
           tNao.innerHTML = hn;
+          tNao.querySelectorAll('.btn-marcar-dact').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+              var tr = btn.closest('tr');
+              var em2 = tr ? tr.getAttribute('data-email') : '';
+              marcarDadosActualizadosEmail(em2);
+            });
+          });
         }
       } catch (e) {
+        console.error(e);
         tSim.innerHTML = '<tr><td colspan="5" class="vazio">Erro: ' + escHtml(e.message || e) + '</td></tr>';
         tNao.innerHTML = '<tr><td colspan="5" class="vazio">Erro</td></tr>';
       }
     }
 
     function filtrarDadosActualizados() {
-      var q = (document.getElementById('busca-dados-act') && document.getElementById('busca-dados-act').value || '').trim().toLowerCase();
+      var inp = document.getElementById('busca-dados-act');
+      var q = (inp && inp.value || '').trim().toLowerCase();
       ['tbody-dados-act-sim', 'tbody-dados-act-nao'].forEach(function (id) {
         var tb = document.getElementById(id);
         if (!tb) return;
@@ -8816,15 +8853,23 @@ async function carregarBonus100() {
       if (!email) return;
       try {
         var snap = await db.collection('usuarios').where('email', '==', email).limit(1).get();
-        if (snap.empty) {
+        if (!snap.empty) {
+          await snap.docs[0].ref.update({
+            dadosActualizados: true,
+            dadosActualizadosEm: new Date().toISOString(),
+            dadosActualizadosPorAdmin: true
+          });
+        } else {
           var d = await db.collection('usuarios').doc(email).get();
           if (d.exists) {
-            await d.ref.update({ dadosActualizados: true, dadosActualizadosEm: new Date().toISOString(), dadosActualizadosPorAdmin: true });
+            await d.ref.update({
+              dadosActualizados: true,
+              dadosActualizadosEm: new Date().toISOString(),
+              dadosActualizadosPorAdmin: true
+            });
           } else {
             return alert('Conta não encontrada: ' + email);
           }
-        } else {
-          await snap.docs[0].ref.update({ dadosActualizados: true, dadosActualizadosEm: new Date().toISOString(), dadosActualizadosPorAdmin: true });
         }
         alert('Marcado como actualizado: ' + email);
         carregarDadosActualizados();
@@ -8834,11 +8879,11 @@ async function carregarBonus100() {
     }
 
     async function marcarDadosActualizadosManual() {
-      var email = (document.getElementById('dados-act-email-manual') && document.getElementById('dados-act-email-manual').value || '').trim().toLowerCase();
+      var inp = document.getElementById('dados-act-email-manual');
+      var email = (inp && inp.value || '').trim().toLowerCase();
       if (!email || email.indexOf('@') === -1) return alert('Escreve um e-mail válido.');
       await marcarDadosActualizadosEmail(email);
     }
-
 
     // ===== MANUTENÇÃO DO SITE (coleção config, doc manutencao) =====
     var manEmails = [];
@@ -12374,13 +12419,35 @@ async function carregarCliquesMissao() {
           await db.collection('jogoEstado').doc(email).set(j, { merge: true });
         }
 
-        // Remover do ban
-        if (snap.exists && key) {
+        // Remover do ban — TODAS as chaves com este e-mail (evita ficar "ainda banido")
+        if (snap.exists) {
+          var dataBan = snap.data() || {};
           var upd = {};
-          upd[key] = firebase.firestore.FieldValue.delete();
-          await ref.update(upd);
+          var algum = false;
+          Object.keys(dataBan).forEach(function (k) {
+            var d = dataBan[k];
+            if (!d || typeof d !== 'object') return;
+            var emK = String(d.email || '').trim().toLowerCase();
+            if (emK === email || k === key || k === _banEmailKey(email)) {
+              upd[k] = firebase.firestore.FieldValue.delete();
+              algum = true;
+            }
+          });
+          if (!algum && key) {
+            upd[key] = firebase.firestore.FieldValue.delete();
+            algum = true;
+          }
+          if (algum) await ref.update(upd);
         }
+        // Limpar coleção antiga emailsBanidos (doc id = email ou chave)
         try { await db.collection('emailsBanidos').doc(email).delete(); } catch (eOld) {}
+        try { await db.collection('emailsBanidos').doc(_banEmailKey(email)).delete(); } catch (eOld2) {}
+        try {
+          var qOld = await db.collection('emailsBanidos').where('email', '==', email).limit(10).get();
+          var dels = [];
+          qOld.forEach(function (doc) { dels.push(doc.ref.delete()); });
+          if (dels.length) await Promise.all(dels);
+        } catch (eOld3) {}
 
         if (typeof mostrarAviso === 'function') {
           mostrarAviso('Desbanido e restaurado: ' + email + (u ? ' · pontos e dados recuperados' : ''));

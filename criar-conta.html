@@ -833,7 +833,7 @@
         btn.textContent = 'Entrar';
         return mostrarAviso('🚫 Esta conta foi <b>banida permanentemente</b> do Desafio MOZ' +
           (banInfo.motivo ? ' (' + String(banInfo.motivo).slice(0, 80) + ')' : '') +
-          '. Não podes entrar nem criar conta de novo.');
+          '. Não podes entrar nem criar conta de novo até o administrador desbanir.');
       }
       var senhaHash = await hashSenha(senha);
       var procura = await db.collection('usuarios')
@@ -916,7 +916,7 @@
       if (banCad) {
         btn.disabled = false;
         btn.textContent = 'Criar a minha conta';
-        return mostrarAviso('🚫 Este e-mail está <b>banido permanentemente</b> do Desafio MOZ. Não podes criar conta.');
+        return mostrarAviso('🚫 Este e-mail está <b>banido permanentemente</b> do Desafio MOZ. Não podes criar conta até o administrador desbanir.');
       }
       var telExiste = await db.collection('usuarios').where('telemovel', '==', telemovel).limit(1).get();
       if (telExiste.empty) {
