@@ -328,6 +328,13 @@ if (userData.indicadoPor) { await creditarBonusMarcoIndicacao(userData.indicadoP
 
         localStorage.setItem('pesquisaHabitosCompleta', 'true');
         localStorage.setItem('pontosUtilizador', String(novosPontos));
+
+        try {
+          if (typeof DM_aposPontosInfluencer === 'function') {
+            await DM_aposPontosInfluencer(db, email, novosPontos, docRef, userData);
+          }
+        } catch (eInf) { console.warn('inf confirm', eInf); }
+
         localStorage.setItem('ultimoGanho', '7');
 
         document.getElementById('passo5').classList.remove('ativo');
@@ -346,6 +353,7 @@ if (userData.indicadoPor) { await creditarBonusMarcoIndicacao(userData.indicadoP
       }
     }
   </script>
+<script src="influencer-confirm.js?v=2"></script>
 <script src="historico-pontos.js?v=1"></script>
 </body>
 </html>

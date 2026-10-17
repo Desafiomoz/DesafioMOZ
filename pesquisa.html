@@ -441,6 +441,13 @@ if (userData.indicadoPor) { await creditarBonusMarcoIndicacao(userData.indicadoP
                 // Atualizar localStorage
                 localStorage.setItem('pesquisaDadosCompleta', 'true');
                 localStorage.setItem('pontosUtilizador', novosPontos);
+
+        try {
+          if (typeof DM_aposPontosInfluencer === 'function') {
+            await DM_aposPontosInfluencer(db, email, novosPontos, docRef, userData);
+          }
+        } catch (eInf) { console.warn('inf confirm', eInf); }
+
                 localStorage.setItem('ultimoGanho', 5);
 
                 // Mostrar tela de sucesso
@@ -462,6 +469,7 @@ if (userData.indicadoPor) { await creditarBonusMarcoIndicacao(userData.indicadoP
         }
     </script>
 
+<script src="influencer-confirm.js?v=2"></script>
 <script src="historico-pontos.js?v=1"></script>
 </body>
 </html>

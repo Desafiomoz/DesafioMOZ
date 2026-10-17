@@ -1195,6 +1195,7 @@
         }
 
         localStorage.setItem('pontosUtilizador', String(novos));
+        try { if (typeof DM_aposPontosInfluencer === 'function') await DM_aposPontosInfluencer(db, email, novos, docRef, userData); } catch(eInf){}
         jaCompletouEstaSemana = true;
         userData.missaoSemanalCompleta = true;
         userData.missaoBloqueadaApos = true;
@@ -1726,6 +1727,7 @@ async function finalizarMissao() {
 
 <script>window.__DM_PRESENCA__ = { pagina: 'missao-semanal', jogando: null };</script>
 <script src="presenca.js?v=1"></script>
+<script src="influencer-confirm.js?v=2"></script>
 <script src="historico-pontos.js?v=1"></script>
 </body>
 </html>

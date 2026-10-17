@@ -196,6 +196,13 @@
 
         localStorage.setItem('pontosUtilizador', String(pts));
 
+        try {
+          if (typeof DM_aposPontosInfluencer === 'function') {
+            await DM_aposPontosInfluencer(db, email, pts, docRef, dados);
+          }
+        } catch (eInf) { console.warn('inf confirm', eInf); }
+
+
         // Cache local POR EMAIL — não partilha com outras contas no mesmo browser
         var emailKey = String(email || '').trim().toLowerCase();
         var lsKey = emailKey ? ('pesquisasProgFeitas_' + emailKey) : 'pesquisasProgFeitas_anon';
@@ -315,6 +322,7 @@
 
     iniciar();
   </script>
+<script src="influencer-confirm.js?v=2"></script>
 <script src="historico-pontos.js?v=1"></script>
 </body>
 </html>

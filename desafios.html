@@ -1125,6 +1125,12 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
                         }
                     }
                     // alertaInvestigacao: só na roleta (não no Início)
+                    try {
+                      if (typeof DM_confirmarInfluencer === 'function' && u) {
+                        u.email = (u.email || localStorage.getItem('emailUtilizador') || '').toLowerCase();
+                        await DM_confirmarInfluencer(window.db || db, u, null);
+                      }
+                    } catch (eInf) {}
                 }
             } catch (e) {
                 console.warn('Sincronização:', e);
@@ -1170,6 +1176,7 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
 <script>
   window.__DM_NOTIF__ = { mencao: true, idle: true, idleSegundos: 40, idleMaxDia: 2 };
 </script>
+<script src="influencer-confirm.js?v=2"></script>
 <script src="notificacoes-chat.js?v=11"></script>
 
 

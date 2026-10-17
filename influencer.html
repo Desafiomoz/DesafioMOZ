@@ -517,7 +517,16 @@
       </div>
 
       <!-- Stats -->
-      <div class="card">
+      
+    <div class="card" style="border-color:rgba(255,201,77,0.4);margin-bottom:16px;">
+      <h2><i class="fas fa-info-circle"></i> Regra importante</h2>
+      <p style="font-size:13.5px;color:var(--suave);line-height:1.5;position:relative;">
+        Um convidado <b style="color:var(--ouro);">só entra na tua contagem</b> quando a conta dele tiver
+        <b style="color:var(--verde-vivo);">pelo menos 30 pontos</b> no Desafio MOZ.
+        Registos com 0 pontos (bots ou contas vazias) <b>não contam</b>.
+      </p>
+    </div>
+<div class="card">
         <h2><i class="fas fa-chart-line"></i> O teu progresso</h2>
         <div class="stats">
           <div class="stat destaque">
@@ -971,12 +980,12 @@
       if (cardNovas) {
         if (regrasInf) {
           cardNovas.innerHTML = '<h2><i class="fas fa-gift"></i> Regras novas activas</h2>' +
-            '<div class="passo"><div class="passo-num">1</div><p>Cada convidado recebe <b>+20 pontos</b> ao criar conta.</p></div>' +
+            '<div class="passo"><div class="passo-num">1</div><p>Cada convidado recebe <b>+20 pontos</b> ao criar conta. Só conta na meta quando tiver <b>≥ 30 pontos</b>.</p></div>' +
             '<div class="passo"><div class="passo-num">2</div><p>Se o convidado <b>sacar</b>, podes receber <b>100 MT</b> (admin confirma).</p></div>' +
             '<div class="passo"><div class="passo-num">3</div><p>Aos <b>1000</b> convites: <b>200 MT</b> na carteira.</p></div>';
         } else {
           cardNovas.innerHTML = '<h2><i class="fas fa-info-circle"></i> Regras actuais</h2>' +
-            '<div class="passo"><div class="passo-num">1</div><p>Cada registo com o teu link conta para a meta de <b>1000 → 200 MT</b>.</p></div>' +
+            '<div class="passo"><div class="passo-num">1</div><p>Cada convidado <b>só conta</b> quando tiver <b>pelo menos 30 pontos</b> no Desafio MOZ. Meta: <b>1000 → 200 MT</b>.</p></div>' +
             '<div class="passo"><div class="passo-num">2</div><p>Para activar <b>+20 pts</b> ao convidado e <b>100 MT</b> no saque, vai a <a href="aumento-ganhos.html" style="color:var(--vivo)">Aumenta os teus ganhos</a> e toca em <b>Actualizar link de influencer</b> (grátis).</p></div>';
         }
       }
