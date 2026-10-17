@@ -2375,7 +2375,8 @@ document.getElementById('btn-girar').addEventListener('click', async ()=>{
   await girarRoleta(indice);
 
   // Quando o giro pára → vitória (já desbloqueada no clique)
-  const premio = PREMIOS[indice];
+  // let (não const): o prémio pode ser ajustado (orçamento MT / pontos / maldição)
+  let premio = Object.assign({}, PREMIOS[indice] || { label:'QUASE!', tipo:'nada', valor:0, emoji:'😅' });
   await tocarVitoria();
 
   var ptsRoletaGanho = 0;
