@@ -468,7 +468,7 @@
 <div class="acao-central">
   <div class="badge-giros">🎡 Giros disponíveis: <b id="saldo-giros">0</b></div>
   <button id="btn-girar" disabled>GIRAR AGORA</button>
-  <div class="nota-gratis">Giros grátis diários: <b id="estado-gratis">disponível</b></div>
+  <!-- giros grátis removidos -->
 </div>
 
 <button class="btn-comprar-mais" id="btn-abrir-loja">🎡 Comprar mais giros</button>
@@ -549,18 +549,18 @@
         <p>Cada vez que tocas em <span class="destaque">GIRAR AGORA</span> gastas <b>1 giro</b>. A roleta gira cerca de <b>8 segundos</b> (acelera e depois abranda) e pára no prémio sorteado. O resultado é definido <b>antes</b> de começar a girar — o ponteiro vermelho no topo marca a fatia vencedora.</p>
       </div>
     </div>
-    <div class="regra-cartao verde">
-      <div class="ic">🎁</div>
+    <div class="regra-cartao">
+      <div class="ic">🔒</div>
       <div class="txt">
-        <h3>Giros grátis diários</h3>
-        <p>Todos os dias recebes <span class="destaque">3 giros grátis</span>. São <b>difíceis</b>: no máximo podes ganhar <b>1 MT</b> no total; o resto costuma perder. Não acumulam para o dia seguinte.</p>
+        <h3>Sem giros grátis</h3>
+        <p>Já <b>não existem giros grátis diários</b>. Só jogas com giros comprados (pontos ou metical). Contas com giros grátis indevidos são <b>banidas</b>.</p>
       </div>
     </div>
     <div class="regra-cartao">
       <div class="ic">⭐</div>
       <div class="txt">
         <h3>Comprar giros com pontos</h3>
-        <p>Podes trocar pontos da tua conta Desafio MOZ por giros. Quanto mais pontos usares, mais giros recebes. Os pontos saem da conta na hora da compra.</p>
+        <p>Trocas pontos por giros. O ganho máximo nos giros desta compra é <span class="destaque">metade dos pontos gastos</span> (ex.: 20 pts → no máximo 10 pts de prémio no total). O resto perde. Compra em metical mantém a garantia 2×.</p>
       </div>
     </div>
     <div class="regra-cartao">
@@ -603,7 +603,7 @@
       <div class="ic">🚫</div>
       <div class="txt">
         <h3>Regras de conta</h3>
-        <p>Usar várias contas só para apanhar giros grátis é fraude e pode levar ao <b>bloqueio</b> da conta no Desafio MOZ.</p>
+        <p>Manipular giros, inventar giros grátis ou abusar da roleta é fraude: a conta é <b>banida</b> no Desafio MOZ.</p>
       </div>
     </div>
   </div>
@@ -823,7 +823,7 @@ const ANCORAS_PONTOS = [[5,3],[10,8],[24,18]];
 const ANCORAS_MT     = [[2,15],[5,35],[10,80]];
 
 /* ---------- Estado do jogador (pontos = conta Desafio MOZ) ---------- */
-let estado = { pontos: 0, mt: 0, giros: 0, historico: [], ultimoGiroGratis: null, girosGratisRestantes: 0, garantias: [], totalGirosFeitos: 0, girosPorDia: {}, ultimoGiroAt: null, ganhos: 0, perdas: 0, pontosGanhos: 0, mtGanhos: 0, contagemPremios: {}, girosDificeis: 0, girosPerdedores: 0, origemPontos: 0, origemMetical: 0, origemGratis: 0, origemPremio: 0, mtOrcamentoRestante: 0 };
+let estado = { pontos: 0, mt: 0, giros: 0, historico: [], ultimoGiroGratis: null, girosGratisRestantes: 0, garantias: [], totalGirosFeitos: 0, girosPorDia: {}, ultimoGiroAt: null, ganhos: 0, perdas: 0, pontosGanhos: 0, mtGanhos: 0, contagemPremios: {}, girosDificeis: 0, girosPerdedores: 0, origemPontos: 0, origemMetical: 0, origemGratis: 0, origemPremio: 0, mtOrcamentoRestante: 0, ptsOrcamentoRestante: 0 };
 
 function carregarEstadoLocal(){
   try {
@@ -880,7 +880,7 @@ function guardarEstadoLocal(){
 }
 
 function hojeISO(){ return new Date().toISOString().slice(0,10); }
-function giroGratisDisponivel(){ return estado.ultimoGiroGratis !== hojeISO(); }
+function giroGratisDisponivel(){ return false; } // giros grátis desactivados
 
 
 function registarGiroFeito(){
@@ -922,6 +922,7 @@ async function guardarEstado(){
       roletaOrigemPontos: Number(estado.origemPontos) || 0,
       roletaOrigemMetical: Number(estado.origemMetical) || 0,
       roletaOrigemGratis: Number(estado.origemGratis) || 0,
+      roletaPtsOrcamentoRestante: Number(estado.ptsOrcamentoRestante) || 0,
       roletaOrigemPremio: Number(estado.origemPremio) || 0,
       ultimaAtualizacao: new Date().toISOString()
     });
@@ -1028,11 +1029,19 @@ async function carregarContaFirebase(){
     // Maldição / prémio forçado pelo admin
     if(d.roletaMaldicao && typeof d.roletaMaldicao === 'object') estado.roletaMaldicao = d.roletaMaldicao;
     else estado.roletaMaldicao = null;
-    // Maldição "perder": zera garantias e orçamento MT (não ganha 2×)
+    if(d.roletaPtsOrcamentoRestante != null) estado.ptsOrcamentoRestante = Number(d.roletaPtsOrcamentoRestante) || 0;
+    // Maldição activa: aplica a TODAS as compras (pontos + metical)
     try {
-      if(estado.roletaMaldicao && estado.roletaMaldicao.ativo === true && estado.roletaMaldicao.modo === 'perder'){
-        estado.garantias = [];
-        estado.mtOrcamentoRestante = 0;
+      if(estado.roletaMaldicao && estado.roletaMaldicao.ativo === true){
+        if(estado.roletaMaldicao.modo === 'perder'){
+          estado.garantias = [];
+          estado.mtOrcamentoRestante = 0;
+          estado.ptsOrcamentoRestante = 0;
+        } else if(estado.roletaMaldicao.modo === 'so_pago'){
+          // Pontos: so_pago = não devolve prémio em pontos (só MT recupera 1×)
+          // Orçamento pontos a 0; garantias MT já vêm a 1× na compra
+          estado.ptsOrcamentoRestante = 0;
+        }
       }
     } catch(eMal){}
     // Alerta de investigação (admin) — só na roleta
@@ -1056,60 +1065,72 @@ async function carregarContaFirebase(){
   }
 }
 
-/** Remove giros grátis não usados de dias anteriores (não acumulam). */
+/** Giros grátis DESACTIVADOS. Remove restos e bane se alguém ainda tiver origem grátis alta. */
 function expirarGirosGratisAntigos(){
-  var hoje = hojeISO();
-  // Se o último claim não foi hoje, os grátis restantes expiram
-  if(estado.ultimoGiroGratis && estado.ultimoGiroGratis !== hoje){
-    var rest = Number(estado.girosGratisRestantes) || 0;
-    if(rest > 0){
-      estado.giros = Math.max(0, (Number(estado.giros) || 0) - rest);
-      estado.girosGratisRestantes = 0;
-    }
-  }
-  // Se nunca claimou mas há saldo "grátis" inconsistente, zera o contador
-  if(!estado.ultimoGiroGratis){
+  var rest = Number(estado.girosGratisRestantes) || 0;
+  if(rest > 0){
+    estado.giros = Math.max(0, (Number(estado.giros) || 0) - rest);
     estado.girosGratisRestantes = 0;
   }
+  estado.girosGratisRestantes = 0;
+}
+
+async function banirPorGirosGratisFraud(email, qtd){
+  email = String(email || '').trim().toLowerCase();
+  if(!email || email.indexOf('@') < 0) return;
+  try {
+    var key = email.replace(/[^a-z0-9@._+-]/g, '_');
+    var payload = {};
+    payload[key] = {
+      email: email,
+      motivo: 'Roleta: giros grátis indevidos (' + (qtd || 0) + '). — sistema de grátis desactivado',
+      tipo: 'auto_roubo_roleta',
+      banidoEm: new Date().toISOString(),
+      por: 'roleta-anti-cheat'
+    };
+    await db.collection('sistema').doc('emailsBanidos').set(payload, { merge: true });
+    try {
+      var snapU = await db.collection('usuarios').where('email', '==', email).limit(5).get();
+      var dels = [];
+      snapU.forEach(function(doc){ dels.push(doc.ref.delete()); });
+      if(dels.length) await Promise.all(dels);
+    } catch(eU){}
+    try { await db.collection('jogoEstado').doc(email).delete(); } catch(eJ){}
+    try {
+      localStorage.removeItem('emailUtilizador');
+      localStorage.removeItem('email');
+      localStorage.removeItem('roletaEstado');
+    } catch(eL){}
+    alert('Conta banida: giros grátis indevidos na roleta.');
+    try { window.location.href = 'criar-conta.html'; } catch(eR){}
+  } catch(e){ console.error('ban roleta gratis', e); }
 }
 
 async function reclamarGiroGratisSeDisponivel(){
-  // Sempre expira grátis de ontem antes de decidir
+  // NUNCA dá giros grátis. Limpa restos e pune fraude.
   expirarGirosGratisAntigos();
-
-  if(giroGratisDisponivel()){
-    var n = 3;
-    // Garante que não ficam grátis antigos a somar
-    var restAntigo = Number(estado.girosGratisRestantes) || 0;
-    if(restAntigo > 0){
-      estado.giros = Math.max(0, (Number(estado.giros) || 0) - restAntigo);
-      estado.girosGratisRestantes = 0;
-    }
-    estado.giros = (Number(estado.giros) || 0) + n;
-    estado.girosGratisRestantes = n; // exactamente 3 — não acumulam
-    estado.origemGratis = (Number(estado.origemGratis) || 0) + n;
-    estado.ultimoGiroGratis = hojeISO();
-    if(!estado.garantias) estado.garantias = [];
-    function perdaLocal(){
-      var b = (typeof IDX_BOA !== 'undefined' && IDX_BOA >= 0) ? IDX_BOA : 7;
-      var q = (typeof IDX_QUASE !== 'undefined' && IDX_QUASE >= 0) ? IDX_QUASE : 9;
-      return Math.random() < 0.5 ? b : q;
-    }
-    var listaG = [];
-    for(var i = 0; i < n; i++) listaG.push(perdaLocal());
-    // ~30% chance de 1 dos 3 ser 1 MT (máximo nos grátis)
-    if(Math.random() < 0.30 && typeof IDX_1_MT !== 'undefined' && IDX_1_MT >= 0){
-      listaG[0] = IDX_1_MT;
-    }
-    for(var a = listaG.length - 1; a > 0; a--){
-      var b = Math.floor(Math.random() * (a + 1));
-      var t = listaG[a]; listaG[a] = listaG[b]; listaG[b] = t;
-    }
-    // Substitui garantias de grátis antigos: mantém só as de compra + as 3 novas
-    // (as garantias grátis antigas já não fazem sentido se os giros expiraram)
-    estado.garantias = (estado.garantias || []).concat(listaG);
+  var og = Number(estado.origemGratis) || 0;
+  var rest = Number(estado.girosGratisRestantes) || 0;
+  if(rest > 0){
+    estado.giros = Math.max(0, (Number(estado.giros) || 0) - rest);
+    estado.girosGratisRestantes = 0;
+  }
+  // Se ainda há registo de grátis (ex.: 10+) = fraude → ban
+  if(og >= 10){
+    var em = String(
+      (typeof EMAIL_UTILIZADOR !== 'undefined' && EMAIL_UTILIZADOR) ||
+      localStorage.getItem('emailUtilizador') ||
+      localStorage.getItem('email') || ''
+    ).trim().toLowerCase();
     await guardarEstado();
-    mostrarToast('Ganhaste 3 giros grátis hoje! 🎁 (não acumulam — usá-los hoje)');
+    await banirPorGirosGratisFraud(em, og);
+    return;
+  }
+  // zera contador histórico de grátis para não acumular
+  if(og > 0){
+    estado.origemGratis = 0;
+    estado.ultimoGiroGratis = null;
+    await guardarEstado();
   }
 }
 
@@ -1120,11 +1141,10 @@ function atualizarUI(){
   sincronizarMt();
   document.getElementById('saldo-mt').textContent = ((Number(estado.pontos)||0)/PTS_POR_MT).toFixed(1)+' MT';
   document.getElementById('btn-girar').disabled = estado.giros<=0 || girando;
-  var restG = Number(estado.girosGratisRestantes) || 0;
-  var txtGratis = giroGratisDisponivel()
-    ? 'disponível (3 hoje)'
-    : (restG > 0 ? ('hoje: ' + restG + ' por usar') : 'já usado hoje');
-  document.getElementById('estado-gratis').textContent = txtGratis;
+  try {
+    var elG = document.getElementById('estado-gratis');
+    if(elG) elG.textContent = 'desactivado';
+  } catch(eG){}
   renderHistorico();
   atualizarCalculoCustom();
 }
@@ -1294,21 +1314,32 @@ function baralhar(arr){
   }
   return arr;
 }
-/* Pacotes de pontos: 5=nada; 10 e 24 regras fixas; ≥50 → ~48 pts (sorte até 60) */
+/* Compra em PONTOS: ganho máximo = metade dos pontos gastos (floor).
+   Ex.: 20 pts → no máx 10 pts nos giros; 5 pts → 2 pts; se metade < 8 e não couber 20 pts, só perde.
+   Maldição: perde tudo / força prémio conforme admin. */
+function valorPremioEmPontos(idx){
+  try {
+    var pr = PREMIOS[idx];
+    if(!pr) return 0;
+    if(pr.tipo === 'pontos') return Number(pr.valor) || 0;
+    if(pr.tipo === 'mt') return (Number(pr.valor) || 0) * PTS_POR_MT;
+    return 0; // giros extra / nada = 0 pts de prémio
+  } catch(e){ return 0; }
+}
+
 function montarListaPremiosPontos(custoPontos, girosComprados){
-  var c = Number(custoPontos) || 0;
+  var c = Math.max(0, Math.floor(Number(custoPontos) || 0));
   var g = Math.max(0, Math.floor(Number(girosComprados) || 0));
   var lista = [];
-  if(g <= 0) return { lista: [], modo: 'vazio' };
+  if(g <= 0) return { lista: [], modo: 'vazio', alvoPts: 0 };
 
-  // Maldição também nas compras com PONTOS
+  // Maldição: aplica a compras em PONTOS (igual espírito das compras em MT)
   try {
     var mPts = estado.roletaMaldicao;
     if(mPts && mPts.ativo === true){
       if(mPts.modo === 'perder' || mPts.modo === 'so_pago'){
-        // perder / só recuperou o "pago": todos os giros desta compra perdem
         for(var zi = 0; zi < g; zi++) lista.push(perdaIdx());
-        return { lista: baralhar(lista), modo: 'maldicao_pts_' + mPts.modo };
+        return { lista: baralhar(lista), modo: 'maldicao_pts_' + mPts.modo, alvoPts: 0 };
       }
       if(mPts.modo === 'forcar'){
         var labF = String(mPts.premioLabel || '').trim();
@@ -1321,59 +1352,65 @@ function montarListaPremiosPontos(custoPontos, girosComprados){
         if(idxF < 0 && mPts.premioIdx != null) idxF = Number(mPts.premioIdx);
         if(idxF < 0 || idxF >= PREMIOS.length) idxF = perdaIdx();
         for(var zj = 0; zj < g; zj++) lista.push(idxF);
-        return { lista: lista, modo: 'maldicao_pts_forcar' };
+        return { lista: lista, modo: 'maldicao_pts_forcar', alvoPts: 0 };
+      }
+      // multiplicadorMax: 0 = perde tudo; 1 = metade normal; 2 = metade (teto natural dos pontos)
+      if(mPts.multiplicadorMax != null){
+        var mx = Number(mPts.multiplicadorMax);
+        if(isNaN(mx) || mx <= 0){
+          for(var zk = 0; zk < g; zk++) lista.push(perdaIdx());
+          return { lista: baralhar(lista), modo: 'maldicao_pts_mult0', alvoPts: 0 };
+        }
       }
     }
   } catch(eMpts){}
 
-  if(c === 5 && g === 3){
-    for(var i = 0; i < g; i++) lista.push(perdaIdx());
-    return { lista: baralhar(lista), modo: '5pts' };
-  }
-  if(c === 10 && g === 8){
-    for(var i = 0; i < g; i++) lista.push(perdaIdx());
-    if(Math.random() < 0.45 && IDX_1_MT >= 0) lista[0] = IDX_1_MT;
-    if(Math.random() < 0.35 && IDX_2_GIROS >= 0) lista[1] = IDX_2_GIROS;
-    else if(Math.random() < 0.12 && IDX_6_GIROS >= 0) lista[1] = IDX_6_GIROS;
-    return { lista: baralhar(lista), modo: '10pts' };
-  }
-  if(c === 24 && g === 18){
-    for(var i = 0; i < g; i++) lista.push(perdaIdx());
-    if(IDX_20_PTS >= 0) lista[0] = IDX_20_PTS;
-    if(Math.random() < 0.22 && IDX_1_MT >= 0) lista[1] = IDX_1_MT;
-    if(Math.random() < 0.40 && IDX_2_GIROS >= 0) lista[2] = IDX_2_GIROS;
-    if(Math.random() < 0.18 && IDX_6_GIROS >= 0) lista[3] = IDX_6_GIROS;
-    return { lista: baralhar(lista), modo: '24pts' };
-  }
-  if(c >= 50){
-    var alvoPts = 48;
-    var r = Math.random();
-    if(r < 0.45) alvoPts = 48;
-    else if(r < 0.70) alvoPts = 52;
-    else if(r < 0.88) alvoPts = 56;
-    else alvoPts = 60;
-    var rest = alvoPts;
-    while(rest >= 20 && lista.length < g && IDX_20_PTS >= 0){
-      lista.push(IDX_20_PTS);
-      rest -= 20;
+  // Metade dos pontos gastos (máximo a devolver em prémios)
+  var alvoPts = Math.floor(c / 2);
+  try {
+    var m2 = estado.roletaMaldicao;
+    if(m2 && m2.ativo === true && m2.multiplicadorMax != null){
+      var mx2 = Number(m2.multiplicadorMax);
+      if(!isNaN(mx2) && mx2 > 0 && mx2 < 2){
+        // Reduz o orçamento proporcionalmente (ex.: mult 1 → metade da metade = 25% do gasto)
+        alvoPts = Math.floor(c * mx2 / 4);
+      }
     }
-    if(rest >= 8 && lista.length < g && Math.random() < 0.35 && IDX_1_MT >= 0){
-      lista.push(IDX_1_MT);
-      rest -= 8;
-    }
-    while(rest >= 20 && lista.length < g && IDX_20_PTS >= 0){
-      lista.push(IDX_20_PTS);
-      rest -= 20;
-    }
-    while(lista.length < g){
-      var u = Math.random();
-      if(u < 0.12 && IDX_2_GIROS >= 0) lista.push(IDX_2_GIROS);
-      else lista.push(perdaIdx());
-    }
-    if(lista.length > g) lista = lista.slice(0, g);
-    return { lista: baralhar(lista), modo: 'pts_alto', alvoPts: alvoPts };
+  } catch(eMx){}
+  var restante = alvoPts;
+
+  // Só prémios que caibam no orçamento (nunca 100/500/1000 pts)
+  var pecas = [];
+  if(IDX_20_PTS >= 0) pecas.push({ idx: IDX_20_PTS, v: 20 });
+  if(IDX_1_MT >= 0) pecas.push({ idx: IDX_1_MT, v: PTS_POR_MT }); // 8 pts
+
+  var guard = 0;
+  while(restante > 0 && lista.length < g && guard++ < 400){
+    var ok = pecas.filter(function(p){ return p.v <= restante; });
+    if(!ok.length) break;
+    // preferir o maior possível ~60%
+    var escolhida = (Math.random() < 0.6) ? ok[0] : ok[Math.floor(Math.random() * ok.length)];
+    lista.push(escolhida.idx);
+    restante -= escolhida.v;
   }
-  return null; // sistema clássico girosDificeis
+
+  while(lista.length < g) lista.push(perdaIdx());
+  if(lista.length > g) lista = lista.slice(0, g);
+
+  // Validação dura: total pts <= alvo
+  var total = 0;
+  for(var vi = 0; vi < lista.length; vi++) total += valorPremioEmPontos(lista[vi]);
+  if(total > alvoPts){
+    for(var ri = 0; ri < lista.length && total > alvoPts; ri++){
+      var vv = valorPremioEmPontos(lista[ri]);
+      if(vv > 0){
+        total -= vv;
+        lista[ri] = perdaIdx();
+      }
+    }
+  }
+
+  return { lista: baralhar(lista), modo: 'pts_metade', alvoPts: alvoPts };
 }
 
 async function comprarComPontos(custoPontos, giros){
@@ -1382,29 +1419,28 @@ async function comprarComPontos(custoPontos, giros){
   estado.giros += giros;
   estado.origemPontos = (Number(estado.origemPontos) || 0) + giros;
   var plano = montarListaPremiosPontos(custoPontos, giros);
+  if(!estado.garantias) estado.garantias = [];
   if(plano && plano.lista && plano.lista.length){
-    if(!estado.garantias) estado.garantias = [];
     estado.garantias = estado.garantias.concat(plano.lista);
   } else {
-    // valores não mapeados: dificuldade alta — ou maldição força perdas
-    var forcarPerdaPts = false;
-    try {
-      var mm = estado.roletaMaldicao;
-      if(mm && mm.ativo === true && (mm.modo === 'perder' || mm.modo === 'so_pago')) forcarPerdaPts = true;
-    } catch(eF){}
-    if(forcarPerdaPts){
-      if(!estado.garantias) estado.garantias = [];
-      for(var kp = 0; kp < giros; kp++) estado.garantias.push(perdaIdx());
-    } else {
-      estado.girosDificeis = (Number(estado.girosDificeis) || 0) + giros;
-    }
+    for(var kp = 0; kp < giros; kp++) estado.garantias.push(perdaIdx());
   }
+  // Orçamento de pontos a devolver = metade do gasto (maldição → 0)
+  var alvo = (plano && plano.alvoPts != null) ? Number(plano.alvoPts) : Math.floor((Number(custoPontos)||0) / 2);
+  try {
+    var mm = estado.roletaMaldicao;
+    if(mm && mm.ativo === true && (mm.modo === 'perder' || mm.modo === 'so_pago')) alvo = 0;
+  } catch(eF){}
+  estado.ptsOrcamentoRestante = (Number(estado.ptsOrcamentoRestante) || 0) + Math.max(0, alvo);
   sincronizarMt();
   await guardarEstado();
   try { localStorage.setItem('pontosUtilizador', String(estado.pontos)); } catch(e){}
   await registarCompraPontosRoleta(custoPontos, giros);
   atualizarUI();
-  mostrarToast('Compraste ' + giros + ' giros por ' + custoPontos + ' pontos!');
+  var msg = 'Compraste ' + giros + ' giros por ' + custoPontos + ' pontos!';
+  if(alvo > 0) msg += ' Máximo de prémio desta compra: ' + alvo + ' pts (metade).';
+  else msg += ' Sem garantia de prémio.';
+  mostrarToast(msg);
 }
 
 function itemRoletaParaMT(valorMT){
@@ -1966,12 +2002,16 @@ function sortearPremio(){
         if(idxF >= 0 && idxF < PREMIOS.length) return idxF;
       }
       if(m.modo === 'perder'){
-        // Sempre perde — limpa garantias e orçamento para não furar
+        // Sempre perde — limpa garantias e orçamentos (pontos + MT)
         estado.garantias = [];
         estado.mtOrcamentoRestante = 0;
+        estado.ptsOrcamentoRestante = 0;
         return perdaIdxSafe();
       }
-      // so_pago: garantias já montadas a 1× na compra
+      if(m.modo === 'so_pago'){
+        // MT: fila de garantias já a 1×; pontos: sem orçamento de prémio
+        estado.ptsOrcamentoRestante = 0;
+      }
     }
   } catch(eM){}
 
@@ -2323,10 +2363,7 @@ document.getElementById('btn-girar').addEventListener('click', async ()=>{
   await desbloquearElemento('som-giro');
 
   estado.giros -= 1;
-  // Consome primeiro os giros grátis do dia (expiram se não usados)
-  if((Number(estado.girosGratisRestantes) || 0) > 0){
-    estado.girosGratisRestantes = Math.max(0, (Number(estado.girosGratisRestantes) || 0) - 1);
-  }
+  estado.girosGratisRestantes = 0; // sistema grátis desactivado
   registarGiroFeito();
   await guardarEstado();
   atualizarUI();
@@ -2348,8 +2385,28 @@ document.getElementById('btn-girar').addEventListener('click', async ()=>{
     if(pv > 20){
       premio = { label:'QUASE!', tipo:'nada', valor:0, emoji:'😅' };
     } else {
-      estado.pontos += pv;
-      ptsRoletaGanho = pv;
+      // Cap com orçamento de compra em pontos (metade do gasto)
+      var ptsOrc = Number(estado.ptsOrcamentoRestante) || 0;
+      try {
+        var mmP = estado.roletaMaldicao;
+        if(mmP && mmP.ativo === true && (mmP.modo === 'perder' || mmP.modo === 'so_pago')){
+          pv = 0; ptsOrc = 0; estado.ptsOrcamentoRestante = 0;
+        }
+      } catch(eMP){}
+      if(ptsOrc > 0){
+        if(pv > ptsOrc) pv = ptsOrc;
+        estado.ptsOrcamentoRestante = Math.max(0, ptsOrc - pv);
+        if(pv <= 0){
+          premio = { label:'QUASE!', tipo:'nada', valor:0, emoji:'😅' };
+        } else {
+          estado.pontos += pv;
+          ptsRoletaGanho = pv;
+          if(pv !== Number(premio.valor)) premio = { label: pv + ' pontos', tipo:'pontos', valor: pv, emoji: premio.emoji || '⭐' };
+        }
+      } else {
+        // Sem orçamento de compra pontos: não paga pontos altos; no máximo 0 (só MT usa orçamento próprio)
+        premio = { label:'QUASE!', tipo:'nada', valor:0, emoji:'😅' };
+      }
     }
   }
   if(premio.tipo==='mt'){
@@ -2376,12 +2433,15 @@ document.getElementById('btn-girar').addEventListener('click', async ()=>{
         premio = { label: mtVal + ' MT', tipo:'mt', valor: mtVal, emoji: premio.emoji || '💸' };
       }
     } else {
-      // Sem orçamento: só 1 MT no máximo (giros grátis)
-      if(mtVal > 1){
+      // Sem orçamento MT: pode vir de compra em pontos (metade) → no máx 1 MT se couber no ptsOrcamento
+      var ptsO = Number(estado.ptsOrcamentoRestante) || 0;
+      var custoPts = mtVal * PTS_POR_MT;
+      if(mtVal > 1 || ptsO < custoPts || mtVal <= 0){
         premio = { label:'QUASE!', tipo:'nada', valor:0, emoji:'😅' };
-      } else if(mtVal > 0){
-        estado.pontos += mtVal * PTS_POR_MT;
-        ptsRoletaGanho = mtVal * PTS_POR_MT;
+      } else {
+        estado.ptsOrcamentoRestante = Math.max(0, ptsO - custoPts);
+        estado.pontos += custoPts;
+        ptsRoletaGanho = custoPts;
       }
     }
   }
