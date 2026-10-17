@@ -319,6 +319,8 @@
       letter-spacing: 0.02em;
     }
   </style>
+  <!-- Cloudflare Turnstile (CAPTCHA) — grátis -->
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 </head>
 <body>
 
@@ -354,6 +356,16 @@
           <input type="password" id="senha-login" placeholder="••••••••" autocomplete="current-password">
           <button type="button" class="btn-olho" onclick="toggleSenha('senha-login', this)"><i class="fas fa-eye"></i></button>
         </div>
+      </div>
+      <div class="grupo-input" style="margin-top:8px;margin-bottom:4px;">
+        <label style="margin-bottom:8px;">Confirma que não és um robot</label>
+        <div class="cf-turnstile" id="captcha-login"
+          data-sitekey="0x4AAAAAAFZJSXGhlyXHzXQ1"
+          data-theme="dark"
+          data-language="pt"
+          data-callback="onCaptchaOk"
+          data-expired-callback="onCaptchaExpired"
+          data-error-callback="onCaptchaError"></div>
       </div>
       <button type="submit" class="btn-principal" id="btn-login">Entrar</button>
       <div class="link-ajuda"><a href="recuperar-senha.html">Esqueceu a senha?</a></div>
@@ -392,6 +404,17 @@
           Já sei <strong style="color:var(--texto);">e compreende</strong> — há várias formas de ganhar .</span>
         </label>
       </div>
+      <div class="grupo-input" style="margin-top:8px;margin-bottom:4px;">
+        <label style="margin-bottom:8px;">Confirma que não és um robot</label>
+        <div class="cf-turnstile" id="captcha-cadastro"
+          data-sitekey="0x4AAAAAAFZJSXGhlyXHzXQ1"
+          data-theme="dark"
+          data-language="pt"
+          data-callback="onCaptchaOk"
+          data-expired-callback="onCaptchaExpired"
+          data-error-callback="onCaptchaError"></div>
+        <small style="display:block;margin-top:6px;font-size:11px;color:#8e9bb8;">Protecção anti-bot · Cloudflare</small>
+      </div>
       <button type="submit" class="btn-principal" id="btn-cadastro">Criar a minha conta</button>
     </form>
 
@@ -401,6 +424,63 @@
 
 <script>
   var aviso = document.getElementById('aviso-campo');
+
+  /* ========== CAPTCHA Cloudflare Turnstile ==========
+     1) Entra em https://dash.cloudflare.com → Turnstile → Add site
+     2) Domínio: desafiomoz.pages.dev (e localhost se testares)
+     3) Copia o Site Key e substitui em TODOS os data-sitekey abaixo
+        (procura 0x4AAAAAAFZJSXGhlyXHzXQ1 e troca pela tua chave real)
+     A chave 1x0000...AA é só de TESTE (sempre passa). Em produção usa a tua.
+  */
+  var TURNSTILE_SITE_KEY = '0x4AAAAAAFZJSXGhlyXHzXQ1';
+  var captchaToken = '';
+
+  function onCaptchaOk(token) {
+    captchaToken = token || '';
+  }
+  function onCaptchaExpired() {
+    captchaToken = '';
+  }
+  function onCaptchaError() {
+    captchaToken = '';
+  }
+  function captchaValido() {
+    // token do callback ou input hidden que o Turnstile injeta
+    if (captchaToken && captchaToken.length > 10) return true;
+    try {
+      var inputs = document.querySelectorAll('[name="cf-turnstile-response"]');
+      for (var i = 0; i < inputs.length; i++) {
+        if (inputs[i].value && inputs[i].value.length > 10) return true;
+      }
+    } catch (e) {}
+    return false;
+  }
+  function aplicarSiteKeyTurnstile() {
+    try {
+      document.querySelectorAll('.cf-turnstile').forEach(function (el) {
+        el.setAttribute('data-sitekey', TURNSTILE_SITE_KEY);
+      });
+    } catch (e) {}
+  }
+  // se a página já carregou o script, re-render com a chave
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', aplicarSiteKeyTurnstile);
+  } else {
+    aplicarSiteKeyTurnstile();
+  }
+
+  function resetCaptcha() {
+    captchaToken = '';
+    try {
+      if (window.turnstile) {
+        var els = document.querySelectorAll('.cf-turnstile');
+        els.forEach(function (el) {
+          try { window.turnstile.reset(el); } catch (e1) {}
+        });
+      }
+    } catch (e) {}
+  }
+
 
   /** Se a conta estiver bloqueada, vai para a página de bloqueio (não para desafios). */
 
@@ -679,6 +759,9 @@
         if (!aceitoG || !aceitoG.checked) {
           return mostrarAviso('⚠️ Aceite os Termos de Uso antes de se registar (incluindo com Google).');
         }
+        if (!captchaValido()) {
+          return mostrarAviso('⚠️ Completa o CAPTCHA antes de registar com Google.');
+        }
       }
       var provider = new firebase.auth.GoogleAuthProvider();
       var resultado = await authGoogle.signInWithPopup(provider);
@@ -829,6 +912,9 @@
     var senha = document.getElementById('senha-login').value;
     var btn = document.getElementById('btn-login');
     if (!email || !senha) return mostrarAviso('⚠️ Preencha todos os campos!');
+    if (!captchaValido()) {
+      return mostrarAviso('⚠️ Completa o CAPTCHA (não sou um robot) antes de entrar.');
+    }
     btn.disabled = true;
     btn.textContent = 'A entrar...';
     try {
@@ -836,6 +922,7 @@
       if (banInfo) {
         btn.disabled = false;
         btn.textContent = 'Entrar';
+        resetCaptcha();
         return mostrarAviso('🚫 Esta conta foi <b>banida permanentemente</b> do Desafio MOZ' +
           (banInfo.motivo ? ' (' + String(banInfo.motivo).slice(0, 80) + ')' : '') +
           '. Não podes entrar nem criar conta de novo até o administrador desbanir.');
@@ -859,6 +946,7 @@
       if (procura.empty) {
         btn.disabled = false;
         btn.textContent = 'Entrar';
+        resetCaptcha();
         return mostrarAviso('⚠️ E-mail ou senha inválidos!');
       }
       var usuario = procura.docs[0].data();
@@ -903,6 +991,9 @@
     var senha = document.getElementById('senha-cadastro').value;
     var btn = document.getElementById('btn-cadastro');
     if (!nome || !telemovel || !email || !senha) return mostrarAviso('⚠️ Preencha todos os campos!');
+    if (!captchaValido()) {
+      return mostrarAviso('⚠️ Completa o CAPTCHA (não sou um robot) antes de criar a conta.');
+    }
     if (!emailGmailValido(email)) {
       return mostrarAviso('⚠️ Só são aceites e-mails <b>@gmail.com</b> (ex.: nome@gmail.com).');
     }
@@ -921,6 +1012,7 @@
       if (banCad) {
         btn.disabled = false;
         btn.textContent = 'Criar a minha conta';
+        resetCaptcha();
         return mostrarAviso('🚫 Este e-mail está <b>banido permanentemente</b> do Desafio MOZ. Não podes criar conta até o administrador desbanir.');
       }
       var telExiste = await db.collection('usuarios').where('telemovel', '==', telemovel).limit(1).get();
@@ -935,6 +1027,7 @@
       if (!telExiste.empty || !emailExiste.empty) {
         btn.disabled = false;
         btn.textContent = 'Criar Minha Conta';
+        resetCaptcha();
         return mostrarAviso('⚠️ Este número ou e-mail já está cadastrado!');
       }
       var params = new URLSearchParams(window.location.search);
