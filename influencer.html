@@ -763,6 +763,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
   <script src="historico-pontos.js?v=1"></script>
+  <script src="influencer-confirm.js?v=3"></script>
   <script>
 (function () {
   if (typeof window.__DESAFIO_MOZ_FIREBASE__ === 'undefined') {
@@ -971,6 +972,12 @@
       // recarregar
       var again = await userRef.get();
       userDoc = again.data() || userDoc;
+      // Sincroniza contagem: convidados com ≥ 30 pts confirmados → +1 na tabela
+      try {
+        if (typeof DM_sincronizarContagemInfluencer === 'function') {
+          userDoc = await DM_sincronizarContagemInfluencer(db, userDoc, userRef) || userDoc;
+        }
+      } catch (eSync) { console.warn('sync inf', eSync); }
       // Prémios em falta (ex.: 1000, 2000…) → pontos na carteira automaticamente
       userDoc = await verificarPremiosInfluencer(userRef, userDoc);
       actualizarUI(userDoc);

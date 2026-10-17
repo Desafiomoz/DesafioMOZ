@@ -512,6 +512,11 @@
         } catch (eH) { console.warn('hist checkin', eH); }
 
         if (data.indicadoPor) { await creditarBonusMarcoIndicacao(data.indicadoPor, pontosAtuais, novosPontos); }
+        try {
+          if (typeof DM_aposPontosInfluencer === 'function') {
+            await DM_aposPontosInfluencer(db, emChk || (data.email || ''), novosPontos, docRef, data);
+          }
+        } catch (eInf) {}
 
         checkins = lista;
         localStorage.setItem('pontosUtilizador', String(novosPontos));
@@ -535,6 +540,7 @@
   </script>
 
 <script>window.__DM_PRESENCA__ = { pagina: 'checkin', jogando: null };</script>
+<script src="influencer-confirm.js?v=3"></script>
 <script src="presenca.js?v=1"></script>
 </body>
 </html>

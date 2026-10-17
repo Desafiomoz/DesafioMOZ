@@ -683,6 +683,11 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
             if (userDataCache && userDataCache.indicadoPor) {
                 try { await creditarBonusMarcoIndicacao(userDataCache.indicadoPor, ptsAntes, ptsDepois); } catch (eM) {}
             }
+            try {
+              if (typeof DM_aposPontosInfluencer === 'function') {
+                await DM_aposPontosInfluencer(window.db || db, email, ptsDepois, docRef, userDataCache || {});
+              }
+            } catch (eInf) {}
             jaFezYoutube = true;
             atualizarPontosUI(ptsDepois);
             mostrarEstadoFeito();
@@ -882,6 +887,11 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
               }
             } catch (eH) { console.warn('hist desafio', eH); }
             if (dados.indicadoPor) { await creditarBonusMarcoIndicacao(dados.indicadoPor, dados.pontos || 0, novosPts); }
+            try {
+              if (typeof DM_aposPontosInfluencer === 'function') {
+                await DM_aposPontosInfluencer(window.db || db, emailUtilizador, novosPts, docRef, dados);
+              }
+            } catch (eInf) {}
             if (userDataCache) userDataCache.desafiosProgramadosFeitos = feitos;
             atualizarPontosUI(novosPts);
             alert('✅ +' + pts + ' pontos recebidos!');
@@ -1176,7 +1186,7 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
 <script>
   window.__DM_NOTIF__ = { mencao: true, idle: true, idleSegundos: 40, idleMaxDia: 2 };
 </script>
-<script src="influencer-confirm.js?v=2"></script>
+<script src="influencer-confirm.js?v=3"></script>
 <script src="notificacoes-chat.js?v=11"></script>
 
 
