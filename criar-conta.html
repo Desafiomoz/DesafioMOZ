@@ -514,6 +514,26 @@
     return false;
   }
 
+  /** Telemóvel banido? (compara os últimos 9 dígitos com os banidos guardados) */
+  async function telefoneEstaBanido(tel) {
+    var t = String(tel || '').replace(/\D/g, '').slice(-9);
+    if (t.length < 9 || !db) return false;
+    try {
+      var doc = await db.collection('sistema').doc('emailsBanidos').get();
+      if (doc.exists) {
+        var data = doc.data() || {};
+        var keys = Object.keys(data);
+        for (var i = 0; i < keys.length; i++) {
+          var d = data[keys[i]];
+          if (!d || typeof d !== 'object') continue;
+          var dt = String(d.telemovel || (d.snapshotUsuario && d.snapshotUsuario.telemovel) || '').replace(/\D/g, '').slice(-9);
+          if (dt && dt === t) return d;
+        }
+      }
+    } catch (e) { console.warn('ban tel', e); }
+    return false;
+  }
+
   function redirecionarAposLogin(usuario, novaConta) {
     var u = usuario || {};
     var bloqueado =
@@ -959,7 +979,7 @@
         resetCaptcha();
         return mostrarAviso('🚫 Esta conta foi <b>banida permanentemente</b> do Desafio MOZ' +
           (banInfo.motivo ? ' (' + String(banInfo.motivo).slice(0, 80) + ')' : '') +
-          '. Não podes entrar nem criar conta de novo até o administrador desbanir.');
+          '. Não podes entrar nem criar conta de novo. O banimento é para sempre.');
       }
       var senhaHash = await hashSenha(senha);
       var procura = await db.collection('usuarios')
@@ -1049,7 +1069,14 @@
         btn.disabled = false;
         btn.textContent = 'Criar a minha conta';
         resetCaptcha();
-        return mostrarAviso('🚫 Este e-mail está <b>banido permanentemente</b> do Desafio MOZ. Não podes criar conta até o administrador desbanir.');
+        return mostrarAviso('🚫 Este e-mail está <b>banido permanentemente</b> do Desafio MOZ. Não podes criar conta. O banimento é para sempre.');
+      }
+      var banTel = await telefoneEstaBanido(telemovel);
+      if (banTel) {
+        btn.disabled = false;
+        btn.textContent = 'Criar a minha conta';
+        resetCaptcha();
+        return mostrarAviso('🚫 Este número está <b>banido permanentemente</b> do Desafio MOZ. Não podes criar conta. O banimento é para sempre.');
       }
       var telExiste = await db.collection('usuarios').where('telemovel', '==', telemovel).limit(1).get();
       if (telExiste.empty) {

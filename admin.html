@@ -3333,7 +3333,7 @@
         <h3><i class="fas fa-ban"></i> Banimento permanente por e-mail</h3>
         <p style="font-size:12px;color:#aaa;margin-bottom:12px;line-height:1.45;">
           O e-mail banido <b style="color:#ff6b6b;">nunca mais</b> consegue fazer login nem criar conta no Desafio MOZ,
-          até tu removeres o banimento aqui. Usa isto para quem manipula jogos ou rouba pontos.
+          <b>para sempre</b>. O banimento é <b>definitivo e irreversível</b> — nem o administrador pode desbanir. Usa isto para quem manipula jogos ou rouba pontos.
         </p>
         <div class="form-grid">
           <div class="form-row">
@@ -3347,7 +3347,6 @@
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
           <button type="button" class="btn-vermelho" style="width:auto;padding:12px 16px;" onclick="banirEmailPermanente()">🚫 Banir permanentemente + apagar conta</button>
-          <button type="button" class="btn-verde" style="width:auto;padding:12px 16px;" onclick="desbanirEmail()">✅ Remover banimento</button>
         </div>
       </div>
 
@@ -12392,7 +12391,7 @@ async function carregarCliquesMissao() {
         || 'Banimento permanente — manipulação / roubo';
       var tipo = tipoFixo || 'manual';
       if (!email || email.indexOf('@') === -1) return alert('E-mail inválido.');
-      if (!emailFixo && !confirm('BANIR permanentemente:\n' + email + '\n\nA conta será guardada para poderes RESTAURAR com Desbanir.\nContinuar?')) return;
+      if (!emailFixo && !confirm('BANIR permanentemente:\n' + email + '\n\nATENÇÃO: o banimento é PERMANENTE e NÃO pode ser desfeito.\nContinuar?')) return;
       try {
         var snapU = await db.collection('usuarios').where('email', '==', email).limit(5).get();
         var nome = '';
@@ -12423,6 +12422,7 @@ async function carregarCliquesMissao() {
           nivelAntes: jogo.nivelDesbloqueado || jogo.nivel || null,
           ajudasAntes: jogo.ajudasDisponiveis != null ? jogo.ajudasDisponiveis : null,
           moedasAntes: jogo.moedasTotais != null ? jogo.moedasTotais : null,
+          telemovel: String((usuarioCompleto && usuarioCompleto.telemovel) || '').replace(/\D/g, '').slice(-9),
           banidoEm: new Date().toISOString(),
           por: 'admin',
           // Snapshot completo para restaurar no desbanir
@@ -12458,7 +12458,7 @@ async function carregarCliquesMissao() {
         await Promise.all(dels);
         try { await db.collection('jogoEstado').doc(email).delete(); } catch (e1) {}
 
-        if (typeof mostrarAviso === 'function') mostrarAviso('Banido (com backup para restaurar): ' + email);
+        if (typeof mostrarAviso === 'function') mostrarAviso('Banido para sempre: ' + email);
         else alert('Banido: ' + email);
         try {
           if (document.getElementById('ban-email')) document.getElementById('ban-email').value = '';
@@ -12473,6 +12473,12 @@ async function carregarCliquesMissao() {
     }
 
     async function desbanirEmail(emailFixo) {
+      // Banimento permanente: não é permitido desbanir.
+      alert('🔒 Banimento permanente — contas banidas não podem ser desbanidas.');
+      return;
+    }
+
+    async function _desbanirEmailDESATIVADO(emailFixo) {
       var email = String(emailFixo || (document.getElementById('ban-email') && document.getElementById('ban-email').value) || '').trim().toLowerCase();
       if (!email || email.indexOf('@') === -1) return alert('E-mail inválido.');
       if (!confirm('Desbanir e RESTAURAR a conta de ' + email + '?\n\nVolta pontos, dados e progresso Homejub.\nDepois pode fazer login de novo.')) return;
@@ -12658,7 +12664,7 @@ async function carregarCliquesMissao() {
         lista.forEach(function (d, i) {
           var em = String(d.email || '').toLowerCase();
           var emSafe = em.replace(/'/g, "\\'");
-          var temSnap = d.snapshotUsuario ? ' · tem backup' : '';
+          var temSnap = '';
           html += '<tr>' +
             '<td>' + (i + 1) + '</td>' +
             '<td><strong>' + escHtml(em) + '</strong>' + (d.nome ? '<br><small style="color:#888">' + escHtml(d.nome) + '</small>' : '') +
@@ -12666,7 +12672,7 @@ async function carregarCliquesMissao() {
             '<td style="font-size:12px;max-width:200px;">' + escHtml(d.motivo || '—') + '</td>' +
             '<td><span class="status-tag ' + (d.tipo === 'auto_roubo' ? 'status-recusado' : 'status-bloqueado') + '">' + escHtml(d.tipo || 'manual') + '</span></td>' +
             '<td style="font-size:11px;white-space:nowrap;">' + escHtml(String(d.banidoEm || '').slice(0, 19).replace('T', ' ')) + '</td>' +
-            '<td><button type="button" class="btn-verde" onclick="desbanirEmail(\'' + emSafe + '\')">✅ Desbanir + restaurar</button></td>' +
+            '<td><span class="status-tag status-recusado">🔒 Banido para sempre</span></td>' +
             '</tr>';
         });
         tbody.innerHTML = html;
@@ -12717,7 +12723,7 @@ async function carregarCliquesMissao() {
     async function banirHomejubPorRoubo(email) {
       email = String(email || '').trim().toLowerCase();
       if (!email) return;
-      if (!confirm('Apagar conta e BANIR por roubo/manipulação?\n' + email + '\n\nPodes restaurar depois com Desbanir.')) return;
+      if (!confirm('Apagar conta e BANIR por roubo/manipulação?\n' + email + '\n\nO banimento é PERMANENTE e não pode ser desfeito.')) return;
       var snapJ = null;
       try { snapJ = await db.collection('jogoEstado').doc(email).get(); } catch (e) {}
       var jogo = (snapJ && snapJ.exists) ? snapJ.data() : {};
