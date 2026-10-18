@@ -1705,15 +1705,142 @@ function totalObjetivoNoNivel(n){
 
 const NIVEIS = {
   1: { jogadas: 18, objetivos: [ {tipo:3, alvo:10}, {tipo:4, alvo:6} ] }, // nível fácil, à mão
-  // Nível 29: objectivo círculo 58; recolha efectiva limitada a 56 (silencioso)
+  // Níveis "impossíveis" sem desbloqueio: uma peça deixa de sair quando faltam ~5 para o alvo
+  // (sem aviso ao jogador — igual ao nível 29)
   29: {
     jogadas: 42,
     objetivos: [
       { tipo: 6, alvo: 58 },
-      { tipo: 5, alvo: 58 }, // círculo/anel
+      { tipo: 5, alvo: 58 },
       { tipo: 2, alvo: 59 }
     ],
     impossivel: { tipo: 5, maxReal: 56 }
+  },
+  49: {
+    jogadas: 44,
+    objetivos: [
+      { tipo: 4, alvo: 60 },
+      { tipo: 6, alvo: 58 },
+      { tipo: 3, alvo: 55 }
+    ],
+    impossivel: { tipo: 4, maxReal: 58 }
+  },
+  60: {
+    jogadas: 44,
+    objetivos: [
+      { tipo: 5, alvo: 62 },
+      { tipo: 1, alvo: 58 },
+      { tipo: 6, alvo: 56 }
+    ],
+    impossivel: { tipo: 5, maxReal: 60 }
+  },
+  71: {
+    jogadas: 45,
+    objetivos: [
+      { tipo: 3, alvo: 64 },
+      { tipo: 2, alvo: 58 },
+      { tipo: 4, alvo: 56 }
+    ],
+    impossivel: { tipo: 3, maxReal: 62 }
+  },
+  82: {
+    jogadas: 46,
+    objetivos: [
+      { tipo: 6, alvo: 66 },
+      { tipo: 0, alvo: 58 },
+      { tipo: 5, alvo: 55 }
+    ],
+    impossivel: { tipo: 6, maxReal: 64 }
+  },
+  99: {
+    jogadas: 48,
+    objetivos: [
+      { tipo: 5, alvo: 70 },
+      { tipo: 4, alvo: 60 },
+      { tipo: 1, alvo: 58 }
+    ],
+    impossivel: { tipo: 5, maxReal: 68 }
+  },
+  140: {
+    jogadas: 50,
+    objetivos: [
+      { tipo: 4, alvo: 72 },
+      { tipo: 6, alvo: 62 },
+      { tipo: 2, alvo: 58 }
+    ],
+    impossivel: { tipo: 4, maxReal: 70 }
+  },
+  159: {
+    jogadas: 50,
+    objetivos: [
+      { tipo: 3, alvo: 74 },
+      { tipo: 5, alvo: 62 },
+      { tipo: 0, alvo: 56 }
+    ],
+    impossivel: { tipo: 3, maxReal: 72 }
+  },
+  172: {
+    jogadas: 52,
+    objetivos: [
+      { tipo: 6, alvo: 76 },
+      { tipo: 1, alvo: 62 },
+      { tipo: 4, alvo: 58 }
+    ],
+    impossivel: { tipo: 6, maxReal: 74 }
+  },
+  199: {
+    jogadas: 54,
+    objetivos: [
+      { tipo: 5, alvo: 80 },
+      { tipo: 3, alvo: 64 },
+      { tipo: 2, alvo: 58 }
+    ],
+    impossivel: { tipo: 5, maxReal: 78 }
+  },
+  249: {
+    jogadas: 56,
+    objetivos: [
+      { tipo: 4, alvo: 84 },
+      { tipo: 6, alvo: 66 },
+      { tipo: 0, alvo: 58 }
+    ],
+    impossivel: { tipo: 4, maxReal: 82 }
+  },
+  260: {
+    jogadas: 56,
+    objetivos: [
+      { tipo: 3, alvo: 86 },
+      { tipo: 5, alvo: 66 },
+      { tipo: 1, alvo: 56 }
+    ],
+    impossivel: { tipo: 3, maxReal: 84 }
+  },
+  271: {
+    jogadas: 58,
+    objetivos: [
+      { tipo: 6, alvo: 88 },
+      { tipo: 2, alvo: 66 },
+      { tipo: 4, alvo: 58 }
+    ],
+    impossivel: { tipo: 6, maxReal: 86 }
+  },
+  282: {
+    jogadas: 58,
+    objetivos: [
+      { tipo: 5, alvo: 90 },
+      { tipo: 0, alvo: 66 },
+      { tipo: 3, alvo: 58 }
+    ],
+    impossivel: { tipo: 5, maxReal: 88 }
+  },
+  299: {
+    jogadas: 60,
+    objetivos: [
+      { tipo: 4, alvo: 92 },
+      { tipo: 6, alvo: 68 },
+      { tipo: 1, alvo: 58 }
+    ],
+    impossivel: { tipo: 4, maxReal: 90 }
   }
 };
 function configDoNivel(n){
@@ -1872,24 +1999,35 @@ const geometrias = [0,1,2,3,4,5,6].map(criarGeometria);
 
 /* ---------- lógica da grelha ---------- */
 function tipoAleatorio(){
-  // Nível 29: quando os círculos (tipo 5) já estão perto do limite real (56),
-  // deixam de sair no tabuleiro — sem aviso ao jogador, só fica mais raro/impossível.
+  // Níveis impossíveis (29, 49, 60…): quando faltam ~5 peças do objectivo "travado",
+  // essa peça deixa de sair no tabuleiro — sem aviso ao jogador.
   var max = Math.max(1, TIPOS_ATIVOS|0);
   var t = Math.floor(Math.random()*max);
   try {
-    if(typeof nivelAtual === 'number' && nivelAtual === 29 && typeof objetivoAtual !== 'undefined' && objetivoAtual){
-      var circ = null;
-      for(var i=0;i<objetivoAtual.length;i++){
-        if(objetivoAtual[i] && objetivoAtual[i].tipo === 5){ circ = objetivoAtual[i]; break; }
-      }
-      if(circ && Number(circ.atual||0) >= 50){
-        // evita gerar mais círculos a partir de 50/58 (limite real 56)
-        var tent = 0;
-        while(t === 5 && tent < 12){
-          t = Math.floor(Math.random()*max);
-          tent++;
+    if(typeof nivelAtual === 'number' && typeof configDoNivel === 'function' && typeof objetivoAtual !== 'undefined' && objetivoAtual){
+      var cfg = configDoNivel(nivelAtual);
+      if(cfg && cfg.impossivel && cfg.impossivel.tipo != null){
+        var tipoBloq = Number(cfg.impossivel.tipo);
+        var maxReal = Number(cfg.impossivel.maxReal);
+        var obj = null;
+        for(var i=0;i<objetivoAtual.length;i++){
+          if(objetivoAtual[i] && Number(objetivoAtual[i].tipo) === tipoBloq){ obj = objetivoAtual[i]; break; }
         }
-        if(t === 5) t = (t + 1) % max; // força outro tipo
+        if(obj){
+          var atual = Number(obj.atual||0);
+          var alvo = Number(obj.alvo||0);
+          // Quando faltam 5 ou menos para o alvo (ou atingiu maxReal-1), deixa de gerar essa peça
+          var limiar = (alvo > 0) ? (alvo - 5) : 50;
+          if(!isNaN(maxReal) && maxReal > 0) limiar = Math.min(limiar, maxReal - 1);
+          if(atual >= limiar){
+            var tent = 0;
+            while(t === tipoBloq && tent < 16){
+              t = Math.floor(Math.random()*max);
+              tent++;
+            }
+            if(t === tipoBloq) t = (tipoBloq + 1) % max;
+          }
+        }
       }
     }
   } catch(e){}
