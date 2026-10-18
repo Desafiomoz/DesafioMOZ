@@ -161,6 +161,46 @@
         }
         .menu-baixo a i { font-size: 20px; margin-bottom: 2px; }
         .menu-baixo a.ativo { color: #00e676; }
+
+        .hist-totais {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px;
+        }
+        .hist-tot {
+            background: rgba(10,10,15,0.65); border: 1px solid rgba(0,200,83,0.2);
+            border-radius: 12px; padding: 10px 8px; text-align: center;
+        }
+        .hist-tot .n { font-size: 16px; font-weight: 800; color: #FFD700; }
+        .hist-tot .t { font-size: 10px; color: #888; margin-top: 3px; }
+        .hist-item {
+            display: flex; justify-content: space-between; align-items: flex-start;
+            padding: 11px 0; border-bottom: 1px solid rgba(255,255,255,0.06); gap: 10px;
+        }
+        .hist-item:last-child { border-bottom: none; padding-bottom: 0; }
+        .hist-item:first-child { padding-top: 0; }
+        .hist-item .esq { flex: 1; min-width: 0; }
+        .hist-item .titulo { font-weight: 700; font-size: 13px; color: #eee; }
+        .hist-item .meta { font-size: 11px; color: #777; margin-top: 3px; }
+        .hist-pts {
+            font-weight: 800; font-size: 14px; color: #00e676; white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .hist-badge {
+            display: inline-block; font-size: 10px; font-weight: 700;
+            padding: 2px 7px; border-radius: 6px; margin-right: 4px;
+            background: rgba(0,200,83,0.15); color: #00e676;
+        }
+        .hist-badge.checkin { background: rgba(33,150,243,0.18); color: #64b5f6; }
+        .hist-badge.pesquisa { background: rgba(156,39,176,0.18); color: #ce93d8; }
+        .hist-badge.desafio { background: rgba(255,193,7,0.15); color: #ffc107; }
+        .hist-badge.missao { background: rgba(255,87,34,0.18); color: #ff8a65; }
+        .hist-badge.homejub { background: rgba(0,200,83,0.18); color: #00e676; }
+        .hist-badge.roleta { background: rgba(233,30,99,0.18); color: #f48fb1; }
+        .card-hist {
+            background: linear-gradient(160deg, rgba(0,200,83,0.12), rgba(21,21,31,0.95) 50%, rgba(255,201,77,0.08));
+            border: 1px solid rgba(0,200,83,0.35);
+            box-shadow: 0 0 22px rgba(0,200,83,0.12);
+        }
+        .card-hist h3 { color: #FFD700; }
     </style>
 <style>/* Brilho extra - efeito de aura no site */
 body{filter:brightness(1.16) saturate(1.1);}</style>
@@ -230,6 +270,23 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
             <h3><i class="fas fa-wallet"></i> Saques feitos</h3>
             <div id="lista-saques">
                 <div class="vazio">A carregar...</div>
+            </div>
+        </div>
+
+
+        <div class="card card-hist">
+            <h3><i class="fas fa-history"></i> Histórico de ganhos</h3>
+            <div class="hist-totais" id="hist-totais">
+                <div class="hist-tot"><div class="n" id="hist-total-pts">0</div><div class="t">Total nestes ganhos</div></div>
+                <div class="hist-tot"><div class="n" id="hist-total-mzn">0 MZN</div><div class="t">Em meticais</div></div>
+            </div>
+            <div class="stats-grid" style="margin-bottom:12px;" id="hist-por-origem">
+                <div class="stat"><div class="n" id="h-checkin">0</div><div class="t">Check-in</div></div>
+                <div class="stat"><div class="n" id="h-pesquisa">0</div><div class="t">Pesquisas</div></div>
+                <div class="stat"><div class="n" id="h-desafio">0</div><div class="t">Desafios</div></div>
+                <div class="stat"><div class="n" id="h-missao">0</div><div class="t">Missão</div></div>
+                <div class="stat"><div class="n" id="h-homejub">0</div><div class="t">Homejub</div></div>
+                <div class="stat"><div class="n" id="h-roleta">0</div><div class="t">Roleta</div></div>
             </div>
         </div>
 
@@ -322,6 +379,50 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
             return '<span class="tag tag-pendente">Pendente</span>';
         }
 
+
+        async function carregarHistoricoGanhos(email) {
+            if (!email || email === '—') return;
+            try {
+                var em = String(email).trim().toLowerCase();
+                var totais = { checkin: 0, pesquisa: 0, desafio: 0, missao_semanal: 0, homejub: 0, roleta: 0 };
+                var totalPts = 0;
+                var permitidas = ['checkin', 'pesquisa', 'desafio', 'missao_semanal', 'homejub', 'roleta'];
+
+                var snap = await db.collection('historicoPontos').where('email', '==', em).limit(300).get();
+                snap.forEach(function (doc) {
+                    var d = doc.data() || {};
+                    var orig = String(d.origem || '').toLowerCase();
+                    var pts = Number(d.pontos) || 0;
+                    if (permitidas.indexOf(orig) === -1 || !pts) return;
+                    totalPts += pts;
+                    totais[orig] += pts;
+                });
+                if (String(email).trim() !== em) {
+                    var snap2 = await db.collection('historicoPontos').where('email', '==', String(email).trim()).limit(100).get();
+                    snap2.forEach(function (doc) {
+                        var d = doc.data() || {};
+                        var orig = String(d.origem || '').toLowerCase();
+                        var pts = Number(d.pontos) || 0;
+                        if (permitidas.indexOf(orig) === -1 || !pts) return;
+                        totalPts += pts;
+                        totais[orig] += pts;
+                    });
+                }
+
+                var el;
+                el = document.getElementById('hist-total-pts'); if (el) el.textContent = totalPts;
+                el = document.getElementById('hist-total-mzn'); if (el) el.textContent = (totalPts / 8).toFixed(1) + ' MZN';
+                el = document.getElementById('h-checkin'); if (el) el.textContent = totais.checkin;
+                el = document.getElementById('h-pesquisa'); if (el) el.textContent = totais.pesquisa;
+                el = document.getElementById('h-desafio'); if (el) el.textContent = totais.desafio;
+                el = document.getElementById('h-missao'); if (el) el.textContent = totais.missao_semanal;
+                el = document.getElementById('h-homejub'); if (el) el.textContent = totais.homejub;
+                el = document.getElementById('h-roleta'); if (el) el.textContent = totais.roleta;
+            } catch (e) {
+                console.warn('Histórico:', e);
+            }
+        }
+
         async function carregarSaques(email) {
             var host = document.getElementById('lista-saques');
             if (!email || email === '—') {
@@ -349,38 +450,13 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
 
                 document.getElementById('stat-saques').textContent = lista.length;
 
-                if (!lista.length) {
-                    host.innerHTML = '<div class="vazio">Nenhum saque ainda</div>';
-                    return;
-                }
-
-                var html = '';
-                lista.forEach(function (s) {
-                    var valor = s.liquidoMZN != null
-                        ? Number(s.liquidoMZN).toFixed(2)
-                        : (s.valorMZN != null ? Number(s.valorMZN).toFixed(2) : ((s.pontos || 0) / 8).toFixed(2));
-                    var pts = s.pontos || 0;
-                    var metodo = s.metodo || '';
-                    var dataStr = formatarData(s.dataPedido);
-                    var status = s.status || 'pendente';
-                    html +=
-                        '<div class="saque-item">' +
-                          '<div class="esq">' +
-                            '<div class="valor">' + valor + ' MZN</div>' +
-                            '<div class="meta">' + pts + ' pts' +
-                              (metodo ? ' · ' + metodo : '') +
-                              (dataStr ? ' · ' + dataStr : '') +
-                            '</div>' +
-                          '</div>' +
-                          tagStatus(status) +
-                        '</div>';
-                });
-                host.innerHTML = html;
             } catch (e) {
-                console.warn('Saques:', e);
-                host.innerHTML = '<div class="vazio">Não foi possível carregar</div>';
+                console.warn('Histórico:', e);
+
+                host.innerHTML = '<div class="vazio">Não foi possível carregar o histórico</div>';
             }
         }
+
 
         async function carregarPontosFirebase(email) {
             if (!email || email === '—') return null;
@@ -442,6 +518,7 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
                     document.getElementById('stat-indicacao').textContent = dados.pontosIndicacao || 0;
                 }
                 await carregarSaques(email);
+                await carregarHistoricoGanhos(email);
             } else {
                 document.getElementById('lista-saques').innerHTML = '<div class="vazio">Nenhum saque ainda</div>';
             }
