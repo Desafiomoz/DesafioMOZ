@@ -2726,8 +2726,9 @@
       <div class="form-box">
         <h3><i class="fas fa-ticket-alt"></i> Bilhetes comprados — decide quem ganha</h3>
         <p style="font-size:12px;color:#888;margin-bottom:10px;">
-          Cada bilhete pago aparece aqui. Escolhe a posicao 1-10 se ganhou, ou deixa vazio se perdeu.
-          Depois clica em Publicar ranking para o app mostrar os nomes oficiais.
+          Bilhetes são só com <b>pontos</b> (sem e-Mola). Escolhe a posição 1-10 se ganhou, ou vazio se perdeu.
+          Lugares <b>1-3</b>: prémio fixo (5000 / 3000 / 1000 MZN em pontos). Lugares <b>4-10</b>: escreve quantos <b>pontos</b> ganhou (máx. 7999, abaixo do 3.º).
+          Depois publica o ranking.
         </p>
         <button type="button" class="btn-verde" style="width:auto;margin-bottom:12px;" onclick="carregarSorteioBilhetes()">Actualizar bilhetes</button>
         <div class="tabela-wrap">
@@ -2735,10 +2736,10 @@
             <thead>
               <tr>
                 <th>#</th><th>Utilizador</th><th>Pagamento</th><th>Forca</th><th>Telefone</th>
-                <th>ID</th><th>Data</th><th>Posicao</th><th>Accao</th>
+                <th>ID</th><th>Data</th><th>Posicao</th><th>Pts 4-10</th><th>Accao</th>
               </tr>
             </thead>
-            <tbody id="tbody-sorteio-bilhetes"><tr><td colspan="9" class="vazio">Clica em Actualizar.</td></tr></tbody>
+            <tbody id="tbody-sorteio-bilhetes"><tr><td colspan="10" class="vazio">Clica em Actualizar.</td></tr></tbody>
           </table>
         </div>
         <button type="button" class="btn-verde" style="width:auto;margin-top:12px;" onclick="publicarRankingSorteio()">Publicar ranking no app</button>
@@ -2759,6 +2760,10 @@
           <div class="form-row">
             <label>Posicao (1-10)</label>
             <input type="number" id="sv-lugar" min="1" max="10" placeholder="1">
+          </div>
+          <div class="form-row">
+            <label>Pontos (só 4-10, máx. 7999)</label>
+            <input type="number" id="sv-pontos" min="1" max="7999" placeholder="Ex: 400">
           </div>
         </div>
         <button type="button" class="btn-verde" style="width:auto;" onclick="adicionarVencedorManual()">Adicionar ao ranking</button>
@@ -11375,7 +11380,7 @@ async function bloquearContaEmail() {
     }
 
     
-    var PREMIOS_SORTEIO = { 1: '5000 MZN', 2: '3000 MZN', 3: '1000 MZN', 4: '1000 pontos', 5: '500 pontos', 6: '250 pontos', 7: '130 pontos', 8: '70 pontos', 9: '30 pontos', 10: '16 pontos' };
+    var PREMIOS_SORTEIO = { 1: '5000 MZN', 2: '3000 MZN', 3: '1000 MZN', 4: 'Surpresa', 5: 'Surpresa', 6: 'Surpresa', 7: 'Surpresa', 8: 'Surpresa', 9: 'Surpresa', 10: 'Surpresa' };
     // 1 MT = 8 pontos (igual ao resto do site: 200 MT = 1600 pts)
     var PREMIOS_SORTEIO_PONTOS = { 1: 40000, 2: 24000, 3: 8000, 4: 1000, 5: 500, 6: 250, 7: 130, 8: 70, 9: 30, 10: 16 };
 
@@ -11532,7 +11537,7 @@ async function bloquearContaEmail() {
           lista.sort(function (a, b) { return String(b.createdAt || '').localeCompare(String(a.createdAt || '')); });
         }
         if (!lista.length) {
-          tbody.innerHTML = '<tr><td colspan="9" class="vazio">Ainda sem bilhetes.</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="10" class="vazio">Ainda sem bilhetes.</td></tr>';
           return;
         }
         var html = '';
@@ -11549,7 +11554,9 @@ async function bloquearContaEmail() {
           html += '<td style="font-family:monospace;font-size:12px;">' + escHtml(d.telefone || '—') + '</td>';
           html += '<td style="font-family:monospace;font-size:11px;">' + escHtml(d.txid || '—') + '</td>';
           html += '<td style="font-size:11px;">' + escHtml(String(d.createdAt || '').slice(0, 16).replace('T', ' ')) + '</td>';
-          html += '<td><input type="number" min="1" max="10" placeholder="—" value="' + escHtml(String(pos)) + '" id="pos-' + id + '" style="width:60px;padding:6px;background:#0d0d12;border:1px solid #333;color:#fff;border-radius:6px;"></td>';
+          var ptsPrev = d.premioPontosAdmin != null ? d.premioPontosAdmin : '';
+          html += '<td><input type="number" min="1" max="10" placeholder="—" value="' + escHtml(String(pos)) + '" id="pos-' + id + '" style="width:56px;padding:6px;background:#0d0d12;border:1px solid #333;color:#fff;border-radius:6px;"></td>';
+          html += '<td><input type="number" min="1" max="7999" placeholder="pts" value="' + escHtml(String(ptsPrev)) + '" id="ptsprem-' + id + '" title="Só lugares 4-10" style="width:70px;padding:6px;background:#0d0d12;border:1px solid #333;color:#22FF99;border-radius:6px;"></td>';
           html += '<td><button type="button" class="btn-azul" onclick="guardarPosicaoBilhete(\'' + id + '\')">Guardar</button></td></tr>';
         });
         tbody.innerHTML = html;
@@ -11574,8 +11581,6 @@ async function bloquearContaEmail() {
         // Carrega bilhete para nome/email
         var bilheteSnap = await db.collection('sorteioBilhetes').doc(id).get();
         var bil = bilheteSnap.exists ? (bilheteSnap.data() || {}) : {};
-        await db.collection('sorteioBilhetes').doc(id).update({ posicao: v, decidido: true, decididoEm: new Date().toISOString() });
-        // Publica já no ranking do CICLO ACTUAL (só este tempo — prémio no zero do relógio)
         var cicloId = 'atual';
         try {
           var cfg = await db.collection('sorteioConfig').doc('proximo').get();
@@ -11583,13 +11588,34 @@ async function bloquearContaEmail() {
           else if (cfg.exists && cfg.data().quando) cicloId = 'c_' + new Date(cfg.data().quando).getTime();
         } catch (eC) {}
         var nomeV = bil.nome || (String(bil.email || '').split('@')[0]) || 'Utilizador';
+        var ptsInp = document.getElementById('ptsprem-' + id);
+        var ptsCustom = ptsInp ? parseInt(ptsInp.value, 10) : NaN;
+        var premioLbl = (typeof PREMIOS_SORTEIO !== 'undefined' && PREMIOS_SORTEIO[v]) ? PREMIOS_SORTEIO[v] : '';
+        var premioPts = null;
+        if (v >= 1 && v <= 3) {
+          premioPts = (typeof PREMIOS_SORTEIO_PONTOS !== 'undefined') ? (PREMIOS_SORTEIO_PONTOS[v] || null) : null;
+          premioLbl = PREMIOS_SORTEIO[v] || premioLbl;
+        } else if (v >= 4 && v <= 10) {
+          if (isNaN(ptsCustom) || ptsCustom < 1) return alert('Para o lugar ' + v + ' indica quantos pontos ganhou (1 a 7999).');
+          if (ptsCustom >= 8000) return alert('Lugares 4-10: máximo 7999 pts (abaixo do 3.º lugar).');
+          premioPts = ptsCustom;
+          premioLbl = ptsCustom + ' pontos';
+        }
+        await db.collection('sorteioBilhetes').doc(id).update({
+          posicao: v,
+          decidido: true,
+          decididoEm: new Date().toISOString(),
+          premioPontosAdmin: premioPts
+        });
         await db.collection('sorteioVencedores').doc('lugar_' + v).set({
           lugar: v,
           nome: nomeV,
           email: String(bil.email || '').toLowerCase(),
-          premio: (typeof PREMIOS_SORTEIO !== 'undefined' && PREMIOS_SORTEIO[v]) ? PREMIOS_SORTEIO[v] : '',
+          premio: premioLbl,
+          premioPontos: premioPts,
           forca: bil.forca || 0,
           valorMt: bil.valorMt || 0,
+          valorPontos: bil.valorPontos || 0,
           txid: bil.txid || '',
           bilheteId: id,
           cicloId: cicloId,
@@ -11622,13 +11648,23 @@ async function bloquearContaEmail() {
           var p = parseInt(d.posicao, 10);
           if (p >= 1 && p <= 10) {
             if (!porLugar[p] || (d.forca || 0) > (porLugar[p].forca || 0)) {
+              var premPts = (d.premioPontosAdmin != null) ? Number(d.premioPontosAdmin) : null;
+              var premLbl = PREMIOS_SORTEIO[p] || '';
+              if (p >= 4 && p <= 10 && premPts > 0) {
+                if (premPts >= 8000) premPts = 7999;
+                premLbl = premPts + ' pontos';
+              } else if (p >= 1 && p <= 3) {
+                premPts = PREMIOS_SORTEIO_PONTOS[p] || null;
+              }
               porLugar[p] = {
                 lugar: p,
                 nome: d.nome || (d.email || '').split('@')[0] || 'Utilizador',
                 email: String(d.email || '').toLowerCase(),
-                premio: PREMIOS_SORTEIO[p] || '',
+                premio: premLbl,
+                premioPontos: premPts,
                 forca: d.forca || 0,
                 valorMt: d.valorMt || 0,
+                valorPontos: d.valorPontos || 0,
                 txid: d.txid || '',
                 bilheteId: doc.id,
                 cicloId: (window.__adminSorteioCicloId || 'atual'),
@@ -11671,11 +11707,23 @@ async function bloquearContaEmail() {
           if (cfgM.exists && cfgM.data().cicloId) cicloM = cfgM.data().cicloId;
           else if (cfgM.exists && cfgM.data().quando) cicloM = 'c_' + new Date(cfgM.data().quando).getTime();
         } catch (eM) {}
+        var ptsM = parseInt(document.getElementById('sv-pontos') && document.getElementById('sv-pontos').value, 10);
+        var premioLblM = PREMIOS_SORTEIO[lugar] || '';
+        var premioPtsM = null;
+        if (lugar >= 1 && lugar <= 3) {
+          premioPtsM = PREMIOS_SORTEIO_PONTOS[lugar] || null;
+        } else {
+          if (isNaN(ptsM) || ptsM < 1) return alert('Para lugares 4-10 indica os pontos (1-7999).');
+          if (ptsM >= 8000) return alert('Máximo 7999 pts (abaixo do 3.º lugar).');
+          premioPtsM = ptsM;
+          premioLblM = ptsM + ' pontos';
+        }
         await db.collection('sorteioVencedores').doc('lugar_' + lugar).set({
           lugar: lugar,
           nome: nome,
           email: emailManual || '',
-          premio: PREMIOS_SORTEIO[lugar] || '',
+          premio: premioLblM,
+          premioPontos: premioPtsM,
           createdAt: new Date().toISOString(),
           cicloId: cicloM,
           premioCreditado: false,

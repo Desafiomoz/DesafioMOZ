@@ -273,7 +273,7 @@
     <a href="tarefas.html" class="btn-voltar"><i class="fas fa-arrow-left"></i></a>
     <div>
       <h1>Sorteio Desafio MOZ</h1>
-      <p>Compra bilhetes · quanto mais forte, mais chance</p>
+      <p>Aposta com pontos · quanto mais forte, mais chance</p>
     </div>
   </div>
 
@@ -329,14 +329,13 @@
         <li><span class="lugar">🥇 1.º lugar</span><span class="valor">5 000 MZN</span></li>
         <li><span class="lugar">🥈 2.º lugar</span><span class="valor">3 000 MZN</span></li>
         <li><span class="lugar">🥉 3.º lugar</span><span class="valor">1 000 MZN</span></li>
-        <li><span class="lugar">4.º lugar</span><span class="valor pts">1 000 pontos</span></li>
-        <li><span class="lugar">5.º lugar</span><span class="valor pts">500 pontos</span></li>
-        <li><span class="lugar">6.º lugar</span><span class="valor pts">250 pontos</span></li>
-        <li><span class="lugar">7.º lugar</span><span class="valor pts">130 pontos</span></li>
-        <li><span class="lugar">8.º lugar</span><span class="valor pts">70 pontos</span></li>
-        <li><span class="lugar">9.º lugar</span><span class="valor pts">30 pontos</span></li>
-        <li><span class="lugar">10.º lugar</span><span class="valor pts">16 pontos</span></li>
+        <li><span class="lugar">4.º ao 10.º</span><span class="valor pts">🎁 Surpresa</span></li>
       </ul>
+      <p style="font-size:12px;color:#aaa;margin-top:10px;line-height:1.45;">
+        Os lugares <b style="color:#22FF99;">4 a 10</b> não têm prémio fixo visível.
+        Só quem for sorteado nessas posições fica a saber quantos <b>pontos</b> ganhou — o valor é decidido com o bilhete.
+        Nunca chega ao valor do 3.º lugar.
+      </p>
     </div>
 
     <div class="card">
@@ -351,12 +350,8 @@
       <h2><i class="fas fa-ticket-alt"></i> Compra o teu bilhete</h2>
       <p style="font-size:13px;color:#ccc;margin-bottom:12px;line-height:1.45;">
         Quanto <b style="color:#FFD700;">mais forte</b> o bilhete, mais chance tens de ganhar.
-        Paga em <b style="color:#FFD700;">e-Mola (MT)</b> ou com os teus <b style="color:#22FF99;">pontos</b> da conta.
+        Apostas <b style="color:#22FF99;">só com pontos</b> da tua conta (mínimo 20 pontos).
       </p>
-      <div style="display:flex;gap:8px;margin-bottom:12px;">
-        <button type="button" class="btn-sec" id="tab-mt" style="margin:0;flex:1;background:linear-gradient(90deg,#FFD700,#00e676);color:#04140a;border:none;" onclick="escolherModoCompra('mt')">💰 e-Mola (MT)</button>
-        <button type="button" class="btn-sec" id="tab-pts" style="margin:0;flex:1;" onclick="escolherModoCompra('pontos')">⭐ Pontos</button>
-      </div>
       <div class="valor-box" id="box-mt">
         <label>Quantos meticais queres pagar? (mín. 2 MZN)</label>
         <input type="number" id="input-mt" min="2" step="1" placeholder="Ex: 2, 5, 10, 20..." oninput="actualizarForca()">
@@ -403,7 +398,7 @@
 <script>
   var email = '', docRef = null, userData = {};
   var mtSel = 0, forcaSel = 0, ptsSel = 0;
-  var modoCompra = 'mt'; // 'mt' | 'pontos'
+  var modoCompra = 'pontos'; // 'mt' | 'pontos'
   var countdownTarget = null;
   var cdTimer = null;
   var rankingZerado = false; // relógio chegou a zero → força nomes aleatórios
@@ -412,7 +407,8 @@
 
   // 1 MT = 8 pontos (igual ao resto do site)
   var PREMIOS_SORTEIO_PONTOS = { 1: 40000, 2: 24000, 3: 8000, 4: 1000, 5: 500, 6: 250, 7: 130, 8: 70, 9: 30, 10: 16 };
-  var PREMIOS_SORTEIO_LBL = { 1: '5000 MZN', 2: '3000 MZN', 3: '1000 MZN', 4: '1000 pontos', 5: '500 pontos', 6: '250 pontos', 7: '130 pontos', 8: '70 pontos', 9: '30 pontos', 10: '16 pontos' };
+  var PREMIOS_SORTEIO_LBL = { 1: '5000 MZN', 2: '3000 MZN', 3: '1000 MZN', 4: 'Surpresa', 5: 'Surpresa', 6: 'Surpresa', 7: 'Surpresa', 8: 'Surpresa', 9: 'Surpresa', 10: 'Surpresa' };
+  // 3.º lugar = 8000 pts; 4-10 nunca igualam ou passam este valor
 
   var NOMES_ALEATORIOS = [
     'Carlos M.','Ana J.','Pedro S.','Maria L.','João R.','Sofia T.','António P.',
@@ -593,6 +589,11 @@
   }
 
   async function confirmarPagamento() {
+    // Apenas pontos — sem pagamento em meticais
+    modoCompra = 'pontos';
+    if (typeof comprarComPontos === 'function') {
+      return comprarComPontos();
+    }
     var txid = String(document.getElementById('pag-txid').value || '').trim().replace(/\s+/g, '').toUpperCase();
     var tel = String(document.getElementById('pag-tel').value || '').replace(/\D/g, '');
     if (tel.length === 12 && tel.indexOf('258') === 0) tel = tel.slice(3);
@@ -754,7 +755,19 @@
       for (var i = 0; i < lugares.length; i++) {
         var L = lugares[i];
         var info = porLugar[L];
-        var pts = PREMIOS_SORTEIO_PONTOS[L] || 0;
+        var pts = 0;
+        if (info.premioPontos != null && Number(info.premioPontos) > 0) {
+          pts = Number(info.premioPontos);
+        } else if (L >= 1 && L <= 3) {
+          pts = PREMIOS_SORTEIO_PONTOS[L] || 0;
+        } else {
+          pts = PREMIOS_SORTEIO_PONTOS[L] || 0;
+        }
+        // 4-10 nunca >= 3.º lugar (8000 pts)
+        if (L >= 4 && pts >= 8000) pts = 7999;
+        var lblPrem = (info.premio && String(info.premio)) || (pts + ' pontos');
+        if (L >= 4 && pts) lblPrem = pts + ' pontos';
+
         if (!info.email || pts <= 0) continue;
 
         var chave = (info.email + '_L' + L).replace(/[^a-z0-9_@.-]/gi, '_');
@@ -777,19 +790,19 @@
             ultimoPremioSorteio: {
               lugar: L,
               pontos: pts,
-              premioLabel: PREMIOS_SORTEIO_LBL[L] || '',
+              premioLabel: lblPrem,
               em: new Date().toISOString(),
               visto: false,
               cicloId: window.__sorteioCicloId || ''
             },
             sorteioPerdeuAviso: null
           });
-          try { if (typeof DM_histPontos === 'function') await DM_histPontos(db, info.email, pts, 'sorteio', 'Prémio ' + L + 'º lugar: ' + (PREMIOS_SORTEIO_LBL[L] || pts + ' pts')); } catch(eH) {}
+          try { if (typeof DM_histPontos === 'function') await DM_histPontos(db, info.email, pts, 'sorteio', 'Prémio ' + L + 'º lugar: ' + lblPrem); } catch(eH) {}
           await pagRef.set({
             email: info.email,
             lugar: L,
             pontos: pts,
-            premio: PREMIOS_SORTEIO_LBL[L] || '',
+            premio: lblPrem,
             nome: info.nome || dados.nome || '',
             pagoEm: new Date().toISOString(),
             txid: info.txid || '',
@@ -991,13 +1004,28 @@
     if (listaAleatoriaCache) return listaAleatoriaCache;
     var usados = {};
     var lista = [];
+    // 4-10: pontos PEQUENOS e em ORDEM decrescente (maior → menor)
+    // Faixas tipicas: 4.º ~400-700 · 5.º ~250-400 · 6.º ~150-250 · 7.º ~100-150 · 8.º ~50-100 · 9.º ~30-50 · 10.º ~16-30
+    function randEntre(a, b) {
+      return a + Math.floor(Math.random() * (b - a + 1));
+    }
+    var pts4 = randEntre(400, 700);
+    var pts5 = randEntre(250, Math.min(399, pts4 - 20));
+    var pts6 = randEntre(150, Math.min(249, pts5 - 15));
+    var pts7 = randEntre(100, Math.min(149, pts6 - 10));
+    var pts8 = randEntre(50, Math.min(99, pts7 - 10));
+    var pts9 = randEntre(30, Math.min(49, pts8 - 5));
+    var pts10 = randEntre(16, Math.min(29, pts9 - 5));
+    var ptsOrdem = { 4: pts4, 5: pts5, 6: pts6, 7: pts7, 8: pts8, 9: pts9, 10: pts10 };
     for (var i = 1; i <= 10; i++) {
       var nm = NOMES_ALEATORIOS[Math.floor(Math.random() * NOMES_ALEATORIOS.length)];
       while (usados[nm]) nm = NOMES_ALEATORIOS[Math.floor(Math.random() * NOMES_ALEATORIOS.length)];
       usados[nm] = true;
-      var prem = i === 1 ? '5000 MZN' : i === 2 ? '3000 MZN' : i === 3 ? '1000 MZN'
-        : i === 4 ? '1000 pts' : i === 5 ? '500 pts' : i === 6 ? '250 pts'
-        : i === 7 ? '130 pts' : i === 8 ? '70 pts' : i === 9 ? '30 pts' : '16 pts';
+      var prem;
+      if (i === 1) prem = '5000 MZN';
+      else if (i === 2) prem = '3000 MZN';
+      else if (i === 3) prem = '1000 MZN';
+      else prem = ptsOrdem[i] + ' pts';
       lista.push({ lugar: i, nome: nm, premio: prem, aleatorio: true });
     }
     listaAleatoriaCache = lista;
@@ -1211,6 +1239,20 @@
 
       document.getElementById('loading').style.display = 'none';
       document.getElementById('conteudo').style.display = 'block';
+      try {
+        modoCompra = 'pontos';
+        var boxMt = document.getElementById('box-mt');
+        var boxPts = document.getElementById('box-pts');
+        var tabMt = document.getElementById('tab-mt');
+        var tabPts = document.getElementById('tab-pts');
+        if (boxMt) boxMt.style.display = 'none';
+        if (boxPts) boxPts.style.display = 'block';
+        if (tabMt) tabMt.style.display = 'none';
+        if (tabPts) tabPts.style.display = 'none';
+        var sal = document.getElementById('saldo-pts');
+        if (sal) sal.textContent = (userData.pontos != null ? userData.pontos : '—');
+        if (typeof actualizarForca === 'function') actualizarForca();
+      } catch (eUI) {}
       carregarCountdown();
       carregarMeusBilhetes();
       carregarRankingSorteados();
