@@ -355,7 +355,7 @@ function mus(){if(AX){if(AX.state=='suspended')AX.resume();return}var C=window.A
 /* Loja, opções e pausa */
 var UP=[['mo','Motor','+velocidade',250],['ag','Direção','+controlo',200],['te','Tempo extra','+4 s por nível',150]],SK=['Rubi','Safira','Obsidiana','Pérola','Esmeralda','Ouro'],SPR=[0,300,500,700,900,1500];
 function pauseScr(){S.pz=true;ov.className='';ov.innerHTML=`<div class='pn'><h1 style='font-size:1.8rem'>PAUSA</h1><button class='go' data-a='resume'>Continuar</button><p><button data-a='opt'>Opções</button> <button data-a='shop2'>Loja</button></p><p><button data-a='exit'>Sair</button></p></div>`}
-function opts(from){S.ob=from;var c=['Setas','Inclinar o telemóvel','Leme'];ov.className='';ov.innerHTML=`<div class='pn'><h1 style='font-size:1.6rem;letter-spacing:4px'>OPÇÕES</h1><p class='s'>Som</p><label>Música <b id='vv'>${Math.round(P.vol*100)}%</b></label><input id='vol' class='rg' type='range' min='0' max='100' value='${Math.round(P.vol*100)}'><p class='s'>Controlo do carro</p>${c.map(function(n,i){return `<button class='cb${P.ctl==i?' on':''}' data-c='${i}'>${n}</button>`}).join('')}<p><button class='go' data-a='ob'>Voltar</button></p></div>`}
+function opts(from){S.ob=from;var c=['Setas','Inclinar o telemóvel','Leme','Arrastar o ecrã'],od=[0,3,1,2];ov.className='';ov.innerHTML=`<div class='pn'><h1 style='font-size:1.6rem;letter-spacing:4px'>OPÇÕES</h1><p class='s'>Som</p><label>Música <b id='vv'>${Math.round(P.vol*100)}%</b></label><input id='vol' class='rg' type='range' min='0' max='100' value='${Math.round(P.vol*100)}'><p class='s'>Controlo do carro</p>${od.map(function(i){var n=c[i];return `<button class='cb${P.ctl==i?' on':''}' data-c='${i}'>${n}</button>`}).join('')}<p class='h2'>${['Setas: toca nos botões ◀ e ▶ para ir para esse lado.','Inclinar: vira o telemóvel para o lado para onde queres ir.','Leme: roda o volante para a direita (sentido horário) ou para a esquerda (anti-horário).','Arrastar: põe o dedo no lado esquerdo ou direito do ecrã e arrasta.'][P.ctl]}</p><p><button class='go' data-a='ob'>Voltar</button></p></div>`}
 function shop(from){S.sb=from;var h=`<div class='pn lp'><h1 style='font-size:1.6rem;letter-spacing:4px'>LOJA</h1><p class='s'>✦ ${P.coins} moedas${S.msg?' · '+S.msg:''}</p><div class='lg1'><p class='s'>Melhorias</p>`;
   UP.forEach(function(u){var l=P[u[0]];h+=`<div class='rw'><span><b>${u[1]}</b><br><small>${u[2]} · nível ${l}/5</small></span>${l>=5?'<em>Máx.</em>':`<button data-u='${u[0]}'>${u[3]*(l+1)} ✦</button>`}</div>`});
   h+=`<p class='s'>Carros (tintas)</p>`;
@@ -379,9 +379,10 @@ document.addEventListener('visibilitychange',function(){if(document.hidden&&S.pl
 function hold(id,v){var el=$(id);el.addEventListener('pointerdown',function(ev){ev.preventDefault();AR=v;el.setPointerCapture(ev.pointerId)});['pointerup','pointercancel','lostpointercapture'].forEach(function(n){el.addEventListener(n,function(){if(AR==v)AR=0})})}
 hold('bl',-1);hold('br',1);
 var wl=$('wl'),wd=null;
-wl.addEventListener('pointerdown',function(ev){ev.preventDefault();wd=ev.clientX;wl.setPointerCapture(ev.pointerId)});
-wl.addEventListener('pointermove',function(ev){if(wd===null)return;WA=Math.max(-1,Math.min(1,(ev.clientX-wd)/70));wl.style.transform='rotate('+WA*100+'deg)'});
-function wu(){wd=null;WA=0;wl.style.transform='rotate(0deg)'}
+var wr=0,wc=0;function wang(ev){var r=wl.getBoundingClientRect();return Math.atan2(ev.clientY-r.top-r.height/2,ev.clientX-r.left-r.width/2)}
+wl.addEventListener('pointerdown',function(ev){ev.preventDefault();wd=1;wc=wang(ev);wl.style.transition='none';wl.setPointerCapture(ev.pointerId)});
+wl.addEventListener('pointermove',function(ev){if(wd===null)return;var a=wang(ev),d=a-wc;if(d>Math.PI)d-=2*Math.PI;if(d<-Math.PI)d+=2*Math.PI;wc=a;wr=Math.max(-1.75,Math.min(1.75,wr+d));WA=Math.max(-1,Math.min(1,wr));wl.style.transform='rotate('+wr+'rad)'});
+function wu(){wd=null;wr=0;WA=0;wl.style.transition='transform .18s';wl.style.transform='rotate(0rad)'}
 wl.addEventListener('pointerup',wu);wl.addEventListener('pointercancel',wu);
 window.addEventListener('deviceorientation',function(ev){if(P.ctl!=1||ev.gamma==null)return;var g=ev.gamma;TL=Math.max(-1,Math.min(1,(Math.abs(g)<3?0:g)/22))});
 function oldMenu(){
@@ -444,9 +445,9 @@ window.addEventListener('keydown',function(e){var k=e.key;
   if(k=='ArrowLeft'||k=='a')keys.l=1;if(k=='ArrowRight'||k=='d')keys.r=1;
   if((k=='Enter'||k==' ')&&!S.play)start()});
 window.addEventListener('keyup',function(e){var k=e.key;if(k=='ArrowLeft'||k=='a')keys.l=0;if(k=='ArrowRight'||k=='d')keys.r=0});
-function tp(e){}
+function tp(e){if(P.ctl!=3||S.pz||e.target.closest('#hb'))return;var W=window.innerWidth,v=(e.clientX-W/2)/(W*.3);tch=Math.abs(v)<.06?0:(v<0?-1:1)*Math.min(1,Math.max(.55,Math.abs(v)))}
 app.addEventListener('pointerdown',function(e){if(S.play)tp(e)});
-app.addEventListener('pointermove',function(e){if(tch&&S.play)tp(e)});
+app.addEventListener('pointermove',function(e){if(S.play&&e.buttons)tp(e)});
 window.addEventListener('pointerup',function(){tch=0});window.addEventListener('pointercancel',function(){tch=0});
 
 function resize(){var w=app.clientWidth,h=app.clientHeight;rd.setSize(w,h);cam.aspect=w/h;cam.updateProjectionMatrix()}
@@ -457,7 +458,7 @@ function step(dt){
   var inp=Math.max(-1,Math.min(1,keys.r-keys.l+tch+CI)),p=pose(S.s);
   S.v+=(TR.maxV-S.v)*dt*.4;
   if(Math.abs(S.lat)>HW-.8)S.v*=1-dt*1.1;
-  S.vl+=(inp*(10+P.ag)-S.vl)*dt*6;
+  S.vl+=(-inp*(10+P.ag)-S.vl)*dt*6;
   S.lat+=(S.vl-p.c*S.v*S.v*.15*(1-.08*P.ag))*dt;
   if(Math.abs(S.lat)>HW+1.6){S.lat=Math.sign(S.lat)*(HW+1.6);S.v*=.97;S.sh=Math.max(S.sh,.3)}
   S.s+=S.v*dt;S.t-=dt;
@@ -469,7 +470,7 @@ function step(dt){
 var hu=0,c1='',c2='',c3=-1,fa0=0,fn=0,tm=0,last=performance.now(),cp=new T.Vector3(),ct=new T.Vector3(),bar=document.querySelector('#bar i');
 function frame(now){
   requestAnimationFrame(frame);
-  var dt=Math.min(.05,(now-last)/1000);last=now;if(S.pz)dt=0;tm+=dt;CI=P.ctl==0?AR:P.ctl==1?TL:WA;step(dt);var cn='c'+P.ctl+(S.play&&!S.pz?' g':'');if(app.className!=cn)app.className=cn;
+  var dt=Math.min(.05,(now-last)/1000);last=now;if(S.pz)dt=0;tm+=dt;CI=P.ctl==0?AR:P.ctl==1?TL:P.ctl==2?WA:0;step(dt);var cn='c'+P.ctl+(S.play&&!S.pz?' g':'');if(app.className!=cn)app.className=cn;
   if(tm>3){fn++;fa0+=dt;if(fn>=40){var av=fa0/fn;fn=0;fa0=0;if(av>.036&&PR>.8){PR=Math.max(.8,PR-.1);rd.setPixelRatio(PR);resize()}}}
   var p=put(car,S.s,S.lat,.02),p2=pose(S.s+4);
   car.rotation.x=-Math.atan((p2.y-p.y)/4);car.rotation.z=-S.vl*.012;car.rotation.y=p.h+S.vl*.02;
