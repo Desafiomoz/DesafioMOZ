@@ -29,6 +29,28 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family
 .wt button{white-space:nowrap;flex:none}
 .lg{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;overflow-y:auto;padding:6px 2px;flex:1;min-height:0}
 .lg button{padding:12px 0;font-weight:700;min-width:0}
+.wt{flex:none;position:relative;scroll-snap-type:x proximity;padding:8px 2px 10px}
+.lp{box-shadow:0 0 44px var(--a2,#ff4fa322)}
+.s2{margin:2px 0 6px;color:#c9d0e0;font-size:.85rem}
+#ov.lv{background:radial-gradient(ellipse at 50% 25%,#151b2e 0%,#06070c 78%)}
+#app:not(.g) #hud,#app:not(.g) #bar{display:none}
+.wc{flex:none;width:92px;display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:12px 10px;border-radius:16px;text-align:left;scroll-snap-align:center;background:linear-gradient(160deg,var(--c2),rgba(255,255,255,.03));border:1px solid var(--c2)}
+.wc.sel{border-color:var(--c);box-shadow:0 0 18px var(--c2),inset 0 0 14px var(--c2);transform:translateY(-3px)}
+.wc .wn{font-style:normal;font-size:.92rem;font-weight:800;color:var(--c);white-space:nowrap}
+.wc b{font-size:.78rem;line-height:1.15;min-height:2.3em;white-space:normal}
+.wc .pb{display:block;width:100%;height:4px;border-radius:2px;background:#ffffff22}
+.wc .pb u{display:block;height:100%;border-radius:2px;background:var(--c);box-shadow:0 0 6px var(--c)}
+.wc small{font-size:.68rem;color:#b9c0d0}
+.wh{margin:2px 0 0;font-size:1.2rem;color:var(--a);text-shadow:0 0 14px var(--a3)}
+.wr{margin:2px 0 8px;font-size:.78rem;color:#b9c0d0}
+.lg button.lb{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 0;border-radius:14px;font-size:1.05rem;font-weight:800;color:#fff;background:linear-gradient(160deg,var(--a4),rgba(255,255,255,.04));border:1px solid var(--a2)}
+.lb i{font-style:normal;font-size:.6rem;letter-spacing:1px;color:#ffd24a;height:.8rem;line-height:.8rem;text-shadow:0 0 6px #ffd24a88}
+.lg button.lb.d{background:linear-gradient(160deg,var(--a3),var(--a2));border-color:var(--a);box-shadow:0 0 12px var(--a2)}
+.lg button.lb.cur{background:var(--a);color:#10121a;border-color:#fff;animation:pl 1.4s ease-in-out infinite}
+.lb.cur i{color:#10121a;text-shadow:none}
+@keyframes pl{0%,100%{box-shadow:0 0 6px var(--a)}50%{box-shadow:0 0 22px var(--a),0 0 36px var(--a3)}}
+.meta{margin:8px 0 0;font-size:.82rem;color:#e8ecf4}
+.stz{font-size:2.2rem;margin:4px 0;color:#ffd24a;letter-spacing:6px;text-shadow:0 0 16px #ffd24a}
 .on{background:var(--a,#ff4fa3)!important;color:#10121a!important;border-color:transparent!important}
 #hb{position:absolute;left:14px;top:calc(env(safe-area-inset-top,0px) + 68px);display:flex;gap:8px}
 #hb button{width:42px;height:42px;padding:0;min-width:0;font-size:1.1rem;border-radius:50%;background:#000a}
@@ -375,7 +397,7 @@ function menu(skip){
   if(!skip){pb.style.opacity=0;pb.style.pointerEvents='none';setTimeout(function(){pb.style.opacity=1;pb.style.pointerEvents='auto'},5000)}
   $('lv').textContent='';$('tm').textContent='';$('sp').textContent='';
 }
-function levels(){
+function oldLevels(){
   S.play=false;
   if(S.wi==null)S.wi=Math.floor((S.lv-1)/92)%12;
   var h='<div class="pn lp"><h1 style="font-size:1.6rem;letter-spacing:4px">NÍVEIS</h1><div class="wt">';
@@ -388,12 +410,32 @@ function levels(){
   var wt=ov.querySelector('.wt'),on=wt.querySelector('.on');
   if(on)wt.scrollLeft=on.offsetLeft-wt.clientWidth/2+on.clientWidth/2;
 }
+function rgba(n,a){return 'rgba('+(n>>16&255)+','+(n>>8&255)+','+(n&255)+','+a+')'}
+function wcol(i){return '#'+('000000'+WL[i][4].toString(16)).slice(-6)}
+function wprog(i){var dn=P.dn||'',a=i*92,b=Math.min(MAXL,a+92),c=0,s=0;for(var k=a;k<b;k++){var v=+dn.charAt(k)||0;if(v){c++;s+=v}}return[c,s,b-a]}
+function levels(){
+  S.play=false;
+  if(S.wi==null)S.wi=Math.floor((S.lv-1)/92)%12;
+  var wi=S.wi,w=WL[wi],pr=wprog(wi),tot=0,tst=0,i,q;
+  for(i=0;i<12;i++){q=wprog(i);tot+=q[0];tst+=q[1]}
+  var h='<div class="pn lp" style="--a:'+wcol(wi)+';--a2:'+rgba(w[4],.22)+';--a3:'+rgba(w[4],.55)+';--a4:'+rgba(w[4],.12)+';background:linear-gradient(180deg,'+w[1]+'e6 0%,'+w[2]+'59 40%,#070910f2 100%),#070910">';
+  h+='<h1 style="font-size:1.6rem;letter-spacing:4px">NÍVEIS</h1><p class="s2">★ '+tst+' · '+tot+'/'+MAXL+' concluídos</p><div class="wt">';
+  WL.forEach(function(x,j){var p=wprog(j);h+='<button class="wc'+(j==wi?' sel':'')+'" data-w="'+j+'" style="--c:'+wcol(j)+';--c2:'+rgba(x[4],.25)+'"><i class="wn">'+(p[0]==p[2]?'👑 ':'')+'Mundo '+(j+1)+'</i><span class="pb"><u style="width:'+Math.round(p[0]/p[2]*100)+'%"></u></span></button>'});
+  var a0=wi*92+1,b0=Math.min(MAXL,a0+91);
+  h+='</div><h2 class="wh">'+w[0]+'</h2><p class="wr">Níveis '+a0+'–'+b0+' · ★ '+pr[1]+'/'+pr[2]*3+'</p><div class="lg">';
+  for(var k=a0;k<=b0;k++){var v=+(P.dn||'').charAt(k-1)||0;h+='<button class="lb'+(v?' d':'')+(k==S.lv?' cur':'')+'" data-l="'+k+'"><b>'+k+'</b><i>'+(v?'★'.repeat(v)+'☆'.repeat(3-v):'')+'</i></button>'}
+  h+='</div><p class="meta">'+(pr[0]==pr[2]?(pr[1]==pr[2]*3?'👑 Mundo perfeito! Todas as estrelas!':'👑 Mundo completo! Tenta ganhar ★★★ em todos os níveis.'):'🎯 Faltam '+(pr[2]-pr[0])+' níveis para completar este mundo.')+'</p><button class="go" data-a="go">▶ Continuar · Nível '+S.lv+'</button><p class="row"><button data-a="back">Voltar</button><button data-a="opt0">Opções</button><button data-a="shop0">Loja</button></p></div>';
+  ov.className='';ov.innerHTML=h;
+  ov.className='lv';var wt=ov.querySelector('.wt'),sl=wt.querySelector('.sel');
+  if(sl)wt.scrollLeft=sl.offsetLeft-wt.clientWidth/2+sl.clientWidth/2;
+  var cu=ov.querySelector('.lb.cur'),lg=ov.querySelector('.lg');if(cu)lg.scrollTop=Math.max(0,cu.offsetTop-90);
+}
 function start(){S.pz=false;c1='';c2='';c3=-1;build(S.lv);bodyM.color.setHex(PAL[P.skin][0]);S.play=true;ov.className='h';save()}
 function end(win){
-  S.play=false;var last=S.lv>=MAXL,gain=(win?50+Math.floor(S.lv*.4):0)+S.orbs*(win?10:5);P.coins+=gain;sv();
+  S.play=false;var last=S.lv>=MAXL,gain=(win?50+Math.floor(S.lv*.4):0)+S.orbs*(win?10:5),st=0;P.coins+=gain;if(win){var r0=S.t/TR.time;st=r0>=.3?3:r0>=.12?2:1;var dn=P.dn||'0'.repeat(MAXL),o0=+dn.charAt(S.lv-1)||0;if(st>o0)P.dn=dn.substring(0,S.lv-1)+st+dn.substring(S.lv)}sv();
   if(win&&!last){S.lv++;save()}
   ov.className='';
-  ov.innerHTML='<div class="pn"><h1 style="font-size:1.7rem">'+(win?(last?'CAMPEÃO!':'NÍVEL CONCLUÍDO'):'TEMPO ESGOTADO')+'</h1><p class="s">'+(win?(last?'Completaste os 1100 níveis da AURAVIA!':'Esferas: '+S.orbs+' · Sobraram '+Math.ceil(S.t)+' s · +'+gain+' moedas'):'Tenta outra vez! +'+gain+' moedas')+'</p><button class="go" data-a="go">'+(win&&!last?'Nível '+S.lv:'Jogar de novo')+'</button><p><button data-a="shop">Melhorias</button> <button data-a="menu">Níveis</button></p></div>';
+  ov.innerHTML='<div class="pn"><h1 style="font-size:1.7rem">'+(win?(last?'CAMPEÃO!':'NÍVEL CONCLUÍDO'):'TEMPO ESGOTADO')+'</h1>'+(win?'<p class="stz">'+'★'.repeat(st)+'☆'.repeat(3-st)+'</p>':'')+'<p class="s">'+(win?(last?'Completaste os 1100 níveis da AURAVIA!':'Esferas: '+S.orbs+' · Sobraram '+Math.ceil(S.t)+' s · +'+gain+' moedas'):'Tenta outra vez! +'+gain+' moedas')+'</p><button class="go" data-a="go">'+(win&&!last?'Nível '+S.lv:'Jogar de novo')+'</button><p><button data-a="shop">Melhorias</button> <button data-a="menu">Níveis</button></p></div>';
 }
 ov.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;
   if(b.dataset.l){S.lv=parseInt(b.dataset.l);start()}else if(b.dataset.w){S.wi=parseInt(b.dataset.w);levels()}else if(b.dataset.a=='play'){S.wi=null;levels()}else if(b.dataset.a=='back')menu(true)
@@ -455,7 +497,7 @@ function frame(now){
   var fa=fg.attributes.position;for(var i=0;i<240;i++){var z=fa.getZ(i)-S.v*dt*1.2;if(z<-40)z+=110;fa.setZ(i,z)}fa.needsUpdate=true;
   sunS.position.set(cam.position.x+Math.sin(TR.sa)*1500,cam.position.y+260,cam.position.z+Math.cos(TR.sa)*1500);
   stars.position.copy(cam.position);camL.position.copy(cam.position);camL.target.position.copy(car.position);camL.target.updateMatrixWorld();stage.visible=!S.play;stage.position.set(car.position.x,car.position.y-.035,car.position.z);stage.rotation.y+=dt*.4;sAcc.color.copy(auraM.color);bm.color.copy(auraM.color);
-  rd.render(scene,cam);
+  if(ov.className!='lv')rd.render(scene,cam);
 }
 menu();cam.position.set(0,5,-10);
 requestAnimationFrame(frame);
