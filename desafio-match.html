@@ -1510,25 +1510,47 @@ function incrementoDoMarco(nivel){
   const anterior = idx>0 ? MARCOS_NIVEL[idx-1] : 0;
   return nivel - anterior; // em MT
 }
-async function creditarMarcoNaContaReal(mt){
-  if(!emailJogador || !db || mt<=0) return;
+async function creditarMarcoNaContaReal(mt, nivel){
+  // Só via Cloudflare Function — o browser NÃO soma pontos sozinho
+  if(!emailJogador || mt<=0 || !nivel) return false;
   try{
-    const snap = await db.collection('usuarios').where('email','==',emailJogador).limit(1).get();
-    if(!snap.empty){
-      var ptsAdd = mt*10; // 10 pontos = 1 MT
-      await snap.docs[0].ref.update({ pontos: firebase.firestore.FieldValue.increment(ptsAdd) });
-      try { if (typeof DM_histPontos === 'function') await DM_histPontos(db, emailJogador, ptsAdd, 'homejub', 'Marco nível +' + mt + ' MT'); } catch(eH) {}
+    var resp = await fetch('/api/homejub-recompensa', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: String(emailJogador).toLowerCase(),
+        nivel: Number(nivel)
+      })
+    });
+    var dados = {};
+    try { dados = await resp.json(); } catch(eJ) { dados = {}; }
+    if(!resp.ok || !dados.ok){
+      console.warn('Homejub recompensa:', dados && dados.erro ? dados.erro : resp.status);
+      return false;
     }
-  }catch(e){ console.warn('Homejub: falha ao creditar marco na conta real', e); }
-}
-function verificarMarcoDeNivel(nivel){
-  if(MARCOS_NIVEL.includes(nivel) && !marcosPagos.includes(nivel)){
-    const mt = incrementoDoMarco(nivel);
-    marcosPagos.push(nivel);
-    creditarMarcoNaContaReal(mt);
-    salvarEstado();
-    mostrarAvisoMarcoMt(mt, nivel);
+    if(Array.isArray(dados.marcosPagos)){
+      marcosPagos = dados.marcosPagos.slice();
+    } else if(!marcosPagos.includes(nivel)){
+      marcosPagos.push(nivel);
+    }
+    return true;
+  }catch(e){
+    console.warn('Homejub: falha ao creditar marco na conta real', e);
+    return false;
   }
+}
+async function verificarMarcoDeNivel(nivel){
+  if(!MARCOS_NIVEL.includes(nivel) || marcosPagos.includes(nivel)) return;
+  const mt = incrementoDoMarco(nivel);
+  if(mt <= 0) return;
+  try {
+    const ok = await creditarMarcoNaContaReal(mt, nivel);
+    if(ok){
+      if(!marcosPagos.includes(nivel)) marcosPagos.push(nivel);
+      try { salvarEstado(); } catch(e){}
+      try { mostrarAvisoMarcoMt(mt, nivel); } catch(e){}
+    }
+  } catch(e){ console.warn(e); }
 }
 
 /** Quando compras desbloqueio +10 (ou o nível sobe sem jogar cada marco),
@@ -1540,19 +1562,21 @@ async function verificarMarcosAtrasadosPorDesbloqueio(){
   let totalMt = 0;
   const novos = [];
   for(const nivel of MARCOS_NIVEL){
-    // Já "passou" este marco se o próximo nível jogável está além dele
     if(nivel < nivelDesbloqueado && !marcosPagos.includes(nivel)){
       const mt = incrementoDoMarco(nivel);
       if(mt <= 0) continue;
-      marcosPagos.push(nivel);
-      novos.push({ nivel, mt });
-      totalMt += mt;
-      try { await creditarMarcoNaContaReal(mt); } catch(e) {}
+      try {
+        const ok = await creditarMarcoNaContaReal(mt, nivel);
+        if(ok){
+          if(!marcosPagos.includes(nivel)) marcosPagos.push(nivel);
+          novos.push({ nivel, mt });
+          totalMt += mt;
+        }
+      } catch(e) {}
     }
   }
   if(novos.length === 0) return;
   try { salvarEstado(); } catch(e) {}
-  // Aviso com aura — um por marco, ou resumo se forem vários
   if(novos.length === 1){
     try { mostrarAvisoMarcoMt(novos[0].mt, novos[0].nivel); } catch(e) {
       try { mostrarToastSucesso('🎉 +' + novos[0].mt + ' MT na conta!\nMarco nível ' + novos[0].nivel); } catch(e2) {}
