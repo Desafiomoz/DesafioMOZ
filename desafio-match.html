@@ -3139,29 +3139,36 @@ document.getElementById('btn-checkout-confirmar').addEventListener('click', asyn
     return;
   }
   mostrarPassoCheckout('aguardar');
-  document.getElementById('checkout-status-txt').textContent = 'A verificar se este ID ainda não foi usado…';
+  document.getElementById('checkout-status-txt').textContent = 'A validar o pagamento no servidor…';
   try{
-    if(!window.db) throw new Error('Sem ligação ao Firebase');
-    var txRef = db.collection('emolaTransacoes').doc(txId);
-    await db.runTransaction(async function(tr){
-      var snap = await tr.get(txRef);
-      if(snap.exists) throw new Error('Este ID de transacção já foi usado. Cada ID só funciona uma vez.');
-      tr.set(txRef, {
+    // Compra só via Cloudflare Function — o browser NÃO grava pontos/itens no Firebase
+    var resp = await fetch('/api/homejub-compra', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
         email: String(emailJogador).toLowerCase(),
         item: itemEmCompra,
-        jogo: 'homejub',
-        mt: PRECOS_ITEM_MT[itemEmCompra] || 0,
-        descricao: DESCRICOES_ITEM[itemEmCompra] || itemEmCompra,
-        createdAt: new Date().toISOString()
-      });
+        txId: txId
+      })
     });
+    var dados = {};
+    try { dados = await resp.json(); } catch (eJ) { dados = {}; }
+    if(!resp.ok || !dados.ok){
+      var errMsg = (dados && dados.erro) ? dados.erro : ('Erro ' + resp.status);
+      throw new Error(errMsg);
+    }
+    // Servidor já creditou jogoEstado + emolaTransacoes + log
+    try {
+      __HOMEJUB_CREDITO_LOJA_OK__ = true;
+      if(itemEmCompra === 'desbloqueio10') __HOMEJUB_SALTO_NIVEL_OK__ = true;
+    } catch(eFlag){}
+
     if(itemEmCompra === 'jogadasOferta20'){
       if(!ofertaJogadasJaAplicada){
         ofertaJogadasJaAplicada = true;
         jogadasRestantes = Math.max(0, jogadasRestantes) + 20;
         try { atualizarHud(); } catch(e){}
       }
-      await creditarItemHomejubLocal('jogadasOferta20', String(emailJogador).toLowerCase());
       try {
         document.getElementById('overlay-oferta-jogadas').classList.remove('ativo');
         document.getElementById('overlay-fim').classList.remove('ativo');
@@ -3170,11 +3177,9 @@ document.getElementById('btn-checkout-confirmar').addEventListener('click', asyn
       } catch(e){}
       document.getElementById('checkout-sucesso-txt').textContent = '🎯 +20 jogadas creditadas! Continua neste nível — toca em Fechar.';
     } else {
-      await creditarItemHomejubLocal(itemEmCompra, String(emailJogador).toLowerCase());
+      try { await carregarEstado(); } catch(e){}
       if(itemEmCompra === 'desbloqueio10'){
-        try { await carregarEstado(); if(typeof verificarMarcosAtrasadosPorDesbloqueio==='function') await verificarMarcosAtrasadosPorDesbloqueio(); } catch(e){}
-      } else {
-        try { await carregarEstado(); } catch(e){}
+        try { if(typeof verificarMarcosAtrasadosPorDesbloqueio==='function') await verificarMarcosAtrasadosPorDesbloqueio(); } catch(e){}
       }
       try {
         atualizarBotaoAjuda(); atualizarVidasUI();
@@ -3186,22 +3191,10 @@ document.getElementById('btn-checkout-confirmar').addEventListener('click', asyn
       } catch(e){}
       document.getElementById('checkout-sucesso-txt').textContent = mensagemSucessoCompra(itemEmCompra);
     }
-    try {
-      await db.collection('pagamentosManuais').add({
-        jogo: 'homejub',
-        email: String(emailJogador).toLowerCase(),
-        item: itemEmCompra,
-        label: DESCRICOES_ITEM[itemEmCompra] || itemEmCompra,
-        mt: PRECOS_ITEM_MT[itemEmCompra] || 0,
-        txId: txId,
-        status: 'entregue',
-        createdAt: new Date().toISOString()
-      });
-    } catch(eLog){}
     mostrarPassoCheckout('sucesso');
   }catch(e){
     var msg = (e && e.message) ? e.message : String(e);
-    if(/already exists|ALREADY_EXISTS/i.test(msg)) msg = 'Este ID de transacção já foi usado. Cada ID só funciona uma vez.';
+    if(/already exists|ALREADY_EXISTS|já foi usado|TX_JA/i.test(msg)) msg = 'Este ID de transacção já foi usado. Cada ID só funciona uma vez.';
     document.getElementById('checkout-erro-txt').textContent = msg;
     mostrarPassoCheckout('erro');
   }
