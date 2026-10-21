@@ -1,11 +1,8 @@
 /**
  * Desafio MOZ – Homejub compra (e-Mola)
  * URL: POST https://desafiomoz.pages.dev/api/homejub-compra
- *
- * Body JSON: { "email": "...", "item": "moedas30", "txId": "PP...." }
- * Secret: FIREBASE_SERVICE_ACCOUNT (JSON da service account)
- *
- * O browser NÃO decide quantas moedas/níveis recebe — só esta Function.
+ * Body: { "email", "item", "txId" }
+ * Secret: FIREBASE_SERVICE_ACCOUNT (JSON service account)
  */
 
 const ITENS = {
@@ -14,11 +11,11 @@ const ITENS = {
   ajudas20:        { mt: 2,   label: '20 ajudas' },
   jogadas10:       { mt: 2,   label: '10 jogadas extra' },
   jogadasOferta20: { mt: 2,   label: '20 jogadas (nível actual)' },
-  bonus:           { mt: 5,   label: 'Bónus 6 vidas + 70 moedas + 6 ajudas + 10 jogadas' },
+  bonus:           { mt: 5,   label: 'Bónus' },
   bonus2:          { mt: 10,  label: 'Bónus grande' },
   moedasInfinitas: { mt: 100, label: 'Moedas infinitas' },
   ajudasInfinitas: { mt: 50,  label: 'Ajudas infinitas' },
-  desbloqueio10:   { mt: 15,  label: '+10 níveis desbloqueados' },
+  desbloqueio10:   { mt: 15,  label: '+10 níveis' },
 };
 
 const CORS = {
@@ -33,17 +30,12 @@ function json(data, status = 200) {
 }
 
 function normalizarTxId(s) {
-  return String(s || '')
-    .trim()
-    .replace(/\s+/g, '')
-    .toUpperCase();
+  return String(s || '').trim().replace(/\s+/g, '').toUpperCase();
 }
 
 function txIdValido(txId) {
-  // e-Mola: começa por PP e tem formato razoável
   if (!txId || txId.length < 12 || txId.length > 64) return false;
   if (!txId.startsWith('PP')) return false;
-  // só letras, números e pontuação típica
   return /^PP[A-Z0-9.\-_]+$/i.test(txId);
 }
 
@@ -54,63 +46,95 @@ function emailValido(email) {
   return email;
 }
 
-/** JWT + access token Google (service account) para Firestore REST */
+/** Base64 URL-safe (string UTF-8 ou ArrayBuffer/Uint8Array) */
+function b64url(input) {
+  let bytes;
+  if (typeof input === 'string') {
+    bytes = new TextEncoder().encode(input);
+  } else if (input instanceof ArrayBuffer) {
+    bytes = new Uint8Array(input);
+  } else {
+    bytes = new Uint8Array(input);
+  }
+  let bin = '';
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    bin += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+  }
+  return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+}
+
+function parseServiceAccount(raw) {
+  let sa = typeof raw === 'string' ? JSON.parse(raw) : raw;
+  if (!sa || !sa.private_key || !sa.client_email || !sa.project_id) {
+    throw new Error('Service account incompleta (private_key / client_email / project_id)');
+  }
+  // Normalizar quebras de linha da chave privada
+  let pk = String(sa.private_key);
+  pk = pk.replace(/\\n/g, '\n');
+  if (!pk.includes('BEGIN PRIVATE KEY')) {
+    throw new Error('private_key sem BEGIN PRIVATE KEY — cola o JSON completo');
+  }
+  sa.private_key = pk;
+  return sa;
+}
+
 async function getAccessToken(sa) {
   const now = Math.floor(Date.now() / 1000);
-  const header = { alg: 'RS256', typ: 'JWT' };
-  const claim = {
-    iss: sa.client_email,
-    scope: 'https://www.googleapis.com/auth/datastore',
-    aud: 'https://oauth2.googleapis.com/token',
-    iat: now,
-    exp: now + 3600,
-  };
+  const header = b64url(JSON.stringify({ alg: 'RS256', typ: 'JWT' }));
+  const claim = b64url(
+    JSON.stringify({
+      iss: sa.client_email,
+      sub: sa.client_email,
+      scope: 'https://www.googleapis.com/auth/datastore https://www.googleapis.com/auth/cloud-platform',
+      aud: 'https://oauth2.googleapis.com/token',
+      iat: now,
+      exp: now + 3600,
+    })
+  );
+  const unsigned = header + '.' + claim;
 
-  const enc = new TextEncoder();
-  const b64 = (obj) =>
-    btoa(String.fromCharCode(...enc.encode(JSON.stringify(obj))))
-      .replace(/=/g, '')
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_');
-
-  const unsigned = `\( {b64(header)}. \){b64(claim)}`;
-
-  // PKCS8 private key
-  const pem = sa.private_key.replace(/\\n/g, '\n');
+  const pem = sa.private_key;
   const pemBody = pem
-    .replace(/-----BEGIN PRIVATE KEY-----/, '')
-    .replace(/-----END PRIVATE KEY-----/, '')
+    .replace(/-----BEGIN PRIVATE KEY-----/g, '')
+    .replace(/-----END PRIVATE KEY-----/g, '')
     .replace(/\s+/g, '');
   const binary = Uint8Array.from(atob(pemBody), (c) => c.charCodeAt(0));
 
   const key = await crypto.subtle.importKey(
     'pkcs8',
-    binary,
+    binary.buffer,
     { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
     false,
     ['sign']
   );
 
-  const sig = await crypto.subtle.sign(
+  const signature = await crypto.subtle.sign(
     'RSASSA-PKCS1-v1_5',
     key,
-    enc.encode(unsigned)
+    new TextEncoder().encode(unsigned)
   );
-  const sigB64 = btoa(String.fromCharCode(...new Uint8Array(sig)))
-    .replace(/=/g, '')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_');
+  const jwt = unsigned + '.' + b64url(signature);
 
-  const jwt = `\( {unsigned}. \){sigB64}`;
+  const body =
+    'grant_type=' +
+    encodeURIComponent('urn:ietf:params:oauth:grant-type:jwt-bearer') +
+    '&assertion=' +
+    encodeURIComponent(jwt);
 
   const tokRes = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: `grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=${jwt}`,
+    body,
   });
   const tok = await tokRes.json();
   if (!tok.access_token) {
-    throw new Error('Falha ao obter token Google: ' + JSON.stringify(tok));
+    throw new Error(
+      'Falha ao obter token Google: ' +
+        JSON.stringify(tok) +
+        ' | email=' +
+        (sa.client_email || '?')
+    );
   }
   return tok.access_token;
 }
@@ -120,24 +144,22 @@ function fsBase(projectId) {
 }
 
 async function fsGet(token, projectId, path) {
-  const url = `\( {fsBase(projectId)}/ \){path}`;
-  const r = await fetch(url, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const url = `${fsBase(projectId)}/${path}`;
+  const r = await fetch(url, { headers: { Authorization: 'Bearer ' + token } });
   if (r.status === 404) return null;
   if (!r.ok) throw new Error('FS GET ' + path + ' ' + r.status + ' ' + (await r.text()));
   return r.json();
 }
 
 async function fsPatch(token, projectId, path, fields, mask) {
-  let url = `\( {fsBase(projectId)}/ \){path}`;
+  let url = `${fsBase(projectId)}/${path}`;
   if (mask && mask.length) {
     url += '?' + mask.map((f) => 'updateMask.fieldPaths=' + encodeURIComponent(f)).join('&');
   }
   const r = await fetch(url, {
     method: 'PATCH',
     headers: {
-      Authorization: `Bearer ${token}`,
+      Authorization: 'Bearer ' + token,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({ fields }),
@@ -147,21 +169,17 @@ async function fsPatch(token, projectId, path, fields, mask) {
 }
 
 async function fsCreate(token, projectId, collection, docId, fields) {
-  // createDocument com nome fixo → falha se já existir (idempotência do txId)
   const url =
-    `\( {fsBase(projectId)}/ \){collection}?documentId=${encodeURIComponent(docId)}`;
+    `${fsBase(projectId)}/${collection}?documentId=` + encodeURIComponent(docId);
   const r = await fetch(url, {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${token}`,
+      Authorization: 'Bearer ' + token,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({ fields }),
   });
-  if (r.status === 409) {
-    const err = new Error('TX_JA_USADO');
-    throw err;
-  }
+  if (r.status === 409) throw new Error('TX_JA_USADO');
   if (!r.ok) throw new Error('FS CREATE ' + r.status + ' ' + (await r.text()));
   return r.json();
 }
@@ -195,10 +213,8 @@ function lerBool(doc, key) {
   }
 }
 
-/** Aplica o item no documento jogoEstado (valores só do servidor) */
 function aplicarItemNoEstado(estadoDoc, item) {
   const fields = (estadoDoc && estadoDoc.fields) || {};
-  // clonar campos existentes que vamos manter/alterar
   let moedas = lerNum({ fields }, 'moedasTotais', 0);
   let ajudas = lerNum({ fields }, 'ajudasDisponiveis', 0);
   let vidas = lerNum({ fields }, 'vidas', 5);
@@ -221,11 +237,9 @@ function aplicarItemNoEstado(estadoDoc, item) {
       jogadasExtra += 10;
       break;
     case 'jogadasOferta20':
-      // no nível actual o cliente soma jogadasRestantes; no estado guardamos extra
       jogadasExtra += 20;
       break;
     case 'bonus':
-      vidas = Math.min(5, Math.max(vidas, 6)); // jogo usa max 5; bónus histórico
       vidas = 5;
       moedas += 70;
       ajudas += 6;
@@ -268,19 +282,29 @@ export async function onRequest(context) {
   if (request.method === 'OPTIONS') {
     return new Response(null, { status: 204, headers: CORS });
   }
-
   if (request.method !== 'POST') {
     return json({ ok: false, erro: 'Só POST' }, 405);
   }
 
-  // Secret obrigatório
   let sa;
   try {
     const raw = env.FIREBASE_SERVICE_ACCOUNT;
-    if (!raw) return json({ ok: false, erro: 'Secret FIREBASE_SERVICE_ACCOUNT em falta' }, 500);
-    sa = typeof raw === 'string' ? JSON.parse(raw) : raw;
+    if (!raw) {
+      return json(
+        {
+          ok: false,
+          erro:
+            'Secret FIREBASE_SERVICE_ACCOUNT em falta. Nome exacto na Cloudflare: FIREBASE_SERVICE_ACCOUNT',
+        },
+        500
+      );
+    }
+    sa = parseServiceAccount(raw);
   } catch (e) {
-    return json({ ok: false, erro: 'Secret FIREBASE_SERVICE_ACCOUNT inválido' }, 500);
+    return json({
+      ok: false,
+      erro: 'Secret inválido: ' + (e && e.message ? e.message : String(e)),
+    }, 500);
   }
 
   let body;
@@ -309,7 +333,6 @@ export async function onRequest(context) {
   try {
     const token = await getAccessToken(sa);
 
-    // 1) Registar txId — se já existir, rejeita (cada ID só uma vez)
     try {
       await fsCreate(token, projectId, 'emolaTransacoes', txId, {
         email: strField(email),
@@ -330,11 +353,8 @@ export async function onRequest(context) {
       throw e;
     }
 
-    // 2) Ler / criar jogoEstado e creditar
-    const estadoPath = `jogoEstado/${encodeURIComponent(email)}`;
-    let estado = await fsGet(token, projectId, `jogoEstado/${email}`);
+    let estado = await fsGet(token, projectId, 'jogoEstado/' + email);
     if (!estado) {
-      // documento vazio inicial
       estado = {
         fields: {
           moedasTotais: numField(0),
@@ -349,10 +369,9 @@ export async function onRequest(context) {
     }
 
     const novos = aplicarItemNoEstado(estado, item);
-    await fsPatch(token, projectId, `jogoEstado/${email}`, novos, Object.keys(novos));
+    await fsPatch(token, projectId, 'jogoEstado/' + email, novos, Object.keys(novos));
 
-    // 3) Log admin
-    const logId = `hj_\( {Date.now()}_ \){Math.random().toString(36).slice(2, 8)}`;
+    const logId = 'hj_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
     try {
       await fsCreate(token, projectId, 'pagamentosManuais', logId, {
         jogo: strField('homejub'),
@@ -365,9 +384,7 @@ export async function onRequest(context) {
         createdAt: strField(new Date().toISOString()),
         via: strField('api-homejub-compra'),
       });
-    } catch (eLog) {
-      // não falha a compra se o log falhar
-    }
+    } catch (eLog) {}
 
     return json({
       ok: true,
