@@ -1426,9 +1426,19 @@ function salvarEstado(){
     return;
   }
   if(emailJogador && db){
+    // Só progresso de jogo — nunca marcosPagos nem flags infinitas (só a Function)
     const remoto = { vidas, proximaRecarga, nivelDesbloqueado, moedasTotais, ajudasDisponiveis, jogadasExtraArmazenadas };
     const b = estadoBaseServidor;
-    if(b && (nivelDesbloqueado > b.nivelDesbloqueado || moedasTotais > b.moedasTotais)){
+    var subiu = false;
+    if(b){
+      if(nivelDesbloqueado > (Number(b.nivelDesbloqueado)||1)) subiu = true;
+      if(moedasTotais > (Number(b.moedasTotais)||0)) subiu = true;
+      if(ajudasDisponiveis > (Number(b.ajudasDisponiveis)||0)) subiu = true;
+      if(jogadasExtraArmazenadas > (Number(b.jogadasExtraArmazenadas)||0)) subiu = true;
+    } else {
+      subiu = true;
+    }
+    if(subiu){
       remoto.ultimoAvanco = firebase.firestore.FieldValue.serverTimestamp();
     }
     db.collection('jogoEstado').doc(emailJogador).set(remoto, { merge:true }).then(function(){
