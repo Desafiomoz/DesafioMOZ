@@ -291,6 +291,19 @@ export async function onRequest(context) {
     let estado = await fsGet(token, projectId, 'jogoEstado/' + email);
     let marcos = estado ? lerMarcosPagos(estado) : [];
 
+    // Anti-fraude: o nível tem de estar realmente desbloqueado no servidor (as regras limitam o avanço a 1 nível / 20 s)
+    const nivelServidor = estado ? lerNum(estado, 'nivelDesbloqueado', 1) : 1;
+    if (nivelServidor <= nivel) {
+      return json({ ok: false, erro: 'Nível ainda não concluído' }, 403);
+    }
+
+    // Banido para sempre? (chave igual à do painel admin)
+    const banDoc = await fsGet(token, projectId, 'sistema/emailsBanidos');
+    const banKey = email.replace(/[^a-z0-9@._+-]/g, '_');
+    if (banDoc && banDoc.fields && banDoc.fields[banKey]) {
+      return json({ ok: false, erro: 'Conta banida' }, 403);
+    }
+
     if (marcos.includes(nivel)) {
       return json({
         ok: true,
@@ -310,6 +323,10 @@ export async function onRequest(context) {
     }
     if (!userDoc || !userDoc.name) {
       return json({ ok: false, erro: 'Conta de utilizador não encontrada' }, 404);
+    }
+
+    if (userDoc.fields && userDoc.fields.jogosBloqueado && userDoc.fields.jogosBloqueado.booleanValue === true) {
+      return json({ ok: false, erro: 'Jogos bloqueados' }, 403);
     }
 
     const pontosAtuais = lerNum(userDoc, 'pontos', 0);

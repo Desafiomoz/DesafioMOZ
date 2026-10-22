@@ -1417,8 +1417,21 @@ function salvarEstado(){
   try { aplicarAntiTrapacaAntesDeGuardar(); } catch(e){}
   const dados = { vidas, proximaRecarga, nivelDesbloqueado, moedasTotais, ajudasDisponiveis, jogadasExtraArmazenadas, marcosPagos, moedasInfinitas, ajudasInfinitas };
   try{ localStorage.setItem(chaveLocal(), JSON.stringify(dados)); }catch(e){}
+  // Segurança: o servidor (regras + Functions) é quem decide marcos, compras e flags infinitas.
+  // O browser só grava progresso de jogo e nunca marcosPagos nem moedasInfinitas/ajudasInfinitas.
+  if(__HOMEJUB_CREDITO_LOJA_OK__ || __HOMEJUB_SALTO_NIVEL_OK__){
+    // compra já creditada pelo servidor: não escrever por cima
+    try { sincronizarBaseServidor(); } catch(e0){}
+    __HOMEJUB_SALTO_NIVEL_OK__ = false; __HOMEJUB_CREDITO_LOJA_OK__ = false;
+    return;
+  }
   if(emailJogador && db){
-    db.collection('jogoEstado').doc(emailJogador).set(dados, { merge:true }).then(function(){
+    const remoto = { vidas, proximaRecarga, nivelDesbloqueado, moedasTotais, ajudasDisponiveis, jogadasExtraArmazenadas };
+    const b = estadoBaseServidor;
+    if(b && (nivelDesbloqueado > b.nivelDesbloqueado || moedasTotais > b.moedasTotais)){
+      remoto.ultimoAvanco = firebase.firestore.FieldValue.serverTimestamp();
+    }
+    db.collection('jogoEstado').doc(emailJogador).set(remoto, { merge:true }).then(function(){
       try {
         sincronizarBaseServidor();
         __HOMEJUB_SALTO_NIVEL_OK__ = false;
