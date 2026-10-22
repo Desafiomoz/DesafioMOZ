@@ -3619,7 +3619,7 @@ estadoPronto = false;
 promessaEstado = Promise.resolve();
 
 (async function arranqueHomejub(){
-  // APK FECHADO — só jogar online no navegador
+  // APK: gate de teste (só quem sabe a senha entra). Público joga online.
   try {
     emailJogador = null;
     ehCriador = false;
@@ -3629,36 +3629,93 @@ promessaEstado = Promise.resolve();
   try {
     document.getElementById('tela-abertura').style.display = 'none';
     document.getElementById('tela-login').classList.add('oculto');
-    var mapa = document.getElementById('tela-mapa');
-    if (mapa) mapa.classList.remove('ativo');
-    var jogo = document.getElementById('tela-jogo');
-    if (jogo) jogo.style.display = 'none';
   } catch(e) {}
 
-  if (document.getElementById('tela-apk-fechado')) return;
+  var PASS_H = 'cf7b6674894de7934ca52506615e60b760a413b0ac1b055c34b344ba5302ba94';
+  var KEY = 'hj_apk_teste_ok';
 
-  var s = document.createElement('style');
-  s.textContent =
-    '#tela-apk-fechado{position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 20px;text-align:center;' +
-    'background:radial-gradient(ellipse at 50% 20%,rgba(59,158,255,.2),transparent 55%),radial-gradient(ellipse at 80% 80%,rgba(255,154,60,.12),transparent 45%),#06080e;}' +
-    '#tela-apk-fechado .ico{width:88px;height:88px;border-radius:22px;margin-bottom:16px;display:flex;align-items:center;justify-content:center;font-size:40px;' +
-    'background:linear-gradient(135deg,#666,#444);box-shadow:0 0 30px rgba(0,0,0,.4)}' +
-    '#tela-apk-fechado h1{font-family:Sora,sans-serif;font-size:22px;font-weight:800;color:#fff;margin:0 0 10px}' +
-    '#tela-apk-fechado p{font-size:14px;color:#8e9bb8;line-height:1.5;max-width:340px;margin:0 0 12px}' +
-    '#tela-apk-fechado a.btn-online{display:inline-flex;align-items:center;justify-content:center;margin-top:10px;padding:14px 28px;border-radius:30px;font-family:Sora,sans-serif;font-weight:800;font-size:15px;text-decoration:none;color:#06080e;' +
-    'background:linear-gradient(90deg,#3b9eff,#2ee6a0);box-shadow:0 0 24px rgba(46,230,160,.35)}';
-  document.head.appendChild(s);
+  function gateOk() {
+    try { return sessionStorage.getItem(KEY) === '1'; } catch(e) { return false; }
+  }
+  function markGate() {
+    try { sessionStorage.setItem(KEY, '1'); } catch(e) {}
+  }
+  async function sha(s) {
+    var buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(String(s || '')));
+    return Array.from(new Uint8Array(buf)).map(function(b){ return b.toString(16).padStart(2,'0'); }).join('');
+  }
+
+  function liberarLoginNormal() {
+    try {
+      var g = document.getElementById('hj-gate-apk');
+      if (g) g.style.display = 'none';
+      document.getElementById('tela-abertura').style.display = 'none';
+      document.getElementById('tela-login').classList.remove('oculto');
+      var em = document.getElementById('login-email');
+      var se = document.getElementById('login-senha');
+      if (em) em.value = '';
+      if (se) se.value = '';
+    } catch(e) {}
+  }
+
+  if (gateOk()) {
+    liberarLoginNormal();
+    return;
+  }
+
+  if (document.getElementById('hj-gate-apk')) return;
 
   var box = document.createElement('div');
-  box.id = 'tela-apk-fechado';
+  box.id = 'hj-gate-apk';
+  box.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(6,8,14,0.98);';
   box.innerHTML =
-    '<div class="ico">🛠️</div>' +
-    '<h1>APK indisponível</h1>' +
-    '<p>O app Homejub (APK) está <strong style="color:#ffcf4d">temporariamente fechado</strong> por actualização de segurança.</p>' +
-    '<p>Joga <strong style="color:#2ee6a0">online no navegador</strong> — o progresso e as compras ficam na tua conta Desafio MOZ.</p>' +
-    '<a class="btn-online" href="https://desafiomoz.pages.dev/desafio-match.html">Abrir Homejub online</a>' +
-    '<p style="margin-top:18px;font-size:12px;color:#666">Desafio MOZ · Homejub</p>';
+    '<div style="width:100%;max-width:360px;background:#12161f;border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:22px 18px;text-align:center;">' +
+      '<div style="font-size:36px;margin-bottom:8px;">🔒</div>' +
+      '<h2 style="font-family:Sora,sans-serif;font-size:18px;margin:0 0 8px;color:#fff;">Homejub APK — teste</h2>' +
+      '<p style="font-size:13px;color:#8e9bb8;line-height:1.45;margin:0 0 14px;">O APK está fechado ao público.<br>Só acesso de teste autorizado.<br>O público joga <b style="color:#2ee6a0;">online</b> no navegador.</p>' +
+      '<input type="password" id="hj-gate-pass" placeholder="Senha de teste" autocomplete="current-password" ' +
+        'style="width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,0.12);background:#0a0d14;color:#fff;font-size:15px;margin-bottom:10px;outline:none;box-sizing:border-box;">' +
+      '<div id="hj-gate-erro" style="display:none;color:#ff6b6b;font-size:12.5px;margin-bottom:8px;"></div>' +
+      '<button type="button" id="hj-gate-btn" style="width:100%;padding:13px;border:none;border-radius:14px;font-weight:800;font-size:15px;background:linear-gradient(90deg,#3b9eff,#2ee6a0);color:#06080e;cursor:pointer;">Entrar no teste</button>' +
+      '<p style="font-size:11px;color:#666;margin-top:12px;line-height:1.4;">Utilizadores: Online → Homejub → <b style="color:#8e9bb8;">Jogar online</b></p>' +
+      '<a href="https://desafiomoz.pages.dev/desafio-match.html" style="display:inline-block;margin-top:10px;font-size:13px;font-weight:700;color:#2ee6a0;text-decoration:none;">Abrir Homejub online →</a>' +
+    '</div>';
   document.body.appendChild(box);
+
+  var btn = document.getElementById('hj-gate-btn');
+  var inp = document.getElementById('hj-gate-pass');
+  var err = document.getElementById('hj-gate-erro');
+  async function tentar() {
+    err.style.display = 'none';
+    var p = inp.value || '';
+    if (!p) {
+      err.textContent = 'Escreve a senha de teste.';
+      err.style.display = 'block';
+      return;
+    }
+    btn.disabled = true;
+    btn.textContent = 'A verificar...';
+    try {
+      var h = await sha(p);
+      if (h !== PASS_H) {
+        err.textContent = 'Senha incorrecta.';
+        err.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Entrar no teste';
+        return;
+      }
+      markGate();
+      liberarLoginNormal();
+    } catch (e) {
+      err.textContent = 'Erro ao verificar. Usa um browser recente.';
+      err.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Entrar no teste';
+    }
+  }
+  if (btn) btn.addEventListener('click', tentar);
+  if (inp) inp.addEventListener('keydown', function(e){ if (e.key === 'Enter') tentar(); });
+})();
 })();
 </script>
 

@@ -797,20 +797,6 @@ canvas{ touch-action:none; display:block; }
 <button type="button" class="btn-mute" id="btn-mute" title="Som">🔊</button>
 
 
-<!-- Acesso restrito (teste) — e-mail não está em texto no código -->
-<div id="hj-gate" style="position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(6,8,14,0.96);">
-  <div style="width:100%;max-width:360px;background:#12161f;border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:22px 18px;text-align:center;">
-    <div style="font-size:36px;margin-bottom:8px;">🔒</div>
-    <h2 style="font-family:Sora,sans-serif;font-size:18px;margin:0 0 8px;">Homejub online — teste</h2>
-    <p style="font-size:13px;color:#8e9bb8;line-height:1.45;margin:0 0 14px;">Versão online em actualização de segurança.<br>Só acesso autorizado. O público joga pelo <b style="color:#2ee6a0;">APK</b>.</p>
-    <input type="password" id="hj-gate-pass" placeholder="Senha de teste" autocomplete="current-password"
-      style="width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,0.12);background:#0a0d14;color:#fff;font-size:15px;margin-bottom:10px;outline:none;">
-    <div id="hj-gate-erro" style="display:none;color:#ff6b6b;font-size:12.5px;margin-bottom:8px;"></div>
-    <button type="button" id="hj-gate-btn" style="width:100%;padding:13px;border:none;border-radius:14px;font-weight:800;font-size:15px;background:linear-gradient(90deg,#3b9eff,#2ee6a0);color:#06080e;cursor:pointer;">Entrar no teste</button>
-    <p style="font-size:11px;color:#666;margin-top:12px;">Utilizadores: usem o APK em Online → Baixar APK</p>
-  </div>
-</div>
-
 <div id="tela-abertura">
   <div class="capa-emblema">
     <svg viewBox="0 0 24 24" fill="none">
@@ -2609,69 +2595,6 @@ const frasesCarregamento = [
   'Quase pronto...'
 ];
 
-
-/* ---- Gate de teste (senha; e-mail do criador só por hash) ---- */
-(function(){
-  var PASS_H = 'cf7b6674894de7934ca52506615e60b760a413b0ac1b055c34b344ba5302ba94';
-  var KEY = 'hj_online_teste_ok';
-  function ok() {
-    try { return sessionStorage.getItem(KEY) === '1'; } catch(e) { return false; }
-  }
-  function mark() {
-    try { sessionStorage.setItem(KEY, '1'); } catch(e) {}
-  }
-  async function sha(s) {
-    var buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(String(s||'')));
-    return Array.from(new Uint8Array(buf)).map(function(b){return b.toString(16).padStart(2,'0');}).join('');
-  }
-  function hideGate() {
-    var g = document.getElementById('hj-gate');
-    if (g) g.style.display = 'none';
-  }
-  if (ok()) {
-    document.addEventListener('DOMContentLoaded', hideGate);
-    hideGate();
-    return;
-  }
-  function bind() {
-    var btn = document.getElementById('hj-gate-btn');
-    var inp = document.getElementById('hj-gate-pass');
-    var err = document.getElementById('hj-gate-erro');
-    if (!btn || !inp) return;
-    async function tentar() {
-      err.style.display = 'none';
-      var p = inp.value || '';
-      if (!p) {
-        err.textContent = 'Escreve a senha de teste.';
-        err.style.display = 'block';
-        return;
-      }
-      btn.disabled = true;
-      btn.textContent = 'A verificar...';
-      try {
-        var h = await sha(p);
-        if (h !== PASS_H) {
-          err.textContent = 'Senha incorrecta.';
-          err.style.display = 'block';
-          btn.disabled = false;
-          btn.textContent = 'Entrar no teste';
-          return;
-        }
-        mark();
-        hideGate();
-      } catch (e) {
-        err.textContent = 'Erro ao verificar. Usa um browser recente.';
-        err.style.display = 'block';
-        btn.disabled = false;
-        btn.textContent = 'Entrar no teste';
-      }
-    }
-    btn.addEventListener('click', tentar);
-    inp.addEventListener('keydown', function(e){ if (e.key === 'Enter') tentar(); });
-  }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bind);
-  else bind();
-})();
 
 function animarCapa(){
   const barra = document.getElementById('capa-barra');
