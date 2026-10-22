@@ -313,22 +313,22 @@
         <div class="modal-caixa">
             <div class="modal-icone">🧩</div>
             <h2 id="modal-titulo">Como queres jogar?</h2>
-            <p class="modal-txt">Escolhe jogar no navegador ou instalar o app Homejub no teu telemóvel.</p>
+            <p class="modal-txt">Joga no navegador com progresso e compras seguros no servidor. O APK está temporariamente fechado.</p>
             <div class="modal-opcoes">
-                <div class="btn-opcao online" id="btn-jogar-online" style="opacity:0.75;cursor:default;">
-                    <div class="btn-ico" style="background:linear-gradient(135deg,#666,#444);color:#ccc;"><i class="fas fa-tools"></i></div>
+                <a href="desafio-match.html" class="btn-opcao online" id="btn-jogar-online">
+                    <div class="btn-ico"><i class="fas fa-globe"></i></div>
                     <div>
-                        <strong>Jogar online — indisponível</strong>
-                        <span>Em actualização de segurança. Por agora joga pelo APK.</span>
-                    </div>
-                </div>
-                <a href="https://desafiomoz.pages.dev/Homejub/Homejub.apk" class="btn-opcao apk" id="btn-baixar-apk" download>
-                    <div class="btn-ico"><i class="fas fa-download"></i></div>
-                    <div>
-                        <strong>Baixar APK</strong>
-                        <span>Instala no telemóvel e joga como app (disponível)</span>
+                        <strong>Jogar online</strong>
+                        <span>Abre o Homejub no navegador — disponível para todos</span>
                     </div>
                 </a>
+                <div class="btn-opcao apk" id="btn-baixar-apk" style="opacity:0.75;cursor:default;">
+                    <div class="btn-ico" style="background:linear-gradient(135deg,#666,#444);color:#ccc;"><i class="fas fa-tools"></i></div>
+                    <div>
+                        <strong>APK — indisponível</strong>
+                        <span>Em actualização. Por agora joga online no navegador.</span>
+                    </div>
+                </div>
             </div>
             <button type="button" class="btn-fechar-modal" id="btn-fechar-modal">Cancelar</button>
         </div>
@@ -358,12 +358,12 @@
 
             btnAbrir.addEventListener('click', abrirModal);
             btnFechar.addEventListener('click', fecharModal);
-            var btnOnline = document.getElementById('btn-jogar-online');
-            if (btnOnline) {
-              btnOnline.addEventListener('click', function (e) {
+            var btnApk = document.getElementById('btn-baixar-apk');
+            if (btnApk) {
+              btnApk.addEventListener('click', function (e) {
                 e.preventDefault();
                 e.stopPropagation();
-                alert('Homejub online está temporariamente indisponível.\n\nUsa o APK para jogar no telemóvel.');
+                alert('O APK do Homejub está temporariamente indisponível.\n\nJoga online no navegador.');
               });
             }
             modal.addEventListener('click', function (e) {

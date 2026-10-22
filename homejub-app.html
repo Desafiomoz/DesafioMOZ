@@ -3619,24 +3619,46 @@ estadoPronto = false;
 promessaEstado = Promise.resolve();
 
 (async function arranqueHomejub(){
-  // SEMPRE pedir login ao abrir o app (não entra automático com sessão antiga)
+  // APK FECHADO — só jogar online no navegador
   try {
     emailJogador = null;
     ehCriador = false;
-    // Limpa sessão para obrigar login de novo
     localStorage.removeItem('emailUtilizador');
   } catch(e) {}
 
-  document.getElementById('tela-abertura').style.display = 'none';
-  document.getElementById('tela-login').classList.remove('oculto');
-
-  // Limpa campos de senha; e-mail fica vazio para cada pessoa escrever o seu
   try {
-    var em = document.getElementById('login-email');
-    var se = document.getElementById('login-senha');
-    if(em) em.value = '';
-    if(se) se.value = '';
+    document.getElementById('tela-abertura').style.display = 'none';
+    document.getElementById('tela-login').classList.add('oculto');
+    var mapa = document.getElementById('tela-mapa');
+    if (mapa) mapa.classList.remove('ativo');
+    var jogo = document.getElementById('tela-jogo');
+    if (jogo) jogo.style.display = 'none';
   } catch(e) {}
+
+  if (document.getElementById('tela-apk-fechado')) return;
+
+  var s = document.createElement('style');
+  s.textContent =
+    '#tela-apk-fechado{position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 20px;text-align:center;' +
+    'background:radial-gradient(ellipse at 50% 20%,rgba(59,158,255,.2),transparent 55%),radial-gradient(ellipse at 80% 80%,rgba(255,154,60,.12),transparent 45%),#06080e;}' +
+    '#tela-apk-fechado .ico{width:88px;height:88px;border-radius:22px;margin-bottom:16px;display:flex;align-items:center;justify-content:center;font-size:40px;' +
+    'background:linear-gradient(135deg,#666,#444);box-shadow:0 0 30px rgba(0,0,0,.4)}' +
+    '#tela-apk-fechado h1{font-family:Sora,sans-serif;font-size:22px;font-weight:800;color:#fff;margin:0 0 10px}' +
+    '#tela-apk-fechado p{font-size:14px;color:#8e9bb8;line-height:1.5;max-width:340px;margin:0 0 12px}' +
+    '#tela-apk-fechado a.btn-online{display:inline-flex;align-items:center;justify-content:center;margin-top:10px;padding:14px 28px;border-radius:30px;font-family:Sora,sans-serif;font-weight:800;font-size:15px;text-decoration:none;color:#06080e;' +
+    'background:linear-gradient(90deg,#3b9eff,#2ee6a0);box-shadow:0 0 24px rgba(46,230,160,.35)}';
+  document.head.appendChild(s);
+
+  var box = document.createElement('div');
+  box.id = 'tela-apk-fechado';
+  box.innerHTML =
+    '<div class="ico">🛠️</div>' +
+    '<h1>APK indisponível</h1>' +
+    '<p>O app Homejub (APK) está <strong style="color:#ffcf4d">temporariamente fechado</strong> por actualização de segurança.</p>' +
+    '<p>Joga <strong style="color:#2ee6a0">online no navegador</strong> — o progresso e as compras ficam na tua conta Desafio MOZ.</p>' +
+    '<a class="btn-online" href="https://desafiomoz.pages.dev/desafio-match.html">Abrir Homejub online</a>' +
+    '<p style="margin-top:18px;font-size:12px;color:#666">Desafio MOZ · Homejub</p>';
+  document.body.appendChild(box);
 })();
 </script>
 
