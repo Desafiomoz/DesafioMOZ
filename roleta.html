@@ -1609,10 +1609,18 @@ document.getElementById('ck-confirmar').addEventListener('click', async function
     localStorage.getItem('email') || ''
   ).trim().toLowerCase();
   if(!email){ mostrarToast('Inicia sessão no Desafio MOZ para comprar.'); return; }
-  var txRaw = (document.getElementById('pay-txid') && document.getElementById('pay-txid').value) || '';
+  var txEl = document.getElementById('ck-txid') || document.getElementById('pay-txid');
+  var txRaw = (txEl && txEl.value) || '';
   var txId = String(txRaw).trim().replace(/\s+/g, '').toUpperCase();
   if(!/^PP[A-Z0-9.\-]{5,40}$/i.test(txId)){
     mostrarToast('Cola o ID completo da e-Mola (começa por PP).');
+    try {
+      var errTxt = document.getElementById('ck-erro-txt');
+      if(errTxt) errTxt.textContent = 'Cola o ID completo da e-Mola (começa por PP). Ex: PP260927.0652.q29322';
+      document.querySelectorAll('#overlay-checkout-roleta .ck-passo').forEach(function(el){ el.classList.remove('ativo'); });
+      var pe = document.getElementById('ck-passo-erro');
+      if(pe) pe.classList.add('ativo');
+    } catch(e){}
     return;
   }
   var btn = document.getElementById('ck-confirmar');
@@ -1643,8 +1651,11 @@ document.getElementById('ck-confirmar').addEventListener('click', async function
     guardarEstadoLocal();
     atualizarUI();
     try {
-      var ov = document.getElementById('overlay-checkout-roleta');
-      if(ov) ov.classList.remove('ativo');
+      document.querySelectorAll('#overlay-checkout-roleta .ck-passo').forEach(function(el){ el.classList.remove('ativo'); });
+      var okTxt = document.getElementById('ck-sucesso-txt');
+      if(okTxt) okTxt.textContent = 'Pagamento ok! +' + (dados.giros || '') + ' giros' + (orcAdd > 0 ? ' · garantia até ' + orcAdd + ' MT' : '') + '.';
+      var ps = document.getElementById('ck-passo-sucesso');
+      if(ps) ps.classList.add('ativo');
     } catch(e){}
     ckPendente = null;
     var msg = 'Pagamento ok! +' + (dados.giros || '') + ' giros.';
@@ -1654,6 +1665,13 @@ document.getElementById('ck-confirmar').addEventListener('click', async function
     var msg = (e && e.message) ? e.message : String(e);
     if(/já foi usado|TX_JA|409/i.test(msg)) msg = 'Este ID de transacção já foi usado. Cada ID só funciona uma vez.';
     mostrarToast(msg);
+    try {
+      var errTxt = document.getElementById('ck-erro-txt');
+      if(errTxt) errTxt.textContent = msg;
+      document.querySelectorAll('#overlay-checkout-roleta .ck-passo').forEach(function(el){ el.classList.remove('ativo'); });
+      var pe = document.getElementById('ck-passo-erro');
+      if(pe) pe.classList.add('ativo');
+    } catch(e2){}
   } finally {
     if(btn){ btn.disabled = false; btn.textContent = 'Confirmar e receber giros'; }
   }
