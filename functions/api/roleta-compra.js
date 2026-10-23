@@ -258,6 +258,134 @@ function lerMap(doc, key) {
   }
 }
 
+
+function arrIntField(nums) {
+  return {
+    arrayValue: {
+      values: (nums || []).map((n) => ({ integerValue: String(Math.floor(Number(n) || 0)) })),
+    },
+  };
+}
+
+function lerArrInt(doc, key) {
+  try {
+    const f = doc.fields && doc.fields[key];
+    if (!f || !f.arrayValue || !Array.isArray(f.arrayValue.values)) return [];
+    return f.arrayValue.values.map((v) => {
+      if (v.integerValue != null) return parseInt(v.integerValue, 10) || 0;
+      if (v.doubleValue != null) return Math.floor(Number(v.doubleValue) || 0);
+      return 0;
+    });
+  } catch (e) {
+    return [];
+  }
+}
+
+// Índices alinhados com roleta-giro.js PREMIOS
+const IDX_1_MT = 3;
+const IDX_5_MT = 4;
+const IDX_10_MT = 2;
+const IDX_50_MT = 11;
+const IDX_2_GIROS = 6;
+const IDX_6_GIROS = 8;
+const IDX_BOA = 7;
+const IDX_QUASE = 9;
+
+/** Fila exacta 2× pago em MT (ou 1× / 0 se maldição). Resto = perde / +giros. */
+function montarListaPremiosMT(valorMT, girosComprados, maldicaoModo) {
+  const pago = Math.max(0, Math.floor(Number(valorMT) || 0));
+  const nGiros = Math.max(1, Math.floor(Number(girosComprados) || 0));
+  let alvo = pago * 2;
+  let maxMT = pago * 2;
+  if (maldicaoModo === 'perder') {
+    alvo = 0;
+    maxMT = 0;
+  } else if (maldicaoModo === 'so_pago') {
+    alvo = pago;
+    maxMT = pago;
+  }
+  if (alvo > maxMT) alvo = maxMT;
+  if (alvo < 0) alvo = 0;
+
+  const lista = [];
+  let restante = alvo;
+
+  let pecas;
+  if (pago >= 50) {
+    pecas = [
+      { idx: IDX_50_MT, v: 50 },
+      { idx: IDX_10_MT, v: 10 },
+      { idx: IDX_5_MT, v: 5 },
+      { idx: IDX_1_MT, v: 1 },
+    ];
+  } else if (pago >= 10) {
+    pecas = [
+      { idx: IDX_10_MT, v: 10 },
+      { idx: IDX_5_MT, v: 5 },
+      { idx: IDX_1_MT, v: 1 },
+    ];
+  } else if (pago >= 5) {
+    pecas = [
+      { idx: IDX_5_MT, v: 5 },
+      { idx: IDX_1_MT, v: 1 },
+    ];
+  } else {
+    pecas = [{ idx: IDX_1_MT, v: 1 }];
+  }
+
+  let guard = 0;
+  while (restante > 0 && lista.length < nGiros && guard++ < 800) {
+    const candidatas = pecas.filter((p) => p.v <= restante);
+    if (!candidatas.length) break;
+    const escolhida =
+      Math.random() < 0.55
+        ? candidatas[0]
+        : candidatas[Math.floor(Math.random() * candidatas.length)];
+    lista.push(escolhida.idx);
+    restante -= escolhida.v;
+  }
+  while (restante >= 1 && lista.length < nGiros) {
+    lista.push(IDX_1_MT);
+    restante -= 1;
+  }
+  while (lista.length < nGiros) {
+    const u = Math.random();
+    if (u < 0.12) lista.push(IDX_6_GIROS);
+    else if (u < 0.28) lista.push(IDX_2_GIROS);
+    else if (u < 0.64) lista.push(IDX_QUASE);
+    else lista.push(IDX_BOA);
+  }
+  if (lista.length > nGiros) lista.length = nGiros;
+
+  // Validar total MT <= maxMT
+  const valorPorIdx = {
+    [IDX_1_MT]: 1,
+    [IDX_5_MT]: 5,
+    [IDX_10_MT]: 10,
+    [IDX_50_MT]: 50,
+  };
+  let totalMT = 0;
+  const limpa = [];
+  for (const ix of lista) {
+    const v = valorPorIdx[ix] || 0;
+    if (v > 0 && totalMT + v > maxMT) {
+      limpa.push(Math.random() < 0.5 ? IDX_BOA : IDX_QUASE);
+    } else {
+      limpa.push(ix);
+      totalMT += v;
+    }
+  }
+  // Shuffle para não sair tudo no início
+  for (let i = limpa.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const tmp = limpa[i];
+    limpa[i] = limpa[j];
+    limpa[j] = tmp;
+  }
+  return { lista: limpa, alvoMT: alvo, totalMT };
+}
+
+
 function docPathId(doc) {
   // name: projects/.../documents/usuarios/ABC
   const name = doc.name || '';
@@ -344,10 +472,9 @@ export async function onRequest(context) {
         return json({ ok: false, erro: 'Valor inválido para giros.' }, 400);
       }
 
-      // Orçamento MT a entregar nos giros = 2× pago (maldição so_pago = 1×; perder = 0)
-      let orcMT = valorMT * 2;
-      if (maldicaoModo === 'perder') orcMT = 0;
-      else if (maldicaoModo === 'so_pago') orcMT = valorMT;
+      // Orçamento + fila exacta 2× (maldição so_pago = 1×; perder = 0)
+      const plano = montarListaPremiosMT(valorMT, giros, maldicaoModo);
+      let orcMT = plano.alvoMT;
 
       try {
         await fsCreate(token, projectId, 'emolaTransacoes', txId, {
@@ -373,12 +500,15 @@ export async function onRequest(context) {
       const girosAct = lerNum(userDoc, 'roletaGiros', 0);
       const origemMet = lerNum(userDoc, 'roletaOrigemMetical', 0);
       const mtOrc = lerNum(userDoc, 'roletaMtOrcamento', 0);
+      const garantiasAct = lerArrInt(userDoc, 'roletaGarantias');
+      const garantiasNovas = garantiasAct.concat(plano.lista);
       const gastosMT = lerNum(userDoc, 'roletaMeticalGasto', 0);
 
       const fields = {
         roletaGiros: numField(girosAct + giros),
         roletaOrigemMetical: numField(origemMet + giros),
         roletaMtOrcamento: numField(mtOrc + orcMT),
+        roletaGarantias: arrIntField(garantiasNovas),
         roletaMeticalGasto: numField(gastosMT + valorMT),
         roletaUltimaCompraMetical: strField(new Date().toISOString()),
         ultimaAtualizacao: strField(new Date().toISOString()),
@@ -408,6 +538,7 @@ export async function onRequest(context) {
         valorMT,
         giros,
         mtOrcamentoAdd: orcMT,
+        garantiasAdd: (plano && plano.lista) ? plano.lista.length : 0,
         girosTotais: girosAct + giros,
         mensagem: 'Giros creditados com sucesso.',
       });

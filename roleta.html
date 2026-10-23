@@ -567,7 +567,7 @@
       <div class="ic">💵</div>
       <div class="txt">
         <h3>Comprar giros com metical</h3>
-        <p>Mínimo <span class="destaque">2 MT</span>. <b>Garantia:</b> ganhas exactamente <b>2 × o que pagaste</b> em prémios. <b>Nunca mais do que o dobro.</b> Os prémios saem em ordem aleatória. Giros +2/+6, quando usados, <b>não dão prémio</b>.</p>
+        <p>Mínimo <span class="destaque">2 MT</span>. Envia o valor por e-Mola, cola o ID da transacção e recebe os giros. Cada ID só funciona uma vez.</p>
       </div>
     </div>
     <div class="regra-cartao verde">
@@ -1646,20 +1646,19 @@ document.getElementById('ck-confirmar').addEventListener('click', async function
     estado.origemMetical = (Number(estado.origemMetical) || 0) + (Number(dados.giros) || ckPendente.giros);
     var orcAdd = (dados.mtOrcamentoAdd != null) ? Number(dados.mtOrcamentoAdd) : ((Number(ckPendente.valorMT)||0) * 2);
     estado.mtOrcamentoRestante = (Number(estado.mtOrcamentoRestante) || 0) + Math.max(0, orcAdd);
-    registarGarantiasMetical(ckPendente.valorMT, Number(dados.giros) || ckPendente.giros);
+    /* fila de garantia no servidor */
     sincronizarMt();
     guardarEstadoLocal();
     atualizarUI();
     try {
       document.querySelectorAll('#overlay-checkout-roleta .ck-passo').forEach(function(el){ el.classList.remove('ativo'); });
       var okTxt = document.getElementById('ck-sucesso-txt');
-      if(okTxt) okTxt.textContent = 'Pagamento ok! +' + (dados.giros || '') + ' giros' + (orcAdd > 0 ? ' · garantia até ' + orcAdd + ' MT' : '') + '.';
+      if(okTxt) okTxt.textContent = 'Pagamento ok! +' + (dados.giros || '') + ' giros.';
       var ps = document.getElementById('ck-passo-sucesso');
       if(ps) ps.classList.add('ativo');
     } catch(e){}
     ckPendente = null;
     var msg = 'Pagamento ok! +' + (dados.giros || '') + ' giros.';
-    if(orcAdd > 0) msg += ' Garantia até ' + orcAdd + ' MT nos giros (2×).';
     mostrarToast(msg);
   } catch(e){
     var msg = (e && e.message) ? e.message : String(e);
@@ -1735,11 +1734,11 @@ async function ckVerificarPagamento(){
         ckMarcarCreditadoLocal(ckChargeId);
         estado.giros = girosAntes + esperados;
         estado.origemMetical = (Number(estado.origemMetical) || 0) + esperados;
-        registarGarantiasMetical(ckPendente.valorMT, esperados);
+        /* fila de garantia no servidor */
         await guardarEstado();
       } else {
         ckMarcarCreditadoLocal(ckChargeId);
-        registarGarantiasMetical(ckPendente.valorMT, esperados);
+        /* fila de garantia no servidor */
         guardarEstadoLocal();
       }
 
@@ -2283,13 +2282,7 @@ async function creditarGirosMetical(valorMT, giros){
   estado.mtOrcamentoRestante = (Number(estado.mtOrcamentoRestante) || 0) + Math.max(0, orc);
   await guardarEstado();
   atualizarUI();
-  var msg = 'Pagamento ok! +' + giros + ' giros.';
-  if(plano){
-    if((plano.baseMT || 0) <= 0 && (plano.maxMT || 0) <= 0) msg += ' (sem garantia de prémio em MT).';
-    else if(plano.baseMT === plano.maxMT) msg += ' Garantia exacta: ' + plano.baseMT + ' MT nos giros (2×).';
-    else msg += ' Garantido cerca de ' + (plano.baseMT || 0) + ' MT; com sorte até ' + plano.maxMT + ' MT.';
-  }
-  mostrarToast(msg);
+  mostrarToast('Pagamento ok! +' + giros + ' giros.');
 }
 
 

@@ -1,15 +1,16 @@
 /**
  * Desafio MOZ – Roleta giro (sorteio + crédito no servidor)
- * URL: POST https://desafiomoz.pages.dev/api/roleta-giro
+ * POST https://desafiomoz.pages.dev/api/roleta-giro
  * Body: { "email": "..." }
- * Secret: FIREBASE_SERVICE_ACCOUNT
  *
- * O servidor:
- *  - gasta 1 giro
- *  - sorteia o prémio (pesos iguais ao cliente)
- *  - limita MT/pontos ao orçamento da compra
- *  - credita pontos na conta
- *  - devolve o prémio para a animação
+ * Prioridade do prémio:
+ *  1) Maldição "perder" → sempre perde
+ *  2) Maldição "forcar" → índice forçado
+ *  3) Fila roletaGarantias (compra em metical 2×) → exacta
+ *  4) Sorteio livre com caps de orçamento
+ *
+ * Compra em metical: prémios em MT vêm da fila e creditam pontos = MT × 8.
+ * Compra em pontos: orçamento ptsOrc (metade do gasto); sem MT.
  */
 
 const CORS = {
@@ -40,9 +41,26 @@ const IDX_BOA = 7;
 const IDX_QUASE = 9;
 const IDX_1_MT = 3;
 const IDX_20_PTS = 10;
+const IDX_2_GIROS = 6;
+const IDX_6_GIROS = 8;
 
 function pesoTotal() {
   return PREMIOS.reduce((s, p) => s + (Number(p.peso) || 0), 0);
+}
+
+function perdaIdx() {
+  return Math.random() < 0.5 ? IDX_BOA : IDX_QUASE;
+}
+
+function sortearLivre() {
+  const total = pesoTotal();
+  let r = Math.random() * total;
+  for (let i = 0; i < PREMIOS.length; i++) {
+    const p = Number(PREMIOS[i].peso) || 0;
+    if (r < p) return i;
+    r -= p;
+  }
+  return perdaIdx();
 }
 
 function json(data, status = 200) {
@@ -153,7 +171,7 @@ async function fsPatch(token, projectId, path, fields, mask) {
     },
     body: JSON.stringify({ fields }),
   });
-  if (!r.ok) throw new Error('FS PATCH ' + r.status + ' ' + (await r.text()));
+  if (!r.ok) throw new Error('FS PATCH ' + path + ' ' + r.status + ' ' + (await r.text()));
   return r.json();
 }
 
@@ -168,6 +186,7 @@ async function fsCreate(token, projectId, collection, docId, fields) {
     },
     body: JSON.stringify({ fields }),
   });
+  if (r.status === 409) throw new Error('TX_JA_USADO');
   if (!r.ok) throw new Error('FS CREATE ' + r.status + ' ' + (await r.text()));
   return r.json();
 }
@@ -210,6 +229,14 @@ function numField(n) {
 function strField(s) {
   return { stringValue: String(s ?? '') };
 }
+function arrIntField(nums) {
+  return {
+    arrayValue: {
+      values: (nums || []).map((n) => ({ integerValue: String(Math.floor(Number(n) || 0)) })),
+    },
+  };
+}
+
 function lerNum(doc, key, def = 0) {
   try {
     const f = doc.fields && doc.fields[key];
@@ -221,6 +248,7 @@ function lerNum(doc, key, def = 0) {
     return def;
   }
 }
+
 function lerMap(doc, key) {
   try {
     const f = doc.fields && doc.fields[key];
@@ -230,24 +258,25 @@ function lerMap(doc, key) {
     return null;
   }
 }
-function docPathId(doc) {
-  const parts = (doc.name || '').split('/');
-  return parts[parts.length - 1];
-}
 
-function perdaIdx() {
-  return Math.random() < 0.5 ? IDX_BOA : IDX_QUASE;
-}
-
-function sortearLivre() {
-  const total = pesoTotal();
-  let r = Math.random() * total;
-  for (let i = 0; i < PREMIOS.length; i++) {
-    const p = Number(PREMIOS[i].peso) || 0;
-    if (r < p) return i;
-    r -= p;
+function lerArrInt(doc, key) {
+  try {
+    const f = doc.fields && doc.fields[key];
+    if (!f || !f.arrayValue || !Array.isArray(f.arrayValue.values)) return [];
+    return f.arrayValue.values.map((v) => {
+      if (v.integerValue != null) return parseInt(v.integerValue, 10) || 0;
+      if (v.doubleValue != null) return Math.floor(Number(v.doubleValue) || 0);
+      return 0;
+    });
+  } catch (e) {
+    return [];
   }
-  return perdaIdx();
+}
+
+function docPathId(doc) {
+  const name = doc.name || '';
+  const parts = name.split('/');
+  return parts[parts.length - 1];
 }
 
 export async function onRequest(context) {
@@ -303,6 +332,7 @@ export async function onRequest(context) {
     let mtGanhos = lerNum(userDoc, 'roletaMtGanhos', 0);
     let origemPremio = lerNum(userDoc, 'roletaOrigemPremio', 0);
     let totalGiros = lerNum(userDoc, 'roletaTotalGiros', 0);
+    let garantias = lerArrInt(userDoc, 'roletaGarantias');
 
     // Maldição
     let maldicaoModo = null;
@@ -312,7 +342,10 @@ export async function onRequest(context) {
       if (mm && mm.ativo && mm.ativo.booleanValue === true) {
         maldicaoModo = mm.modo && mm.modo.stringValue ? mm.modo.stringValue : 'perder';
         if (maldicaoModo === 'forcar' && mm.premioIdx != null) {
-          forcarIdx = parseInt(mm.premioIdx.integerValue || mm.premioIdx.stringValue || '-1', 10);
+          forcarIdx = parseInt(
+            mm.premioIdx.integerValue || mm.premioIdx.stringValue || '-1',
+            10
+          );
         }
       }
     } catch (eM) {}
@@ -321,12 +354,21 @@ export async function onRequest(context) {
     totalGiros += 1;
 
     let idx;
+    let daFila = false;
+
     if (maldicaoModo === 'perder') {
+      // Sempre perde — esvazia orçamentos e fila desta rodada
       mtOrc = 0;
       ptsOrc = 0;
+      garantias = [];
       idx = perdaIdx();
     } else if (maldicaoModo === 'forcar' && forcarIdx >= 0 && forcarIdx < PREMIOS.length) {
       idx = forcarIdx;
+    } else if (garantias.length > 0) {
+      // Fila de garantia da compra em metical (2× exacto)
+      idx = garantias.shift();
+      if (idx < 0 || idx >= PREMIOS.length) idx = perdaIdx();
+      daFila = true;
     } else if (girosPerdedores > 0) {
       girosPerdedores -= 1;
       idx = perdaIdx();
@@ -334,22 +376,70 @@ export async function onRequest(context) {
       idx = sortearLivre();
     }
 
+    // Maldição so_pago: não permite prémios só de pontos (orçamento pts a 0)
     if (maldicaoModo === 'so_pago') {
       ptsOrc = 0;
     }
 
     let premio = Object.assign({}, PREMIOS[idx]);
     let ptsAdd = 0;
+    let mtAdd = 0;
 
-    // Aplicar orçamentos (capo duro)
-    if (premio.tipo === 'pontos') {
+    // --- Aplicar prémio ---
+    if (premio.tipo === 'mt') {
       let v = Number(premio.valor) || 0;
-      if (v > 20) v = 0;
+      if (v <= 0) {
+        premio = Object.assign({}, PREMIOS[perdaIdx()]);
+        idx = premio.label === 'BOA SORTE' ? IDX_BOA : IDX_QUASE;
+      } else if (daFila) {
+        // Da fila de garantia: credita sempre (orçamento já foi planeado na compra)
+        if (mtOrc > 0 && v > mtOrc) v = mtOrc;
+        if (v > 0 && mtOrc > 0) {
+          mtOrc -= v;
+          const pts = v * PTS_POR_MT;
+          pontos += pts;
+          ptsAdd = pts;
+          mtAdd = v;
+          premio = { label: v + ' MT', tipo: 'mt', valor: v, emoji: premio.emoji || '💸' };
+          if (v === 1) idx = IDX_1_MT;
+        } else {
+          // Sem orçamento residual → perde visualmente
+          premio = Object.assign({}, PREMIOS[perdaIdx()]);
+          idx = premio.label === 'BOA SORTE' ? IDX_BOA : IDX_QUASE;
+        }
+      } else if (mtOrc >= v) {
+        mtOrc -= v;
+        const pts = v * PTS_POR_MT;
+        pontos += pts;
+        ptsAdd = pts;
+        mtAdd = v;
+        premio = { label: v + ' MT', tipo: 'mt', valor: v, emoji: premio.emoji || '💸' };
+        if (v === 1) idx = IDX_1_MT;
+      } else if (mtOrc > 0) {
+        // Corta ao orçamento restante
+        v = mtOrc;
+        mtOrc = 0;
+        const pts = v * PTS_POR_MT;
+        pontos += pts;
+        ptsAdd = pts;
+        mtAdd = v;
+        premio = { label: v + ' MT', tipo: 'mt', valor: v, emoji: premio.emoji || '💸' };
+        if (v === 1) idx = IDX_1_MT;
+      } else {
+        // Sem orçamento MT: não paga MT aleatório
+        premio = Object.assign({}, PREMIOS[perdaIdx()]);
+        idx = premio.label === 'BOA SORTE' ? IDX_BOA : IDX_QUASE;
+      }
+    } else if (premio.tipo === 'pontos') {
+      let v = Number(premio.valor) || 0;
+      // Só prémios de pontos vindos de compra em pontos (ptsOrc)
+      // Nunca inventar 20 PTS sem orçamento — evita "mostrou 20 / creditou 2"
       if (ptsOrc <= 0 || v <= 0) {
         premio = Object.assign({}, PREMIOS[perdaIdx()]);
         idx = premio.label === 'BOA SORTE' ? IDX_BOA : IDX_QUASE;
       } else {
         if (v > ptsOrc) v = ptsOrc;
+        // Limite de segurança: prémios altos de pontos só se o orçamento cobrir
         ptsOrc -= v;
         pontos += v;
         ptsAdd = v;
@@ -359,43 +449,22 @@ export async function onRequest(context) {
           valor: v,
           emoji: premio.emoji || '✨',
         };
-        // map idx for animation near 20 PTS if possible
         if (v === 20) idx = IDX_20_PTS;
-      }
-    } else if (premio.tipo === 'mt') {
-      let v = Number(premio.valor) || 0;
-      if (mtOrc <= 0 || v <= 0) {
-        // sem orçamento MT: no máx 1 MT se couber em ptsOrc
-        if (v === 1 && ptsOrc >= PTS_POR_MT) {
-          ptsOrc -= PTS_POR_MT;
-          pontos += PTS_POR_MT;
-          ptsAdd = PTS_POR_MT;
-          premio = { label: '1 MT', tipo: 'mt', valor: 1, emoji: '💸' };
-          idx = IDX_1_MT;
-        } else {
-          premio = Object.assign({}, PREMIOS[perdaIdx()]);
-          idx = premio.label === 'BOA SORTE' ? IDX_BOA : IDX_QUASE;
-        }
-      } else {
-        if (v > mtOrc) v = mtOrc;
-        mtOrc -= v;
-        const pts = v * PTS_POR_MT;
-        pontos += pts;
-        ptsAdd = pts;
-        premio = { label: v + ' MT', tipo: 'mt', valor: v, emoji: premio.emoji || '💸' };
-        if (v === 1) idx = IDX_1_MT;
       }
     } else if (premio.tipo === 'giros') {
       const g = Number(premio.valor) || 0;
-      giros += g;
-      origemPremio += g;
-      girosPerdedores += g; // giros ganhos na roleta não pagam prémio
+      if (g > 0) {
+        giros += g;
+        origemPremio += g;
+        // Giros ganhos na roleta não pagam prémio em dinheiro
+        girosPerdedores += g;
+      }
     }
 
     if (premio.tipo === 'nada') perdas += 1;
     else ganhos += 1;
     if (premio.tipo === 'pontos') pontosGanhos += Number(premio.valor) || 0;
-    if (premio.tipo === 'mt') mtGanhos += Number(premio.valor) || 0;
+    if (premio.tipo === 'mt') mtGanhos += Number(premio.valor) || mtAdd;
 
     const fields = {
       pontos: numField(pontos),
@@ -409,6 +478,7 @@ export async function onRequest(context) {
       roletaPerdas: numField(perdas),
       roletaPontosGanhos: numField(pontosGanhos),
       roletaMtGanhos: numField(mtGanhos),
+      roletaGarantias: arrIntField(garantias),
       roletaUltimoGiroAt: strField(new Date().toISOString()),
       ultimaAtualizacao: strField(new Date().toISOString()),
     };
@@ -439,9 +509,11 @@ export async function onRequest(context) {
       },
       pontos,
       giros,
+      ptsAdd,
+      mtAdd,
       mtOrcamentoRestante: mtOrc,
       ptsOrcamentoRestante: ptsOrc,
-      ptsAdd,
+      garantiasRestantes: garantias.length,
     });
   } catch (e) {
     return json({
