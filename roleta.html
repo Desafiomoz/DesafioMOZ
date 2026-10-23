@@ -2485,21 +2485,8 @@ document.getElementById('btn-fechar-premio').addEventListener('click', ()=>{
 });
 
 /* ---------- arranque + gate de teste (APK/roleta fechados ao público) ---------- */
+/* ---------- arranque (aberto a todos) ---------- */
 (async function arranqueRoleta(){
-  var PASS_H = 'cf7b6674894de7934ca52506615e60b760a413b0ac1b055c34b344ba5302ba94';
-  var KEY = 'hj_roleta_teste_ok';
-
-  function gateOk() {
-    try { return sessionStorage.getItem(KEY) === '1'; } catch(e) { return false; }
-  }
-  function markGate() {
-    try { sessionStorage.setItem(KEY, '1'); } catch(e) {}
-  }
-  async function sha(s) {
-    var buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(String(s || '')));
-    return Array.from(new Uint8Array(buf)).map(function(b){ return b.toString(16).padStart(2,'0'); }).join('');
-  }
-
   async function iniciarJogo(){
     try {
       var ptsCache = Number(localStorage.getItem('pontosUtilizador') || 0);
@@ -2508,69 +2495,13 @@ document.getElementById('btn-fechar-premio').addEventListener('click', ()=>{
     carregarEstadoLocal();
     atualizarUI();
     await carregarContaFirebase();
-    await reclamarGiroGratisSeDisponivel();
+    try { if(typeof reclamarGiroGratisSeDisponivel === 'function') await reclamarGiroGratisSeDisponivel(); } catch(e){}
     atualizarUI();
     try { if(typeof ajustarTamanho === 'function') setTimeout(ajustarTamanho, 200); } catch(e){}
   }
-
-  if (gateOk()) {
-    await iniciarJogo();
-    return;
-  }
-
-  if (document.getElementById('hj-gate-roleta')) return;
-
-  var box = document.createElement('div');
-  box.id = 'hj-gate-roleta';
-  box.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(6,8,14,0.98);';
-  box.innerHTML =
-    '<div style="width:100%;max-width:360px;background:#12161f;border:1px solid rgba(255,201,77,0.25);border-radius:20px;padding:22px 18px;text-align:center;">' +
-      '<div style="font-size:36px;margin-bottom:8px;">🔒</div>' +
-      '<h2 style="font-family:sans-serif;font-size:18px;margin:0 0 8px;color:#fff;">Roleta — teste</h2>' +
-      '<p style="font-size:13px;color:#8a93a6;line-height:1.45;margin:0 0 14px;">A Roleta da Sorte está <b style="color:#FFC94D">fechada ao público</b>.<br>Só acesso de teste autorizado.</p>' +
-      '<input type="password" id="hj-gate-pass-roleta" placeholder="Senha de teste" autocomplete="current-password" ' +
-        'style="width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,0.12);background:#0a0d14;color:#fff;font-size:15px;margin-bottom:10px;outline:none;box-sizing:border-box;">' +
-      '<div id="hj-gate-erro-roleta" style="display:none;color:#ff6b6b;font-size:12.5px;margin-bottom:8px;"></div>' +
-      '<button type="button" id="hj-gate-btn-roleta" style="width:100%;padding:13px;border:none;border-radius:14px;font-weight:800;font-size:15px;background:linear-gradient(90deg,#FFC94D,#FFAA00);color:#221200;cursor:pointer;">Entrar no teste</button>' +
-      '<p style="font-size:11px;color:#666;margin-top:12px;">Desafio MOZ · Roleta da Sorte</p>' +
-    '</div>';
-  document.body.appendChild(box);
-
-  var btn = document.getElementById('hj-gate-btn-roleta');
-  var inp = document.getElementById('hj-gate-pass-roleta');
-  var err = document.getElementById('hj-gate-erro-roleta');
-  async function tentar() {
-    err.style.display = 'none';
-    var p = (inp && inp.value) || '';
-    if (!p) {
-      err.textContent = 'Escreve a senha de teste.';
-      err.style.display = 'block';
-      return;
-    }
-    btn.disabled = true;
-    btn.textContent = 'A verificar...';
-    try {
-      var h = await sha(p);
-      if (h !== PASS_H) {
-        err.textContent = 'Senha incorrecta.';
-        err.style.display = 'block';
-        btn.disabled = false;
-        btn.textContent = 'Entrar no teste';
-        return;
-      }
-      markGate();
-      box.style.display = 'none';
-      await iniciarJogo();
-    } catch (e) {
-      err.textContent = 'Erro ao verificar. Usa um browser recente.';
-      err.style.display = 'block';
-      btn.disabled = false;
-      btn.textContent = 'Entrar no teste';
-    }
-  }
-  if (btn) btn.addEventListener('click', tentar);
-  if (inp) inp.addEventListener('keydown', function(e){ if (e.key === 'Enter') tentar(); });
+  await iniciarJogo();
 })();
+
 </script>
 
 <script>window.__DM_PRESENCA__ = { pagina: 'roleta', jogando: 'roleta' };</script>
