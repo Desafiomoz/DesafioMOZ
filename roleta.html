@@ -746,6 +746,7 @@ const MODO_DEMO = false;
 const EMAIL_UTILIZADOR = (localStorage.getItem('emailUtilizador') || localStorage.getItem('email') || '').trim().toLowerCase();
 const CHAVE_ESTADO = 'roletaEstado_' + (EMAIL_UTILIZADOR || 'convidado');
 const PTS_POR_MT = 8; // 8 pontos = 1 metical
+const ROLETA_API = 'https://desafiomoz.pages.dev/api';
 let userRef = null;
 
 /* ---------- Prémios da roleta (12 fatias) ---------- */
@@ -1415,32 +1416,51 @@ function montarListaPremiosPontos(custoPontos, girosComprados){
 
 async function comprarComPontos(custoPontos, giros){
   if(estado.pontos < custoPontos){ mostrarToast('Não tens pontos suficientes.'); return; }
-  estado.pontos -= custoPontos;
-  estado.giros += giros;
-  estado.origemPontos = (Number(estado.origemPontos) || 0) + giros;
-  var plano = montarListaPremiosPontos(custoPontos, giros);
-  if(!estado.garantias) estado.garantias = [];
-  if(plano && plano.lista && plano.lista.length){
-    estado.garantias = estado.garantias.concat(plano.lista);
-  } else {
-    for(var kp = 0; kp < giros; kp++) estado.garantias.push(perdaIdx());
-  }
-  // Orçamento de pontos a devolver = metade do gasto (maldição → 0)
-  var alvo = (plano && plano.alvoPts != null) ? Number(plano.alvoPts) : Math.floor((Number(custoPontos)||0) / 2);
+  var email = String(
+    (typeof EMAIL_UTILIZADOR !== 'undefined' && EMAIL_UTILIZADOR) ||
+    localStorage.getItem('emailUtilizador') ||
+    localStorage.getItem('email') || ''
+  ).trim().toLowerCase();
+  if(!email){ mostrarToast('Inicia sessão no Desafio MOZ para comprar.'); return; }
+  mostrarToast('A validar compra no servidor…');
   try {
-    var mm = estado.roletaMaldicao;
-    if(mm && mm.ativo === true && (mm.modo === 'perder' || mm.modo === 'so_pago')) alvo = 0;
-  } catch(eF){}
-  estado.ptsOrcamentoRestante = (Number(estado.ptsOrcamentoRestante) || 0) + Math.max(0, alvo);
-  sincronizarMt();
-  await guardarEstado();
-  try { localStorage.setItem('pontosUtilizador', String(estado.pontos)); } catch(e){}
-  await registarCompraPontosRoleta(custoPontos, giros);
-  atualizarUI();
-  var msg = 'Compraste ' + giros + ' giros por ' + custoPontos + ' pontos!';
-  if(alvo > 0) msg += ' Máximo de prémio desta compra: ' + alvo + ' pts (metade).';
-  else msg += ' Sem garantia de prémio.';
-  mostrarToast(msg);
+    var resp = await fetch(ROLETA_API + '/roleta-compra', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tipo: 'pontos', email: email, custoPontos: Number(custoPontos) || 0 })
+    });
+    var dados = {};
+    try { dados = await resp.json(); } catch(eJ) { dados = {}; }
+    if(!resp.ok || !dados.ok){
+      throw new Error((dados && dados.erro) ? dados.erro : ('Erro ' + resp.status));
+    }
+    // Servidor já debitou pontos e creditou giros + orçamento
+    estado.pontos = (dados.pontosRestantes != null) ? Number(dados.pontosRestantes) : (estado.pontos - custoPontos);
+    estado.giros = (dados.girosTotais != null) ? Number(dados.girosTotais) : ((Number(estado.giros)||0) + (Number(dados.giros)||giros));
+    estado.origemPontos = (Number(estado.origemPontos) || 0) + (Number(dados.giros) || giros);
+    var orcAdd = (dados.ptsOrcamentoAdd != null) ? Number(dados.ptsOrcamentoAdd) : Math.floor((Number(custoPontos)||0)/2);
+    estado.ptsOrcamentoRestante = (Number(estado.ptsOrcamentoRestante) || 0) + Math.max(0, orcAdd);
+    // Garantias locais (RNG no cliente; prémios em pontos limitados pelo orçamento do servidor)
+    var plano = montarListaPremiosPontos(custoPontos, Number(dados.giros) || giros);
+    if(!estado.garantias) estado.garantias = [];
+    if(plano && plano.lista && plano.lista.length){
+      estado.garantias = estado.garantias.concat(plano.lista);
+    } else {
+      for(var kp = 0; kp < (Number(dados.giros)||giros); kp++) estado.garantias.push(perdaIdx());
+    }
+    try {
+      var mm = estado.roletaMaldicao;
+      if(mm && mm.ativo === true && (mm.modo === 'perder' || mm.modo === 'so_pago')){
+        estado.ptsOrcamentoRestante = 0;
+      }
+    } catch(eM){}
+    sincronizarMt();
+    guardarEstadoLocal();
+    atualizarUI();
+    mostrarToast('Compra ok! +' + (dados.giros || giros) + ' giros.');
+  } catch(e){
+    mostrarToast((e && e.message) ? e.message : 'Falha na compra.');
+  }
 }
 
 function itemRoletaParaMT(valorMT){
@@ -1582,62 +1602,60 @@ async function snapshotRoletaAntes(){
 }
 
 document.getElementById('ck-confirmar').addEventListener('click', async function(){
-  if(!ckPendente) return;
-  var txRaw = (document.getElementById('ck-txid') && document.getElementById('ck-txid').value) || '';
+  if(!ckPendente){ mostrarToast('Escolhe primeiro o pacote de giros.'); return; }
+  var email = String(
+    (typeof EMAIL_UTILIZADOR !== 'undefined' && EMAIL_UTILIZADOR) ||
+    localStorage.getItem('emailUtilizador') ||
+    localStorage.getItem('email') || ''
+  ).trim().toLowerCase();
+  if(!email){ mostrarToast('Inicia sessão no Desafio MOZ para comprar.'); return; }
+  var txRaw = (document.getElementById('pay-txid') && document.getElementById('pay-txid').value) || '';
   var txId = String(txRaw).trim().replace(/\s+/g, '').toUpperCase();
   if(!/^PP[A-Z0-9.\-]{5,40}$/i.test(txId)){
-    mostrarToast('Cola o ID completo da transacção e-Mola (ex: PP260927.0652.q29322)');
+    mostrarToast('Cola o ID completo da e-Mola (começa por PP).');
     return;
   }
-  var telDig = String(document.getElementById('ck-tel').value||'').replace(/\D/g,'');
-  if(telDig.length===12 && telDig.indexOf('258')===0) telDig = telDig.slice(3);
-  if(!/^8\d{8}$/.test(telDig)){
-    mostrarToast('Escreve o número com que enviaste o dinheiro (ex: 841234567)');
-    return;
-  }
-  ckMostrarPasso('aguardar');
-  document.getElementById('ck-status-txt').textContent = 'A verificar se este ID ainda não foi usado…';
+  var btn = document.getElementById('ck-confirmar');
+  if(btn){ btn.disabled = true; btn.textContent = 'A validar…'; }
   try {
-    if (typeof db === 'undefined' || !db) throw new Error('Sem ligação ao Firebase');
-    var antesRt = await snapshotRoletaAntes();
-    var txRef = db.collection('emolaTransacoes').doc(txId);
-    await db.runTransaction(async function(tr){
-      var snap = await tr.get(txRef);
-      if(snap.exists) throw new Error('Este ID de transacção já foi usado. Cada ID só funciona uma vez.');
-      tr.set(txRef, {
-        email: ckPendente.email,
-        telefone: telDig,
-        item: ckPendente.item || 'giros',
-        jogo: 'roleta',
-        giros: ckPendente.giros,
-        mt: ckPendente.valorMT,
-        createdAt: new Date().toISOString()
-      });
+    var resp = await fetch(ROLETA_API + '/roleta-compra', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        tipo: 'metical',
+        email: email,
+        valorMT: Number(ckPendente.valorMT) || 0,
+        txId: txId
+      })
     });
-    await creditarGirosMetical(ckPendente.valorMT, ckPendente.giros);
+    var dados = {};
+    try { dados = await resp.json(); } catch(eJ) { dados = {}; }
+    if(!resp.ok || !dados.ok){
+      throw new Error((dados && dados.erro) ? dados.erro : ('Erro ' + resp.status));
+    }
+    // Servidor já creditou giros + orçamento MT (máx 2×)
+    estado.giros = (dados.girosTotais != null) ? Number(dados.girosTotais) : ((Number(estado.giros)||0) + (Number(dados.giros)||ckPendente.giros));
+    estado.origemMetical = (Number(estado.origemMetical) || 0) + (Number(dados.giros) || ckPendente.giros);
+    var orcAdd = (dados.mtOrcamentoAdd != null) ? Number(dados.mtOrcamentoAdd) : ((Number(ckPendente.valorMT)||0) * 2);
+    estado.mtOrcamentoRestante = (Number(estado.mtOrcamentoRestante) || 0) + Math.max(0, orcAdd);
+    registarGarantiasMetical(ckPendente.valorMT, Number(dados.giros) || ckPendente.giros);
+    sincronizarMt();
+    guardarEstadoLocal();
+    atualizarUI();
     try {
-      await db.collection('pagamentosManuais').add({
-        jogo: 'roleta',
-        email: ckPendente.email,
-        item: 'giros',
-        label: ckPendente.giros + ' giros',
-        giros: ckPendente.giros,
-        mt: ckPendente.valorMT,
-        txId: txId,
-        telefone: telDig,
-        antes: antesRt,
-        depois: { pontos: Number(estado.pontos) || 0, giros: Number(estado.giros) || 0, garantias: (estado.garantias || []).length },
-        status: 'entregue',
-        createdAt: new Date().toISOString()
-      });
-    } catch(eLog){}
-    document.getElementById('ck-sucesso-txt').textContent = '✅ +' + ckPendente.giros + ' giros na tua conta!';
-    ckMostrarPasso('sucesso');
+      var ov = document.getElementById('overlay-checkout-roleta');
+      if(ov) ov.classList.remove('ativo');
+    } catch(e){}
+    ckPendente = null;
+    var msg = 'Pagamento ok! +' + (dados.giros || '') + ' giros.';
+    if(orcAdd > 0) msg += ' Garantia até ' + orcAdd + ' MT nos giros (2×).';
+    mostrarToast(msg);
   } catch(e){
     var msg = (e && e.message) ? e.message : String(e);
-    if(/already exists|ALREADY_EXISTS/i.test(msg)) msg = 'Este ID de transacção já foi usado. Cada ID só funciona uma vez.';
-    document.getElementById('ck-erro-txt').textContent = msg;
-    ckMostrarPasso('erro');
+    if(/já foi usado|TX_JA|409/i.test(msg)) msg = 'Este ID de transacção já foi usado. Cada ID só funciona uma vez.';
+    mostrarToast(msg);
+  } finally {
+    if(btn){ btn.disabled = false; btn.textContent = 'Confirmar e receber giros'; }
   }
 });
 
@@ -2354,148 +2372,81 @@ document.getElementById('btn-girar').addEventListener('click', async ()=>{
   if(estado.giros<=0 || girando) return;
   girando = true;
   try { if(window.DM_presenca) window.DM_presenca.setJogando('roleta'); } catch(e){}
-  // na área da roleta: sem música de fundo
   pararSom('som-fundo');
 
-  // CRÍTICO: desbloquear vitória AINDA no clique (gesto do utilizador)
-  // senão o telemóvel bloqueia o play() 8 segundos depois
   await desbloquearElemento('som-vitoria');
   await desbloquearElemento('som-giro');
 
-  estado.giros -= 1;
-  estado.girosGratisRestantes = 0; // sistema grátis desactivado
-  registarGiroFeito();
-  await guardarEstado();
+  var email = String(
+    (typeof EMAIL_UTILIZADOR !== 'undefined' && EMAIL_UTILIZADOR) ||
+    localStorage.getItem('emailUtilizador') ||
+    localStorage.getItem('email') || ''
+  ).trim().toLowerCase();
+  if(!email){
+    girando = false;
+    mostrarToast('Inicia sessão no Desafio MOZ para girar.');
+    return;
+  }
+
+  // 1) Servidor sorteia + credita (não confiar no browser)
+  var dadosGiro = null;
+  try {
+    var resp = await fetch(ROLETA_API + '/roleta-giro', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email })
+    });
+    dadosGiro = await resp.json().catch(function(){ return {}; });
+    if(!resp.ok || !dadosGiro.ok){
+      throw new Error((dadosGiro && dadosGiro.erro) ? dadosGiro.erro : ('Erro ' + resp.status));
+    }
+  } catch(eG){
+    girando = false;
+    atualizarUI();
+    mostrarToast((eG && eG.message) ? eG.message : 'Falha ao girar. Tenta de novo.');
+    return;
+  }
+
+  // Sincroniza estado local com o servidor
+  if(dadosGiro.pontos != null) estado.pontos = Number(dadosGiro.pontos) || 0;
+  if(dadosGiro.giros != null) estado.giros = Number(dadosGiro.giros) || 0;
+  if(dadosGiro.mtOrcamentoRestante != null) estado.mtOrcamentoRestante = Number(dadosGiro.mtOrcamentoRestante) || 0;
+  if(dadosGiro.ptsOrcamentoRestante != null) estado.ptsOrcamentoRestante = Number(dadosGiro.ptsOrcamentoRestante) || 0;
+  sincronizarMt();
+  guardarEstadoLocal();
+  try { localStorage.setItem('pontosUtilizador', String(estado.pontos)); } catch(e){}
   atualizarUI();
 
-  // Som de giro a 30% (logo no clique → permitido)
   tocarSom('som-giro', 0.3, true);
 
-  const indice = sortearPremio();
+  var indice = (dadosGiro.indice != null) ? Number(dadosGiro.indice) : 0;
+  if(indice < 0 || indice >= PREMIOS.length) indice = (IDX_QUASE >= 0 ? IDX_QUASE : 9);
   await girarRoleta(indice);
 
-  // Quando o giro pára → vitória (já desbloqueada no clique)
-  // let (não const): o prémio pode ser ajustado (orçamento MT / pontos / maldição)
-  let premio = Object.assign({}, PREMIOS[indice] || { label:'QUASE!', tipo:'nada', valor:0, emoji:'😅' });
+  var premio = dadosGiro.premio || Object.assign({}, PREMIOS[indice] || { label:'QUASE!', tipo:'nada', valor:0, emoji:'😅' });
   await tocarVitoria();
 
-  var ptsRoletaGanho = 0;
-  // Capo duro: pontos livres nunca > 20; 1000/500/100 bloqueados
-  if(premio.tipo==='pontos'){
-    var pv = Number(premio.valor) || 0;
-    if(pv > 20){
-      premio = { label:'QUASE!', tipo:'nada', valor:0, emoji:'😅' };
-    } else {
-      // Cap com orçamento de compra em pontos (metade do gasto)
-      var ptsOrc = Number(estado.ptsOrcamentoRestante) || 0;
-      try {
-        var mmP = estado.roletaMaldicao;
-        if(mmP && mmP.ativo === true && (mmP.modo === 'perder' || mmP.modo === 'so_pago')){
-          pv = 0; ptsOrc = 0; estado.ptsOrcamentoRestante = 0;
-        }
-      } catch(eMP){}
-      if(ptsOrc > 0){
-        if(pv > ptsOrc) pv = ptsOrc;
-        estado.ptsOrcamentoRestante = Math.max(0, ptsOrc - pv);
-        if(pv <= 0){
-          premio = { label:'QUASE!', tipo:'nada', valor:0, emoji:'😅' };
-        } else {
-          estado.pontos += pv;
-          ptsRoletaGanho = pv;
-          if(pv !== Number(premio.valor)) premio = { label: pv + ' pontos', tipo:'pontos', valor: pv, emoji: premio.emoji || '⭐' };
-        }
-      } else {
-        // Sem orçamento de compra pontos: não paga pontos altos; no máximo 0 (só MT usa orçamento próprio)
-        premio = { label:'QUASE!', tipo:'nada', valor:0, emoji:'😅' };
-      }
-    }
-  }
-  if(premio.tipo==='mt'){
-    var orcRest = Number(estado.mtOrcamentoRestante) || 0;
-    var mtVal = Number(premio.valor) || 0;
-    // Maldição perder: nunca credita MT
-    try {
-      var mmC = estado.roletaMaldicao;
-      if(mmC && mmC.ativo === true && mmC.modo === 'perder'){
-        mtVal = 0;
-        orcRest = 0;
-        estado.mtOrcamentoRestante = 0;
-      }
-    } catch(eC){}
-    // Orçamento = o que falta do 2× (ou 1× se so_pago) da compra em metical
-    if(orcRest > 0){
-      if(mtVal > orcRest) mtVal = orcRest;
-      estado.mtOrcamentoRestante = Math.max(0, orcRest - mtVal);
-      if(mtVal <= 0){
-        premio = { label:'QUASE!', tipo:'nada', valor:0, emoji:'😅' };
-      } else {
-        estado.pontos += mtVal * PTS_POR_MT;
-        ptsRoletaGanho = mtVal * PTS_POR_MT;
-        premio = { label: mtVal + ' MT', tipo:'mt', valor: mtVal, emoji: premio.emoji || '💸' };
-      }
-    } else {
-      // Sem orçamento MT: pode vir de compra em pontos (metade) → no máx 1 MT se couber no ptsOrcamento
-      var ptsO = Number(estado.ptsOrcamentoRestante) || 0;
-      var custoPts = mtVal * PTS_POR_MT;
-      if(mtVal > 1 || ptsO < custoPts || mtVal <= 0){
-        premio = { label:'QUASE!', tipo:'nada', valor:0, emoji:'😅' };
-      } else {
-        estado.ptsOrcamentoRestante = Math.max(0, ptsO - custoPts);
-        estado.pontos += custoPts;
-        ptsRoletaGanho = custoPts;
-      }
-    }
-  }
-  if(premio.tipo==='giros'){
-    estado.giros += premio.valor;
-    estado.origemPremio = (Number(estado.origemPremio) || 0) + (Number(premio.valor) || 0);
-    // Giros ganhos na roleta: ao usar, não ganham nada
-    estado.girosPerdedores = (Number(estado.girosPerdedores) || 0) + premio.valor;
-  }
-  sincronizarMt();
-  await guardarEstado();
-  try {
-    var emRoleta = String(
-      EMAIL_UTILIZADOR ||
-      localStorage.getItem('emailUtilizador') ||
-      localStorage.getItem('email') ||
-      ''
-    ).trim().toLowerCase();
-    if(ptsRoletaGanho > 0 && emRoleta){
-      if(typeof DM_histPontos === 'function'){
-        await DM_histPontos(db, emRoleta, ptsRoletaGanho, 'roleta', 'Roleta: ' + (premio.label || ''));
-      } else if(typeof db !== 'undefined' && db){
-        await db.collection('historicoPontos').add({
-          email: emRoleta,
-          pontos: ptsRoletaGanho,
-          origem: 'roleta',
-          detalhe: 'Roleta: ' + (premio.label || ''),
-          dia: new Date().toISOString().slice(0, 10),
-          createdAt: new Date().toISOString()
-        });
-      }
-    }
-  } catch(eH){ console.warn('hist roleta', eH); }
-  try { localStorage.setItem('pontosUtilizador', String(estado.pontos)); } catch(e){}
-
+  // Histórico local (só visual)
   estado.historico.unshift({
-    emoji:premio.emoji,
-    texto:premio.label,
-    ganhou: premio.tipo!=='nada',
-    quando:new Date().toLocaleString('pt-PT',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})
+    emoji: premio.emoji || '🎡',
+    texto: premio.label || '',
+    ganhou: premio.tipo !== 'nada',
+    quando: new Date().toLocaleString('pt-PT',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})
   });
   estado.historico = estado.historico.slice(0,40);
   if(!estado.contagemPremios || typeof estado.contagemPremios !== 'object') estado.contagemPremios = {};
   estado.contagemPremios[premio.label] = (Number(estado.contagemPremios[premio.label]) || 0) + 1;
-  if(premio.tipo === 'nada'){
-    estado.perdas = (Number(estado.perdas) || 0) + 1;
-  } else {
+  if(premio.tipo === 'nada') estado.perdas = (Number(estado.perdas) || 0) + 1;
+  else {
     estado.ganhos = (Number(estado.ganhos) || 0) + 1;
     if(premio.tipo === 'pontos') estado.pontosGanhos = (Number(estado.pontosGanhos) || 0) + (Number(premio.valor) || 0);
     if(premio.tipo === 'mt') estado.mtGanhos = (Number(estado.mtGanhos) || 0) + (Number(premio.valor) || 0);
   }
-  guardarEstado();
-  registarGiroNoFirebase(premio);
+  if(premio.tipo === 'giros'){
+    estado.origemPremio = (Number(estado.origemPremio) || 0) + (Number(premio.valor) || 0);
+  }
+  guardarEstadoLocal();
+  try { registarGiroNoFirebase(premio); } catch(eR){}
 
   mostrarResultado(premio);
   girando = false;
