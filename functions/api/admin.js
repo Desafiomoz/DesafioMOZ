@@ -254,12 +254,24 @@ async function fsDelete(token, projectId, path) {
   return true;
 }
 
-async function fsList(token, projectId, collection, pageSize = 300) {
-  const url =
-    `${fsBase(projectId)}/${collection}?pageSize=` + encodeURIComponent(String(pageSize));
-  const r = await fetch(url, { headers: { Authorization: 'Bearer ' + token } });
-  if (!r.ok) throw new Error('FS LIST ' + r.status + ' ' + (await r.text()));
-  return r.json();
+async function fsList(token, projectId, collection, pageSize = 300, maxDocs = 5000) {
+  const docs = [];
+  let pageToken = null;
+  let guard = 0;
+  while (guard++ < 50 && docs.length < maxDocs) {
+    let url =
+      `${fsBase(projectId)}/${collection}?pageSize=` +
+      encodeURIComponent(String(Math.min(pageSize, 300)));
+    if (pageToken) url += '&pageToken=' + encodeURIComponent(pageToken);
+    const r = await fetch(url, { headers: { Authorization: 'Bearer ' + token } });
+    if (!r.ok) throw new Error('FS LIST ' + r.status + ' ' + (await r.text()));
+    const data = await r.json();
+    const batch = data.documents || [];
+    docs.push(...batch);
+    pageToken = data.nextPageToken || null;
+    if (!pageToken || batch.length === 0) break;
+  }
+  return { documents: docs };
 }
 
 async function fsQuery(token, projectId, collection, constraints, limit, orderBy) {
@@ -302,7 +314,7 @@ async function fsQuery(token, projectId, collection, constraints, limit, orderBy
     ];
   }
 
-  if (limit) structuredQuery.limit = Math.min(Number(limit) || 100, 500);
+  if (limit) structuredQuery.limit = Math.min(Number(limit) || 500, 2000);
 
   const r = await fetch(url, {
     method: 'POST',
@@ -361,8 +373,16 @@ export async function onRequest(context) {
   if (request.method === 'OPTIONS') {
     return new Response(null, { status: 204, headers: CORS });
   }
+  // GET = teste rápido no browser (sem token)
+  if (request.method === 'GET') {
+    return json({
+      ok: true,
+      msg: 'Admin API no ar. Usa POST com Authorization Bearer (token Firebase).',
+      endpoint: '/api/admin',
+    });
+  }
   if (request.method !== 'POST') {
-    return json({ ok: false, erro: 'Só POST' }, 405);
+    return json({ ok: false, erro: 'Usa POST (ou GET para teste). Método: ' + request.method }, 405);
   }
 
   let sa;
@@ -479,7 +499,13 @@ export async function onRequest(context) {
       if (!collection) return json({ ok: false, erro: 'collection inválida' }, 400);
       let docs;
       if (op === 'list' || !body.constraints || !body.constraints.length) {
-        const listed = await fsList(token, projectId, collection, body.limit || 300);
+        const listed = await fsList(
+          token,
+          projectId,
+          collection,
+          300,
+          Math.min(Number(body.limit) || 5000, 10000)
+        );
         docs = (listed.documents || []).map(docToClient);
       } else {
         docs = await fsQuery(

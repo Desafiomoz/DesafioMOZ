@@ -141,7 +141,7 @@
           op: constraints.length ? 'query' : 'list',
           collection: collection,
           constraints: constraints,
-          limit: lim || 300,
+          limit: lim || 5000,
           orderBy: orderBy || null,
         });
         var docs = (r.docs || []).map(function (d) {
@@ -186,7 +186,7 @@
         return makeQuery(name, [], null, { field: field, dir: dir || 'asc' });
       },
       get: async function () {
-        return makeQuery(name, [], 300, null).get();
+        return makeQuery(name, [], 5000, null).get();
       },
     };
   }
