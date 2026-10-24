@@ -193,6 +193,8 @@
             margin-bottom: 20px;
         }
     </style>
+
+<script src="creditar-pontos-client.js?v=2"></script>
 </head>
 <body>
 
@@ -399,26 +401,48 @@
 
             try {
                 // Procurar o utilizador pelo email
-                const snap = await db.collection('usuarios')
-                    .where('email', '==', email)
+                var emailNorm = String(email).trim().toLowerCase();
+                var snap = await db.collection('usuarios')
+                    .where('email', '==', emailNorm)
                     .limit(1)
                     .get();
-
+                if (snap.empty && emailNorm !== String(email).trim()) {
+                  snap = await db.collection('usuarios')
+                    .where('email', '==', String(email).trim())
+                    .limit(1)
+                    .get();
+                }
                 if (snap.empty) {
-                    alert('Utilizador não encontrado.');
+                    // tenta doc id = email
+                    try {
+                      var ddoc = await db.collection('usuarios').doc(emailNorm).get();
+                      if (ddoc.exists) {
+                        snap = { empty: false, docs: [ddoc] };
+                      }
+                    } catch (eD) {}
+                }
+                if (snap.empty) {
+                    alert('Utilizador não encontrado. Faz login de novo.');
                     btn.disabled = false;
                     btn.textContent = 'Enviar e Ganhar +5 Pontos';
                     return;
                 }
 
-                const docRef = snap.docs[0].ref;
-                const userData = snap.docs[0].data();
+                const docRef = snap.docs[0].ref || snap.docs[0];
+                const userData = (snap.docs[0].data && snap.docs[0].data()) || {};
                 const pontosAtuais = userData.pontos || 0;
-                const novosPontos = pontosAtuais + 5;
-
-                // Pontos + flags via Cloudflare Function (não escreve pontos no browser)
+                if (userData.pesquisaDadosCompleta === true) {
+                  localStorage.setItem('pesquisaDadosCompleta', 'true');
+                  alert('Já completou esta pesquisa.');
+                  window.location.href = 'tarefas.html';
+                  return;
+                }
+                                // Pontos + flags via Cloudflare Function (não escreve pontos no browser)
+                if (typeof DM_creditarPontos !== 'function') {
+                  throw new Error('API de pontos não carregou. Faz push de creditar-pontos-client.js e recarrega.');
+                }
                 var apiRes = await DM_creditarPontos({
-                    email: email,
+                    email: String(email).trim().toLowerCase(),
                     tipo: 'pesquisa_dados',
                     pontos: 5,
                     respostas: dados,
@@ -449,7 +473,6 @@
         }
     </script>
 
-<script src="creditar-pontos-client.js?v=1"></script>
 <script src="influencer-confirm.js?v=3"></script>
 <script src="historico-pontos.js?v=1"></script>
 </body>
