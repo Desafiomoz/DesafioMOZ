@@ -23,6 +23,7 @@
       detalhe: opts.detalhe || '',
       respostas: opts.respostas || null,
       pesquisaId: opts.pesquisaId || null,
+      desafioId: opts.desafioId || null,
       camposExtra: opts.camposExtra || null,
     };
     var r = await fetch(API, {

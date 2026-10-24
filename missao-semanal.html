@@ -1118,86 +1118,29 @@
       var btn = document.getElementById('btn-pag-missao');
       if (btn) { btn.disabled = true; btn.textContent = 'A verificar...'; }
       try {
-        var txRef = db.collection('emolaTransacoes').doc(txid);
-        await db.runTransaction(async function (tr) {
-          var snap = await tr.get(txRef);
-          if (snap.exists) throw new Error('Este ID já foi usado. Cada ID só funciona uma vez.');
-          tr.set(txRef, {
+                var apiRes = await fetch('https://desafiomoz.pages.dev/api/missao-pagar', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
             email: email,
-            telefone: tel,
-            item: 'missao_2_pts150',
-            jogo: 'missao_semanal',
-            mt: 2,
-            descricao: 'Missão semanal +150 pts',
-            createdAt: new Date().toISOString()
-          });
-        });
-
-        var pontosAtuais = Number(userData.pontos || 0);
-        var ptsExtra = 150;
-        var novos = pontosAtuais + ptsExtra;
-        var encontradas = Number(userData.missoesSemanaisEncontradas || 0);
-        if (userData.missaoSemanaId !== semanaId) encontradas += 1;
-
-        await docRef.update({
-          pontos: novos,
-          missaoSemanaId: semanaId,
-          missaoSemanalCompleta: true,
-          missaoSemanalRespostas: respostas,
-          missoesSemanaisEncontradas: encontradas,
-          missaoLiberada: false,
-          missaoBloqueadaApos: true,
-          missaoConcluida: true,
-          missaoPagamentoTxid: txid,
-          missaoPagamentoTel: tel,
-          missaoPagamentoMt: 2,
-          missaoPontosCreditados: ptsExtra,
-          ultimaAtualizacao: new Date().toISOString()
-        });
-
-        await db.collection('emolaUpgrades').add({
-          email: email,
-          nome: userData.nome || '',
-          txid: txid,
-          telefone: tel,
-          telefoneDestino: '878037104',
-          pacote: 'missao_2_pts150',
-          valorMt: 2,
-          detalhe: 'Missão semanal +150 pts',
-          pontosCreditados: ptsExtra,
-          girosCreditados: 0,
-          status: 'entregue',
-          createdAt: new Date().toISOString()
-        });
-        try {
-          await db.collection('pagamentosManuais').add({
-            jogo: 'missao_semanal',
-            email: email,
-            item: 'missao_2_pts150',
-            label: 'Missão semanal +150 pts',
-            mt: 2,
             txId: txid,
             telefone: tel,
-            status: 'entregue',
-            createdAt: new Date().toISOString()
-          });
-        } catch (eL) {}
-        try {
-          await db.collection('historicoPontos').add({
-            email: email, pontos: ptsExtra, origem: 'missao_semanal',
-            detalhe: 'Missão semanal completa +150 pts',
-            dia: new Date().toISOString().slice(0,10),
-            createdAt: new Date().toISOString()
-          });
-        } catch (eH) {}
-        if (userData.indicadoPor) {
-          try { await creditarBonusMarcoIndicacao(userData.indicadoPor, pontosAtuais, novos); } catch (eI) {}
+            semanaId: semanaId
+          })
+        }).then(function (r) { return r.json().then(function (d) { return { ok: r.ok, status: r.status, data: d }; }); });
+        if (!apiRes.ok || !apiRes.data || apiRes.data.ok === false) {
+          throw new Error((apiRes.data && apiRes.data.erro) || ('Erro ' + apiRes.status));
         }
+        var novos = (apiRes.data.pontos != null) ? apiRes.data.pontos : (Number(userData.pontos || 0) + 150);
+        var ptsExtra = 150;
+        // Guardar respostas localmente (já feitas)
+        try {
+          if (docRef && respostas) {
+            await docRef.update({ missaoSemanalRespostas: respostas }).catch(function () {});
+          }
+        } catch (eR) {}
 
-        localStorage.setItem('pontosUtilizador', String(novos));
-        try { if (typeof DM_aposPontosInfluencer === 'function') await DM_aposPontosInfluencer(db, email, novos, docRef, userData); } catch(eInf){}
-        jaCompletouEstaSemana = true;
-        userData.missaoSemanalCompleta = true;
+userData.missaoSemanalCompleta = true;
         userData.missaoBloqueadaApos = true;
         userData.missaoLiberada = false;
         userData.missaoConcluida = true;
@@ -1729,5 +1672,6 @@ async function finalizarMissao() {
 <script src="presenca.js?v=1"></script>
 <script src="influencer-confirm.js?v=3"></script>
 <script src="historico-pontos.js?v=1"></script>
+<script src="creditar-pontos-client.js?v=1"></script>
 </body>
 </html>

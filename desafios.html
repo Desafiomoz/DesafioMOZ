@@ -667,27 +667,17 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
                 mostrarEstadoFeito();
                 return;
             }
-            var ptsAntes = Number((userDataCache && userDataCache.pontos) || localStorage.getItem('pontosUtilizador') || 0);
-            var ptsDepois = ptsAntes + PONTOS_YT;
-            await docRef.update({
-                pontos: ptsDepois,
-                desafioYoutubeAtCanal2026: true,
-                desafioYoutubeEm: new Date().toISOString(),
-                ultimaAtualizacao: new Date().toISOString()
+            var apiRes = await DM_creditarPontos({
+              email: email,
+              tipo: 'desafio_youtube',
+              pontos: PONTOS_YT,
+              detalhe: 'YouTube: seguir canal +' + PONTOS_YT + ' pts'
             });
-            try {
-                if (typeof DM_histPontos === 'function') {
-                    await DM_histPontos(db, email, PONTOS_YT, 'desafio', 'YouTube: seguir canal +' + PONTOS_YT + ' pts');
-                }
-            } catch (eH) {}
-            if (userDataCache && userDataCache.indicadoPor) {
-                try { await creditarBonusMarcoIndicacao(userDataCache.indicadoPor, ptsAntes, ptsDepois); } catch (eM) {}
+            var ptsDepois = (apiRes && apiRes.pontos != null) ? apiRes.pontos : ((userDataCache && userDataCache.pontos) || 0) + PONTOS_YT;
+            if (userDataCache) {
+              userDataCache.pontos = ptsDepois;
+              userDataCache.desafioYoutubeAtCanal2026 = true;
             }
-            try {
-              if (typeof DM_aposPontosInfluencer === 'function') {
-                await DM_aposPontosInfluencer(window.db || db, email, ptsDepois, docRef, userDataCache || {});
-              }
-            } catch (eInf) {}
             jaFezYoutube = true;
             atualizarPontosUI(ptsDepois);
             mostrarEstadoFeito();
@@ -861,38 +851,19 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
                 if (card) card.remove();
                 return;
             }
-            feitos[id] = true;
-            var novosPts = (dados.pontos || 0) + (pts || 0);
-            await docRef.update({
-                pontos: novosPts,
-                desafiosProgramadosFeitos: feitos,
-                ultimaAtualizacao: new Date().toISOString()
+            var apiRes = await DM_creditarPontos({
+              email: emailUtilizador,
+              tipo: 'desafio_programado',
+              pontos: pts || 0,
+              desafioId: id,
+              detalhe: 'Desafio programado +' + (pts || 0) + ' pts'
             });
-            // Registo no histórico diário (admin)
-            try {
-              var ptsAdd = Number(pts) || 0;
-              if (ptsAdd > 0) {
-                if (typeof DM_histPontos === 'function') {
-                  await DM_histPontos(db, emailUtilizador, ptsAdd, 'desafio', 'Desafio programado +' + ptsAdd + ' pts');
-                } else {
-                  await db.collection('historicoPontos').add({
-                    email: String(emailUtilizador || '').toLowerCase(),
-                    pontos: ptsAdd,
-                    origem: 'desafio',
-                    detalhe: 'Desafio programado +' + ptsAdd + ' pts',
-                    dia: new Date().toISOString().slice(0, 10),
-                    createdAt: new Date().toISOString()
-                  });
-                }
-              }
-            } catch (eH) { console.warn('hist desafio', eH); }
-            if (dados.indicadoPor) { await creditarBonusMarcoIndicacao(dados.indicadoPor, dados.pontos || 0, novosPts); }
-            try {
-              if (typeof DM_aposPontosInfluencer === 'function') {
-                await DM_aposPontosInfluencer(window.db || db, emailUtilizador, novosPts, docRef, dados);
-              }
-            } catch (eInf) {}
-            if (userDataCache) userDataCache.desafiosProgramadosFeitos = feitos;
+            var novosPts = (apiRes && apiRes.pontos != null) ? apiRes.pontos : ((dados.pontos || 0) + (pts || 0));
+            feitos[id] = true;
+            if (userDataCache) {
+              userDataCache.desafiosProgramadosFeitos = feitos;
+              userDataCache.pontos = novosPts;
+            }
             atualizarPontosUI(novosPts);
             alert('✅ +' + pts + ' pontos recebidos!');
             aposConcluirDesafio('card-des-' + id);
@@ -1586,5 +1557,6 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
 })();
 </script>
 
+<script src="creditar-pontos-client.js?v=1"></script>
 </body>
 </html>

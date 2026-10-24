@@ -58,6 +58,16 @@ const TIPOS = {
     pontosFixos: null,
     detalhe: 'Pesquisa programada',
   },
+  desafio_youtube: {
+    flag: 'desafioYoutubeAtCanal2026',
+    pontosFixos: 10,
+    detalhe: 'Desafio YouTube +10',
+  },
+  desafio_programado: {
+    flag: null, // usa desafiosProgramadosFeitos[id]
+    pontosFixos: null,
+    detalhe: 'Desafio programado',
+  },
 };
 
 function json(data, status = 200) {
@@ -483,6 +493,19 @@ export async function onRequest(context) {
         });
       }
     }
+    if (tipo === 'desafio_programado') {
+      const did = String(body.desafioId || body.pesquisaId || '').trim();
+      if (!did) return json({ ok: false, erro: 'desafioId em falta' }, 400);
+      const feitos = d.desafiosProgramadosFeitos || {};
+      if (feitos[did] === true) {
+        return json({
+          ok: true,
+          jaFeito: true,
+          pontos: d.pontos || 0,
+          msg: 'Desafio já feito',
+        });
+      }
+    }
 
     const ptsAntes = Number(d.pontos || 0);
     const ptsDepois = ptsAntes + pontos;
@@ -503,6 +526,15 @@ export async function onRequest(context) {
       feitas[pid] = true;
       update.pesquisasProgramadasFeitas = feitas;
       update.ultimaPesquisaProgEm = new Date().toISOString();
+    }
+    if (tipo === 'desafio_programado') {
+      const did = String(body.desafioId || body.pesquisaId || '').trim();
+      const feitos = Object.assign({}, d.desafiosProgramadosFeitos || {});
+      feitos[did] = true;
+      update.desafiosProgramadosFeitos = feitos;
+    }
+    if (tipo === 'desafio_youtube') {
+      update.desafioYoutubeEm = new Date().toISOString();
     }
     if (body.camposExtra && typeof body.camposExtra === 'object') {
       Object.keys(body.camposExtra).forEach((k) => {
