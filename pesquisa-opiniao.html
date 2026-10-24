@@ -281,35 +281,17 @@
         var pontosAtuais = userData.pontos || 0;
         var novosPontos = pontosAtuais + 5;
 
-        await docRef.update({
-          pesquisaOpiniao: respostas,
-          pesquisaOpiniaoCompleta: true,
-          pontos: novosPontos,
-          ultimaAtualizacao: new Date().toISOString()
+        var apiRes = await DM_creditarPontos({
+          email: email,
+          tipo: 'pesquisa_opiniao',
+          pontos: 5,
+          respostas: respostas,
+          detalhe: 'Pesquisa opinião +5'
         });
-
-                try {
-          if (typeof DM_histPontos === 'function') {
-            await DM_histPontos(db, email, 5, 'pesquisa', 'Pesquisa opinião +5');
-          } else {
-            await db.collection('historicoPontos').add({
-              email: String(email).toLowerCase(), pontos: 5, origem: 'pesquisa',
-              detalhe: 'Pesquisa opinião +5', dia: new Date().toISOString().slice(0,10), createdAt: new Date().toISOString()
-            });
-          }
-        } catch (eH) {}
-
-if (userData.indicadoPor) { await creditarBonusMarcoIndicacao(userData.indicadoPor, pontosAtuais, novosPontos); }
+        var novosPontos = (apiRes && apiRes.pontos != null) ? apiRes.pontos : (pontosAtuais + 5);
 
         localStorage.setItem('pesquisaOpiniaoCompleta', 'true');
         localStorage.setItem('pontosUtilizador', String(novosPontos));
-
-        try {
-          if (typeof DM_aposPontosInfluencer === 'function') {
-            await DM_aposPontosInfluencer(db, email, novosPontos, docRef, userData);
-          }
-        } catch (eInf) { console.warn('inf confirm', eInf); }
-
         localStorage.setItem('ultimoGanho', '5');
 
         document.getElementById('passo3').classList.remove('ativo');
@@ -328,6 +310,7 @@ if (userData.indicadoPor) { await creditarBonusMarcoIndicacao(userData.indicadoP
       }
     }
   </script>
+<script src="creditar-pontos-client.js?v=1"></script>
 <script src="influencer-confirm.js?v=3"></script>
 <script src="historico-pontos.js?v=1"></script>
 </body>

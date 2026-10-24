@@ -280,35 +280,17 @@
         var pontosAtuais = userData.pontos || 0;
         var novosPontos = pontosAtuais + 3;
 
-        await docRef.update({
-          pesquisaRapida: respostas,
-          pesquisaRapidaCompleta: true,
-          pontos: novosPontos,
-          ultimaAtualizacao: new Date().toISOString()
+        var apiRes = await DM_creditarPontos({
+          email: email,
+          tipo: 'pesquisa_rapida',
+          pontos: 3,
+          respostas: respostas,
+          detalhe: 'Pesquisa rápida +3'
         });
-
-                try {
-          if (typeof DM_histPontos === 'function') {
-            await DM_histPontos(db, email, 3, 'pesquisa', 'Pesquisa rápida +3');
-          } else {
-            await db.collection('historicoPontos').add({
-              email: String(email).toLowerCase(), pontos: 3, origem: 'pesquisa',
-              detalhe: 'Pesquisa rápida +3', dia: new Date().toISOString().slice(0,10), createdAt: new Date().toISOString()
-            });
-          }
-        } catch (eH) {}
-
-if (userData.indicadoPor) { await creditarBonusMarcoIndicacao(userData.indicadoPor, pontosAtuais, novosPontos); }
+        var novosPontos = (apiRes && apiRes.pontos != null) ? apiRes.pontos : (pontosAtuais + 3);
 
         localStorage.setItem('pesquisaRapidaCompleta', 'true');
         localStorage.setItem('pontosUtilizador', String(novosPontos));
-
-        try {
-          if (typeof DM_aposPontosInfluencer === 'function') {
-            await DM_aposPontosInfluencer(db, email, novosPontos, docRef, userData);
-          }
-        } catch (eInf) { console.warn('inf confirm', eInf); }
-
         localStorage.setItem('ultimoGanho', '3');
 
         document.getElementById('passo3').classList.remove('ativo');
@@ -327,6 +309,7 @@ if (userData.indicadoPor) { await creditarBonusMarcoIndicacao(userData.indicadoP
       }
     }
   </script>
+<script src="creditar-pontos-client.js?v=1"></script>
 <script src="influencer-confirm.js?v=3"></script>
 <script src="historico-pontos.js?v=1"></script>
 </body>

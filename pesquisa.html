@@ -416,39 +416,19 @@
                 const pontosAtuais = userData.pontos || 0;
                 const novosPontos = pontosAtuais + 5;
 
-                // Guardar respostas + pontos no Firebase
-                await docRef.update({
-                    pesquisaDados: dados,
-                    pesquisaDadosCompleta: true,
-                    pontos: novosPontos,
-                    ultimaAtualizacao: firebase.firestore.FieldValue.serverTimestamp()
+                // Pontos + flags via Cloudflare Function (não escreve pontos no browser)
+                var apiRes = await DM_creditarPontos({
+                    email: email,
+                    tipo: 'pesquisa_dados',
+                    pontos: 5,
+                    respostas: dados,
+                    detalhe: 'Pesquisa de Dados +5'
                 });
+                var novosPontos = (apiRes && apiRes.pontos != null) ? apiRes.pontos : (pontosAtuais + 5);
 
-                // Bónus para quem indicou este utilizador (não desconta nada do utilizador atual)
-                        try {
-          if (typeof DM_histPontos === 'function') {
-            await DM_histPontos(db, email, 5, 'pesquisa', 'Pesquisa de Dados +5');
-          } else {
-            await db.collection('historicoPontos').add({
-              email: String(email).toLowerCase(), pontos: 5, origem: 'pesquisa',
-              detalhe: 'Pesquisa de Dados +5', dia: new Date().toISOString().slice(0,10), createdAt: new Date().toISOString()
-            });
-          }
-        } catch (eH) {}
-
-if (userData.indicadoPor) { await creditarBonusMarcoIndicacao(userData.indicadoPor, pontosAtuais, novosPontos); }
-
-                // Atualizar localStorage
                 localStorage.setItem('pesquisaDadosCompleta', 'true');
-                localStorage.setItem('pontosUtilizador', novosPontos);
-
-        try {
-          if (typeof DM_aposPontosInfluencer === 'function') {
-            await DM_aposPontosInfluencer(db, email, novosPontos, docRef, userData);
-          }
-        } catch (eInf) { console.warn('inf confirm', eInf); }
-
-                localStorage.setItem('ultimoGanho', 5);
+                localStorage.setItem('pontosUtilizador', String(novosPontos));
+                localStorage.setItem('ultimoGanho', '5');
 
                 // Mostrar tela de sucesso
                 document.getElementById('passo4').classList.remove('ativo');
@@ -469,6 +449,7 @@ if (userData.indicadoPor) { await creditarBonusMarcoIndicacao(userData.indicadoP
         }
     </script>
 
+<script src="creditar-pontos-client.js?v=1"></script>
 <script src="influencer-confirm.js?v=3"></script>
 <script src="historico-pontos.js?v=1"></script>
 </body>

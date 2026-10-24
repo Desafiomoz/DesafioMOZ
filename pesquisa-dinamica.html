@@ -171,36 +171,17 @@
         var feitas = Object.assign({}, dados.pesquisasProgramadasFeitas || {});
         feitas[pesquisaId] = true;
 
-        // Atualiza APENAS o documento DESTE utilizador (nunca a pesquisa global)
-        // ultimaPesquisaProgEm → tarefas espera 24h antes do próximo lote
-        await docRef.update({
-          pontos: pts,
-          pesquisasProgramadasFeitas: feitas,
-          ultimaPesquisaProgEm: new Date().toISOString(),
-          ultimaAtualizacao: new Date().toISOString()
+        var ganho = (pesquisa.pontos || 0);
+        var apiRes = await DM_creditarPontos({
+          email: email,
+          tipo: 'pesquisa_programada',
+          pontos: ganho,
+          pesquisaId: pesquisaId,
+          detalhe: 'Pesquisa: ' + (pesquisa.titulo || pesquisaId)
         });
-        try {
-          var ganho = (pesquisa.pontos || 0);
-          if (typeof DM_histPontos === 'function') {
-            await DM_histPontos(db, email, ganho, 'pesquisa', 'Pesquisa programada: ' + (pesquisa.titulo || pesquisaId));
-          } else {
-            await db.collection('historicoPontos').add({
-              email: String(email).toLowerCase(), pontos: ganho, origem: 'pesquisa',
-              detalhe: 'Pesquisa: ' + (pesquisa.titulo || pesquisaId),
-              dia: new Date().toISOString().slice(0,10), createdAt: new Date().toISOString()
-            });
-          }
-        } catch (eH) {}
-
-        if (dados.indicadoPor) { await creditarBonusMarcoIndicacao(dados.indicadoPor, dados.pontos || 0, pts); }
+        var pts = (apiRes && apiRes.pontos != null) ? apiRes.pontos : ((dados.pontos || 0) + ganho);
 
         localStorage.setItem('pontosUtilizador', String(pts));
-
-        try {
-          if (typeof DM_aposPontosInfluencer === 'function') {
-            await DM_aposPontosInfluencer(db, email, pts, docRef, dados);
-          }
-        } catch (eInf) { console.warn('inf confirm', eInf); }
 
 
         // Cache local POR EMAIL — não partilha com outras contas no mesmo browser
@@ -322,6 +303,7 @@
 
     iniciar();
   </script>
+<script src="creditar-pontos-client.js?v=1"></script>
 <script src="influencer-confirm.js?v=3"></script>
 <script src="historico-pontos.js?v=1"></script>
 </body>
