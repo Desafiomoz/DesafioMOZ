@@ -516,59 +516,20 @@
     var btn = document.getElementById('btn-comprar');
     btn.disabled = true; btn.textContent = 'A comprar...';
     try {
-      if (!docRef) throw new Error('Conta não encontrada. Faz login de novo.');
       var pts = ptsSel;
-      var forca = forcaSel;
-      await db.runTransaction(async function (tr) {
-        var snap = await tr.get(docRef);
-        if (!snap.exists) throw new Error('Conta não encontrada.');
-        var d = snap.data() || {};
-        var saldo = Number(d.pontos) || 0;
-        if (saldo < pts) throw new Error('Pontos insuficientes. Tens ' + saldo + ' pts.');
-        tr.update(docRef, {
-          pontos: saldo - pts,
-          pontosSorteioGastos: (Number(d.pontosSorteioGastos) || 0) + pts,
-          ultimaAtualizacao: new Date().toISOString()
-        });
-      });
-      userData.pontos = (Number(userData.pontos) || 0) - pts;
+      var apiRes = await fetch('https://desafiomoz.pages.dev/api/sorteio-comprar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email, pontos: pts })
+      }).then(function (r) { return r.json(); });
+      if (!apiRes || !apiRes.ok) {
+        throw new Error((apiRes && apiRes.erro) || 'Falha na compra');
+      }
+      userData.pontos = apiRes.pontos != null ? apiRes.pontos : ((Number(userData.pontos) || 0) - pts);
       var salEl = document.getElementById('saldo-pts');
       if (salEl) salEl.textContent = userData.pontos;
-
-      var bilhete = {
-        email: email,
-        nome: userData.nome || '',
-        pacote: 'pontos',
-        tipoPagamento: 'pontos',
-        valorMt: 0,
-        valorPontos: pts,
-        forca: forca,
-        telefone: '',
-        txid: 'PTS_' + Date.now(),
-        status: 'activo',
-        posicao: null,
-        decidido: false,
-        createdAt: new Date().toISOString()
-      };
-      await db.collection('sorteioBilhetes').add(bilhete);
-      await db.collection('sorteioPagamentos').add({
-        email: email,
-        nome: userData.nome || '',
-        pacote: 'pontos',
-        tipoPagamento: 'pontos',
-        valorMt: 0,
-        valorPontos: pts,
-        forca: forca,
-        status: 'entregue',
-        createdAt: new Date().toISOString()
-      });
-      if (docRef) {
-        docRef.update({
-          sorteioClicou: true,
-          sorteioUltimoBilhete: pts + 'pts',
-          sorteioUltimoEm: new Date().toISOString()
-        }).catch(function () {});
-      }
+      localStorage.setItem('pontosUtilizador', String(userData.pontos));
+      var forca = apiRes.forca || forcaSel;
       alert('✅ Bilhete comprado com ' + pts + ' pontos! Força ' + forca + '. Boa sorte!');
       document.getElementById('input-pts').value = '';
       actualizarForca();

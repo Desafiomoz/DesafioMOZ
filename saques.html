@@ -880,37 +880,23 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
             var pontosRestantes = pontosAtuais - ptsEscolha;
 
             try {
-                // 1) Desconta os pontos da conta do utilizador
-                if (userDocRef) {
-                    var fresh = await userDocRef.get();
-                    var dadosFresh = fresh.exists ? fresh.data() : {};
-                    var ptsAtuaisFresh = dadosFresh.pontos || 0;
-                    if (ptsEscolha > ptsAtuaisFresh) {
-                        throw new Error('Saldo insuficiente (atualizado). Atualize a página.');
-                    }
-                    pontosRestantes = ptsAtuaisFresh - ptsEscolha;
-                    await userDocRef.update({
-                        pontos: pontosRestantes,
-                        ultimaAtualizacao: new Date().toISOString()
-                    });
+                var apiRes = await fetch('https://desafiomoz.pages.dev/api/saque-pedir', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: String(emailUtilizador).trim().toLowerCase(),
+                        nome: nome,
+                        telemovel: tel.replace(/\s/g, ''),
+                        pontos: ptsEscolha,
+                        metodo: metodoPagamento
+                    })
+                }).then(function (r) { return r.json(); });
+                if (!apiRes || !apiRes.ok) {
+                    throw new Error((apiRes && apiRes.erro) || 'Falha no pedido de saque');
                 }
+                pontosRestantes = apiRes.pontos != null ? apiRes.pontos : (pontosAtuais - ptsEscolha);
+                liquido = apiRes.liquidoMZN != null ? Number(apiRes.liquidoMZN) : liquido;
 
-                // 2) Cria o pedido no Admin — o valor principal é o LÍQUIDO (após 10%)
-                await db.collection('solicitacoesSaque').add({
-                    email: emailUtilizador,
-                    nome: nome,
-                    telemovel: tel.replace(/\s/g, ''),
-                    pontos: ptsEscolha,
-                    pontosRestantes: pontosRestantes,
-                    valorMZN: Number(mznEscolha.toFixed(2)),
-                    taxaMZN: Number(taxa.toFixed(2)),
-                    liquidoMZN: Number(liquido.toFixed(2)),
-                    metodo: metodoPagamento,
-                    status: 'pendente',
-                    dataPedido: new Date().toISOString()
-                });
-
-                // Atualiza saldo local
                 pontosAtuais = pontosRestantes;
                 mznAtuais = pontosAtuais / 8;
                 localStorage.setItem('pontosUtilizador', String(pontosAtuais));
@@ -926,7 +912,7 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
                 mostrarToast(
                     'Pedido de saque enviado!',
                     'Foram descontados ' + ptsEscolha + ' pontos. Restam ' + pontosRestantes +
-                    ' pts na conta. Receberá ' + liquido.toFixed(2) + ' MZN via ' + metodoPagamento + '.'
+                    ' pts na conta. Receberá ' + Number(liquido).toFixed(2) + ' MZN via ' + metodoPagamento + '.'
                 );
 
                 setTimeout(function () { atualizarUI(); }, 2500);

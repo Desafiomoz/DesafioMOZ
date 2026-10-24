@@ -274,7 +274,7 @@
       <div class="sec">
         <div class="sec-titulo"><i class="fas fa-calendar-check"></i> Check-in diário</div>
         <p style="font-size:12.5px;color:var(--suave);margin-bottom:12px;line-height:1.45">
-          O check-in base dá <b style="color:var(--vivo)">+3 pontos</b> por dia. Actualiza por <b style="color:var(--ouro)">10 MT</b> e passa a receber <b style="color:var(--vivo)">2 meticais (16 pontos) todos os dias para sempre</b>.
+          O check-in base dá <b style="color:var(--vivo)">+3 pontos</b> por dia. Actualiza por <b style="color:var(--ouro)">20 MT</b> e passa a receber <b style="color:var(--vivo)">2 meticais (16 pontos) todos os dias para sempre</b>.
         </p>
 
         <div class="pacote ouro destaque" id="pkg-checkin-16" data-pkg="checkin_16_vitalicio">
@@ -282,12 +282,12 @@
             <div class="pacote-ico">♾️</div>
             <div>
               <h3>Recebe 2 MT todos os dias no check-in</h3>
-              <div class="desc">Vitalício: <b style="color:var(--vivo)">2 meticais por dia</b> (16 pontos) no check-in diário, em vez dos 3 pontos base. Pagas <b style="color:var(--ouro)">10 MT</b> uma vez e fica para sempre.</div>
-              <div class="preco">10 MT</div>
+              <div class="desc">Vitalício: <b style="color:var(--vivo)">2 meticais por dia</b> (16 pontos) no check-in diário, em vez dos 3 pontos base. Pagas <b style="color:var(--ouro)">20 MT</b> uma vez e fica para sempre.</div>
+              <div class="preco">20 MT</div>
               <span class="tag-ativo">✅ Activo</span>
             </div>
           </div>
-          <button type="button" class="btn-comprar" onclick="abrirPagamento('checkin_16_vitalicio',10,'Check-in +2 MT/dia vitalício')">Pagar 10 MT na e-Mola</button>
+          <button type="button" class="btn-comprar" onclick="abrirPagamento('checkin_16_vitalicio',20,'Check-in +2 MT/dia vitalício')">Pagar 20 MT na e-Mola</button>
         </div>
       </div>
     </div>
@@ -378,7 +378,7 @@
 
     function jaTemCheckinBoost() {
       var d = userData || {};
-      // Qualquer compra antiga (5 MT) ou nova (10 MT) conta — não pode pagar de novo
+      // Qualquer compra antiga (5 MT) ou nova (20 MT) conta — não pode pagar de novo
       if (d.checkinBoostVitalicio === true) return true;
       if (Number(d.checkinPtsDia) >= 16) return true;
       if (d.checkinBoostTipo === '16_vitalicio') return true;
@@ -387,7 +387,7 @@
 
     function actualizarEstados() {
       var d = userData || {};
-      // check-in já pago (5 MT antigo ou 10 MT novo) → bloqueado
+      // check-in já pago (5 MT antigo ou 20 MT novo) → bloqueado
       if (jaTemCheckinBoost()) {
         marcarActivo('pkg-checkin-16', true);
       }
@@ -435,7 +435,7 @@
       var detalhe = pkg;
 
       if (pkg === 'checkin_16_vitalicio' || pkg === 'checkin_vitalicio') {
-        // Quem já pagou (5 MT ou 10 MT) NÃO pode activar outra vez
+        // Quem já pagou (5 MT ou 20 MT) NÃO pode activar outra vez
         if (jaTemCheckinBoost()) {
           throw new Error('Já tens este bónus activo. Cada conta só paga uma vez.');
         }
@@ -538,32 +538,31 @@
       btn.disabled = true;
       btn.textContent = 'A verificar...';
       try {
-        // Reserva o ID (igual ao Homejub) — cada ID só uma vez
-        var txRef = db.collection('emolaTransacoes').doc(txid);
-        await db.runTransaction(async function (tr) {
-          var snap = await tr.get(txRef);
-          if (snap.exists) throw new Error('Este ID de transacção já foi usado. Cada ID só funciona uma vez.');
-          tr.set(txRef, {
+        var apiRes = await fetch('https://desafiomoz.pages.dev/api/aumento-pagar', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
             email: email,
-            telefone: telDig,
-            item: pkgActual,
-            jogo: 'aumento_ganhos',
-            mt: valorActual,
-            descricao: pkgActual,
-            createdAt: new Date().toISOString()
-          });
-        });
-        var r = await aplicarPacote(pkgActual, txid, telDig);
+            pacote: pkgActual,
+            txid: txid,
+            telefone: telDig
+          })
+        }).then(function (r) { return r.json(); });
+        if (!apiRes || !apiRes.ok) {
+          throw new Error((apiRes && apiRes.erro) || 'Falha ao activar');
+        }
         fecharModal();
-        var msg = '✅ Activado! ' + (r.detalhe || '');
-        if (r.ptsExtra) msg += ' (+' + r.ptsExtra + ' pts)';
-        if (r.girosExtra) msg += ' (+' + r.girosExtra + ' giros)';
+        var msg = '✅ Activado! ' + (apiRes.detalhe || 'Check-in boost');
+        if (apiRes.jaActivo) msg = 'Já tinhas este bónus activo.';
         toast(msg);
-        // reload estado
-        var again = await userRef.get();
-        userData = again.data() || userData;
+        try {
+          var again = await userRef.get();
+          userData = again.data() || userData;
+        } catch (eR) {
+          userData.checkinBoostVitalicio = true;
+          userData.checkinPtsDia = 16;
+        }
         actualizarEstados();
-
       } catch (e) {
         console.error(e);
         alert('Erro: ' + (e.message || e));
