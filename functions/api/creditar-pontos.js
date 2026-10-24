@@ -68,6 +68,11 @@ const TIPOS = {
     pontosFixos: null,
     detalhe: 'Desafio programado',
   },
+  anuncio_tarefa: {
+    flag: null, // cooldown via anunciosTarefasHist
+    pontosFixos: null,
+    detalhe: 'Anúncio tarefa',
+  },
 };
 
 function json(data, status = 200) {
@@ -471,6 +476,57 @@ export async function onRequest(context) {
     const d = user.data || {};
     const path = user.path;
 
+    if (tipo === 'anuncio_tarefa') {
+      const adTipo = String(body.adTipo || body.tipoAnuncio || 'interativo').trim();
+      if (adTipo !== 'interativo' && adTipo !== 'rewarded') {
+        return json({ ok: false, erro: 'Tipo de anúncio inválido' }, 400);
+      }
+      // Lê pontos oficiais do admin (não confia no cliente)
+      let ptsOficial = 0;
+      try {
+        const adDocs = await fsQuery(token, projectId, 'anunciosTarefas', 'tipo', '==', adTipo, 5);
+        if (adDocs.length) {
+          ptsOficial = parseInt(adDocs[0].data.pontos, 10) || 0;
+        }
+        // também tenta doc id
+        if (!ptsOficial) {
+          const adDoc = await fsGet(token, projectId, 'anunciosTarefas/' + adTipo);
+          if (adDoc && adDoc.fields) {
+            const dd = docToData(adDoc);
+            ptsOficial = parseInt(dd.pontos, 10) || 0;
+          }
+        }
+      } catch (eAd) {}
+      if (!ptsOficial || ptsOficial < 1) {
+        // fallback seguro: máximo 5 se admin não configurou
+        ptsOficial = Math.min(5, Math.max(1, parseInt(body.pontos, 10) || 1));
+      }
+      if (ptsOficial > 50) ptsOficial = 50; // teto anti-fraude
+      pontos = ptsOficial;
+
+      const hist = d.anunciosTarefasHist || {};
+      const last = hist[adTipo];
+      if (last) {
+        try {
+          const lastT = new Date(last).getTime();
+          // 1h cooldown por tipo
+          if (Date.now() - lastT < 60 * 60 * 1000) {
+            return json({
+              ok: true,
+              jaFeito: true,
+              pontos: d.pontos || 0,
+              msg: 'Já recebeu pontos deste anúncio há pouco. Aguarde.',
+            });
+          }
+        } catch (eT) {}
+      }
+      // marca no update
+      body._adTipo = adTipo;
+      body._adHist = Object.assign({}, hist);
+      body._adHist[adTipo] = new Date().toISOString();
+    }
+
+
     // Anti-fraude: já completo?
     if (cfg && cfg.flag && d[cfg.flag] === true) {
       return json({
@@ -535,6 +591,9 @@ export async function onRequest(context) {
     }
     if (tipo === 'desafio_youtube') {
       update.desafioYoutubeEm = new Date().toISOString();
+    }
+    if (tipo === 'anuncio_tarefa' && body._adHist) {
+      update.anunciosTarefasHist = body._adHist;
     }
     if (body.camposExtra && typeof body.camposExtra === 'object') {
       Object.keys(body.camposExtra).forEach((k) => {

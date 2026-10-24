@@ -271,37 +271,14 @@
     btn.textContent = 'A alterar...';
 
     try {
-      var snap = await db.collection('usuarios').where('email', '==', email).limit(1).get();
-      if (snap.empty) {
-        btn.disabled = false;
-        btn.textContent = 'Enviar pedido';
-        return mostrar('Não existe conta com este e-mail no Desafio MOZ.');
+      var apiRes = await fetch('https://desafiomoz.pages.dev/api/recuperar-senha', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email, senha: senha })
+      }).then(function (r) { return r.json(); });
+      if (!apiRes || !apiRes.ok) {
+        throw new Error((apiRes && apiRes.erro) || 'Falha ao alterar senha');
       }
-      var docRef = snap.docs[0].ref;
-      var u = snap.docs[0].data() || {};
-      var nome = u.nome || email.split('@')[0];
-      var senhaHash = await hashSenha(senha);
-
-      // Altera a senha de imediato
-      await docRef.update({
-        senha: senhaHash,
-        ultimaAtualizacao: new Date().toISOString(),
-        senhaRecuperadaEm: new Date().toISOString()
-      });
-
-      // Registo no admin (histórico), já aplicado
-      try {
-        await db.collection('pedidosSenha').add({
-          email: email,
-          nome: nome,
-          novaSenhaHash: senhaHash,
-          status: 'aplicado',
-          automatico: true,
-          createdAt: new Date().toISOString(),
-          aplicadoEm: new Date().toISOString()
-        });
-      } catch (eLog) { console.warn('log senha', eLog); }
-
       mostrar('Senha alterada! Já podes entrar no login com a nova senha.', true);
       document.getElementById('senha').value = '';
       document.getElementById('senha2').value = '';
@@ -312,13 +289,9 @@
     } catch (err) {
       console.error(err);
       var m = (err && err.message) ? err.message : String(err);
-      if (m.indexOf('permission') !== -1 || m.indexOf('Permission') !== -1) {
-        mostrar('Erro de permissão no Firebase. A equipa precisa de permitir atualizar a senha em usuarios.');
-      } else {
-        mostrar('Erro: ' + m);
-      }
+      mostrar('Erro: ' + m);
       btn.disabled = false;
-      btn.textContent = 'Enviar pedido';
+      btn.textContent = 'Alterar senha agora';
     }
   });
 })();

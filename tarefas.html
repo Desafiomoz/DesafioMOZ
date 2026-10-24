@@ -1203,33 +1203,48 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
         async function receberPontosAnuncio() {
             // Exige: anúncio confirmado como carregado + tempo mínimo cumprido.
             if (!adAnuncioCarregado || !adPodeReceber || !adEmCurso) return;
-            var email = localStorage.getItem('emailUtilizador') || '';
+            var email = (localStorage.getItem('emailUtilizador') || '').trim().toLowerCase();
             if (!email) return alert('Faça login.');
             var btn = document.getElementById('ad-ov-btn');
             btn.classList.remove('ativo');
             btn.textContent = 'A guardar…';
             try {
-                var encontrado = await encontrarUtilizadorPorEmail(email);
-                if (!encontrado) {
-                    alert('Utilizador não encontrado.');
-                    fecharAnuncioTarefa();
-                    return;
+                var adTipo = adEmCurso.tipo || 'interativo';
+                var ptsHint = parseInt((adEmCurso.cfg && adEmCurso.cfg.pontos) || 0, 10) || 0;
+                var apiRes;
+                if (typeof DM_creditarPontos === 'function') {
+                  apiRes = await DM_creditarPontos({
+                    email: email,
+                    tipo: 'anuncio_tarefa',
+                    pontos: ptsHint,
+                    adTipo: adTipo,
+                    detalhe: 'Anúncio tarefa (' + adTipo + ')'
+                  });
+                } else {
+                  apiRes = await fetch('https://desafiomoz.pages.dev/api/creditar-pontos', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      email: email,
+                      tipo: 'anuncio_tarefa',
+                      pontos: ptsHint,
+                      adTipo: adTipo,
+                      detalhe: 'Anúncio tarefa (' + adTipo + ')'
+                    })
+                  }).then(function (r) { return r.json(); });
                 }
-                var dados = encontrado.data || {};
-                var pts = parseInt((adEmCurso.cfg && adEmCurso.cfg.pontos) || 0, 10) || 0;
-                var novos = (dados.pontos || 0) + pts;
-                var hist = Object.assign({}, dados.anunciosTarefasHist || {});
-                hist[adEmCurso.tipo] = new Date().toISOString();
-                await encontrado.ref.update({
-                    pontos: novos,
-                    anunciosTarefasHist: hist,
-                    ultimaAtualizacao: new Date().toISOString()
-                });
-                try { if (typeof DM_histPontos === 'function') await DM_histPontos(db, email, pts, 'desafio', 'Anúncio tarefa +' + pts + ' pts'); } catch(eH) {}
-                if (dados.indicadoPor) { await creditarBonusMarcoIndicacao(dados.indicadoPor, dados.pontos || 0, novos); }
+                if (!apiRes || !apiRes.ok) {
+                  throw new Error((apiRes && apiRes.erro) || 'Falha ao creditar');
+                }
+                if (apiRes.jaFeito) {
+                  alert(apiRes.msg || 'Já recebeu pontos deste anúncio há pouco.');
+                  fecharAnuncioTarefa();
+                  return;
+                }
+                var novos = apiRes.pontos != null ? apiRes.pontos : 0;
+                var pts = ptsHint;
                 localStorage.setItem('pontosUtilizador', String(novos));
-                try { if (typeof DM_aposPontosInfluencer === 'function') await DM_aposPontosInfluencer(db, email, novos, encontrado.ref, dados); } catch(eInf){}
-                alert('Ganhou +' + pts + ' pontos! Total: ' + novos);
+                alert('Ganhou pontos! Total: ' + novos);
                 fecharAnuncioTarefa();
             } catch (e) {
                 alert('Erro ao creditar pontos: ' + (e.message || e));
@@ -1544,5 +1559,6 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
 
 <script>window.__DM_PRESENCA__ = { pagina: 'tarefas', jogando: null };</script>
 <script src="presenca.js?v=1"></script>
+<script src="creditar-pontos-client.js?v=2"></script>
 </body>
 </html>
