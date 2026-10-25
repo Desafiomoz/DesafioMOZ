@@ -254,24 +254,21 @@ async function fsDelete(token, projectId, path) {
   return true;
 }
 
-async function fsList(token, projectId, collection, pageSize = 300, maxDocs = 5000) {
-  const docs = [];
-  let pageToken = null;
-  let guard = 0;
-  while (guard++ < 50 && docs.length < maxDocs) {
-    let url =
-      `${fsBase(projectId)}/${collection}?pageSize=` +
-      encodeURIComponent(String(Math.min(pageSize, 300)));
-    if (pageToken) url += '&pageToken=' + encodeURIComponent(pageToken);
-    const r = await fetch(url, { headers: { Authorization: 'Bearer ' + token } });
-    if (!r.ok) throw new Error('FS LIST ' + r.status + ' ' + (await r.text()));
-    const data = await r.json();
-    const batch = data.documents || [];
-    docs.push(...batch);
-    pageToken = data.nextPageToken || null;
-    if (!pageToken || batch.length === 0) break;
-  }
-  return { documents: docs };
+async function fsList(token, projectId, collection, pageSize = 50, pageToken = null) {
+  const size = Math.min(Math.max(1, Number(pageSize) || 50), 50);
+  let url =
+    `${fsBase(projectId)}/${collection}?pageSize=` +
+    encodeURIComponent(String(size));
+  if (pageToken) url += '&pageToken=' + encodeURIComponent(pageToken);
+  const r = await fetch(url, { headers: { Authorization: 'Bearer ' + token } });
+  if (!r.ok) throw new Error('FS LIST ' + r.status + ' ' + (await r.text()));
+  const data = await r.json();
+  const docs = data.documents || [];
+  // segurança: no máximo 50
+  return {
+    documents: docs.slice(0, 50),
+    nextPageToken: data.nextPageToken || null,
+  };
 }
 
 async function fsQuery(token, projectId, collection, constraints, limit, orderBy) {
@@ -314,7 +311,7 @@ async function fsQuery(token, projectId, collection, constraints, limit, orderBy
     ];
   }
 
-  if (limit) structuredQuery.limit = Math.min(Number(limit) || 500, 2000);
+  if (limit) structuredQuery.limit = Math.min(Math.max(1, Number(limit) || 50), 50);
 
   const r = await fetch(url, {
     method: 'POST',
@@ -494,30 +491,124 @@ export async function onRequest(context) {
       return json({ ok: true, id: client && client.id, doc: client });
     }
 
-    if (op === 'query' || op === 'list') {
+    if (op === 'count') {
+      const collection = String(body.collection || 'usuarios').replace(/[^a-zA-Z0-9_-]/g, '');
+      if (!collection) return json({ ok: false, erro: 'collection inválida' }, 400);
+
+      let total = 0;
+      let method = 'aggregation';
+
+      // 1) Tenta agregação (barata)
+      try {
+        const url =
+          'https://firestore.googleapis.com/v1/projects/' +
+          projectId +
+          '/databases/(default)/documents:runAggregationQuery';
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: {
+            Authorization: 'Bearer ' + token,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            structuredAggregationQuery: {
+              structuredQuery: { from: [{ collectionId: collection }] },
+              aggregations: [{ alias: 'total', count: {} }],
+            },
+          }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+          const rows = Array.isArray(data) ? data : [data];
+          for (const row of rows) {
+            const agg =
+              (row && row.result && row.result.aggregateFields) ||
+              (row && row.aggregateFields) ||
+              {};
+            const t = agg.total || {};
+            if (t.integerValue != null) total = parseInt(String(t.integerValue), 10) || 0;
+            else if (t.doubleValue != null) total = Math.round(Number(t.doubleValue)) || 0;
+          }
+        } else {
+          method = 'list';
+        }
+      } catch (eAgg) {
+        method = 'list';
+      }
+
+      // 2) Fallback: conta página a página (só IDs, 50 de cada vez) se agregação falhar ou der 0 suspeito
+      if (method === 'list' || (total === 0 && body.forceList)) {
+        method = 'list';
+        total = 0;
+        let pageToken = null;
+        let guard = 0;
+        while (guard++ < 200) {
+          const listed = await fsList(token, projectId, collection, 50, pageToken);
+          const batch = listed.documents || [];
+          total += batch.length;
+          pageToken = listed.nextPageToken || null;
+          if (!pageToken || batch.length === 0) break;
+        }
+      }
+
+      // Grava em sistema/contadores
+      try {
+        await fsPatch(
+          token,
+          projectId,
+          'sistema/contadores',
+          {
+            totalUsuarios: toFsValue(total),
+            actualizadoEm: toFsValue(new Date().toISOString()),
+          },
+          ['totalUsuarios', 'actualizadoEm']
+        );
+      } catch (e2) {
+        try {
+          await fsCreate(token, projectId, 'sistema', 'contadores', {
+            totalUsuarios: toFsValue(total),
+            actualizadoEm: toFsValue(new Date().toISOString()),
+          });
+        } catch (e3) {}
+      }
+
+      return json({ ok: true, total: total, collection: collection, method: method });
+    }
+
+    if (op === 'queryif (op === 'query' || op === 'list') {
       const collection = String(body.collection || '').replace(/[^a-zA-Z0-9_-]/g, '');
       if (!collection) return json({ ok: false, erro: 'collection inválida' }, 400);
+      const limReq = Math.min(Math.max(1, Number(body.limit) || 50), 50);
       let docs;
-      if (op === 'list' || !body.constraints || !body.constraints.length) {
+      let nextPageToken = null;
+
+      // Lista simples (sem where) → pageToken para paginação exacta de 50
+      if (
+        op === 'list' ||
+        !body.constraints ||
+        !body.constraints.length
+      ) {
         const listed = await fsList(
           token,
           projectId,
           collection,
-          300,
-          Math.min(Number(body.limit) || 5000, 10000)
+          limReq,
+          body.pageToken || body.startAfter || null
         );
-        docs = (listed.documents || []).map(docToClient);
+        docs = (listed.documents || []).map(docToClient).slice(0, 50);
+        nextPageToken = listed.nextPageToken || null;
       } else {
         docs = await fsQuery(
           token,
           projectId,
           collection,
           body.constraints,
-          body.limit,
+          limReq,
           body.orderBy
         );
+        docs = (docs || []).slice(0, 50);
       }
-      return json({ ok: true, docs });
+      return json({ ok: true, docs: docs, nextPageToken: nextPageToken });
     }
 
     return json({ ok: false, erro: 'op desconhecida: ' + op }, 400);

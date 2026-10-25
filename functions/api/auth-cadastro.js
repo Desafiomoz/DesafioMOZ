@@ -657,6 +657,31 @@ export async function onRequest(context) {
     for (const k of Object.keys(dadosNovo)) fields[k] = toFsValue(dadosNovo[k]);
     await fsAdd(token, projectId, 'usuarios', fields);
 
+    try {
+      const cDoc = await fsGet(token, projectId, 'sistema/contadores');
+      if (cDoc && cDoc.fields) {
+        const cd = docToData(cDoc);
+        const total = (Number(cd.totalUsuarios) || 0) + 1;
+        await fsPatch(token, projectId, 'sistema/contadores', {
+          totalUsuarios: toFsValue(total),
+          actualizadoEm: toFsValue(agora),
+        }, ['totalUsuarios', 'actualizadoEm']);
+      } else {
+        const url = 'https://firestore.googleapis.com/v1/projects/' + projectId + '/databases/(default)/documents/sistema?documentId=contadores';
+        await fetch(url, {
+          method: 'POST',
+          headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            fields: {
+              totalUsuarios: toFsValue(1),
+              actualizadoEm: toFsValue(agora),
+            },
+          }),
+        });
+      }
+    } catch (eCnt) { console.error('contador', eCnt); }
+
+
     // credita convidador
     if (refFinal && inviterUser) {
       try {

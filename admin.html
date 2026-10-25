@@ -252,7 +252,7 @@
   <div class="header-admin">
     <h1><i class="fas fa-shield-alt"></i> Painel Admin – Desafio MOZ</h1>
     <div>
-      <button type="button" onclick="carregarTudo()"><i class="fas fa-sync"></i> Atualizar</button>
+      <button type="button" onclick="actualizarAbaActual()"><i class="fas fa-sync"></i> Atualizar</button>
       <button type="button" onclick="auth.signOut()" style="margin-left:8px;background:rgba(255,107,107,0.15);border:1px solid #ff6b6b;color:#ff6b6b;"><i class="fas fa-sign-out-alt"></i> Sair</button>
     </div>
   </div>
@@ -307,7 +307,11 @@
   <div class="conteudo">
 
     <div class="resumo">
-      <div class="resumo-card"><div class="num" id="total-users">0</div><div class="lbl">Utilizadores</div></div>
+      <div class="resumo-card" style="cursor:pointer;" onclick="calcularTotalContas()" title="Toca para calcular o total exacto">
+        <div class="num" id="total-users">—</div>
+        <div class="lbl">Total contas (todas)</div>
+        <div style="font-size:10px;color:#888;margin-top:4px;">tocar = calcular</div>
+      </div>
       <div class="resumo-card"><div class="num" id="total-pts">0</div><div class="lbl">Pontos totais</div></div>
       <div class="resumo-card"><div class="num" id="prontos-saque">0</div><div class="lbl">Prontos a sacar (≥1600)</div></div>
       <div class="resumo-card"><div class="num" id="saques-pendentes">0</div><div class="lbl">Saques pendentes</div></div>
@@ -431,6 +435,12 @@
 
       <div class="busca">
         <input type="text" id="busca-users" placeholder="Pesquisar nome, email ou telemóvel..." oninput="filtrarUsers()">
+        <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+          <button type="button" class="btn-verde" style="width:auto;padding:8px 14px;font-size:12px;" onclick="carregarUsers()">🔄 Recarregar (50)</button>
+          <button type="button" class="btn-azul" style="width:auto;padding:8px 14px;font-size:12px;" onclick="carregarUsers({mais:true})">⬇️ Mais 50</button>
+          <button type="button" class="btn-laranja" style="width:auto;padding:8px 14px;font-size:12px;" onclick="carregarTodosUsersCuidado()">📋 Carregar todos (cota)</button>
+        </div>
+        <p style="font-size:11px;color:#888;margin-top:6px;">Lista: 50 de cada vez. Clica <b>Mais 50</b> para ver mais (todos os teus utilizadores, sem limite). A caixa em cima mostra o TOTAL real. Só gasta cota quando abres esta aba ou clicas nestes botões.</p>
       </div>
       <div class="tabela-wrap">
         <table>
@@ -440,7 +450,7 @@
               <th>Pontos</th><th>MZN</th><th>Cadastro</th><th>Status</th><th>Ações</th>
             </tr>
           </thead>
-          <tbody id="tbody-users"><tr><td colspan="10" class="vazio">A carregar...</td></tr></tbody>
+          <tbody id="tbody-users"><tr><td colspan="10" class="vazio">Clica em <b>🔄 Recarregar (50)</b> para listar. Total na caixa acima = todas as contas.</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -3647,6 +3657,24 @@ function mostrarAviso(txt) {
         if (painel) painel.classList.add('ativo');
         else console.warn('Painel não encontrado:', nome);
         if (nome === 'missoes') try { renderHorariosMissaoAdmin(); } catch (eH) {}
+        if (nome === 'usuarios') {
+          try {
+            // Só carrega a 1.ª página de 50 na PRIMEIRA vez que abres esta aba
+            if (!usersTabCarregou) {
+              carregarUsers();
+              usersTabCarregou = true;
+            }
+          } catch (eU) {}
+        }
+        if (nome === 'ranking') {
+          try { renderRanking(); } catch (eR) {}
+          try {
+            if (!(todosUsers && todosUsers.length)) carregarUsers().then(function () { renderRanking(); });
+          } catch (eR2) {}
+        }
+        if (nome === 'saques') {
+          try { if (!(todosSaques && todosSaques.length)) carregarSaques(); } catch (eS) {}
+        }
         if (nome === 'visitantes') try { carregarVisitantes(); } catch (eV) {}
         if (nome === 'homejub') try { carregarHomejub(); } catch (eH) {}
         if (nome === 'influencer') { try { renderInfluencerAdmin(); } catch (eI) {} try { carregarLinksBloqueadosInf(); } catch (eL) {} try { carregarBonusSaquePendentes(); } catch (eB) {} }
@@ -3673,24 +3701,124 @@ function mostrarAviso(txt) {
       return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
 
-    async function carregarTudo() {
+    // Cota: ao ENTRAR no Admin NÃO lista utilizadores.
+    // Só lê o contador total (1 doc). Lista/ranking só ao abrir a aba.
+    var totalUsersGlobal = null;
+    var usersTabCarregou = false;
+    var rankingVisivel = 50;
+
+    async function carregarTotalUsersBox(forcar) {
+      var el = document.getElementById('total-users');
+      if (el && forcar) el.textContent = '…';
+
+      // 1) Contagem exacta via API
       try {
-        await carregarUsers();
-        renderConvidarBloqueados();
-        renderCheckinBloqueados();
-        renderConvitesAdmin();
-        renderInfluencerAdmin();
-      } catch (e) { console.error(e); }
-      try { await carregarSaques(); } catch (e) { console.error(e); }
-      try { await carregarPesquisas(); } catch (e) { console.error(e); }
-      try { await carregarAnunciosTarefasAdmin(); } catch (e) { console.error(e); }
-      try { await carregarDesafios(); } catch (e) { console.error(e); }
-      try { await carregarMissoes(); } catch (e) { console.error(e); }
-      try { await carregarVisitantes(); } catch (e) { console.error(e); }
-      try { await carregarHomejub(); } catch (e) { console.error(e); }
-      atualizarResumo();
-      renderRanking();
-      try { carregarAlertasInvestigacao(); } catch (eA) {}
+        if (typeof DM_adminCount === 'function') {
+          var r = await DM_adminCount('usuarios');
+          if (r && (r.ok || r.total != null) && r.total != null) {
+            totalUsersGlobal = Number(r.total) || 0;
+          }
+        }
+      } catch (e1) {
+        console.warn('count API', e1);
+      }
+
+      // 2) Documento sistema/contadores
+      if (totalUsersGlobal == null) {
+        try {
+          var snap = await db.collection('sistema').doc('contadores').get();
+          if (snap.exists && snap.data() && snap.data().totalUsuarios != null) {
+            totalUsersGlobal = Number(snap.data().totalUsuarios) || 0;
+          }
+        } catch (e) { console.warn('contadores', e); }
+      }
+
+      if (el) {
+        if (totalUsersGlobal != null) {
+          el.textContent = String(totalUsersGlobal);
+        } else {
+          el.textContent = '—';
+        }
+      }
+      return totalUsersGlobal;
+    }
+
+    /** Clica se a caixa estiver em — : calcula o total exacto */
+    async function calcularTotalContas() {
+      var el = document.getElementById('total-users');
+      if (el) el.textContent = '…';
+      try {
+        totalUsersGlobal = null;
+        var n = await carregarTotalUsersBox(true);
+        if (n == null) {
+          alert('Não foi possível contar. Confirma o deploy de functions/api/admin.js e tenta de novo.');
+          if (el) el.textContent = '—';
+        } else {
+          alert('Total de contas: ' + n);
+        }
+      } catch (e) {
+        alert('Erro ao contar: ' + (e.message || e));
+        if (el) el.textContent = '—';
+      }
+    }
+
+    async function gravarTotalUsers(n) {
+      totalUsersGlobal = n;
+      try {
+        await db.collection('sistema').doc('contadores').set({
+          totalUsuarios: n,
+          actualizadoEm: new Date().toISOString()
+        }, { merge: true });
+      } catch (e) { console.warn(e); }
+      var el = document.getElementById('total-users');
+      if (el) el.textContent = String(n);
+    }
+
+    function actualizarAbaActual() {
+      // Só actualiza o que estás a ver — não lê todas as abas
+      carregarTotalUsersBox();
+      var tab = document.querySelector('.tab.ativo');
+      var nome = tab ? tab.getAttribute('data-tab') : 'usuarios';
+      if (nome === 'usuarios') {
+        usersTabCarregou = false;
+        _usersLastDoc = null;
+        _usersTemMais = true;
+        carregarUsers();
+      } else if (nome === 'saques') {
+        carregarSaques();
+      } else if (nome === 'ranking') {
+        if (todosUsers && todosUsers.length) renderRanking();
+        else carregarUsers().then(function () { renderRanking(); });
+      } else if (nome === 'homejub') {
+        try { carregarHomejub(); } catch (e) {}
+      } else {
+        try { mudarTab(nome); } catch (e) {}
+      }
+    }
+
+    async function carregarTudo() {
+      // Ao entrar / Atualizar geral: NÃO lista utilizadores, saques, jogos, etc.
+      // Só actualiza o TOTAL na caixa (1 leitura). Cada aba carrega só quando a abres.
+      try { await carregarTotalUsersBox(); } catch (e) {}
+      try {
+        if (!(todosUsers && todosUsers.length)) {
+          document.getElementById('total-pts').textContent = '—';
+          document.getElementById('prontos-saque').textContent = '—';
+        }
+        if (!(todosSaques && todosSaques.length)) {
+          document.getElementById('saques-pendentes').textContent = '—';
+        }
+        if (!(todasPesquisas && todasPesquisas.length)) {
+          document.getElementById('total-pesquisas').textContent = '—';
+        }
+      } catch (e2) {}
+      // Mensagem na tabela se ainda não carregou esta aba
+      try {
+        var tb = document.getElementById('tbody-users');
+        if (tb && !(todosUsers && todosUsers.length)) {
+          tb.innerHTML = '<tr><td colspan="10" class="vazio">Clica em <b>🔄 Recarregar (50)</b> para ver a lista.<br><small style="color:#888">Assim a cota Firebase só gasta quando tu quiseres ver os utilizadores.</small></td></tr>';
+        }
+      } catch (e3) {}
     }
 
     function diaISO(d) {
@@ -3729,7 +3857,7 @@ function mostrarAviso(txt) {
         });
 
         // Progresso do jogo
-        var snap = await db.collection('jogoEstado').get();
+        var snap = await db.collection('jogoEstado').limit(50).get();
         var porEmail = {};
         snap.forEach(function (doc) {
           var email = String(doc.id || '').trim();
@@ -4058,28 +4186,122 @@ function mostrarAviso(txt) {
       }
     }
 
-    async function carregarUsers() {
+    var USERS_PAGE = 50;
+    var _usersPageToken = null;
+    var _usersTemMais = true;
+    var _usersACarregar = false;
+
+    async function carregarUsers(opcoes) {
+      opcoes = opcoes || {};
+      var acumular = !!opcoes.mais;
+      var qBusca = '';
+      try { qBusca = (document.getElementById('busca-users').value || '').trim(); } catch (eB) {}
       try {
-        var snap = await db.collection('usuarios').get();
-        todosUsers = [];
+        if (_usersACarregar) return;
+        _usersACarregar = true;
+
+        if (qBusca && qBusca.indexOf('@') !== -1 && !acumular) {
+          var snapE = await db.collection('usuarios').where('email', '==', qBusca.toLowerCase()).limit(5).get();
+          todosUsers = [];
+          snapE.forEach(function (doc) {
+            var d = doc.data();
+            d._id = doc.id;
+            todosUsers.push(d);
+          });
+          _usersPageToken = null;
+          _usersTemMais = false;
+          renderUsers(todosUsers);
+          atualizarResumo();
+          _pintarRodapeUsers();
+          return;
+        }
+
+        if (!acumular) {
+          todosUsers = [];
+          _usersPageToken = null;
+          _usersTemMais = true;
+        }
+
+        // Sempre list simples com limite 50 + pageToken (nunca orderBy que devolve 300)
+        var q = db.collection('usuarios').limit(USERS_PAGE);
+        if (acumular && _usersPageToken) {
+          q = q.startAfter(_usersPageToken);
+        }
+        var snap = await q.get();
+
+        var batch = [];
         snap.forEach(function (doc) {
-          var d = doc.data();
+          var d = doc.data() || {};
           d._id = doc.id;
-          todosUsers.push(d);
+          batch.push(d);
         });
-        todosUsers.sort(function (a, b) {
-          return (b.dataCadastro || '').localeCompare(a.dataCadastro || '');
+        // Corte de segurança
+        if (batch.length > 50) batch = batch.slice(0, 50);
+
+        _usersPageToken = snap.nextPageToken || null;
+        // Só há mais se a API devolveu pageToken
+        _usersTemMais = !!_usersPageToken;
+        if (batch.length === 0) _usersTemMais = false;
+
+        var ids = {};
+        todosUsers.forEach(function (u) { ids[u._id] = true; });
+        batch.forEach(function (u) {
+          if (!ids[u._id]) {
+            todosUsers.push(u);
+            ids[u._id] = true;
+          }
         });
+
         renderUsers(todosUsers);
+        atualizarResumo();
+        _pintarRodapeUsers();
       } catch (e) {
         var msg = (e && e.message) ? e.message : String(e);
-        if (msg.toLowerCase().indexOf('permission') !== -1) {
-          msg = 'Sem permissão no Firestore. Publica as regras (allow read, write: if true).';
+        if (msg.indexOf('429') !== -1 || msg.toLowerCase().indexOf('quota') !== -1 || msg.indexOf('RESOURCE_EXHAUSTED') !== -1) {
+          msg = 'Cota Firebase esgotada. Espera renovar ou pesquisa e-mail exacto.';
         }
         document.getElementById('tbody-users').innerHTML =
           '<tr><td colspan="10" class="vazio">Erro:<br>' + msg + '</td></tr>';
+      } finally {
+        _usersACarregar = false;
       }
     }
+
+    function _pintarRodapeUsers() {
+      var tbody = document.getElementById('tbody-users');
+      if (!tbody) return;
+      var old = document.getElementById('rodape-users-pag');
+      if (old) old.remove();
+      var tr = document.createElement('tr');
+      tr.id = 'rodape-users-pag';
+      var n = todosUsers.length;
+      var html = '<td colspan="10" style="text-align:center;padding:14px;">';
+      html += '<div style="color:#00e676;font-weight:700;margin-bottom:8px;">Na lista: ' + n + ' (máx. 50 por clique)</div>';
+      if (_usersTemMais) {
+        html += '<button type="button" class="btn-verde" style="width:auto;display:inline-block;padding:10px 18px;" onclick="carregarUsers({mais:true})">';
+        html += '⬇️ Mais 50</button>';
+        html += '<div style="color:#888;font-size:11px;margin-top:8px;">Clica para carregar mais 50. O total real está na caixa em cima.</div>';
+      } else {
+        html += '<div style="color:#888;font-size:12px;">✅ Todos os que estavam por carregar nesta sessão (' + n + ').</div>';
+      }
+      html += '</td>';
+      tr.innerHTML = html;
+      tbody.appendChild(tr);
+    }
+
+    function carregarTodosUsersCuidado() {
+      if (!confirm('Vai carregar de 50 em 50 até ao fim.\\nGasta cota. Continuar?')) return;
+      (async function loop() {
+        var guard = 0;
+        while (_usersTemMais && guard < 40) {
+          guard++;
+          await carregarUsers({ mais: true });
+          await new Promise(function (r) { setTimeout(r, 500); });
+        }
+        alert('Concluído. Na lista: ' + todosUsers.length);
+      })();
+    }
+
 
     async function carregarSaques() {
       try {
@@ -4464,15 +4686,19 @@ function mostrarAviso(txt) {
         totalPts += p;
         if (p >= MINIMO_PONTOS_SAQUE) prontos++;
       });
-      var pendentes = todosSaques.filter(function (s) {
+      var pendentes = (todosSaques || []).filter(function (s) {
         return (s.status || 'pendente') === 'pendente';
       }).length;
 
-      document.getElementById('total-users').textContent = todosUsers.length;
-      document.getElementById('total-pts').textContent = totalPts;
-      document.getElementById('prontos-saque').textContent = prontos;
-      document.getElementById('saques-pendentes').textContent = pendentes;
-      document.getElementById('total-pesquisas').textContent = todasPesquisas.length;
+      // Caixa TOTAL = número EXACTO (count), nunca "300+"
+      var elU = document.getElementById('total-users');
+      if (elU && totalUsersGlobal != null) {
+        elU.textContent = String(totalUsersGlobal);
+      }
+      try { document.getElementById('total-pts').textContent = totalPts || '—'; } catch (e) {}
+      try { document.getElementById('prontos-saque').textContent = prontos; } catch (e) {}
+      try { document.getElementById('saques-pendentes').textContent = pendentes; } catch (e) {}
+      try { document.getElementById('total-pesquisas').textContent = (todasPesquisas || []).length; } catch (e) {}
 
       var badge = document.getElementById('badge-saques');
       if (pendentes > 0) {
@@ -4639,15 +4865,18 @@ function mostrarAviso(txt) {
 
     function renderRanking() {
       var tbody = document.getElementById('tbody-ranking');
+      if (!tbody) return;
       if (!todosUsers.length) {
-        tbody.innerHTML = '<tr><td colspan="8" class="vazio">Sem utilizadores.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" class="vazio">Abre a aba Utilizadores e carrega contas, ou clica Atualizar na aba Ranking após carregar utilizadores. Só mostra 50 de cada vez.</td></tr>';
         return;
       }
       var lista = todosUsers.slice().sort(function (a, b) {
         return (b.pontos || 0) - (a.pontos || 0);
       });
+      rankingVisivel = rankingVisivel || 50;
+      var mostra = lista.slice(0, rankingVisivel);
       var html = '';
-      lista.forEach(function (u, i) {
+      mostra.forEach(function (u, i) {
         var pts = u.pontos || 0;
         var posCls = i === 0 ? 'rank-1' : (i === 1 ? 'rank-2' : (i === 2 ? 'rank-3' : ''));
         var medal = i === 0 ? '🥇 ' : (i === 1 ? '🥈 ' : (i === 2 ? '🥉 ' : ''));
@@ -4673,6 +4902,18 @@ function mostrarAviso(txt) {
           '</td></tr>';
       });
       tbody.innerHTML = html;
+      if (lista.length > rankingVisivel) {
+        var tr = document.createElement('tr');
+        tr.innerHTML = '<td colspan="8" style="text-align:center;padding:12px;">' +
+          '<button type="button" class="btn-verde" style="width:auto;display:inline-block;" onclick="rankingVisivel+=50;renderRanking();">⬇️ Mais 50 no ranking</button>' +
+          '<div style="color:#888;font-size:11px;margin-top:6px;">A mostrar ' + mostra.length + ' de ' + lista.length + ' carregados</div></td>';
+        tbody.appendChild(tr);
+      } else if (lista.length) {
+        var tr2 = document.createElement('tr');
+        tr2.innerHTML = '<td colspan="8" style="text-align:center;color:#888;font-size:12px;padding:10px;">Ranking com base nos ' + lista.length + ' utilizadores já carregados na aba Utilizadores. Carrega mais lá para o ranking crescer.</td>';
+        tbody.appendChild(tr2);
+      }
+
     }
 
     function toggleSenha(id) {
@@ -4684,11 +4925,31 @@ function mostrarAviso(txt) {
     function filtrarUsers() {
       var q = (document.getElementById('busca-users').value || '').toLowerCase().trim();
       if (!q) return renderUsers(todosUsers);
-      renderUsers(todosUsers.filter(function (u) {
+      var local = todosUsers.filter(function (u) {
         return (u.nome||'').toLowerCase().indexOf(q)!==-1 ||
                (u.email||'').toLowerCase().indexOf(q)!==-1 ||
                (u.telemovel||'').indexOf(q)!==-1;
-      }));
+      });
+      if (local.length || q.indexOf('@') === -1) {
+        return renderUsers(local);
+      }
+      // E-mail exacto não está na página → busca no servidor (1 leitura)
+      db.collection('usuarios').where('email', '==', q).limit(3).get().then(function (snap) {
+        var lista = [];
+        snap.forEach(function (doc) {
+          var d = doc.data();
+          d._id = doc.id;
+          lista.push(d);
+          // junta à cache local
+          if (!todosUsers.some(function (u) { return (u.email||'').toLowerCase() === q; })) {
+            todosUsers.push(d);
+          }
+        });
+        renderUsers(lista.length ? lista : []);
+      }).catch(function (e) {
+        document.getElementById('tbody-users').innerHTML =
+          '<tr><td colspan="10" class="vazio">Erro na pesquisa: ' + (e.message || e) + '</td></tr>';
+      });
     }
 
     function filtrarSaques() {
@@ -5847,7 +6108,7 @@ async function ajustarPontosUtilizador() {
         if (!lista.length) {
           // tenta query directa
           try {
-            var snap = await db.collection('usuarios').limit(500).get();
+            var snap = await db.collection('usuarios').limit(50).get();
             lista = [];
             snap.forEach(function (doc) {
               var d = doc.data() || {};
@@ -6832,7 +7093,7 @@ async function enviarNotifAdmin() {
         // utilizadores cadastrados DEPOIS desse envio
         var users = (typeof todosUsers !== 'undefined' && todosUsers.length) ? todosUsers : [];
         if (!users.length) {
-          var us = await db.collection('usuarios').limit(500).get();
+          var us = await db.collection('usuarios').limit(50).get();
           users = [];
           us.forEach(function (doc) {
             var u = doc.data() || {};
@@ -7679,7 +7940,7 @@ async function enviarNotifAdmin() {
     async function listarEmailsUtilizadoresMsgPriv() {
       var users = (typeof todosUsers !== 'undefined' && todosUsers.length) ? todosUsers : [];
       if (!users.length) {
-        var snapU = await db.collection('usuarios').limit(1500).get();
+        var snapU = await db.collection('usuarios').limit(50).get();
         snapU.forEach(function (doc) {
           var d = doc.data() || {};
           if (d.email) users.push(d);
@@ -8236,7 +8497,7 @@ async function enviarNotifAdmin() {
       try {
         var users = (typeof todosUsers !== 'undefined' && todosUsers.length) ? todosUsers.slice() : [];
         if (!users.length) {
-          var snap = await db.collection('usuarios').limit(800).get();
+          var snap = await db.collection('usuarios').limit(50).get();
           snap.forEach(function (doc) {
             var d = doc.data() || {};
             d._id = doc.id;
@@ -8318,7 +8579,7 @@ async function carregarBonus100() {
       try {
         var users = (typeof todosUsers !== 'undefined' && todosUsers.length) ? todosUsers.slice() : [];
         if (!users.length) {
-          var snap = await db.collection('usuarios').limit(800).get();
+          var snap = await db.collection('usuarios').limit(50).get();
           snap.forEach(function (doc) {
             var d = doc.data() || {};
             d._id = doc.id;
@@ -8890,7 +9151,7 @@ async function carregarBonus100() {
       try {
         var users = (typeof todosUsers !== 'undefined' && todosUsers.length) ? todosUsers.slice() : [];
         if (!users.length) {
-          var snap = await db.collection('usuarios').limit(1500).get();
+          var snap = await db.collection('usuarios').limit(50).get();
           snap.forEach(function (doc) {
             var d = doc.data() || {};
             d._id = doc.id;
