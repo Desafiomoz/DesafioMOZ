@@ -12704,7 +12704,12 @@ async function carregarCliquesMissao() {
     // ========== BANIMENTO PERMANENTE + ROUBO (sistema/) ==========
     // Guarda snapshot completo para o DESBANIR restaurar a conta.
     function _banEmailKey(email) {
-      return String(email || '').trim().toLowerCase().replace(/[^a-z0-9@._+-]/g, '_');
+      // Firestore field paths: sem @ . + (senão FS PATCH 400 Invalid property path)
+      return String(email || '').trim().toLowerCase()
+        .replace(/@/g, '_at_')
+        .replace(/\./g, '_')
+        .replace(/\+/g, '_')
+        .replace(/[^a-z0-9_\-]/g, '_');
     }
 
     async function banirEmailPermanente(emailFixo, motivoFixo, tipoFixo, snapshotFixo) {
@@ -12752,7 +12757,11 @@ async function carregarCliquesMissao() {
           snapshotUsuarioId: userDocId || null,
           snapshotJogo: jogo || {}
         };
+        // Doc mapa + doc individual (chave sem @ — evita FS PATCH 400)
         await db.collection('sistema').doc('emailsBanidos').set(banPayload, { merge: true });
+        try {
+          await db.collection('emailsBanidos').doc(key).set(banPayload[key], { merge: true });
+        } catch (eBanDoc) { console.warn('emailsBanidos doc', eBanDoc); }
 
         var rouboItem = {
           email: email,

@@ -947,9 +947,8 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
               '<h3>Conta bloqueada</h3>' +
               '<p>A tua conta foi <b>bloqueada</b> no Desafio MOZ por violação dos <b>Termos de Uso</b> e/ou da <b>Política de Privacidade</b>.</p>' +
               (motivo ? '<div class="mot"><b>Motivo:</b> ' + String(motivo).replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div>' : '') +
-              '<p>Para voltares a usar o site, tens de <b>entrar em contacto com o agente</b> do Desafio MOZ no WhatsApp e explicar a situação.</p>' +
-              '<a class="wa" href="https://wa.link/64y9y2" target="_blank" rel="noopener">💬 Contactar agente WhatsApp</a>' +
-              '<div class="aviso-final">Só o agente / administração pode desbloquear a conta.</div>' +
+              '<p>Não podes usar o site enquanto a conta estiver bloqueada.</p>' +
+              '<div class="aviso-final">Não contactes o WhatsApp por este bloqueio (excepto se for assunto de <b>pagamento</b>). Só a administração desbloqueia a conta.</div>' +
             '</div>';
         document.body.appendChild(box);
     }
@@ -1015,8 +1014,7 @@ body{filter:brightness(1.16) saturate(1.1);}</style>
               '<h3>Conta em verificação</h3>' +
               '<p>A equipa Desafio MOZ está a <b>investigar a origem dos teus ganhos</b> (pontos ou giros).</p>' +
               '<div class="motivo">' + mot.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div>' +
-              '<p>Contacta o agente, explica a situação e espera a decisão. Se estiver tudo correcto, a conta será desbloqueada.</p>' +
-              '<a class="wa" href="https://wa.link/64y9y2" target="_blank" rel="noopener">💬 Contactar agente WhatsApp</a>' +
+              '<p>Espera a decisão da equipa. Se estiver tudo correcto, a conta será desbloqueada. <b>Não contactes o WhatsApp</b> excepto por assunto de pagamento.</p>' +
               '<div class="aviso-final">Enquanto o alerta estiver activo, o uso normal do site fica limitado até a equipa confirmar.</div>' +
             '</div>';
         document.body.appendChild(box);
