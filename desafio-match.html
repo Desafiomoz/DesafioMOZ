@@ -1403,36 +1403,52 @@ function salvarEstado(){
   try { aplicarAntiTrapacaAntesDeGuardar(); } catch(e){}
   const dados = { vidas, proximaRecarga, nivelDesbloqueado, moedasTotais, ajudasDisponiveis, jogadasExtraArmazenadas, marcosPagos, moedasInfinitas, ajudasInfinitas };
   try{ localStorage.setItem(chaveLocal(), JSON.stringify(dados)); }catch(e){}
-  // Segurança: o servidor (regras + Functions) é quem decide marcos, compras e flags infinitas.
-  // O browser só grava progresso de jogo e nunca marcosPagos nem moedasInfinitas/ajudasInfinitas.
+  // Compra já creditada pelo servidor: não sobrescrever
   if(__HOMEJUB_CREDITO_LOJA_OK__ || __HOMEJUB_SALTO_NIVEL_OK__){
-    // compra já creditada pelo servidor: não escrever por cima
     try { sincronizarBaseServidor(); } catch(e0){}
     __HOMEJUB_SALTO_NIVEL_OK__ = false; __HOMEJUB_CREDITO_LOJA_OK__ = false;
     return;
   }
-  if(emailJogador && db){
-    // Só progresso de jogo — nunca marcosPagos nem flags infinitas (só a Function)
-    const remoto = { vidas, proximaRecarga, nivelDesbloqueado, moedasTotais, ajudasDisponiveis, jogadasExtraArmazenadas };
-    const b = estadoBaseServidor;
-    var subiu = false;
-    if(b){
-      if(nivelDesbloqueado > (Number(b.nivelDesbloqueado)||1)) subiu = true;
-      if(moedasTotais > (Number(b.moedasTotais)||0)) subiu = true;
-      if(ajudasDisponiveis > (Number(b.ajudasDisponiveis)||0)) subiu = true;
-      if(jogadasExtraArmazenadas > (Number(b.jogadasExtraArmazenadas)||0)) subiu = true;
-    } else {
-      subiu = true;
-    }
-    if(subiu){
-      remoto.ultimoAvanco = firebase.firestore.FieldValue.serverTimestamp();
-    }
-    db.collection('jogoEstado').doc(emailJogador).set(remoto, { merge:true }).then(function(){
+  // Regras fechadas: gravação só via Cloudflare Function (não no browser)
+  if(emailJogador){
+    fetch('/api/homejub-salvar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: String(emailJogador).toLowerCase(),
+        vidas: vidas,
+        proximaRecarga: proximaRecarga,
+        nivelDesbloqueado: nivelDesbloqueado,
+        moedasTotais: moedasTotais,
+        ajudasDisponiveis: ajudasDisponiveis,
+        jogadasExtraArmazenadas: jogadasExtraArmazenadas
+      })
+    }).then(function(r){ return r.json().then(function(d){ return { ok: r.ok, d: d }; }); })
+    .then(function(res){
+      if(!res.ok || !res.d || !res.d.ok){
+        console.warn('Homejub salvar Function', res.d);
+        avisarFalhaDeConta();
+        return;
+      }
+      // Alinha valores com o que o servidor aceitou
       try {
+        var e = res.d.estado || {};
+        if(e.vidas != null) vidas = Number(e.vidas);
+        if(e.proximaRecarga != null) proximaRecarga = Number(e.proximaRecarga);
+        if(e.nivelDesbloqueado != null) nivelDesbloqueado = Number(e.nivelDesbloqueado);
+        if(e.moedasTotais != null) moedasTotais = Number(e.moedasTotais);
+        if(e.ajudasDisponiveis != null) ajudasDisponiveis = Number(e.ajudasDisponiveis);
+        if(e.jogadasExtraArmazenadas != null) jogadasExtraArmazenadas = Number(e.jogadasExtraArmazenadas);
         sincronizarBaseServidor();
-        __HOMEJUB_SALTO_NIVEL_OK__ = false;
-        __HOMEJUB_CREDITO_LOJA_OK__ = false;
+        localStorage.setItem(chaveLocal(), JSON.stringify({
+          vidas: vidas, proximaRecarga: proximaRecarga, nivelDesbloqueado: nivelDesbloqueado,
+          moedasTotais: moedasTotais, ajudasDisponiveis: ajudasDisponiveis,
+          jogadasExtraArmazenadas: jogadasExtraArmazenadas, marcosPagos: marcosPagos,
+          moedasInfinitas: moedasInfinitas, ajudasInfinitas: ajudasInfinitas
+        }));
       } catch(e2){}
+      __HOMEJUB_SALTO_NIVEL_OK__ = false;
+      __HOMEJUB_CREDITO_LOJA_OK__ = false;
     }).catch(function(e){
       console.warn('Homejub: falha ao guardar na conta', e);
       avisarFalhaDeConta();
@@ -2996,46 +3012,9 @@ async function verificarJogosBloqueadoHomejub(){
 function normalizarTxId(id){ return String(id || '').trim().replace(/\s+/g, '').toUpperCase(); }
 function txIdPareceValido(id){ return /^PP[A-Z0-9.\-]{5,40}$/i.test(id); }
 async function creditarItemHomejubLocal(item, email){
-  var def = CREDITO_ITEM[item];
-  if(!def || !db || !email) throw new Error('Item ou conta inválida');
-  var jogoRef = db.collection('jogoEstado').doc(email);
-  var updates = { ultimaAtualizacao: new Date().toISOString() };
-  if(def.credito){
-    Object.keys(def.credito).forEach(function(k){
-      updates[k] = firebase.firestore.FieldValue.increment(Number(def.credito[k]) || 0);
-    });
-  }
-  if(def.vidas != null){ updates.vidas = def.vidas; updates.proximaRecarga = 0; }
-  if(def.flag) updates[def.flag] = true;
-  await jogoRef.set(updates, { merge: true });
-  // Permite reflectir no cliente o crédito legítimo da compra
-  try {
-    __HOMEJUB_CREDITO_LOJA_OK__ = true;
-    if(item === 'desbloqueio10') __HOMEJUB_SALTO_NIVEL_OK__ = true;
-  } catch(eFlag){}
+  // DESACTIVADO: crédito só via /api/homejub-compra (regras Firebase fechadas)
+  throw new Error('Use a Function de compra — crédito local bloqueado');
 }
-
-const DESCRICOES_ITEM = {
-  moedas30: '30 moedas — 2 MT',
-  moedas70: '70 moedas — 4 MT',
-  ajudas20: '20 ajudas — 2 MT',
-  jogadas10: '10 jogadas extra — 2 MT (aplicadas no próximo nível)',
-  jogadasOferta20: '20 jogadas — 2 MT (continuas já este nível)',
-  bonus: 'Bónus: 6 vidas + 70 🪙 + 6 ajudas + 10 jogadas — 5 MT',
-  bonus2: 'Bónus grande: 8 vidas + 100 🪙 + 20 ajudas + 20 jogadas — 10 MT',
-  moedasInfinitas: 'Moedas infinitas — 100 MT',
-  ajudasInfinitas: 'Ajudas infinitas — 50 MT',
-  desbloqueio10: '+10 níveis desbloqueados — 15 MT',
-};
-
-let itemEmCompra = null;
-let metodoEscolhido = 'mpesa';
-let pollingCheckoutId = null;
-let pollingIntervaloId = null;
-let pollingTentativas = 0;
-let ofertaJogadasJaAplicada = false; // evita +20 duas vezes (polling duplo)
-let checkoutAProcessar = false;
-
 
 function mostrarPassoCheckout(passo){
   ['form','aguardar','sucesso','erro'].forEach(function(p){
