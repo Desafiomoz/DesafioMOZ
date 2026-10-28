@@ -575,7 +575,7 @@ export async function onRequest(context) {
       return json({ ok: true, total: total, collection: collection, method: method });
     }
 
-    if (op === 'queryif (op === 'query' || op === 'list') {
+    if (op === 'query' || op === 'list') {
       const collection = String(body.collection || '').replace(/[^a-zA-Z0-9_-]/g, '');
       if (!collection) return json({ ok: false, erro: 'collection inválida' }, 400);
       const limReq = Math.min(Math.max(1, Number(body.limit) || 50), 50);
