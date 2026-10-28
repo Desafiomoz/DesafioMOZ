@@ -215,10 +215,10 @@
       </p>
 
       <div class="wa-box">
-        <p><i class="fab fa-whatsapp" style="color:#25D366;"></i> Dúvidas ou já pagaste? Fala com o <b style="color:#fff;">agente do Desafio MOZ</b> no WhatsApp. Envia o comprovativo se precisares de ajuda.</p>
+        <p><i class="fab fa-whatsapp" style="color:#25D366;"></i> <b style="color:#fff;">Só assunto de pagamento:</b> se já transferiste na e-Mola, envia a <b>captura do comprovativo</b> ao agente no WhatsApp. Outras dúvidas sobre bloqueio <b>não</b> são atendidas no WhatsApp.</p>
         <a class="btn-wa" href="https://wa.link/64y9y2" target="_blank" rel="noopener">
           <i class="fab fa-whatsapp"></i>
-          <span>Falar com o agente<span style="display:block;font-size:11px;font-weight:600;opacity:.9;">WhatsApp · resposta rápida</span></span>
+          <span>Enviar comprovativo (pagamento)<span style="display:block;font-size:11px;font-weight:600;opacity:.9;">WhatsApp · só pagamento</span></span>
         </a>
       </div>
 
@@ -243,11 +243,7 @@
     </div>
 
     <div class="zona-fim" id="zona-fim">
-      <p id="fim-texto">Já usaste a segunda chance ou a conta está marcada para eliminação. Sem nova oportunidade. Contacta o agente só se a equipa pedir.</p>
-      <a class="btn-wa" href="https://wa.link/64y9y2" target="_blank" rel="noopener" style="margin-top:12px;">
-        <i class="fab fa-whatsapp"></i>
-        <span>Falar com o agente no WhatsApp</span>
-      </a>
+      <p id="fim-texto">Já usaste a segunda chance ou a conta está marcada para eliminação. Sem nova oportunidade. <b>Não contactes o WhatsApp</b> por este bloqueio — só a administração desbloqueia.</p>
     </div>
 
     <a class="sair" href="#" onclick="sair();return false;">Sair / trocar de conta</a>
@@ -441,7 +437,7 @@
       if (userData.contaMarcadaEliminacao === true || userData.segundaChanceRecusada === true) {
         document.getElementById('zona-fim').classList.add('show');
         document.getElementById('fim-texto').textContent =
-          'A conta está marcada para eliminação. Não há segunda chance. Se a equipa pedir, contacta o agente.';
+          'A conta está marcada para eliminação. Não há segunda chance. Não contactes o WhatsApp — só a administração desbloqueia.';
         return;
       }
 

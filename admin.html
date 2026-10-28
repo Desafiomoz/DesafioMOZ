@@ -2232,8 +2232,8 @@
         <h3><i class="fas fa-user-slash"></i> Bloquear conta — Termos e Política de Privacidade</h3>
         <p style="font-size:12px;color:#888;margin-bottom:12px;line-height:1.45;">
           Se o utilizador <strong>violar os Termos de Uso</strong> ou a <strong>Política de Privacidade</strong>,
-          bloqueia a conta. Ele deixa de usar o Desafio MOZ até contactar o agente no WhatsApp
-          (<a href="https://wa.link/64y9y2" target="_blank" style="color:#25D366;">wa.link/64y9y2</a>) e seres tu a desbloquear.
+          bloqueia a conta. Ele deixa de usar o Desafio MOZ até <b>tu</b> desbloqueares no Admin.
+          WhatsApp do agente só para <b>assunto de pagamento</b> (ID / comprovativo), não para ban ou investigação.
         </p>
         <div class="form-grid">
           <div class="form-row">
@@ -2332,7 +2332,7 @@
         <h3 style="color:#ffc107;"><i class="fas fa-exclamation-triangle"></i> Alerta — investigação de ganhos</h3>
         <p style="font-size:12px;color:#888;margin-bottom:12px;line-height:1.5;">
           Usa isto quando <b>não consegues explicar de onde vieram os pontos/giros</b> de um utilizador.
-          Enquanto o alerta estiver activo, na página de <b>Início (desafios)</b> aparece um aviso a pedir contacto com o agente.
+          Enquanto o alerta estiver activo, na página da <b>Roleta</b> aparece um aviso. O utilizador <b>não</b> deve contactar o WhatsApp — a equipa analisa e desbloqueia no Admin.
           Depois da investigação podes <b>desbloquear</b>.
         </p>
         <div class="form-grid">
@@ -3112,8 +3112,7 @@
       <div class="form-box" style="border:1px solid rgba(255,107,107,0.4);">
         <h3><i class="fas fa-ban"></i> Utilizadores bloqueados nos jogos</h3>
         <p style="font-size:12px;color:#888;margin-bottom:10px;">
-          Bloqueados não entram em Online / Homejub / Roleta. Mensagem: contactar agente
-          <a href="https://wa.link/64y9y2" target="_blank" style="color:#00e676;">WhatsApp</a>
+          Bloqueados não entram em Online / Homejub / Roleta. Mensagem no site: regularizar pagamento (se for o caso) ou esperar decisão da equipa. WhatsApp só para comprovativo de pagamento.
           com captura do pagamento. Conta pode ser apagada em 2 dias se não regularizar.
         </p>
         <div class="form-grid">
@@ -10193,7 +10192,7 @@ async function bloquearContaEmail() {
         outro: 'Abuso de confiança / violação das regras do site'
       }[tipo] || 'Violação dos Termos de Uso';
       var motivo = detalhe ? (tipoLbl + ': ' + detalhe) : tipoLbl;
-      if (!confirm('Bloquear a CONTA de ' + email + '?\n\n' + motivo + '\n\nO utilizador deixa de usar o Desafio MOZ até contactar o agente e seres tu a desbloquear.')) return;
+      if (!confirm('Bloquear a CONTA de ' + email + '?\n\n' + motivo + '\n\nO utilizador deixa de usar o Desafio MOZ até tu desbloqueares no Admin. WhatsApp só se for pagamento.')) return;
       try {
         var uref = await encontrarUserRefPorEmail(email);
         if (!uref) {
