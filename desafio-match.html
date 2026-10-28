@@ -168,7 +168,7 @@ canvas{ touch-action:none; display:block; }
   flex-direction:column; gap:14px;
   text-align:center; padding:30px;
 }
-#overlay-checkout{ z-index:70; }
+#overlay-checkout{ z-index:9999; }
 .overlay.ativo{ display:flex; }
 .overlay h2{ font-family:'Sora',sans-serif; font-size:26px; font-weight:800; }
 .overlay .resumo{ font-size:15px; color:var(--suave); }
@@ -941,7 +941,7 @@ canvas{ touch-action:none; display:block; }
       <div class="loja-tabela">
         <div class="loja-linha">
           <div class="loja-linha-info"><span class="loja-linha-moedas">20 ajudas</span><span class="loja-linha-preco">2 MT</span></div>
-          <button class="loja-btn" id="btn-mt-ajudas20" data-item="ajudas20">2 MT</button>
+          <button class="loja-btn" id="btn-mt-ajudas20" data-item="ajudas20" type="button" onclick="window.abrirCheckout&&window.abrirCheckout('ajudas20')">2 MT</button>
         </div>
         <div class="loja-linha">
           <div class="loja-linha-info"><span class="loja-linha-moedas">10 ajudas</span><span class="loja-linha-preco">5 🪙</span></div>
@@ -958,7 +958,7 @@ canvas{ touch-action:none; display:block; }
           <div class="loja-item-sub">Aplicadas no próximo nível que jogares</div>
         </div>
         <div class="loja-item-opcoes">
-          <button class="loja-btn" id="btn-mt-jogadas10" data-item="jogadas10">2 MT</button>
+          <button class="loja-btn" id="btn-mt-jogadas10" data-item="jogadas10" type="button" onclick="window.abrirCheckout&&window.abrirCheckout('jogadas10')">2 MT</button>
           <button class="loja-btn" id="btn-comprar-jogadas">20 🪙</button>
         </div>
       </div>
@@ -971,14 +971,14 @@ canvas{ touch-action:none; display:block; }
           <div class="loja-item-titulo">6 vidas + 70 🪙 + 6 ajudas + 10 jogadas</div>
           <div class="loja-item-sub">O melhor pacote — tudo junto</div>
         </div>
-        <button class="loja-btn" id="btn-mt-bonus" data-item="bonus">5 MT</button>
+        <button class="loja-btn" id="btn-mt-bonus" data-item="bonus" type="button" onclick="window.abrirCheckout&&window.abrirCheckout('bonus')">5 MT</button>
       </div>
       <div class="loja-item loja-item-bonus" style="margin-top:10px;">
         <div class="loja-item-info">
           <div class="loja-item-titulo">8 vidas + 100 🪙 + 20 ajudas + 20 jogadas</div>
           <div class="loja-item-sub">Pacote grande — o maior de todos</div>
         </div>
-        <button class="loja-btn" id="btn-mt-bonus2" data-item="bonus2">10 MT</button>
+        <button class="loja-btn" id="btn-mt-bonus2" data-item="bonus2" type="button" onclick="window.abrirCheckout&&window.abrirCheckout('bonus2')">10 MT</button>
       </div>
     </div>
 
@@ -987,15 +987,15 @@ canvas{ touch-action:none; display:block; }
       <div class="loja-tabela">
         <div class="loja-linha">
           <div class="loja-linha-info"><span class="loja-linha-moedas">Moedas infinitas</span><span class="loja-linha-preco">para sempre</span></div>
-          <button class="loja-btn" id="btn-mt-moedasinfinitas" data-item="moedasInfinitas">100 MT</button>
+          <button class="loja-btn" id="btn-mt-moedasinfinitas" data-item="moedasInfinitas" type="button" onclick="window.abrirCheckout&&window.abrirCheckout('moedasInfinitas')">100 MT</button>
         </div>
         <div class="loja-linha">
           <div class="loja-linha-info"><span class="loja-linha-moedas">Ajudas infinitas</span><span class="loja-linha-preco">para sempre</span></div>
-          <button class="loja-btn" id="btn-mt-ajudasinfinitas" data-item="ajudasInfinitas">50 MT</button>
+          <button class="loja-btn" id="btn-mt-ajudasinfinitas" data-item="ajudasInfinitas" type="button" onclick="window.abrirCheckout&&window.abrirCheckout('ajudasInfinitas')">50 MT</button>
         </div>
         <div class="loja-linha">
           <div class="loja-linha-info"><span class="loja-linha-moedas">+10 níveis</span><span class="loja-linha-preco">desbloqueio direto</span></div>
-          <button class="loja-btn" id="btn-mt-desbloqueio10" data-item="desbloqueio10">15 MT</button>
+          <button class="loja-btn" id="btn-mt-desbloqueio10" data-item="desbloqueio10" type="button" onclick="window.abrirCheckout&&window.abrirCheckout('desbloqueio10')">15 MT</button>
         </div>
       </div>
     </div>
@@ -1005,11 +1005,11 @@ canvas{ touch-action:none; display:block; }
       <div class="loja-tabela">
         <div class="loja-linha">
           <div class="loja-linha-info"><span class="loja-linha-moedas">30 🪙</span><span class="loja-linha-preco">2 MT</span></div>
-          <button class="loja-btn" id="btn-mt-moedas30" data-item="moedas30">2 MT</button>
+          <button class="loja-btn" id="btn-mt-moedas30" data-item="moedas30" type="button" onclick="window.abrirCheckout&&window.abrirCheckout('moedas30')">2 MT</button>
         </div>
         <div class="loja-linha">
           <div class="loja-linha-info"><span class="loja-linha-moedas">70 🪙</span><span class="loja-linha-preco">4 MT</span></div>
-          <button class="loja-btn" id="btn-mt-moedas70" data-item="moedas70">4 MT</button>
+          <button class="loja-btn" id="btn-mt-moedas70" data-item="moedas70" type="button" onclick="window.abrirCheckout&&window.abrirCheckout('moedas70')">4 MT</button>
         </div>
       </div>
       <div class="loja-aviso">Pagamento por e-Mola (manual). Envia o valor, copia o ID da transacção e cola no ecrã para receberes na hora.</div>
@@ -1057,7 +1057,7 @@ canvas{ touch-action:none; display:block; }
     <div class="resumo">Compra mais jogadas para continuar este nível — ou perdes 1 vida.</div>
     <div class="loja-aviso-forte" style="margin:10px 0 0;">⏱️ Se pagares com M-Pesa (2 MT), <strong>não saias deste ecrã</strong> até a compra ser confirmada — pode demorar cerca de 1 minuto.</div>
     <button class="loja-btn" id="btn-oferta-comprar-moedas" style="margin-top:10px;">10 jogadas — 20 🪙</button>
-    <button class="loja-btn" id="btn-mt-oferta-jogadas" data-item="jogadasOferta20">20 jogadas — 2 MT</button>
+    <button class="loja-btn" id="btn-mt-oferta-jogadas" data-item="jogadasOferta20" type="button" onclick="window.abrirCheckout&&window.abrirCheckout('jogadasOferta20')">20 jogadas — 2 MT</button>
     <button class="btn-voltar-mapa" id="btn-oferta-recusar" style="margin-top:6px;">Não, obrigado</button>
   </div>
 
@@ -1411,7 +1411,7 @@ function salvarEstado(){
   }
   // Regras fechadas: gravação só via Cloudflare Function (não no browser)
   if(emailJogador){
-    fetch('/api/homejub-salvar', {
+    fetch((window.location.origin || '') + '/api/homejub-salvar', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -3025,24 +3025,42 @@ function mostrarPassoCheckout(passo){
 }
 function fecharCheckout(){
   try {
-    document.getElementById('overlay-checkout').classList.remove('ativo');
+    var ov = document.getElementById('overlay-checkout');
+    if(ov){
+      ov.classList.remove('ativo');
+      ov.style.display = '';
+    }
   } catch(e){}
 }
+window.fecharCheckout = fecharCheckout;
 function abrirCheckout(item){
-  itemEmCompra = item;
-  var desc = document.getElementById('checkout-descricao');
-  if(desc) desc.textContent = DESCRICOES_ITEM[item] || item;
-  var hint = document.getElementById('checkout-email-hint');
-  if(hint){
-    hint.innerHTML = emailJogador
-      ? 'Conta: <strong style="color:#2ee6a0;">' + emailJogador + '</strong>'
-      : 'Faz login no site para comprar.';
+  try {
+    itemEmCompra = item;
+    var desc = document.getElementById('checkout-descricao');
+    if(desc) desc.textContent = (typeof DESCRICOES_ITEM !== 'undefined' && DESCRICOES_ITEM[item]) ? DESCRICOES_ITEM[item] : item;
+    var hint = document.getElementById('checkout-email-hint');
+    if(hint){
+      hint.innerHTML = emailJogador
+        ? 'Conta: <strong style="color:#2ee6a0;">' + emailJogador + '</strong>'
+        : 'Faz login no site para comprar.';
+    }
+    var tx = document.getElementById('checkout-txid');
+    if(tx) tx.value = '';
+    if(typeof mostrarPassoCheckout === 'function') mostrarPassoCheckout('form');
+    var ov = document.getElementById('overlay-checkout');
+    if(!ov){
+      alert('Erro: ecrã de pagamento não encontrado. Faz refresh da página.');
+      return;
+    }
+    ov.classList.add('ativo');
+    ov.style.display = 'flex';
+    ov.style.zIndex = '9999';
+  } catch(err) {
+    console.error('abrirCheckout', err);
+    alert('Erro ao abrir pagamento: ' + (err && err.message ? err.message : err));
   }
-  var tx = document.getElementById('checkout-txid');
-  if(tx) tx.value = '';
-  mostrarPassoCheckout('form');
-  document.getElementById('overlay-checkout').classList.add('ativo');
 }
+window.abrirCheckout = abrirCheckout;
 
 
 document.getElementById('btn-checkout-cancelar').addEventListener('click', fecharCheckout);
@@ -3091,7 +3109,7 @@ document.getElementById('btn-checkout-confirmar').addEventListener('click', asyn
   document.getElementById('checkout-status-txt').textContent = 'A validar o pagamento no servidor…';
   try{
     // Compra só via Cloudflare Function — o browser NÃO grava pontos/itens no Firebase
-    var resp = await fetch('/api/homejub-compra', {
+    var resp = await fetch((window.location.origin || '') + '/api/homejub-compra', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -3235,8 +3253,25 @@ async function aplicarCompraConfirmada(item){
 }
 
 document.querySelectorAll('[data-item]').forEach(btn=>{
-  btn.addEventListener('click', ()=>abrirCheckout(btn.dataset.item));
+  btn.addEventListener('click', function(ev){
+    ev.preventDefault();
+    ev.stopPropagation();
+    var it = btn.getAttribute('data-item') || btn.dataset.item;
+    if(it) abrirCheckout(it);
+  });
 });
+// Delegação: funciona mesmo se a lista de botões mudar
+document.addEventListener('click', function(ev){
+  var t = ev.target;
+  if(!t) return;
+  var btn = t.closest ? t.closest('[data-item]') : null;
+  if(!btn) return;
+  var it = btn.getAttribute('data-item');
+  if(it && typeof abrirCheckout === 'function'){
+    ev.preventDefault();
+    abrirCheckout(it);
+  }
+}, true);
 
 document.getElementById('btn-abrir-loja').addEventListener('click', abrirLoja);
 document.getElementById('btn-abrir-regras').addEventListener('click', function(){ abrirRegras(false); });
