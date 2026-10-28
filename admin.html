@@ -12827,11 +12827,13 @@ async function carregarCliquesMissao() {
           snapshotUsuarioId: userDocId || null,
           snapshotJogo: jogo || {}
         };
-        // Doc mapa + doc individual (chave sem @ — evita FS PATCH 400)
-        await db.collection('sistema').doc('emailsBanidos').set(banPayload, { merge: true });
+        // Só documento na coleção emailsBanidos/{chaveSegura}
+        // NÃO usar mapa em sistema/emailsBanidos (FS PATCH 400 com @ no path)
+        await db.collection('emailsBanidos').doc(key).set(banPayload[key], { merge: true });
+        // Mapa legado: tenta gravar, se falhar ignora (lista lê a coleção)
         try {
-          await db.collection('emailsBanidos').doc(key).set(banPayload[key], { merge: true });
-        } catch (eBanDoc) { console.warn('emailsBanidos doc', eBanDoc); }
+          await db.collection('sistema').doc('emailsBanidos').set(banPayload, { merge: true });
+        } catch (eMap) { console.warn('mapa emailsBanidos ignorado', eMap && eMap.message); }
 
         var rouboItem = {
           email: email,

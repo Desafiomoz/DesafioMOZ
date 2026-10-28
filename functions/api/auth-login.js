@@ -391,13 +391,27 @@ async function sha256Hex(text) {
 async function emailBanido(token, projectId, email) {
   email = String(email || '').trim().toLowerCase();
   if (!email) return null;
+  const safeKey = email
+    .replace(/@/g, '_at_')
+    .replace(/\./g, '_')
+    .replace(/\+/g, '_')
+    .replace(/[^a-z0-9_\-]/g, '_');
+  // 1) Documento emailsBanidos/{safeKey}
   try {
-    const key = email.replace(/[^a-z0-9@._+-]/g, '_');
+    const docDoc = await fsGet(token, projectId, 'emailsBanidos/' + safeKey);
+    if (docDoc && docDoc.fields) {
+      const d = docToData(docDoc);
+      if (d && (d.email || d.banidoEm)) return d.email ? d : { email, ...d };
+    }
+  } catch (e0) {}
+  // 2) Mapa sistema/emailsBanidos
+  try {
     const doc = await fsGet(token, projectId, 'sistema/emailsBanidos');
     if (doc && doc.fields) {
       const data = docToData(doc);
-      if (data[key] && typeof data[key] === 'object' && data[key].email) {
-        if (String(data[key].email).trim().toLowerCase() === email) return data[key];
+      if (data[safeKey] && typeof data[safeKey] === 'object') {
+        const d = data[safeKey];
+        if (String(d.email || '').trim().toLowerCase() === email || d.banidoEm) return d;
       }
       for (const k of Object.keys(data)) {
         const d = data[k];
@@ -405,6 +419,7 @@ async function emailBanido(token, projectId, email) {
       }
     }
   } catch (e) {}
+  // 3) Legado: doc id = email raw (encode)
   try {
     const doc2 = await fsGet(token, projectId, 'emailsBanidos/' + encodeURIComponent(email));
     if (doc2 && doc2.fields) {

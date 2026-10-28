@@ -203,6 +203,40 @@ function dataToFields(data) {
   return fields;
 }
 
+
+function safeBanKey(email) {
+  return String(email || '')
+    .trim()
+    .toLowerCase()
+    .replace(/@/g, '_at_')
+    .replace(/\./g, '_')
+    .replace(/\+/g, '_')
+    .replace(/[^a-z0-9_\-]/g, '_');
+}
+
+/** Firestore updateMask: paths com caracteres especiais precisam de backticks */
+function quoteFieldPath(f) {
+  const s = String(f || '');
+  if (/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(s)) return s;
+  return '`' + s.replace(/`/g, '\\`') + '`';
+}
+
+/** Se data tiver chaves com @ ou ., renomeia para chave segura */
+function sanitizeMapKeys(data) {
+  if (!data || typeof data !== 'object') return data;
+  const out = {};
+  for (const k of Object.keys(data)) {
+    let nk = k;
+    if (/[@.]/.test(k)) {
+      nk = safeBanKey(k);
+    } else if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(k) && k.includes('@')) {
+      nk = safeBanKey(k);
+    }
+    out[nk] = data[k];
+  }
+  return out;
+}
+
 async function fsGet(token, projectId, path) {
   const url = `${fsBase(projectId)}/${path}`;
   const r = await fetch(url, { headers: { Authorization: 'Bearer ' + token } });
@@ -214,7 +248,7 @@ async function fsGet(token, projectId, path) {
 async function fsPatch(token, projectId, path, fields, mask) {
   let url = `${fsBase(projectId)}/${path}`;
   if (mask && mask.length) {
-    url += '?' + mask.map((f) => 'updateMask.fieldPaths=' + encodeURIComponent(f)).join('&');
+    url += '?' + mask.map((f) => 'updateMask.fieldPaths=' + encodeURIComponent(quoteFieldPath(f))).join('&');
   }
   const r = await fetch(url, {
     method: 'PATCH',
@@ -435,10 +469,15 @@ export async function onRequest(context) {
       if (!path || path.includes('..')) return json({ ok: false, erro: 'path inválido' }, 400);
       const merge = !!body.merge;
       let data = body.data || {};
+      // sistema/emailsBanidos: nunca gravar chaves com @ ou .
+      if (path === 'sistema/emailsBanidos' || path.endsWith('/emailsBanidos')) {
+        data = sanitizeMapKeys(data);
+      }
       if (merge) {
         const existing = await fsGet(token, projectId, path);
         const prev = existing ? docToClient(existing).data : {};
         data = applyIncrements(prev, data);
+        if (path === 'sistema/emailsBanidos') data = sanitizeMapKeys(data);
       } else {
         data = applyIncrements({}, data);
       }
@@ -447,7 +486,6 @@ export async function onRequest(context) {
         const v = body.data[k];
         return !(v && v.__op === 'delete');
       }) : null;
-      // For full set without merge, use PATCH with all fields (creates if missing)
       await fsPatch(token, projectId, path, fields, mask);
       return json({ ok: true });
     }
