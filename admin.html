@@ -922,9 +922,13 @@
 
     <!-- RANKING -->
     <div class="painel" id="painel-ranking">
-      <p style="font-size:13px;color:#aaa;margin-bottom:14px;">
-        Classificação por pontos. Pode ocultar pesquisas/tarefas para um utilizador específico.
+      <p style="font-size:13px;color:#aaa;margin-bottom:10px;">
+        Classificação real por pontos (maior → menor). Os de 1500+ aparecem no topo. Não depende da lista da aba Utilizadores.
       </p>
+      <div style="margin-bottom:12px;">
+        <button type="button" class="btn-laranja" style="width:auto;" onclick="carregarRanking()">🔄 Atualizar ranking</button>
+        <button type="button" class="btn-azul" style="width:auto;" onclick="carregarRanking({mais:true})">⬇️ Mais 50 (seguintes por pontos)</button>
+      </div>
       <div class="tabela-wrap">
         <table>
           <thead>
@@ -3666,7 +3670,7 @@ function mostrarAviso(txt) {
           } catch (eU) {}
         }
         if (nome === 'ranking') {
-          try { renderRanking(); } catch (eR) {}
+          try { carregarRanking(); } catch (eR) {}
           try {
             if (!(todosUsers && todosUsers.length)) carregarUsers().then(function () { renderRanking(); });
           } catch (eR2) {}
@@ -3705,6 +3709,11 @@ function mostrarAviso(txt) {
     var totalUsersGlobal = null;
     var usersTabCarregou = false;
     var rankingVisivel = 50;
+    var rankingUsers = [];
+    var _rankingPageToken = null;
+    var _rankingTemMais = false;
+    var _rankingACarregar = false;
+    var _rankingLastDoc = null;
 
     async function carregarTotalUsersBox(forcar) {
       var el = document.getElementById('total-users');
@@ -3786,8 +3795,7 @@ function mostrarAviso(txt) {
       } else if (nome === 'saques') {
         carregarSaques();
       } else if (nome === 'ranking') {
-        if (todosUsers && todosUsers.length) renderRanking();
-        else carregarUsers().then(function () { renderRanking(); });
+        carregarRanking();
       } else if (nome === 'homejub') {
         try { carregarHomejub(); } catch (e) {}
       } else {
@@ -4865,18 +4873,20 @@ function mostrarAviso(txt) {
     function renderRanking() {
       var tbody = document.getElementById('tbody-ranking');
       if (!tbody) return;
-      if (!todosUsers.length) {
-        tbody.innerHTML = '<tr><td colspan="8" class="vazio">Abre a aba Utilizadores e carrega contas, ou clica Atualizar na aba Ranking após carregar utilizadores. Só mostra 50 de cada vez.</td></tr>';
+      var lista = (rankingUsers && rankingUsers.length) ? rankingUsers.slice() : [];
+      if (!lista.length) {
+        tbody.innerHTML = '<tr><td colspan="8" class="vazio">A carregar ranking por pontos… Clica em Atualizar se não aparecer.</td></tr>';
         return;
       }
-      var lista = todosUsers.slice().sort(function (a, b) {
-        return (b.pontos || 0) - (a.pontos || 0);
+      // Já vêm ordenados do servidor; reforça ordenação local
+      lista.sort(function (a, b) {
+        return (Number(b.pontos) || 0) - (Number(a.pontos) || 0);
       });
       rankingVisivel = rankingVisivel || 50;
       var mostra = lista.slice(0, rankingVisivel);
       var html = '';
       mostra.forEach(function (u, i) {
-        var pts = u.pontos || 0;
+        var pts = Number(u.pontos) || 0;
         var posCls = i === 0 ? 'rank-1' : (i === 1 ? 'rank-2' : (i === 2 ? 'rank-3' : ''));
         var medal = i === 0 ? '🥇 ' : (i === 1 ? '🥈 ' : (i === 2 ? '🥉 ' : ''));
         var ocultar = !!u.ocultarPesquisas;
@@ -4901,18 +4911,79 @@ function mostrarAviso(txt) {
           '</td></tr>';
       });
       tbody.innerHTML = html;
-      if (lista.length > rankingVisivel) {
-        var tr = document.createElement('tr');
-        tr.innerHTML = '<td colspan="8" style="text-align:center;padding:12px;">' +
-          '<button type="button" class="btn-verde" style="width:auto;display:inline-block;" onclick="rankingVisivel+=50;renderRanking();">⬇️ Mais 50 no ranking</button>' +
-          '<div style="color:#888;font-size:11px;margin-top:6px;">A mostrar ' + mostra.length + ' de ' + lista.length + ' carregados</div></td>';
-        tbody.appendChild(tr);
-      } else if (lista.length) {
-        var tr2 = document.createElement('tr');
-        tr2.innerHTML = '<td colspan="8" style="text-align:center;color:#888;font-size:12px;padding:10px;">Ranking com base nos ' + lista.length + ' utilizadores já carregados na aba Utilizadores. Carrega mais lá para o ranking crescer.</td>';
-        tbody.appendChild(tr2);
+      var tr = document.createElement('tr');
+      var rodape = '<td colspan="8" style="text-align:center;padding:12px;">';
+      rodape += '<div style="color:#00e676;font-weight:700;margin-bottom:6px;">Top por pontos · a mostrar ' + mostra.length + ' de ' + lista.length + ' carregados</div>';
+      if (_rankingTemMais || lista.length > rankingVisivel) {
+        if (lista.length > rankingVisivel) {
+          rodape += '<button type="button" class="btn-verde" style="width:auto;display:inline-block;margin:4px;" onclick="rankingVisivel+=50;renderRanking();">⬇️ Mostrar mais 50 na tabela</button>';
+        }
+        if (_rankingTemMais) {
+          rodape += '<button type="button" class="btn-azul" style="width:auto;display:inline-block;margin:4px;" onclick="carregarRanking({mais:true})">⬇️ Carregar próximos 50 (por pontos)</button>';
+        }
+        rodape += '<div style="color:#888;font-size:11px;margin-top:6px;">O ranking carrega os utilizadores com mais pontos primeiro (não depende da aba Utilizadores).</div>';
+      } else {
+        rodape += '<div style="color:#888;font-size:12px;">✅ Top completo carregado nesta sessão (' + lista.length + ').</div>';
       }
+      rodape += '</td>';
+      tr.innerHTML = rodape;
+      tbody.appendChild(tr);
+    }
 
+    async function carregarRanking(opcoes) {
+      opcoes = opcoes || {};
+      var acumular = !!opcoes.mais;
+      var tbody = document.getElementById('tbody-ranking');
+      try {
+        if (_rankingACarregar) return;
+        _rankingACarregar = true;
+        if (tbody && !acumular) {
+          tbody.innerHTML = '<tr><td colspan="8" class="vazio">A carregar top por pontos…</td></tr>';
+        }
+        if (!acumular) {
+          rankingUsers = [];
+          rankingVisivel = 50;
+          _rankingPageToken = null;
+          _rankingLastDoc = null;
+          _rankingTemMais = true;
+        }
+        // Ordenado por pontos DESC — os de 1500+ aparecem primeiro
+        var q = db.collection('usuarios').orderBy('pontos', 'desc').limit(50);
+        if (acumular && _rankingLastDoc) {
+          q = q.startAfter(_rankingLastDoc);
+        }
+        var snap = await q.get();
+        var batch = [];
+        snap.forEach(function (doc) {
+          var d = doc.data() || {};
+          d._id = doc.id;
+          batch.push(d);
+          _rankingLastDoc = doc;
+        });
+        if (batch.length > 50) batch = batch.slice(0, 50);
+        _rankingTemMais = batch.length >= 50;
+        var ids = {};
+        rankingUsers.forEach(function (u) { ids[u._id] = true; });
+        batch.forEach(function (u) {
+          if (!ids[u._id]) {
+            rankingUsers.push(u);
+            ids[u._id] = true;
+          }
+        });
+        renderRanking();
+      } catch (e) {
+        var msg = (e && e.message) ? e.message : String(e);
+        if (msg.indexOf('index') !== -1 || msg.indexOf('FAILED_PRECONDITION') !== -1) {
+          msg = 'Falta índice Firestore em usuarios.pontos (ordem descendente). Abre o link do erro no console ou cria o índice no Firebase.';
+        }
+        if (msg.indexOf('429') !== -1 || msg.toLowerCase().indexOf('quota') !== -1) {
+          msg = 'Cota Firebase esgotada. Tenta mais tarde.';
+        }
+        if (tbody) tbody.innerHTML = '<tr><td colspan="8" class="vazio">Erro no ranking:<br>' + msg + '</td></tr>';
+        console.error('carregarRanking', e);
+      } finally {
+        _rankingACarregar = false;
+      }
     }
 
     function toggleSenha(id) {

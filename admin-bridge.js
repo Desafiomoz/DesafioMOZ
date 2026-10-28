@@ -156,10 +156,11 @@
       },
       get: async function () {
         var hardLimit = Math.min(Math.max(1, Number(lim) || 50), 50);
+        var useQuery = (constraints && constraints.length) || (orderBy && orderBy.field);
         var r = await adminOp({
-          op: constraints.length ? 'query' : 'list',
+          op: useQuery ? 'query' : 'list',
           collection: collection,
-          constraints: constraints,
+          constraints: constraints || [],
           limit: hardLimit,
           orderBy: orderBy || null,
           pageToken: startAfterId || null,

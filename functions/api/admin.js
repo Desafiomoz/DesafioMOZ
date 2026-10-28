@@ -581,13 +581,24 @@ export async function onRequest(context) {
       const limReq = Math.min(Math.max(1, Number(body.limit) || 50), 50);
       let docs;
       let nextPageToken = null;
+      const hasOrder = !!(body.orderBy && body.orderBy.field);
+      const hasWhere = !!(body.constraints && body.constraints.length);
 
-      // Lista simples (sem where) → pageToken para paginação exacta de 50
-      if (
-        op === 'list' ||
-        !body.constraints ||
-        !body.constraints.length
-      ) {
+      // Com orderBy (ex.: ranking por pontos) → sempre query estruturada
+      if (hasOrder || (op === 'query' && hasWhere)) {
+        docs = await fsQuery(
+          token,
+          projectId,
+          collection,
+          body.constraints || [],
+          limReq,
+          body.orderBy || null
+        );
+        docs = (docs || []).slice(0, 50);
+        // pageToken nativo de runQuery não é simples; cliente usa startAfter no último doc
+        nextPageToken = null;
+      } else {
+        // Lista simples (sem where / sem order) → pageToken
         const listed = await fsList(
           token,
           projectId,
@@ -597,16 +608,6 @@ export async function onRequest(context) {
         );
         docs = (listed.documents || []).map(docToClient).slice(0, 50);
         nextPageToken = listed.nextPageToken || null;
-      } else {
-        docs = await fsQuery(
-          token,
-          projectId,
-          collection,
-          body.constraints,
-          limReq,
-          body.orderBy
-        );
-        docs = (docs || []).slice(0, 50);
       }
       return json({ ok: true, docs: docs, nextPageToken: nextPageToken });
     }
