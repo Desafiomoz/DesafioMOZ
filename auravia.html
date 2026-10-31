@@ -202,6 +202,10 @@ button:focus-visible{outline:3px solid #fff;outline-offset:2px}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (function(){
+if(typeof THREE==='undefined'){
+  document.body.innerHTML='<div style="color:#fff;padding:40px;text-align:center;font-family:sans-serif"><h1>AURAVIA</h1><p>Three.js nao carregou. Verifica a internet e faz refresh.</p><button onclick="location.reload()" style="padding:12px 20px">Recarregar</button></div>';
+  return;
+}
 var T=THREE,$=function(i){return document.getElementById(i)},app=$('app');
 var rd=new T.WebGLRenderer({antialias:false,powerPreference:'high-performance'}),PR=Math.min(window.devicePixelRatio||1,1.5);
 rd.setPixelRatio(PR);
@@ -316,7 +320,7 @@ var wh=[];
   rm.rotation.z=sd*-Math.PI/2;
   pv.add(t,rm);car.add(pv);wh.push(pv);
 });
-var glowP=new T.Mesh(new T.PlaneGeometry(9,9),auraM);glowP.rotation.x=-Math.PI/2;glowP.position.y=.06;glowP.renderOrder=3;glowP.visible=P.glow!==0;car.add(glowP);
+var glowP=new T.Mesh(new T.PlaneGeometry(9,9),auraM);glowP.rotation.x=-Math.PI/2;glowP.position.y=.06;glowP.renderOrder=3;try{glowP.visible=(typeof P!=="undefined"&&P.glow!==0)}catch(e){glowP.visible=true}car.add(glowP);
 
 var shM=new T.Mesh(new T.SphereGeometry(2.9,24,16),new T.MeshBasicMaterial({color:0x66ccff,transparent:true,opacity:.22,depthWrite:false,blending:T.AdditiveBlending,side:2}));shM.position.y=.9;shM.scale.set(.75,.5,1.2);shM.visible=false;car.add(shM);
 scene.add(car);
@@ -482,22 +486,32 @@ var P={orbs:0,sh:0,mg:0,tu:0,lt:0,nt:0,x2:0,coins:0,mo:0,ag:0,te:0,own:[0],skin:
 try{var q0=JSON.parse(localStorage.getItem('auravia.p')||'{}');for(var kk in q0)P[kk]=q0[kk]}catch(e){}
 if(P.ctl==1)P.ctl=0;
 if(P.fuel==null)P.fuel=4;if(P.lock==null)P.lock=0;if(P.inf==null)P.inf=0;
-if(P.maxLv==null)P.maxLv=Math.max(1,S.lv||1);
+if(P.maxLv==null)P.maxLv=1;
 if(P.glow==null)P.glow=1;
 function isCriador(){
-  try{return String(localStorage.getItem('emailUtilizador')||'').trim().toLowerCase()==='rochajosepaulo7@gmail.com';}catch(e){return false}
+  try{return String(localStorage.getItem('emailUtilizador')||'').trim().toLowerCase()==='rochajosepaulo7@gmail.com'}catch(e){return false}
 }
 function emailJogador(){
-  try{return String(localStorage.getItem('emailUtilizador')||'').trim().toLowerCase();}catch(e){return ''}
+  try{return String(localStorage.getItem('emailUtilizador')||'').trim().toLowerCase()}catch(e){return ''}
 }
 function aplicarCriador(){
   if(!isCriador())return;
-  P.maxLv=MAXL;P.fuel=FMAX;P.lock=0;P.inf=Date.now()+365*86400e3;
+  P.maxLv=MAXL;
+  P.fuel=(typeof FMAX!=='undefined'?FMAX:4);
+  P.lock=0;
+  P.inf=Date.now()+365*86400e3;
   P.orbs=999999;P.coins=999999;P.x2=1;
   if(!P.own||P.own.length<6)P.own=[0,1,2,3,4,5];
 }
-aplicarCriador();
 function sv(){try{localStorage.setItem('auravia.p',JSON.stringify(P))}catch(e){}}
+try{
+  if(P.maxLv==null||P.maxLv<1)P.maxLv=1;
+  if(!isCriador()){
+    if(S.lv>(P.maxLv||1))S.lv=P.maxLv||1;
+  }
+}catch(e){}
+try{aplicarCriador()}catch(e){}
+try{if(typeof glowP!=="undefined")glowP.visible=P.glow!==0}catch(e){}
 /* Música gerada por código */
 var AX=null,mg=null,beat=0,nt=0,CH=[[57,60,64],[53,57,60],[48,52,55],[55,59,62]],BS=[45,41,36,43];
 function setVol(){if(mg)mg.gain.value=P.vol*.5}
@@ -513,7 +527,7 @@ function mus(){if(AX){if(AX.state=='suspended')AX.resume();return}var C=window.A
 /* Loja, opções e pausa */
 var UP=[['mo','Motor','+velocidade',250],['ag','Direção','+controlo',200],['te','Tempo extra','+4 s por nível',150]],SK=['Rubi','Safira','Obsidiana','Pérola','Esmeralda','Ouro'],SPR=[0,300,500,700,900,1500];
 function pauseScr(){S.pz=true;ov.className='';ov.innerHTML=`<div class='pn'><h1 style='font-size:1.8rem'>PAUSA</h1><button class='go' data-a='resume'>Continuar</button><p><button class='go2' data-a='shop2'>🛒 Loja</button></p></div>`}
-function opts(from){S.ob=from;var c=['Setas','Inclinar o telemóvel','Leme','Arrastar o ecrã'],od=[0,3,2];ov.className='';ov.innerHTML=`<div class='pn'><h1 style='font-size:1.6rem;letter-spacing:4px'>OPÇÕES</h1><p class='s'>Som</p><label>Música <b id='vv'>${Math.round(P.vol*100)}%</b></label><input id='vol' class='rg' type='range' min='0' max='100' value='${Math.round(P.vol*100)}'><p class='s'>Controlo do carro</p>${od.map(function(i){var n=c[i];return `<button class='cb${P.ctl==i?' on':''}' data-c='${i}'>${n}</button>`}).join('')}<p class='h2'>${['Setas: toca nos botões ◀ e ▶ para ir para esse lado.','Inclinar: vira o telemóvel para o lado para onde queres ir.','Leme: roda o volante para a direita (sentido horário) ou para a esquerda (anti-horário).','Arrastar: põe o dedo no lado esquerdo ou direito do ecrã e arrasta.'][P.ctl]}</p><p class='s'>Aparência</p><button class='cb${P.glow!==0?' on':''}' data-a='glow'>💡 Luz à volta do carro: ${P.glow!==0?'LIGADA':'DESLIGADA'}</button><p class='h2'>Com a luz desligada o carro vê-se melhor na pista.</p><p><button class='go' data-a='ob'>Voltar</button></p></div>`}
+function opts(from){S.ob=from;var c=['Setas','Inclinar o telemóvel','Leme','Arrastar o ecrã'],od=[0,3,2];ov.className='';ov.innerHTML=`<div class='pn'><h1 style='font-size:1.6rem;letter-spacing:4px'>OPÇÕES</h1><p class='s'>Som</p><label>Música <b id='vv'>${Math.round(P.vol*100)}%</b></label><input id='vol' class='rg' type='range' min='0' max='100' value='${Math.round(P.vol*100)}'><p class='s'>Controlo do carro</p>${od.map(function(i){var n=c[i];return `<button class='cb${P.ctl==i?' on':''}' data-c='${i}'>${n}</button>`}).join('')}<p class='h2'>${['Setas: toca nos botões ◀ e ▶ para ir para esse lado.','Inclinar: vira o telemóvel para o lado para onde queres ir.','Leme: roda o volante para a direita (sentido horário) ou para a esquerda (anti-horário).','Arrastar: põe o dedo no lado esquerdo ou direito do ecrã e arrasta.'][P.ctl]}</p><p class='s'>Aparencia</p><button class='cb' data-a='glow'>Luz do carro: ${P.glow!==0?'LIGADA':'DESLIGADA'}</button><p class='h2'>Desliga a luz para ver o carro melhor.</p><p><button class='go' data-a='ob'>Voltar</button></p></div>`}
 function oldShop(from){S.sb=from;var h=`<div class='pn lp'><h1 style='font-size:1.6rem;letter-spacing:4px'>LOJA</h1>${fuelBar(1)}<p class='s'>${infOn()?`✦ ∞ esferas · 💰 ∞ moedas · ⏱ <u class='lkt' data-t='${P.inf}'>${fmt(P.inf-Date.now())}</u>`:`✦ ${P.orbs||0} esferas · 💰 ${P.coins} moedas`}${S.msg?' · '+S.msg:''}</p><p><button data-a='perfil'>👤 Perfil</button></p><div class='lg1'><p class='s'>Itens</p>${itemsHtml()}<p class='s'>Melhorias</p>`;
   UP.forEach(function(u){var l=P[u[0]];h+=`<div class='rw'><span><b>${u[1]}</b><br><small>${u[2]} · nível ${l}/5</small></span>${l>=5?'<em>Máx.</em>':`<button data-u='${u[0]}'>${u[3]*(l+1)} 💰</button>`}</div>`});
   h+=`<p class='s'>Carros (tintas)</p>`;
@@ -524,12 +538,11 @@ ov.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)r
   else if(a=='exit')askExit();else if(a=='exit2')doExit(true)
   else if(a=='opt')opts('pause');else if(a=='opt0')opts('levels');
   else if(a=='serio')shopSerio();else if(a=='shop2')shop('pause');else if(a=='shop'||a=='shop0')shop('levels');else if(a=='perfil')perfil(1);else if(a=='pback'||a=='shopfu')shop(S.sb);
-  else if(a=='glow'){P.glow=P.glow===0?1:0;try{if(typeof glowP!=='undefined')glowP.visible=P.glow!==0}catch(e){}sv();opts(S.ob)}
-  else if(a=='ob'){if(S.ob=='pause')pauseScr();else levels()}
+  else if(a=='glow'){P.glow=P.glow===0?1:0;try{glowP.visible=P.glow!==0}catch(e){}sv();opts(S.ob)}else if(a=='ob'){if(S.ob=='pause')pauseScr();else levels()}
   else if(a=='sb'){if(S.sb=='pause')pauseScr();else levels()}
   else if(d.c!==undefined){P.ctl=+d.c;sv();if(P.ctl==1&&window.DeviceOrientationEvent&&DeviceOrientationEvent.requestPermission)DeviceOrientationEvent.requestPermission().catch(function(){});opts(S.ob)}
   else if(d.pay!==undefined){if(d.pay==='confirm'){confirmarPayMT();return}var cb=S.payCb;S.payCb=null;if(cb)cb(d.pay=='1')}else if(d.g)buyG(d.g);else if(d.m)buyM(d.m);else if(d.u){var u=UP.filter(function(x){return x[0]==d.u})[0],l=P[d.u],pr=u[3]*(l+1);if(l<5){if(infOn()||P.coins>=pr){if(!infOn())P.coins-=pr;P[d.u]++;sv()}else S.msg='Moedas insuficientes'}shop(S.sb)}
-  else if(d.k!==undefined){var i=+d.k;if(P.own.indexOf(i)<0){if(S.cur==='shopSerio'){payMT(2,SK[i]||('Cor '+i),'skin'+i,function(ok){if(ok){giveItem('skin'+i);S.msg='Cor desbloqueada: '+(SK[i]||i);sv()}shopSerio()});return}if(infOn()||P.coins>=SPR[i]){if(!infOn())P.coins-=SPR[i];P.own.push(i);P.skin=i}else S.msg='Moedas insuficientes'}else P.skin=i;try{bodyM.color.setHex(PAL[P.skin][0])}catch(e){}sv();if(S.cur==='shopSerio')shopSerio();else shop(S.sb)}
+  else if(d.k!==undefined){var i=+d.k;if(P.own.indexOf(i)<0){if(S.cur==='shopSerio'){payMT(2,SK[i]||('Cor '+i),'skin'+i,function(ok){if(ok){giveItem('skin'+i);S.msg='Cor desbloqueada';sv()}shopSerio()});return}if(infOn()||P.coins>=SPR[i]){if(!infOn())P.coins-=SPR[i];P.own.push(i);P.skin=i}else S.msg='Moedas insuficientes'}else P.skin=i;try{bodyM.color.setHex(PAL[P.skin][0])}catch(e){}sv();if(S.cur==='shopSerio')shopSerio();else shop(S.sb)}
 });
 ov.addEventListener('input',function(e){if(e.target.id=='vol'){P.vol=e.target.value/100;setVol();sv();$('vv').textContent=e.target.value+'%'}});
 $('hb').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;var a=b.dataset.h;mus();if(a=='p')pauseScr();else if(a=='o'){S.pz=true;opts('pause')}else if(a=='x')askExit()});
@@ -558,7 +571,7 @@ var IT=[
  ['world','🌍','Mundo completo','Abre todos os níveis do mundo actual.',[0,0,150]]
 ];
 function itm(k){return IT.filter(function(x){return x[0]==k})[0]}
-function itemsHtml(){var h='';IT.forEach(function(t){var c=t[4],k=t[0],n=(k=='pk'||k=='x2')?(k=='x2'&&P.x2?' ✔':''):k=='fu'?' '+P.fuel+'/'+FMAX:k=='inf'?(infOn()?' ⏱ '+fmt(P.inf-Date.now()):''):' ×'+(P[k]||0),g='';
+function itemsHtml(){var h='',serioKeys={pk:1,x2:1,inf:1,open10:1,world:1};IT.forEach(function(t){if(serioKeys[t[0]])return;var c=t[4],k=t[0],n=(k=='pk'||k=='x2')?(k=='x2'&&P.x2?' ✔':''):k=='fu'?' '+P.fuel+'/'+FMAX:k=='inf'?(infOn()?' ⏱ '+fmt(P.inf-Date.now()):''):' ×'+(P[k]||0),g='';
   if(c[0]||c[1])g='<button data-g="'+k+'"'+(((!infOn()&&((P.orbs||0)<c[0]||P.coins<c[1]))||(k=='fu'&&P.fuel>=FMAX))?' disabled':'')+'>'+(c[0]?c[0]+' ✦':'')+(c[0]&&c[1]?' + ':'')+(c[1]?c[1]+' 💰':'')+'</button>';
   var m=(k=='x2'&&P.x2)?'<em>Ativo</em>':(k=='fu'&&P.fuel>=FMAX)?'<em>Cheio</em>':'<button data-m="'+k+'">'+c[2]+' MT</button>';
   h+='<div class="rw"><span><b>'+t[1]+' '+t[2]+'</b><i class="ow">'+n+'</i><br><small>'+t[3]+'</small></span><div class="pbs">'+g+m+'</div></div>'});return h}
@@ -566,17 +579,17 @@ function giveItem(k){
   if(k=='pk')P.orbs=(P.orbs||0)+100;
   else if(k=='x2')P.x2=1;
   else if(k=='fu'){P.fuel=FMAX;P.lock=0}
-  else if(k=='inf')P.inf=Math.max(Date.now(),P.inf||0)+24*3600*1000; /* 1 dia */
-  else if(k=='open10'){P.maxLv=Math.min(MAXL,(P.maxLv||1)+10);S.lv=Math.min(S.lv,P.maxLv);save()}
-  else if(k=='world'){var wi=S.wi!=null?S.wi:Math.floor(((S.lv||1)-1)/92)%12;P.maxLv=Math.min(MAXL,(wi+1)*92);save()}
-  else if(String(k).indexOf('skin')===0){var si=parseInt(String(k).replace('skin',''),10);if(!isNaN(si)&&P.own.indexOf(si)<0)P.own.push(si);P.skin=si;try{bodyM.color.setHex(PAL[P.skin][0])}catch(e){}}
+  else if(k=='inf')P.inf=Math.max(Date.now(),P.inf||0)+24*3600*1000;
+  else if(k=='open10'){P.maxLv=Math.min(MAXL,(P.maxLv||1)+10);if(S.lv>P.maxLv)S.lv=P.maxLv;save()}
+  else if(k=='world'){var wi=(S.wi!=null?S.wi:Math.floor(((S.lv||1)-1)/92)%12);P.maxLv=Math.min(MAXL,(wi+1)*92);save()}
+  else if(String(k).indexOf('skin')===0){var si=parseInt(String(k).replace('skin',''),10);if(!isNaN(si)){if(P.own.indexOf(si)<0)P.own.push(si);P.skin=si;try{bodyM.color.setHex(PAL[si][0])}catch(e){}}}
   else P[k]=(P[k]||0)+1;
 }
 function buyG(k){var t=itm(k),c=t[4],fr=infOn();if(k=='fu'&&P.fuel>=FMAX)S.msg='O tanque já está cheio';else if(!fr&&(P.orbs||0)<c[0])S.msg='Esferas insuficientes';else if(!fr&&P.coins<c[1])S.msg='Moedas insuficientes';else{if(!fr){P.orbs=(P.orbs||0)-c[0];P.coins-=c[1]}giveItem(k);S.msg='Comprado: '+t[2]}sv();shop(S.sb)}
-function buyM(k){var t=itm(k);if((k=='x2'&&P.x2)||(k=='fu'&&P.fuel>=FMAX)||(k=='inf'&&infOn()&&!isCriador())){shop(S.sb);return}payMT(t[4][2],t[2],k,function(ok){S.msg=ok?'Comprado: '+t[2]:'Pagamento cancelado';if(ok){giveItem(k);sv()}if(S.cur==='shopSerio')shopSerio();else shop(S.sb)})}
-/* Pagamento e-Mola real via Cloudflare Function */
+function buyM(k){var t=itm(k);if(!t)return;if((k=='x2'&&P.x2)||(k=='fu'&&P.fuel>=FMAX)){if(S.cur==='shopSerio')shopSerio();else shop(S.sb);return}payMT(t[4][2],t[2],k,function(ok){S.msg=ok?'Comprado: '+t[2]:'Pagamento cancelado';if(ok){giveItem(k);sv()}if(S.cur==='shopSerio')shopSerio();else shop(S.sb)})}
+/* Pagamento e-Mola via Function */
 function payMT(valor,nome,itemKey,cb){
-  if(typeof cb==='function' && itemKey && typeof itemKey!=='string'){cb=itemKey;itemKey=nome}
+  if(typeof itemKey==='function'){cb=itemKey;itemKey=''}
   S.payCb=cb;S.payItem=itemKey||'';S.payValor=valor;S.payNome=nome;
   ov.className='';
   if(MODO_TESTE){
@@ -585,38 +598,39 @@ function payMT(valor,nome,itemKey,cb){
   }
   var em=emailJogador();
   ov.innerHTML='<div class="pn" style="max-width:360px;text-align:left">'+
-    '<h1 style="font-size:1.35rem;text-align:center">💳 Pagamento e-Mola</h1>'+
+    '<h1 style="font-size:1.35rem;text-align:center">Pagamento e-Mola</h1>'+
     '<p class="s" style="text-align:center;color:#ffd24a;font-weight:700">'+nome+' · '+valor+' MT</p>'+
-    '<p style="font-size:.78rem;color:#ffb4b4;background:rgba(255,80,80,.12);padding:8px;border-radius:10px;line-height:1.4">⚠️ ID falso = conta banida no Desafio MOZ.</p>'+
-    '<p style="font-size:.85rem;margin:8px 0 4px"><b style="color:#2ee6a0">1.</b> Envia exactamente <b>'+valor+' MT</b> para:</p>'+
-    '<p style="text-align:center;font-size:1.4rem;font-weight:800;color:#ffcf4d;letter-spacing:1px">878037104</p>'+
-    '<p style="text-align:center"><button type="button" class="go2" id="aur-copy-num" style="font-size:.85rem;padding:8px 14px">📋 Copiar número</button></p>'+
-    '<p style="font-size:.85rem;margin:10px 0 4px"><b style="color:#2ee6a0">2.</b> Copia o <b>ID da transacção</b> (começa por PP):</p>'+
-    '<img src="https://i.supaimg.com/9447b725-0914-4700-9681-fccbd9cb5399/0d27ef0d-69cb-43f4-8572-95a618184de5.jpg" alt="Onde ver o ID e-Mola" style="width:100%;border-radius:12px;margin:6px 0;border:1px solid #ffffff22">'+
-    '<input id="aur-txid" type="text" placeholder="Ex: PP260927.0652.q29322" style="width:100%;box-sizing:border-box;padding:12px;border-radius:12px;border:1px solid #ffffff33;background:#0a0c12;color:#fff;font-size:1rem;margin:6px 0">'+
-    '<p style="font-size:.75rem;color:#9aa3b2">'+(em?'Conta: <b style="color:#2ee6a0">'+em+'</b>':'⚠️ Faz login no Desafio MOZ para receber na conta')+'</p>'+
+    '<p style="font-size:.78rem;color:#ffb4b4;background:rgba(255,80,80,.12);padding:8px;border-radius:10px">ID falso = conta banida no Desafio MOZ.</p>'+
+    '<p style="font-size:.85rem"><b style="color:#2ee6a0">1.</b> Envia exactamente <b>'+valor+' MT</b> para:</p>'+
+    '<p style="text-align:center;font-size:1.4rem;font-weight:800;color:#ffcf4d">878037104</p>'+
+    '<p style="text-align:center"><button type="button" class="go2" id="aur-copy-num" style="font-size:.85rem;padding:8px 14px">Copiar numero</button></p>'+
+    '<p style="font-size:.85rem"><b style="color:#2ee6a0">2.</b> Copia o ID da transaccao (comeca por PP):</p>'+
+    '<img src="https://i.supaimg.com/9447b725-0914-4700-9681-fccbd9cb5399/0d27ef0d-69cb-43f4-8572-95a618184de5.jpg" alt="ID e-Mola" style="width:100%;border-radius:12px;margin:6px 0">'+
+    '<input id="aur-txid" type="text" placeholder="Ex: PP260927.0652.q29322" style="width:100%;box-sizing:border-box;padding:12px;border-radius:12px;border:1px solid #ffffff33;background:#0a0c12;color:#fff;font-size:1rem">'+
+    '<p style="font-size:.75rem;color:#9aa3b2">'+(em?('Conta: '+em):'Faz login no Desafio MOZ primeiro')+'</p>'+
     '<button class="go" data-pay="confirm" style="width:100%;margin-top:8px">Confirmar e receber</button>'+
     '<p style="text-align:center"><button data-pay="0">Cancelar</button></p>'+
     '<p id="aur-pay-msg" style="font-size:.8rem;color:#ff8a80;min-height:1.2em"></p></div>';
   setTimeout(function(){
     var b=document.getElementById('aur-copy-num');
-    if(b)b.onclick=function(){try{navigator.clipboard.writeText('878037104');b.textContent='✓ Copiado'}catch(e){}};
+    if(b)b.onclick=function(){try{navigator.clipboard.writeText('878037104');b.textContent='Copiado'}catch(e){}};
   },30);
 }
-async function confirmarPayMT(){
-  var msg=$('aur-pay-msg');
-  var tx=(document.getElementById('aur-txid')&&document.getElementById('aur-txid').value||'').trim().replace(/\s+/g,'').toUpperCase();
+function confirmarPayMT(){
+  var msg=document.getElementById('aur-pay-msg');
+  var txEl=document.getElementById('aur-txid');
+  var tx=(txEl&&txEl.value||'').trim().replace(/\s+/g,'').toUpperCase();
   var em=emailJogador();
   if(!em){if(msg)msg.textContent='Faz login no Desafio MOZ primeiro.';return}
-  if(!/^PP[A-Z0-9.\-_]{8,}$/i.test(tx)){if(msg)msg.textContent='Cola o ID completo da e-Mola (começa por PP).';return}
-  if(msg)msg.textContent='A validar no servidor…';
-  try{
-    var r=await fetch((location.origin||'')+'/api/auravia-compra',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:em,item:S.payItem||'custom',txId:tx,valor:S.payValor,nome:S.payNome})});
-    var d={};try{d=await r.json()}catch(e){}
-    if(!r.ok||!d.ok){if(msg)msg.textContent=(d&&d.erro)||('Erro '+r.status);return}
-    var cb=S.payCb;S.payCb=null;
-    if(cb)cb(true);
-  }catch(e){if(msg)msg.textContent=e.message||String(e)}
+  if(!/^PP[A-Z0-9.\-_]{8,}$/i.test(tx)){if(msg)msg.textContent='Cola o ID completo (comeca por PP).';return}
+  if(msg)msg.textContent='A validar...';
+  fetch((location.origin||'')+'/api/auravia-compra',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({email:em,item:S.payItem||'custom',txId:tx,valor:S.payValor,nome:S.payNome})
+  }).then(function(r){return r.json().then(function(d){return {ok:r.ok,d:d}})}).then(function(res){
+    if(!res.ok||!res.d||!res.d.ok){if(msg)msg.textContent=(res.d&&res.d.erro)||'Erro no pagamento';return}
+    var cb=S.payCb;S.payCb=null;if(cb)cb(true);
+  }).catch(function(e){if(msg)msg.textContent=e.message||String(e)});
 }
 function useItem(k){if(!S.play||S.pz)return;
   if(k=='sh'){if(S.shd||(P.sh||0)<1)return;P.sh--;S.shd=1;flash('ESCUDO ATIVO',1100)}
@@ -685,8 +699,8 @@ function levelsOld(){
   var cu=ov.querySelector('.lb.cur'),lg=ov.querySelector('.lg');if(cu)lg.scrollTop=Math.max(0,cu.offsetTop-90);
 }
 /* Combustível, perfil e regras de perda */
-var FMAX=4;
-function infOn(){return isCriador()||(P.inf||0)>Date.now()}
+var FMAX=4;try{aplicarCriador()}catch(e){}
+function infOn(){return isCriador()||((P.inf||0)>Date.now())}
 function fmt(ms){var s=Math.max(0,Math.floor(ms/1000)),d=Math.floor(s/86400),h=Math.floor(s%86400/3600),m=Math.floor(s%3600/60);return (d?d+'d ':'')+h+'h '+m+'m'}
 function fuelTick(){if(P.lock&&Date.now()>=P.lock){P.fuel=FMAX;P.lock=0;sv()}}
 function isLocked(){if(isCriador())return false;fuelTick();return P.fuel<=0&&P.lock>Date.now()}
@@ -725,7 +739,7 @@ function levels(){
   var h=`<div class='pn lp lvp' style='--a:${wcol(wi)};--a2:${rgba(w[4],.22)};--a3:${rgba(w[4],.55)};--a4:${rgba(w[4],.12)};background:radial-gradient(ellipse at 50% 0%,${rgba(w[4],.45)} 0%,transparent 60%),linear-gradient(180deg,${w[1]}f2 0%,${w[2]}66 38%,#070910 100%),#070910'><div class='lh'><div class='mt'>${tank()}</div><div class='lt'><h1>NÍVEIS</h1><p class='s2'>★ ${tst} · ${tot}/${MAXL} concluídos</p></div><button class='ls' data-a='shop0'>🛒 Loja</button></div>${lk?`<p class='lk'>⛽ Sem combustível! Volta em ${lockTxt()}</p>`:''}<div class='wt'>`;
   WL.forEach(function(x,j){var p=wprog(j);h+=`<button class='wc${j==wi?' sel':''}' data-w='${j}' style='--c:${wcol(j)};--c2:${rgba(x[4],.25)}'><i class='wn'>${p[0]==p[2]?'👑 ':''}Mundo ${j+1}</i><span class='pb'><u style='width:${Math.round(p[0]/p[2]*100)}%'></u></span></button>`});
   h+=`</div><h2 class='wh'>${w[0]}</h2><p class='wr'>Níveis ${a0}–${b0} · ★ ${pr[1]}/${pr[2]*3} · ${pr[0]==pr[2]?'👑 Mundo completo':'🎯 Faltam '+(pr[2]-pr[0])}</p><div class='lg'>`;
-  for(var k=a0;k<=b0;k++){var v=+(P.dn||'').charAt(k-1)||0;var locked=!isCriador()&&k>(P.maxLv||1);h+=`<button class='lb${v?' d':''}${k==S.lv?' cur':''}${locked?' lk2':''}' data-l='${k}' ${locked?'style="opacity:.4"':''}><b>${k}</b><i>${locked?'🔒':(v?'★'.repeat(v)+'☆'.repeat(3-v):'')}</i></button>`}
+  for(var k=a0;k<=b0;k++){var v=+(P.dn||'').charAt(k-1)||0;var locked=!isCriador()&&k>(P.maxLv||1);h+=`<button class='lb${v?' d':''}${k==S.lv?' cur':''}' data-l='${k}' style='${locked?'opacity:.45':''}'><b>${k}</b><i>${locked?'🔒':(v?'★'.repeat(v)+'☆'.repeat(3-v):'')}</i></button>`}
   h+=`</div><button class='go cb2' data-a='go'>▶ Continuar · Nível ${S.lv}</button><p class='row'><button data-a='back'>Voltar</button><button data-a='opt0'>Opções</button></p></div>`;
   ov.className='lv';ov.innerHTML=h;
   var wt=ov.querySelector('.wt'),sl=wt.querySelector('.sel');
@@ -739,41 +753,49 @@ function shopCard(t){
   return `<div class='ic${k=='fu'?' hero':''}'><div class='ico'>${k=='fu'?tank():t[1]}</div><div class='icb'><b>${t[2]}<i class='ow'>${n}</i></b><small>${t[3]}</small><div class='pbs'>${g}${m}</div></div></div>`}
 
 function shopSerio(){
-  S.cur='shopSerio';fuelTick();
-  var inf=infOn(),h=`<div class='pn lp lvp shp' ${thS()}><div class='sh-h'><h1>💎 SÉRIOS</h1><div class='wal'><span class='chip'>✦ <b>${inf?'∞':(P.orbs||0)}</b></span><span class='chip'>💰 <b>${inf?'∞':P.coins}</b></span></div></div>
-  <p class='s2'>Itens premium com pagamento e-Mola</p>
-  ${S.msg?`<p class='msg'>${S.msg}</p>`:''}
-  <div class='lg1'>
-  <div class='ic hero'><div class='ico'>♾️</div><div class='icb'><b>Esferas e moedas ilimitadas <i class='ow'>${inf?'⏱ '+fmt(P.inf-Date.now()):'1 dia'}</i></b><small>Tudo na loja grátis durante 24 horas.</small><div class='pbs'><button class='mt2' data-m='inf'>50 MT</button></div></div></div>
-  <div class='ic'><div class='ico'>🔓</div><div class='icb'><b>Abertura de +10 níveis</b><small>Desbloqueia 10 níveis à frente (máx. actual: ${P.maxLv||1}).</small><div class='pbs'><button class='mt2' data-m='open10'>20 MT</button></div></div></div>
-  <div class='ic'><div class='ico'>🌍</div><div class='icb'><b>Desbloqueio de um mundo</b><small>Abre todos os níveis do mundo actual (${(S.wi!=null?S.wi:Math.floor(((S.lv||1)-1)/92)%12)+1}).</small><div class='pbs'><button class='mt2' data-m='world'>150 MT</button></div></div></div>
-  <p class='s'>CORES DO CARRO · 2 MT cada</p><div class='skg'>`;
-  SK.forEach(function(n,i){var own=P.own.indexOf(i)>=0,col='#'+('000000'+PAL[i][0].toString(16)).slice(-6);h+=`<button class='sk${P.skin==i?' on3':''}' data-k='${i}' data-skin-mt='${i}' style='--c:${col}'><i></i><b>${n}</b><small>${P.skin==i?'Em uso':own?'Usar':'2 MT'}</small></button>`});
-  h+=`</div></div><button class='go' data-a='shopfu'>← Voltar à loja</button></div>`;
+  S.cur='shopSerio';S.sb=S.sb||'levels';fuelTick();
+  var inf=infOn();
+  var h='<div class="pn lp lvp shp"><div class="sh-h"><h1>SERIOS</h1></div>';
+  h+='<p class="s2">Itens premium · pagamento e-Mola</p>';
+  if(S.msg)h+='<p class="msg">'+S.msg+'</p>';
+  h+='<div class="lg1">';
+  h+='<div class="ic hero"><div class="ico">♾️</div><div class="icb"><b>Ilimitado 1 dia</b><small>Esferas e moedas grátis 24h</small><div class="pbs"><button class="mt2" data-m="inf">50 MT</button></div></div></div>';
+  h+='<div class="ic"><div class="ico">✦</div><div class="icb"><b>Pacote de esferas</b><small>+100 esferas na conta</small><div class="pbs"><button class="mt2" data-m="pk">30 MT</button></div></div></div>';
+  h+='<div class="ic"><div class="ico">✖</div><div class="icb"><b>Multiplicador ×2</b><small>Esferas valem ×2 para sempre</small><div class="pbs"><button class="mt2" data-m="x2">'+(P.x2?'Já tens':'20 MT')+'</button></div></div></div>';
+  h+='<div class="ic"><div class="ico">🔓</div><div class="icb"><b>+10 níveis</b><small>Máx. actual: '+(P.maxLv||1)+'</small><div class="pbs"><button class="mt2" data-m="open10">20 MT</button></div></div></div>';
+  h+='<div class="ic"><div class="ico">🌍</div><div class="icb"><b>Mundo completo</b><small>Abre todos os níveis do mundo actual</small><div class="pbs"><button class="mt2" data-m="world">150 MT</button></div></div></div>';
+  h+='<p class="s">CORES DO CARRO · 2 MT cada</p><div class="skg">';
+  SK.forEach(function(n,i){
+    var own=P.own.indexOf(i)>=0;
+    var col='#'+('000000'+PAL[i][0].toString(16)).slice(-6);
+    h+='<button class="sk'+(P.skin==i?' on3':'')+'" data-k="'+i+'" style="--c:'+col+'"><i></i><b>'+n+'</b><small>'+(P.skin==i?'Em uso':own?'Usar':'2 MT')+'</small></button>';
+  });
+  h+='</div></div><button class="go" data-a="shopfu">Voltar a loja</button></div>';
   ov.className='lv';ov.innerHTML=h;S.msg='';
 }
 
 function shop(from,sl){
   S.sb=from;S.cur='shop';fuelTick();
   var inf=infOn(),h=`<div class='pn lp lvp shp${sl?' slR':''}' ${thS()}><div class='sh-h'><h1>LOJA</h1><div class='wal'><span class='chip'>✦ <b>${inf?'∞':(P.orbs||0)}</b></span><span class='chip'>💰 <b>${inf?'∞':P.coins}</b></span></div></div>${inf?`<p class='infb'>♾️ Ilimitado: <u class='lkt' data-t='${P.inf}'>${fmt(P.inf-Date.now())}</u></p>`:''}${S.msg?`<p class='msg'>${S.msg}</p>`:''}<button class='hint' data-a='perfil'>👤 Perfil <span>arrasta o ecrã para a direita ›</span></button><div class='lg1'><p class='s'>ITENS</p>`;
-  IT.forEach(function(t){h+=shopCard(t)});
+  var serioKeys={pk:1,x2:1,inf:1,open10:1,world:1};
+  IT.forEach(function(t){if(!serioKeys[t[0]])h+=shopCard(t)});
   h+=`<p class='s'>MELHORIAS</p>`;
   UP.forEach(function(u,i){var l=P[u[0]],ic=['🏎️','🎯','⏱️'][i];h+=`<div class='ic'><div class='ico'>${ic}</div><div class='icb'><b>${u[1]}</b><small>${u[2]}</small><div class='pips'>${[0,1,2,3,4].map(function(j){return `<i class='${j<l?'on':''}'></i>`}).join('')}</div></div>${l>=5?`<em>Máx.</em>`:`<button class='pr' data-u='${u[0]}'>${u[3]*(l+1)} 💰</button>`}</div>`});
-  h+=`<p class='s'>JOGADORES SÉRIOS</p><button class='go cb2' data-a='serio' style='width:100%;margin:8px 0'>💎 Itens para jogadores sérios</button><p class='h2' style='margin-bottom:8px'>Ilimitado 1 dia · cores · +10 níveis · mundo completo</p></div><button class='go' data-a='sb'>Voltar</button></div>`;
+  h+=`<p class='s'>JOGADORES SÉRIOS</p><button class='go cb2' data-a='serio' style='width:100%;margin:8px 0'>💎 Itens para jogadores sérios</button></div><button class='go' data-a='sb'>Voltar</button></div>`;
   ov.className='lv';ov.innerHTML=h;S.msg='';
 }
 var sx0=0,sy0=0,st0=0;
 ov.addEventListener('pointerdown',function(e){sx0=e.clientX;sy0=e.clientY;st0=Date.now()});
 ov.addEventListener('pointerup',function(e){var dx=e.clientX-sx0,dy=e.clientY-sy0;if(Math.abs(dx)>70&&Math.abs(dy)<70&&Date.now()-st0<800){if(S.cur=='shop'&&dx>0)perfil(1);else if(S.cur=='perfil'&&dx<0)shop(S.sb,1)}});
-function start(){fuelTick();aplicarCriador();if(!isCriador()&&S.lv>(P.maxLv||1)){S.msg="Nível bloqueado";levels();return}if(P.fuel<=0&&P.lock>Date.now()&&!isCriador()){lockScr();return}S.pz=false;c1='';c2='';c3=-1;build(S.lv);bodyM.color.setHex(PAL[P.skin][0]);S.play=true;ov.className='h';save();$('fk').innerHTML=tank();flash((S.lv<=5?'Tu fazes as curvas! · ':S.lv<=10?'Apanha esferas e usa o TURBO · ':S.lv<=20?'Sem turbo não chegas! · ':'Usa o TURBO nas retas · ')+'Sem boost ~'+Math.ceil(TR.pred)+'s · tens '+Math.ceil(S.t)+'s',3400)}
+function start(){fuelTick();try{aplicarCriador()}catch(e){}if(!isCriador()&&S.lv>(P.maxLv||1)){alert("Nivel bloqueado");levels();return}if(P.fuel<=0&&P.lock>Date.now()&&!isCriador()){lockScr();return}S.pz=false;c1='';c2='';c3=-1;build(S.lv);bodyM.color.setHex(PAL[P.skin][0]);S.play=true;ov.className='h';save();$('fk').innerHTML=tank();flash((S.lv<=5?'Tu fazes as curvas! · ':S.lv<=10?'Apanha esferas e usa o TURBO · ':S.lv<=20?'Sem turbo não chegas! · ':'Usa o TURBO nas retas · ')+'Sem boost ~'+Math.ceil(TR.pred)+'s · tens '+Math.ceil(S.t)+'s',3400)}
 function oldEnd(win){
-  S.play=false;var last=S.lv>=MAXL,gain=(win?50+Math.floor(S.lv*.4):0)+S.orbs*(win?10:5),st=0;P.coins+=gain;P.orbs=(P.orbs||0)+S.orbs*(P.x2?2:1);if(win){var r0=S.t/TR.time;st=r0>=.3?3:r0>=.12?2:1;var dn=P.dn||'0'.repeat(MAXL),o0=+dn.charAt(S.lv-1)||0;if(st>o0)P.dn=dn.substring(0,S.lv-1)+st+dn.substring(S.lv)}if(win){P.maxLv=Math.max(P.maxLv||1,Math.min(MAXL,S.lv+1));}sv();
-  if(win&&!last){S.lv=Math.min(MAXL,S.lv+1);save()}
+  S.play=false;var last=S.lv>=MAXL,gain=(win?50+Math.floor(S.lv*.4):0)+S.orbs*(win?10:5),st=0;P.coins+=gain;P.orbs=(P.orbs||0)+S.orbs*(P.x2?2:1);if(win){var r0=S.t/TR.time;st=r0>=.3?3:r0>=.12?2:1;var dn=P.dn||'0'.repeat(MAXL),o0=+dn.charAt(S.lv-1)||0;if(st>o0)P.dn=dn.substring(0,S.lv-1)+st+dn.substring(S.lv)}sv();
+  if(win&&!last){S.lv++;save()}
   ov.className='';
   ov.innerHTML='<div class="pn"><h1 style="font-size:1.7rem">'+(win?(last?'CAMPEÃO!':'NÍVEL CONCLUÍDO'):'TEMPO ESGOTADO')+'</h1>'+(win?'<p class="stz">'+'★'.repeat(st)+'☆'.repeat(3-st)+'</p>':'')+'<p class="s">'+(win?(last?'Completaste os 1100 níveis da AURAVIA!':'Esferas: +'+S.orbs*(P.x2?2:1)+' · Sobraram '+Math.ceil(S.t)+' s · +'+gain+' moedas'):'Tenta outra vez! +'+gain+' moedas')+'</p><button class="go" data-a="go">'+(win&&!last?'Nível '+S.lv:'Jogar de novo')+'</button><p><button data-a="shop">Melhorias</button> <button data-a="menu">Níveis</button></p></div>';
 }
 ov.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;
-  if(b.dataset.l){var nl=parseInt(b.dataset.l,10);if(!isCriador()&&nl>(P.maxLv||1)){S.msg='Nível bloqueado — completa o nível '+(P.maxLv||1)+' primeiro';levels();return}S.lv=nl;start()}else if(b.dataset.w){S.wi=parseInt(b.dataset.w);levels()}else if(b.dataset.a=='play'){S.wi=null;levels()}else if(b.dataset.a=='back')menu(true)
+  if(b.dataset.l){var nl=parseInt(b.dataset.l,10);if(!isCriador()&&nl>(P.maxLv||1)){alert('Nivel '+nl+' bloqueado. Completa o nivel '+(P.maxLv||1)+' primeiro.');return}S.lv=nl;start()}else if(b.dataset.w){S.wi=parseInt(b.dataset.w);levels()}else if(b.dataset.a=='play'){S.wi=null;levels()}else if(b.dataset.a=='back')menu(true)
   else if(b.dataset.a=='go')start();else if(b.dataset.a=='menu'){S.wi=null;levels()}});
 window.addEventListener('keydown',function(e){var k=e.key;
   if(k=='ArrowLeft'||k=='a')keys.l=1;if(k=='ArrowRight'||k=='d')keys.r=1;
