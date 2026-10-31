@@ -505,9 +505,19 @@ function aplicarCriador(){
 }
 function sv(){try{localStorage.setItem('auravia.p',JSON.stringify(P))}catch(e){}}
 try{
+  /* v2: todos os níveis fechados excepto o 1 do mundo 1 (reinicia progresso antigo de testes) */
+  if(P.progV!==2){
+    if(!isCriador()){
+      P.maxLv=1;
+      S.lv=1;
+      try{localStorage.setItem('auravia.lv','1')}catch(e){}
+    }
+    P.progV=2;
+    sv();
+  }
   if(P.maxLv==null||P.maxLv<1)P.maxLv=1;
   if(!isCriador()){
-    if(S.lv>(P.maxLv||1))S.lv=P.maxLv||1;
+    if(S.lv>(P.maxLv||1)){S.lv=P.maxLv||1;try{localStorage.setItem('auravia.lv',String(S.lv))}catch(e){}}
   }
 }catch(e){}
 try{aplicarCriador()}catch(e){}
@@ -739,8 +749,8 @@ function levels(){
   var h=`<div class='pn lp lvp' style='--a:${wcol(wi)};--a2:${rgba(w[4],.22)};--a3:${rgba(w[4],.55)};--a4:${rgba(w[4],.12)};background:radial-gradient(ellipse at 50% 0%,${rgba(w[4],.45)} 0%,transparent 60%),linear-gradient(180deg,${w[1]}f2 0%,${w[2]}66 38%,#070910 100%),#070910'><div class='lh'><div class='mt'>${tank()}</div><div class='lt'><h1>NÍVEIS</h1><p class='s2'>★ ${tst} · ${tot}/${MAXL} concluídos</p></div><button class='ls' data-a='shop0'>🛒 Loja</button></div>${lk?`<p class='lk'>⛽ Sem combustível! Volta em ${lockTxt()}</p>`:''}<div class='wt'>`;
   WL.forEach(function(x,j){var p=wprog(j);h+=`<button class='wc${j==wi?' sel':''}' data-w='${j}' style='--c:${wcol(j)};--c2:${rgba(x[4],.25)}'><i class='wn'>${p[0]==p[2]?'👑 ':''}Mundo ${j+1}</i><span class='pb'><u style='width:${Math.round(p[0]/p[2]*100)}%'></u></span></button>`});
   h+=`</div><h2 class='wh'>${w[0]}</h2><p class='wr'>Níveis ${a0}–${b0} · ★ ${pr[1]}/${pr[2]*3} · ${pr[0]==pr[2]?'👑 Mundo completo':'🎯 Faltam '+(pr[2]-pr[0])}</p><div class='lg'>`;
-  for(var k=a0;k<=b0;k++){var v=+(P.dn||'').charAt(k-1)||0;var locked=!isCriador()&&k>(P.maxLv||1);h+=`<button class='lb${v?' d':''}${k==S.lv?' cur':''}' data-l='${k}' style='${locked?'opacity:.45':''}'><b>${k}</b><i>${locked?'🔒':(v?'★'.repeat(v)+'☆'.repeat(3-v):'')}</i></button>`}
-  h+=`</div><button class='go cb2' data-a='go'>▶ Continuar · Nível ${S.lv}</button><p class='row'><button data-a='back'>Voltar</button><button data-a='opt0'>Opções</button></p></div>`;
+  for(var k=a0;k<=b0;k++){var v=+(P.dn||'').charAt(k-1)||0;var locked=!isCriador()&&k>(P.maxLv||1);h+=`<button class='lb${v?' d':''}${k==S.lv?' cur':''}' data-l='${k}' ${locked?'disabled':''} style='${locked?'opacity:.4;pointer-events:none;filter:grayscale(.7)':''}'><b>${k}</b><i>${locked?'🔒':(v?'★'.repeat(v)+'☆'.repeat(3-v):'')}</i></button>`}
+  h+=`</div><button class='go cb2' data-a='go'>▶ Continuar · Nível ${Math.min(S.lv,P.maxLv||1)}</button><p class='row'><button data-a='back'>Voltar</button><button data-a='opt0'>Opções</button></p></div>`;
   ov.className='lv';ov.innerHTML=h;
   var wt=ov.querySelector('.wt'),sl=wt.querySelector('.sel');
   if(sl)wt.scrollLeft=sl.offsetLeft-wt.clientWidth/2+sl.clientWidth/2;
@@ -787,7 +797,7 @@ function shop(from,sl){
 var sx0=0,sy0=0,st0=0;
 ov.addEventListener('pointerdown',function(e){sx0=e.clientX;sy0=e.clientY;st0=Date.now()});
 ov.addEventListener('pointerup',function(e){var dx=e.clientX-sx0,dy=e.clientY-sy0;if(Math.abs(dx)>70&&Math.abs(dy)<70&&Date.now()-st0<800){if(S.cur=='shop'&&dx>0)perfil(1);else if(S.cur=='perfil'&&dx<0)shop(S.sb,1)}});
-function start(){fuelTick();try{aplicarCriador()}catch(e){}if(!isCriador()&&S.lv>(P.maxLv||1)){alert("Nivel bloqueado");levels();return}if(P.fuel<=0&&P.lock>Date.now()&&!isCriador()){lockScr();return}S.pz=false;c1='';c2='';c3=-1;build(S.lv);bodyM.color.setHex(PAL[P.skin][0]);S.play=true;ov.className='h';save();$('fk').innerHTML=tank();flash((S.lv<=5?'Tu fazes as curvas! · ':S.lv<=10?'Apanha esferas e usa o TURBO · ':S.lv<=20?'Sem turbo não chegas! · ':'Usa o TURBO nas retas · ')+'Sem boost ~'+Math.ceil(TR.pred)+'s · tens '+Math.ceil(S.t)+'s',3400)}
+function start(){fuelTick();try{aplicarCriador()}catch(e){}if(!isCriador()){if((P.maxLv||1)<1)P.maxLv=1;if(S.lv>(P.maxLv||1)){S.lv=P.maxLv||1;save();alert("Nivel bloqueado. Joga o nivel "+(P.maxLv||1)+" para desbloquear o seguinte.");levels();return}}if(P.fuel<=0&&P.lock>Date.now()&&!isCriador()){lockScr();return}S.pz=false;c1='';c2='';c3=-1;build(S.lv);bodyM.color.setHex(PAL[P.skin][0]);S.play=true;ov.className='h';save();$('fk').innerHTML=tank();flash((S.lv<=5?'Tu fazes as curvas! · ':S.lv<=10?'Apanha esferas e usa o TURBO · ':S.lv<=20?'Sem turbo não chegas! · ':'Usa o TURBO nas retas · ')+'Sem boost ~'+Math.ceil(TR.pred)+'s · tens '+Math.ceil(S.t)+'s',3400)}
 function oldEnd(win){
   S.play=false;var last=S.lv>=MAXL,gain=(win?50+Math.floor(S.lv*.4):0)+S.orbs*(win?10:5),st=0;P.coins+=gain;P.orbs=(P.orbs||0)+S.orbs*(P.x2?2:1);if(win){var r0=S.t/TR.time;st=r0>=.3?3:r0>=.12?2:1;var dn=P.dn||'0'.repeat(MAXL),o0=+dn.charAt(S.lv-1)||0;if(st>o0)P.dn=dn.substring(0,S.lv-1)+st+dn.substring(S.lv)}sv();
   if(win&&!last){S.lv++;save()}
