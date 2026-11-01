@@ -21,7 +21,9 @@ const PRECOS = {
   x2: 20,
   inf: 50,
   open10: 20,
+  c200: 10,
   world: 150,
+  inf7: 200,
   skin0: 2, skin1: 2, skin2: 2, skin3: 2, skin4: 2, skin5: 2,
 };
 
@@ -186,9 +188,11 @@ export async function onRequest(context) {
         try { st = Object.assign(st, JSON.parse(stDoc.fields.stateJson.stringValue)); } catch (e) {}
       }
       if (item === 'pk') st.orbs = (st.orbs || 0) + 100;
+      else if (item === 'c200') st.coins = (st.coins || 0) + 200;
       else if (item === 'x2') st.x2 = 1;
       else if (item === 'fu') { st.fuel = 4; st.lock = 0; }
       else if (item === 'inf') st.inf = Math.max(Date.now(), st.inf || 0) + 24 * 3600 * 1000;
+      else if (item === 'inf7') st.inf = Math.max(Date.now(), st.inf || 0) + 7 * 24 * 3600 * 1000;
       else if (item === 'open10') st.maxLv = Math.min(1100, (st.maxLv || 1) + 10);
       else if (item === 'world') {
         const lv = st.lv || 1;

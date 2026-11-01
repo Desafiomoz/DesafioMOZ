@@ -149,7 +149,11 @@ em{color:var(--a,#ff4fa3);font-style:normal;font-weight:700}
 .hint{width:100%;padding:9px;font-size:.85rem;background:linear-gradient(90deg,var(--a2),transparent);border:1px solid var(--a2);text-align:left}
 .hint span{opacity:.75;font-size:.75rem;margin-left:6px}
 .infb{margin:0;color:#ffd24a;font-weight:700;text-shadow:0 0 10px #ffd24a88}
-.msg{margin:0;color:#fff;font-weight:700;text-shadow:0 0 10px var(--a)}
+.msg{margin:8px 0;padding:12px 14px;border-radius:14px;font-weight:800;font-size:.95rem;text-align:center;color:#fff;
+background:linear-gradient(135deg,rgba(255,79,163,.28),rgba(255,210,74,.2));border:1px solid var(--a,#ff4fa3);
+box-shadow:0 0 20px var(--a2,#ff4fa366),0 0 40px rgba(255,210,74,.25);animation:msgAura .85s ease;text-shadow:0 0 10px var(--a)}
+@keyframes msgAura{0%{transform:scale(.9);opacity:0}55%{transform:scale(1.05)}100%{transform:scale(1);opacity:1}}
+.msg.bad{background:linear-gradient(135deg,rgba(255,75,87,.3),rgba(255,120,80,.18));border-color:#ff4b57;box-shadow:0 0 20px #ff4b5788}
 .shp .lg1{display:flex;flex-direction:column;gap:10px;padding:4px 2px 8px}
 .shp .lg1 .s{margin:8px 0 0;font-weight:800;letter-spacing:3px;color:var(--a);text-shadow:0 0 12px var(--a3);text-align:left}
 .shp .rw{padding:10px 12px;border-radius:12px;background:#ffffff0d;border:1px solid var(--a2)}
@@ -629,8 +633,8 @@ ov.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)r
   else if(a=='glow'){P.glow=P.glow===0?1:0;try{glowP.visible=P.glow!==0}catch(e){}sv();opts(S.ob)}else if(a=='ob'){if(S.ob=='pause')pauseScr();else levels()}
   else if(a=='sb'){if(S.sb=='pause')pauseScr();else levels()}
   else if(d.c!==undefined){P.ctl=+d.c;sv();if(P.ctl==1&&window.DeviceOrientationEvent&&DeviceOrientationEvent.requestPermission)DeviceOrientationEvent.requestPermission().catch(function(){});opts(S.ob)}
-  else if(d.pay!==undefined){if(d.pay==='confirm'){confirmarPayMT();return}var cb=S.payCb;S.payCb=null;if(cb)cb(d.pay=='1')}else if(d.g)buyG(d.g);else if(d.m)buyM(d.m);else if(d.u){var u=UP.filter(function(x){return x[0]==d.u})[0],l=P[d.u],pr=u[3]*(l+1);if(l<5){if(infOn()||P.coins>=pr){if(!infOn())P.coins-=pr;P[d.u]++;sv()}else S.msg='Moedas insuficientes'}shop(S.sb)}
-  else if(d.k!==undefined){var i=+d.k;if(P.own.indexOf(i)<0){if(S.cur==='shopSerio'){payMT(2,SK[i]||('Cor '+i),'skin'+i,function(ok){if(ok){giveItem('skin'+i);S.msg='Cor desbloqueada';sv()}shopSerio()});return}if(infOn()||P.coins>=SPR[i]){if(!infOn())P.coins-=SPR[i];P.own.push(i);P.skin=i}else S.msg='Moedas insuficientes'}else P.skin=i;try{bodyM.color.setHex(PAL[P.skin][0])}catch(e){}sv();if(S.cur==='shopSerio')shopSerio();else shop(S.sb)}
+  else if(d.pay!==undefined){if(d.pay==='confirm'){confirmarPayMT();return}var cb=S.payCb;S.payCb=null;if(cb)cb(d.pay=='1')}else if(d.g)buyG(d.g);else if(d.m)buyM(d.m);else if(d.u){var u=UP.filter(function(x){return x[0]==d.u})[0],l=P[d.u],pr=u[3]*(l+1);if(l<5){if(infOn()||P.coins>=pr){if(!infOn())P.coins-=pr;P[d.u]++;sv()}else{S.msg='Moedas insuficientes';S.msgBad=1}}shop(S.sb)}
+  else if(d.k!==undefined){var i=+d.k;if(P.own.indexOf(i)<0){if(S.cur==='shopSerio'){payMT(2,SK[i]||('Cor '+i),'skin'+i,function(ok){if(ok){giveItem('skin'+i);S.msg='Cor desbloqueada';sv()}shopSerio()});return}if(infOn()||P.coins>=SPR[i]){if(!infOn())P.coins-=SPR[i];P.own.push(i);P.skin=i}else{S.msg='Moedas insuficientes';S.msgBad=1}}else P.skin=i;try{bodyM.color.setHex(PAL[P.skin][0])}catch(e){}sv();if(S.cur==='shopSerio')shopSerio();else shop(S.sb)}
 });
 ov.addEventListener('input',function(e){if(e.target.id=='vol'){P.vol=e.target.value/100;setVol();sv();$('vv').textContent=e.target.value+'%'}});
 $('hb').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;var a=b.dataset.h;mus();if(a=='p')pauseScr();else if(a=='o'){S.pz=true;opts('pause')}else if(a=='x')askExit()});
@@ -656,25 +660,29 @@ var IT=[
  ['x2','✖','Multiplicador ×2','Todas as esferas que apanhares valem ×2, para sempre.',[0,0,20]],
  ['inf','♾️','Esferas e moedas ilimitadas','Durante 1 dia, tudo na loja que custa esferas ou moedas sai de graça.',[0,0,50]],
  ['open10','🔓','Abrir 10 níveis','Desbloqueia 10 níveis à frente.',[0,0,20]],
- ['world','🌍','Mundo completo','Abre todos os níveis do mundo actual.',[0,0,150]]
+ ['c200','💰','200 moedas','Recebe 200 moedas na tua conta.',[0,0,10]],
+ ['world','🌍','Mundo completo','Abre todos os níveis do mundo actual.',[0,0,150]],
+ ['inf7','♾️','Ilimitado 1 semana','Esferas e moedas ilimitadas durante 7 dias.',[0,0,200]]
 ];
 function itm(k){return IT.filter(function(x){return x[0]==k})[0]}
-function itemsHtml(){var h='',serioKeys={pk:1,inf:1,world:1};IT.forEach(function(t){if(serioKeys[t[0]])return;var c=t[4],k=t[0],n=(k=='pk'||k=='x2')?(k=='x2'&&P.x2?' ✔':''):k=='fu'?' '+P.fuel+'/'+FMAX:k=='inf'?(infOn()?' ⏱ '+fmt(P.inf-Date.now()):''):' ×'+(P[k]||0),g='';
+function itemsHtml(){var h='',serioKeys={pk:1,inf:1,inf7:1,world:1};IT.forEach(function(t){if(serioKeys[t[0]])return;var c=t[4],k=t[0],n=(k=='pk'||k=='x2')?(k=='x2'&&P.x2?' ✔':''):k=='fu'?' '+P.fuel+'/'+FMAX:k=='inf'?(infOn()?' ⏱ '+fmt(P.inf-Date.now()):''):' ×'+(P[k]||0),g='';
   if(c[0]||c[1])g='<button data-g="'+k+'"'+(((!infOn()&&((P.orbs||0)<c[0]||P.coins<c[1]))||(k=='fu'&&P.fuel>=FMAX))?' disabled':'')+'>'+(c[0]?c[0]+' ✦':'')+(c[0]&&c[1]?' + ':'')+(c[1]?c[1]+' 💰':'')+'</button>';
   var m=(k=='x2'&&P.x2)?'<em>Ativo</em>':(k=='fu'&&P.fuel>=FMAX)?'<em>Cheio</em>':'<button data-m="'+k+'">'+c[2]+' MT</button>';
   h+='<div class="rw"><span><b>'+t[1]+' '+t[2]+'</b><i class="ow">'+n+'</i><br><small>'+t[3]+'</small></span><div class="pbs">'+g+m+'</div></div>'});return h}
 function giveItem(k){
   if(k=='pk')P.orbs=(P.orbs||0)+100;
+  else if(k=='c200')P.coins=(P.coins||0)+200;
   else if(k=='x2')P.x2=1;
   else if(k=='fu'){P.fuel=FMAX;P.lock=0}
   else if(k=='inf')P.inf=Math.max(Date.now(),P.inf||0)+24*3600*1000;
+  else if(k=='inf7')P.inf=Math.max(Date.now(),P.inf||0)+7*24*3600*1000;
   else if(k=='open10'){P.maxLv=Math.min(MAXL,(P.maxLv||1)+10);if(S.lv>P.maxLv)S.lv=P.maxLv;save()}
   else if(k=='world'){var wi=(S.wi!=null?S.wi:Math.floor(((S.lv||1)-1)/92)%12);P.maxLv=Math.min(MAXL,(wi+1)*92);save()}
   else if(String(k).indexOf('skin')===0){var si=parseInt(String(k).replace('skin',''),10);if(!isNaN(si)){if(P.own.indexOf(si)<0)P.own.push(si);P.skin=si;try{bodyM.color.setHex(PAL[si][0])}catch(e){}}}
   else P[k]=(P[k]||0)+1;
 }
-function buyG(k){var t=itm(k),c=t[4],fr=infOn();if(k=='fu'&&P.fuel>=FMAX)S.msg='O tanque já está cheio';else if(!fr&&(P.orbs||0)<c[0])S.msg='Esferas insuficientes';else if(!fr&&P.coins<c[1])S.msg='Moedas insuficientes';else{if(!fr){P.orbs=(P.orbs||0)-c[0];P.coins-=c[1]}giveItem(k);S.msg='Comprado: '+t[2]}sv();shop(S.sb)}
-function buyM(k){var t=itm(k);if(!t)return;if((k=='x2'&&P.x2)||(k=='fu'&&P.fuel>=FMAX)){if(S.cur==='shopSerio')shopSerio();else shop(S.sb);return}payMT(t[4][2],t[2],k,function(ok){S.msg=ok?'Comprado: '+t[2]:'Pagamento cancelado';if(ok){giveItem(k);sv()}if(S.cur==='shopSerio')shopSerio();else shop(S.sb)})}
+function buyG(k){var t=itm(k),c=t[4],fr=infOn();S.msgBad=0;if(k=='fu'&&P.fuel>=FMAX){S.msg='O tanque já está cheio';S.msgBad=1}else if(!fr&&(P.orbs||0)<c[0]){S.msg='Esferas insuficientes';S.msgBad=1}else if(!fr&&P.coins<c[1]){S.msg='Moedas insuficientes';S.msgBad=1}else{if(!fr){P.orbs=(P.orbs||0)-c[0];P.coins-=c[1]}giveItem(k);S.msg='✓ Compraste: '+t[2];S.msgBad=0}sv();shop(S.sb)}
+function buyM(k){var t=itm(k);if(!t)return;if((k=='x2'&&P.x2)||(k=='fu'&&P.fuel>=FMAX)){if(S.cur==='shopSerio')shopSerio();else shop(S.sb);return}payMT(t[4][2],t[2],k,function(ok){S.msgBad=!ok;S.msg=ok?'✓ Compraste: '+t[2]:'Pagamento cancelado';if(ok){giveItem(k);sv()}if(S.cur==='shopSerio')shopSerio();else shop(S.sb)})}
 /* Pagamento e-Mola via Function */
 function payMT(valor,nome,itemKey,cb){
   if(typeof itemKey==='function'){cb=itemKey;itemKey=''}
@@ -791,13 +799,13 @@ var FMAX=4;try{aplicarCriador()}catch(e){}
 function infOn(){return isCriador()||((P.inf||0)>Date.now())}
 function fmt(ms){var s=Math.max(0,Math.floor(ms/1000)),d=Math.floor(s/86400),h=Math.floor(s%86400/3600),m=Math.floor(s%3600/60);return (d?d+'d ':'')+h+'h '+m+'m'}
 function fuelTick(){if(P.lock&&Date.now()>=P.lock){P.fuel=FMAX;P.lock=0;sv()}}
-function isLocked(){if(isCriador())return false;fuelTick();return P.fuel<=0&&P.lock>Date.now()}
-function loseFuel(){if(P.fuel>0){P.fuel--;if(P.fuel<=0)P.lock=Date.now()+3*24*3600*1000;sv()}}
+function isLocked(){if(isCriador())return false;fuelTick();return P.fuel<=0}
+function loseFuel(){if(P.fuel>0){P.fuel--;if(P.fuel<=0)P.lock=0;sv()}}
 function tank(h){var f=Math.max(0,P.fuel||0),pc=Math.max(0,h==null?f:h)/FMAX*100;return `<div class='tkw'><div class='tk${f<=1?' lo':''}'><i style='height:${pc}%'></i><b>${f}/${FMAX}</b></div></div>`}
 function lockTxt(){return `<u class='lkt' data-t='${P.lock}'>${fmt(P.lock-Date.now())}</u>`}
 function fuelBar(nb){fuelTick();return `<div class='fz'>${tank()}<div class='ft'><b>COMBUSTÍVEL</b><span>${isLocked()?'Sem combustível! Volta em '+lockTxt():'Cada nível perdido gasta 1. Com 0, esperas 3 dias.'}</span>${nb?'':`<button data-a='shop0'>Encher</button>`}</div></div>`}
 setInterval(function(){document.querySelectorAll('.lkt').forEach(function(e){var t=+e.dataset.t-Date.now();e.textContent=t>0?fmt(t):'agora!'})},1000);
-function lockScr(){ov.className='';ov.innerHTML=`<div class='pn'><h1 style='font-size:1.5rem'>SEM COMBUSTÍVEL</h1>${tank()}<p class='s'>Perdeste 4 níveis. Podes jogar de novo em ${lockTxt()}.</p><button class='go' data-a='shop0'>Encher combustível</button><p><button data-a='menu'>Níveis</button></p></div>`}
+function lockScr(){ov.className='';ov.innerHTML=`<div class='pn'><h1 style='font-size:1.5rem'>SEM COMBUSTÍVEL</h1>${tank()}<p class='s'>O tanque está vazio. Compra combustível na loja para continuar a jogar.</p><button class='go' data-a='shop0'>⛽ Ir à loja</button><p><button data-a='menu'>Níveis</button></p></div>`}
 function askExit(){if(S.s<120){doExit(false);return}S.pz=true;ov.className='';ov.innerHTML=`<div class='pn'><h1 style='font-size:1.5rem'>SAIR DO NÍVEL?</h1><p class='s'>Se saíres agora, perdes 1 de combustível.</p><button class='go' data-a='resume'>Continuar a jogar</button><p><button data-a='exit2'>Sair mesmo assim</button></p></div>`}
 function doExit(pen){if(pen)loseFuel();S.play=false;S.pz=false;S.wi=null;levels()}
 function end(win,why){
@@ -855,9 +863,10 @@ function shopSerio(){
   var inf=infOn();
   var h='<div class="pn lp lvp shp"><div class="sh-h"><h1>SERIOS</h1></div>';
   h+='<p class="s2">Itens premium · pagamento e-Mola</p>';
-  if(S.msg)h+='<p class="msg">'+S.msg+'</p>';
+  if(S.msg)h+='<p class="msg'+(S.msgBad?' bad':'')+'">'+S.msg+'</p>';
   h+='<div class="lg1">';
-  h+='<div class="ic hero"><div class="ico">♾️</div><div class="icb"><b>Ilimitado 1 dia</b><small>Esferas e moedas grátis 24h</small><div class="pbs"><button class="mt2" data-m="inf">50 MT</button></div></div></div>';
+  h+='<div class="ic hero"><div class="ico">♾️</div><div class="icb"><b>Ilimitado 1 semana</b><small>Esferas e moedas grátis 7 dias</small><div class="pbs"><button class="mt2" data-m="inf7">200 MT</button></div></div></div>';
+  h+='<div class="ic"><div class="ico">♾️</div><div class="icb"><b>Ilimitado 1 dia</b><small>Esferas e moedas grátis 24h</small><div class="pbs"><button class="mt2" data-m="inf">50 MT</button></div></div></div>';
   h+='<div class="ic"><div class="ico">✦</div><div class="icb"><b>Pacote de esferas</b><small>+100 esferas na conta</small><div class="pbs"><button class="mt2" data-m="pk">30 MT</button></div></div></div>';
   h+='<div class="ic"><div class="ico">🌍</div><div class="icb"><b>Mundo completo</b><small>Abre todos os níveis do mundo actual</small><div class="pbs"><button class="mt2" data-m="world">150 MT</button></div></div></div>';
   h+='<p class="s">CORES DO CARRO · 2 MT cada</p><div class="skg">';
@@ -872,8 +881,8 @@ function shopSerio(){
 
 function shop(from,sl){
   S.sb=from;S.cur='shop';fuelTick();
-  var inf=infOn(),h=`<div class='pn lp lvp shp${sl?' slR':''}' ${thS()}><div class='sh-h'><h1>LOJA</h1><div class='wal'><span class='chip'>✦ <b>${inf?'∞':(P.orbs||0)}</b></span><span class='chip'>💰 <b>${inf?'∞':P.coins}</b></span></div></div>${inf?`<p class='infb'>♾️ Ilimitado: <u class='lkt' data-t='${P.inf}'>${fmt(P.inf-Date.now())}</u></p>`:''}${S.msg?`<p class='msg'>${S.msg}</p>`:''}<button class='hint' data-a='perfil'>👤 Perfil <span>arrasta o ecrã para a direita ›</span></button><div class='lg1'><p class='s'>ITENS</p>`;
-  var serioKeys={pk:1,inf:1,world:1};
+  var inf=infOn(),h=`<div class='pn lp lvp shp${sl?' slR':''}' ${thS()}><div class='sh-h'><h1>LOJA</h1><div class='wal'><span class='chip'>✦ <b>${inf?'∞':(P.orbs||0)}</b></span><span class='chip'>💰 <b>${inf?'∞':P.coins}</b></span></div></div>${inf?`<p class='infb'>♾️ Ilimitado: <u class='lkt' data-t='${P.inf}'>${fmt(P.inf-Date.now())}</u></p>`:''}${S.msg?`<p class='msg${S.msgBad?' bad':''}'>${S.msg}</p>`:''}<button class='hint' data-a='perfil'>👤 Perfil <span>arrasta o ecrã para a direita ›</span></button><div class='lg1'><p class='s'>ITENS</p>`;
+  var serioKeys={pk:1,inf:1,inf7:1,world:1};
   IT.forEach(function(t){if(!serioKeys[t[0]])h+=shopCard(t)});
   h+=`<p class='s'>MELHORIAS</p>`;
   UP.forEach(function(u,i){var l=P[u[0]],ic=['🏎️','🎯','⏱️'][i];h+=`<div class='ic'><div class='ico'>${ic}</div><div class='icb'><b>${u[1]}</b><small>${u[2]}</small><div class='pips'>${[0,1,2,3,4].map(function(j){return `<i class='${j<l?'on':''}'></i>`}).join('')}</div></div>${l>=5?`<em>Máx.</em>`:`<button class='pr' data-u='${u[0]}'>${u[3]*(l+1)} 💰</button>`}</div>`});
@@ -883,7 +892,7 @@ function shop(from,sl){
 var sx0=0,sy0=0,st0=0;
 ov.addEventListener('pointerdown',function(e){sx0=e.clientX;sy0=e.clientY;st0=Date.now()});
 ov.addEventListener('pointerup',function(e){var dx=e.clientX-sx0,dy=e.clientY-sy0;if(Math.abs(dx)>70&&Math.abs(dy)<70&&Date.now()-st0<800){if(S.cur=='shop'&&dx>0)perfil(1);else if(S.cur=='perfil'&&dx<0)shop(S.sb,1)}});
-function start(){fuelTick();try{aplicarCriador()}catch(e){}if(!isCriador()){if((P.maxLv||1)<1)P.maxLv=1;if(S.lv>(P.maxLv||1)){S.lv=P.maxLv||1;save();alert("Nivel bloqueado. Joga o nivel "+(P.maxLv||1)+" para desbloquear o seguinte.");levels();return}}if(P.fuel<=0&&P.lock>Date.now()&&!isCriador()){lockScr();return}S.pz=false;c1='';c2='';c3=-1;build(S.lv);bodyM.color.setHex(PAL[P.skin][0]);S.play=true;ov.className='h';save();$('fk').innerHTML=tank();flash((S.lv<=5?'Tu fazes as curvas! · ':S.lv<=10?'Apanha esferas e usa o TURBO · ':S.lv<=20?'Sem turbo não chegas! · ':'Usa o TURBO nas retas · ')+'Sem boost ~'+Math.ceil(TR.pred)+'s · tens '+Math.ceil(S.t)+'s',3400)}
+function start(){fuelTick();try{aplicarCriador()}catch(e){}if(!isCriador()){if((P.maxLv||1)<1)P.maxLv=1;if(S.lv>(P.maxLv||1)){S.lv=P.maxLv||1;save();alert("Nivel bloqueado. Joga o nivel "+(P.maxLv||1)+" para desbloquear o seguinte.");levels();return}}if(P.fuel<=0&&!isCriador()){lockScr();return}S.pz=false;c1='';c2='';c3=-1;build(S.lv);bodyM.color.setHex(PAL[P.skin][0]);S.play=true;ov.className='h';save();$('fk').innerHTML=tank();flash((S.lv<=5?'Tu fazes as curvas! · ':S.lv<=10?'Apanha esferas e usa o TURBO · ':S.lv<=20?'Sem turbo não chegas! · ':'Usa o TURBO nas retas · ')+'Sem boost ~'+Math.ceil(TR.pred)+'s · tens '+Math.ceil(S.t)+'s',3400)}
 function oldEnd(win){end(win,win?'':'time')}
 ov.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;
   if(b.dataset.l){var nl=parseInt(b.dataset.l,10);if(!isCriador()&&nl>(P.maxLv||1)){alert('Nivel '+nl+' bloqueado. Completa o nivel '+(P.maxLv||1)+' primeiro.');return}S.lv=nl;start()}else if(b.dataset.w){S.wi=parseInt(b.dataset.w);levels()}else if(b.dataset.a=='play'){S.wi=null;levels()}else if(b.dataset.a=='back')menu(true)
