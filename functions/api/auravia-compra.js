@@ -13,7 +13,7 @@ const CORS = {
 const PRECOS = {
   fu: 10,
   sh: 5,
-  mg: 10,
+  mg: 10,   /* Ímã — só MT */
   tu: 4,
   lt: 15,
   nt: 30,
@@ -147,9 +147,10 @@ export async function onRequest(context) {
     try {
       await fsCreate(token, projectId, 'pagamentosManuais', logId, {
         jogo: strField('auravia'),
+        origem: strField('AURAVIA'),
         email: strField(email),
         item: strField(item),
-        label: strField(body.nome || item),
+        label: strField('[AURAVIA] ' + (body.nome || item)),
         mt: numField(mt),
         txId: strField(txId),
         status: strField('entregue'),

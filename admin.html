@@ -3287,6 +3287,7 @@
               <option value="upgrades">🚀 Aumento de ganhos</option>
               <option value="homejub">🎮 Homejub</option>
               <option value="roleta">🎡 Roleta</option>
+              <option value="auravia">🏎️ AURAVIA</option>
               <option value="sorteio">🎟️ Sorteio</option>
               <option value="outro">❓ Outro</option>
             </select>
@@ -10729,6 +10730,7 @@ async function bloquearContaEmail() {
       upgrades: { label: '🚀 Aumento de ganhos', bloq: 'upgrades' },
       homejub:  { label: '🎮 Homejub',           bloq: 'homejub' },
       roleta:   { label: '🎡 Roleta',            bloq: 'roleta' },
+      auravia:  { label: '🏎️ AURAVIA',           bloq: 'auravia' },
       sorteio:  { label: '🎟️ Sorteio',           bloq: 'pagamento' },
       outro:    { label: '❓ Outro',             bloq: 'pagamento' }
     };
@@ -10741,6 +10743,7 @@ async function bloquearContaEmail() {
       if (j.indexOf('miss') !== -1 || t.indexOf('miss') !== -1) return 'missao';
       if (j.indexOf('homejub') !== -1) return 'homejub';
       if (j.indexOf('roleta') !== -1) return 'roleta';
+      if (j.indexOf('auravia') !== -1 || t.indexOf('auravia') !== -1 || t.indexOf('[auravia]') !== -1) return 'auravia';
       if (j.indexOf('sorteio') !== -1) return 'sorteio';
       return j ? 'outro' : 'upgrades';
     }
