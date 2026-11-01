@@ -568,10 +568,12 @@ export async function onRequest(context) {
   }
   if (telemovel) telemovel = normalizarTelMoz(telemovel);
 
-  // Turnstile (se secret configurada)
-  const ip = request.headers.get('CF-Connecting-IP') || '';
-  const captchaOk = await verifyTurnstile(env, captchaToken, ip);
-  if (!captchaOk) return json({ ok: false, erro: 'CAPTCHA inválido ou expirado. Tenta de novo.' }, 400);
+  // Turnstile (se secret configurada) — NÃO exige CAPTCHA no login/cadastro com Google
+  if (!viaGoogle) {
+    const ip = request.headers.get('CF-Connecting-IP') || '';
+    const captchaOk = await verifyTurnstile(env, captchaToken, ip);
+    if (!captchaOk) return json({ ok: false, erro: 'CAPTCHA inválido ou expirado. Tenta de novo.' }, 400);
+  }
 
   try {
     const token = await getAccessToken(sa);

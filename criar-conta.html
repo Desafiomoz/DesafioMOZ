@@ -807,9 +807,7 @@
         if (!aceitoG || !aceitoG.checked) {
           return mostrarAviso('⚠️ Aceite os Termos de Uso antes de se registar (incluindo com Google).');
         }
-        if (!captchaValido()) {
-          return mostrarAviso('⚠️ Completa o CAPTCHA antes de registar com Google.');
-        }
+        /* Google: sem CAPTCHA — o Google já valida a conta */
       }
       var provider = new firebase.auth.GoogleAuthProvider();
       var resultado = await authGoogle.signInWithPopup(provider);
