@@ -425,6 +425,11 @@ function build(lv){
   var turbosNeeded = lv<=10 ? 0.85+(lv-1)*0.025 : Math.min(1.95, 1.30+(lv-11)*0.007);
   TR.pred = pure;
   TR.time = Math.max(12, Math.ceil(pure - turboSave*turbosNeeded + 2.5) + P.te*3);
+  /* 41, 63, 81: tempo quase impossível sem Ilimitado / desbloqueio */
+  if(isNivelImpossivel(lv) && !podePassarImpossivel()){
+    TR.L = Math.floor(TR.L * 1.55);
+    TR.time = Math.max(8, Math.floor(TR.time * 0.42));
+  }
   n=Math.ceil(L/DS)+40;px=[];pz=[];hd=[];py=[];
   var x=0,z=0,h=0,f1=.03+rnd()*.03,f2=.07+rnd()*.05,a=rnd()*6,b=rnd()*6,g1=.03,g2=.071,c1=rnd()*6,c2=rnd()*6;
   for(i=0;i<n;i++){var k=Math.min(1,i/25);px[i]=x;pz[i]=z;hd[i]=h;py[i]=ey*(Math.sin(i*g1+c1)+.6*Math.sin(i*g2+c2))*k;
@@ -487,6 +492,16 @@ try{localStorage.removeItem('auravia.p');localStorage.removeItem('auravia.lv')}c
 if(P.ctl==1)P.ctl=0;
 function isCriador(){
   try{return String(localStorage.getItem('emailUtilizador')||'').trim().toLowerCase()==='rochajosepaulo7@gmail.com'}catch(e){return false}
+}
+function isNivelImpossivel(lv){
+  lv=parseInt(lv,10)||0;
+  return lv===41||lv===63||lv===81;
+}
+/** Só passa 41/63/81 com Ilimitado 24h activo ou conta criador. Desbloqueio (Abrir 10 / Mundo) salta à frente sem precisar concluir o nível. */
+function podePassarImpossivel(){
+  if(isCriador())return true;
+  try{if(typeof infOn==='function'&&infOn())return true}catch(e){}
+  return false;
 }
 function emailJogador(){
   try{return String(localStorage.getItem('emailUtilizador')||'').trim().toLowerCase()}catch(e){return ''}
@@ -636,11 +651,11 @@ var IT=[
  ['pk','✦','Pacote de esferas','+100 esferas na tua conta.',[0,0,30]],
  ['x2','✖','Multiplicador ×2','Todas as esferas que apanhares valem ×2, para sempre.',[0,0,20]],
  ['inf','♾️','Esferas e moedas ilimitadas','Durante 1 dia, tudo na loja que custa esferas ou moedas sai de graça.',[0,0,50]],
- ['open10','🔓','+10 níveis','Desbloqueia 10 níveis à frente.',[0,0,20]],
+ ['open10','🔓','Abrir 10 níveis','Desbloqueia 10 níveis à frente.',[0,0,20]],
  ['world','🌍','Mundo completo','Abre todos os níveis do mundo actual.',[0,0,150]]
 ];
 function itm(k){return IT.filter(function(x){return x[0]==k})[0]}
-function itemsHtml(){var h='',serioKeys={pk:1,x2:1,inf:1,open10:1,world:1};IT.forEach(function(t){if(serioKeys[t[0]])return;var c=t[4],k=t[0],n=(k=='pk'||k=='x2')?(k=='x2'&&P.x2?' ✔':''):k=='fu'?' '+P.fuel+'/'+FMAX:k=='inf'?(infOn()?' ⏱ '+fmt(P.inf-Date.now()):''):' ×'+(P[k]||0),g='';
+function itemsHtml(){var h='',serioKeys={pk:1,inf:1,world:1};IT.forEach(function(t){if(serioKeys[t[0]])return;var c=t[4],k=t[0],n=(k=='pk'||k=='x2')?(k=='x2'&&P.x2?' ✔':''):k=='fu'?' '+P.fuel+'/'+FMAX:k=='inf'?(infOn()?' ⏱ '+fmt(P.inf-Date.now()):''):' ×'+(P[k]||0),g='';
   if(c[0]||c[1])g='<button data-g="'+k+'"'+(((!infOn()&&((P.orbs||0)<c[0]||P.coins<c[1]))||(k=='fu'&&P.fuel>=FMAX))?' disabled':'')+'>'+(c[0]?c[0]+' ✦':'')+(c[0]&&c[1]?' + ':'')+(c[1]?c[1]+' 💰':'')+'</button>';
   var m=(k=='x2'&&P.x2)?'<em>Ativo</em>':(k=='fu'&&P.fuel>=FMAX)?'<em>Cheio</em>':'<button data-m="'+k+'">'+c[2]+' MT</button>';
   h+='<div class="rw"><span><b>'+t[1]+' '+t[2]+'</b><i class="ow">'+n+'</i><br><small>'+t[3]+'</small></span><div class="pbs">'+g+m+'</div></div>'});return h}
@@ -782,7 +797,13 @@ function lockScr(){ov.className='';ov.innerHTML=`<div class='pn'><h1 style='font
 function askExit(){if(S.s<120){doExit(false);return}S.pz=true;ov.className='';ov.innerHTML=`<div class='pn'><h1 style='font-size:1.5rem'>SAIR DO NÍVEL?</h1><p class='s'>Se saíres agora, perdes 1 de combustível.</p><button class='go' data-a='resume'>Continuar a jogar</button><p><button data-a='exit2'>Sair mesmo assim</button></p></div>`}
 function doExit(pen){if(pen)loseFuel();S.play=false;S.pz=false;S.wi=null;levels()}
 function end(win,why){
-  S.play=false;var last=S.lv>=MAXL,st=0,f0=P.fuel,gain=0;
+  S.play=false;
+  /* Níveis 41, 63, 81: só passam com Ilimitado 24h (ou criador). Sem aviso de "bloqueado". */
+  if(win && isNivelImpossivel(S.lv) && !podePassarImpossivel()){
+    win=false;
+    why='time';
+  }
+  var last=S.lv>=MAXL,st=0,f0=P.fuel,gain=0;
   /* Estrelas primeiro → moedas: 3★=10, 2★=5, 1★=2, perda=0 */
   if(win){
     var r0=S.t/TR.time;st=r0>=.3?3:r0>=.12?2:1;
@@ -838,8 +859,6 @@ function shopSerio(){
   h+='<div class="lg1">';
   h+='<div class="ic hero"><div class="ico">♾️</div><div class="icb"><b>Ilimitado 1 dia</b><small>Esferas e moedas grátis 24h</small><div class="pbs"><button class="mt2" data-m="inf">50 MT</button></div></div></div>';
   h+='<div class="ic"><div class="ico">✦</div><div class="icb"><b>Pacote de esferas</b><small>+100 esferas na conta</small><div class="pbs"><button class="mt2" data-m="pk">30 MT</button></div></div></div>';
-  h+='<div class="ic"><div class="ico">✖</div><div class="icb"><b>Multiplicador ×2</b><small>Esferas valem ×2 para sempre</small><div class="pbs"><button class="mt2" data-m="x2">'+(P.x2?'Já tens':'20 MT')+'</button></div></div></div>';
-  h+='<div class="ic"><div class="ico">🔓</div><div class="icb"><b>+10 níveis</b><small>Máx. actual: '+(P.maxLv||1)+'</small><div class="pbs"><button class="mt2" data-m="open10">20 MT</button></div></div></div>';
   h+='<div class="ic"><div class="ico">🌍</div><div class="icb"><b>Mundo completo</b><small>Abre todos os níveis do mundo actual</small><div class="pbs"><button class="mt2" data-m="world">150 MT</button></div></div></div>';
   h+='<p class="s">CORES DO CARRO · 2 MT cada</p><div class="skg">';
   SK.forEach(function(n,i){
@@ -854,7 +873,7 @@ function shopSerio(){
 function shop(from,sl){
   S.sb=from;S.cur='shop';fuelTick();
   var inf=infOn(),h=`<div class='pn lp lvp shp${sl?' slR':''}' ${thS()}><div class='sh-h'><h1>LOJA</h1><div class='wal'><span class='chip'>✦ <b>${inf?'∞':(P.orbs||0)}</b></span><span class='chip'>💰 <b>${inf?'∞':P.coins}</b></span></div></div>${inf?`<p class='infb'>♾️ Ilimitado: <u class='lkt' data-t='${P.inf}'>${fmt(P.inf-Date.now())}</u></p>`:''}${S.msg?`<p class='msg'>${S.msg}</p>`:''}<button class='hint' data-a='perfil'>👤 Perfil <span>arrasta o ecrã para a direita ›</span></button><div class='lg1'><p class='s'>ITENS</p>`;
-  var serioKeys={pk:1,x2:1,inf:1,open10:1,world:1};
+  var serioKeys={pk:1,inf:1,world:1};
   IT.forEach(function(t){if(!serioKeys[t[0]])h+=shopCard(t)});
   h+=`<p class='s'>MELHORIAS</p>`;
   UP.forEach(function(u,i){var l=P[u[0]],ic=['🏎️','🎯','⏱️'][i];h+=`<div class='ic'><div class='ico'>${ic}</div><div class='icb'><b>${u[1]}</b><small>${u[2]}</small><div class='pips'>${[0,1,2,3,4].map(function(j){return `<i class='${j<l?'on':''}'></i>`}).join('')}</div></div>${l>=5?`<em>Máx.</em>`:`<button class='pr' data-u='${u[0]}'>${u[3]*(l+1)} 💰</button>`}</div>`});
