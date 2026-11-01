@@ -91,6 +91,19 @@ async function fsGet(token, projectId, path) {
   if (!r.ok) throw new Error('FS GET ' + r.status);
   return r.json();
 }
+async function fsPatch(token, projectId, path, fields, mask) {
+  let url = `${fsBase(projectId)}/${path}`;
+  if (mask && mask.length) {
+    url += '?' + mask.map((f) => 'updateMask.fieldPaths=' + encodeURIComponent(f)).join('&');
+  }
+  const r = await fetch(url, {
+    method: 'PATCH',
+    headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ fields }),
+  });
+  if (!r.ok) throw new Error('FS PATCH ' + path + ' ' + r.status);
+  return r.json();
+}
 async function fsCreate(token, projectId, collection, docId, fields) {
   const url = `${fsBase(projectId)}/${collection}?documentId=` + encodeURIComponent(docId);
   const r = await fetch(url, {
@@ -159,8 +172,57 @@ export async function onRequest(context) {
       });
     } catch (eLog) {}
 
-    // O cliente aplica o item localmente após ok:true (progresso AURAVIA é localStorage)
-    return json({ ok: true, item, mt, email, mensagem: 'Pagamento registado.' });
+
+    // Aplica o item no progresso da conta (auraviaEstado)
+    try {
+      const stPath = 'auraviaEstado/' + encodeURIComponent(email);
+      const stDoc = await fsGet(token, projectId, stPath);
+      let st = {
+        lv: 1, maxLv: 1, orbs: 0, coins: 0, sh: 0, mg: 0, tu: 0, lt: 0, nt: 0,
+        x2: 0, mo: 0, ag: 0, te: 0, fuel: 4, lock: 0, inf: 0, skin: 0, own: [0],
+        vol: 0.6, ctl: 0, glow: 1, dn: '', progV: 2,
+      };
+      if (stDoc && stDoc.fields && stDoc.fields.stateJson && stDoc.fields.stateJson.stringValue) {
+        try { st = Object.assign(st, JSON.parse(stDoc.fields.stateJson.stringValue)); } catch (e) {}
+      }
+      if (item === 'pk') st.orbs = (st.orbs || 0) + 100;
+      else if (item === 'x2') st.x2 = 1;
+      else if (item === 'fu') { st.fuel = 4; st.lock = 0; }
+      else if (item === 'inf') st.inf = Math.max(Date.now(), st.inf || 0) + 24 * 3600 * 1000;
+      else if (item === 'open10') st.maxLv = Math.min(1100, (st.maxLv || 1) + 10);
+      else if (item === 'world') {
+        const lv = st.lv || 1;
+        const wi = Math.floor((lv - 1) / 92) % 12;
+        st.maxLv = Math.min(1100, (wi + 1) * 92);
+      } else if (String(item).indexOf('skin') === 0) {
+        const si = parseInt(String(item).replace('skin', ''), 10);
+        if (!isNaN(si)) {
+          if (!Array.isArray(st.own)) st.own = [0];
+          if (st.own.indexOf(si) < 0) st.own.push(si);
+          st.skin = si;
+        }
+      } else if (['sh', 'mg', 'tu', 'lt', 'nt'].indexOf(item) >= 0) {
+        st[item] = (st[item] || 0) + 1;
+      }
+      const fields = {
+        stateJson: strField(JSON.stringify(st)),
+        email: strField(email),
+        maxLv: numField(st.maxLv),
+        lv: numField(st.lv),
+        orbs: numField(st.orbs),
+        coins: numField(st.coins),
+        updatedAt: numField(Date.now()),
+      };
+      if (stDoc) {
+        await fsPatch(token, projectId, stPath, fields, Object.keys(fields));
+      } else {
+        await fsCreate(token, projectId, 'auraviaEstado', email, fields);
+      }
+    } catch (eSt) {
+      console.log('auraviaEstado grant', eSt && eSt.message);
+    }
+
+    return json({ ok: true, item, mt, email, mensagem: 'Pagamento registado. Item entregue na conta.' });
   } catch (e) {
     return json({ ok: false, erro: e && e.message ? e.message : String(e) }, 500);
   }

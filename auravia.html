@@ -518,27 +518,39 @@ function aplicarEstadoConta(st){
   try{if(typeof glowP!=='undefined')glowP.visible=P.glow!==0}catch(e){}
   try{if(typeof bodyM!=='undefined')bodyM.color.setHex(PAL[P.skin||0][0])}catch(e){}
 }
-var _saveTimer=null,_saveBusy=false,_contaPronta=false;
+var _saveTimer=null,_saveBusy=false,_contaPronta=false,_saveFila=false,_ultimoSaveOk=0;
 function agendarSaveConta(){
   if(!_contaPronta)return;
   if(_saveTimer)clearTimeout(_saveTimer);
-  _saveTimer=setTimeout(function(){gravarConta()},700);
+  _saveTimer=setTimeout(function(){gravarConta(false)},400);
 }
 function sv(){agendarSaveConta()}
-function gravarConta(){
+function gravarConta(urgente){
   var em=emailJogador();
-  if(!em||_saveBusy)return;
+  if(!em)return;
+  if(!_contaPronta&&!urgente)return;
+  if(_saveBusy){_saveFila=true;return}
   _saveBusy=true;
+  var payload=estadoParaConta();
   fetch((location.origin||'')+'/api/auravia-salvar',{
     method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({email:em,action:'save',state:estadoParaConta()})
-  }).then(function(r){return r.json()}).then(function(d){
-    if(d&&d.ok&&d.state){
-      if(d.state.maxLv!=null)P.maxLv=d.state.maxLv;
-      if(d.state.orbs!=null)P.orbs=d.state.orbs;
-      if(d.state.coins!=null)P.coins=d.state.coins;
+    body:JSON.stringify({email:em,action:'save',state:payload})
+  }).then(function(r){return r.json().then(function(d){return {ok:r.ok,d:d,status:r.status}})}).then(function(res){
+    if(res.d&&res.d.ok){
+      _ultimoSaveOk=Date.now();
+      /* NÃO baixar progresso local se o servidor devolver valores menores a meio da sessão */
+      if(res.d.state){
+        if(res.d.state.maxLv!=null&&res.d.state.maxLv>(P.maxLv||1))P.maxLv=res.d.state.maxLv;
+        if(res.d.state.orbs!=null&&res.d.state.orbs>(P.orbs||0))P.orbs=res.d.state.orbs;
+        if(res.d.state.coins!=null&&res.d.state.coins>(P.coins||0))P.coins=res.d.state.coins;
+      }
+    }else{
+      console.warn('AURAVIA save falhou',res.status,res.d);
     }
-  }).catch(function(){}).finally(function(){_saveBusy=false});
+  }).catch(function(e){console.warn('AURAVIA save erro',e)}).finally(function(){
+    _saveBusy=false;
+    if(_saveFila){_saveFila=false;gravarConta(true)}
+  });
 }
 function carregarConta(cb){
   var em=emailJogador();
@@ -546,17 +558,27 @@ function carregarConta(cb){
   fetch((location.origin||'')+'/api/auravia-salvar',{
     method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({email:em,action:'load'})
-  }).then(function(r){return r.json()}).then(function(d){
-    if(d&&d.ok&&d.state)aplicarEstadoConta(d.state);
-    else aplicarEstadoConta({lv:1,maxLv:1,orbs:0,coins:0,fuel:4,own:[0]});
+  }).then(function(r){return r.json().then(function(d){return {ok:r.ok,d:d,status:r.status}})}).then(function(res){
+    if(res.d&&res.d.ok&&res.d.state)aplicarEstadoConta(res.d.state);
+    else{
+      console.warn('AURAVIA load falhou',res.status,res.d);
+      aplicarEstadoConta({lv:1,maxLv:1,orbs:0,coins:0,fuel:4,own:[0]});
+    }
     _contaPronta=true;
-    if(cb)cb(true);
+    if(cb)cb(!!(res.d&&res.d.ok));
   }).catch(function(e){
+    console.warn('AURAVIA load erro',e);
     aplicarEstadoConta({lv:1,maxLv:1,orbs:0,coins:0,fuel:4,own:[0]});
     _contaPronta=!!emailJogador();
     if(cb)cb(false);
   });
 }
+try{
+  document.addEventListener('visibilitychange',function(){
+    if(document.visibilityState==='hidden'&&_contaPronta)gravarConta(true);
+  });
+  window.addEventListener('pagehide',function(){if(_contaPronta)gravarConta(true)});
+}catch(e){}
 try{aplicarCriador()}catch(e){}
 try{if(typeof glowP!=="undefined")glowP.visible=P.glow!==0}catch(e){}
 /* Música gerada por código */
@@ -771,7 +793,7 @@ function end(win,why){
   }else{
     loseFuel();
   }
-  if(win){P.maxLv=Math.max(P.maxLv||1,Math.min(MAXL,S.lv+1));}sv();if(win&&!last){S.lv=Math.min(MAXL,S.lv+1);save()}
+  if(win){P.maxLv=Math.max(P.maxLv||1,Math.min(MAXL,S.lv+1));}if(win&&!last){S.lv=Math.min(MAXL,S.lv+1);}try{save();gravarConta(true)}catch(e){sv()}
   var lk=!win&&P.fuel<=0&&P.lock>Date.now(),ttl=win?(last?'CAMPEÃO!':'NÍVEL CONCLUÍDO'):(why=='crash'?'COLISÃO!':why=='off'?'SAÍSTE DA PISTA!':'TEMPO ESGOTADO'),
   sub=win?(last?'Completaste os 1100 níveis da AURAVIA!':'Esferas: +'+S.orbs*(P.x2?2:1)+' · '+st+'★ · +'+gain+' moedas'):(why=='crash'?'Bateste noutro carro! Só o escudo da loja te salva.':why=='off'?'O carro não curva sozinho: tens de virar o volante nas curvas.':'O tempo acabou antes da meta.')+' +'+gain+' moedas';
   ov.className='';
@@ -935,7 +957,10 @@ requestAnimationFrame(frame);
     return;
   }
   carregarConta(function(ok){
-    try{menu()}catch(e){
+    try{
+      if(!ok){console.warn('Progresso pode nao ter carregado da conta');}
+      menu();
+    }catch(e){
       ov.innerHTML='<div class="pn"><h1>AURAVIA</h1><p class="s">Erro a abrir o menu.</p><button class="go" onclick="location.reload()">Recarregar</button></div>';
     }
   });
