@@ -480,14 +480,11 @@ function build(lv){
 
 /* Estado do jogo e interface */
 var S={s:0,lat:0,v:0,vl:0,t:0,orbs:0,sh:0,play:false,lv:1},ov=$('ov'),keys={l:0,r:0},tch=0,MAXL=1100;
-try{S.lv=Math.min(MAXL,Math.max(1,parseInt(localStorage.getItem('auravia.lv'))||1))}catch(e){}
-function save(){try{localStorage.setItem('auravia.lv',S.lv)}catch(e){}}
-var P={orbs:0,sh:0,mg:0,tu:0,lt:0,nt:0,x2:0,coins:0,mo:0,ag:0,te:0,own:[0],skin:0,vol:.6,ctl:0},AR=0,TL=0,WA=0,CI=0,BK=0;
-try{var q0=JSON.parse(localStorage.getItem('auravia.p')||'{}');for(var kk in q0)P[kk]=q0[kk]}catch(e){}
+S.lv=1;
+function save(){try{S.lv=Math.min(MAXL,Math.max(1,S.lv||1));agendarSaveConta()}catch(e){}}
+var P={orbs:0,sh:0,mg:0,tu:0,lt:0,nt:0,x2:0,coins:0,mo:0,ag:0,te:0,own:[0],skin:0,vol:.6,ctl:0,fuel:4,lock:0,inf:0,maxLv:1,glow:1,dn:''},AR=0,TL=0,WA=0,CI=0,BK=0;
+try{localStorage.removeItem('auravia.p');localStorage.removeItem('auravia.lv')}catch(e){}
 if(P.ctl==1)P.ctl=0;
-if(P.fuel==null)P.fuel=4;if(P.lock==null)P.lock=0;if(P.inf==null)P.inf=0;
-if(P.maxLv==null)P.maxLv=1;
-if(P.glow==null)P.glow=1;
 function isCriador(){
   try{return String(localStorage.getItem('emailUtilizador')||'').trim().toLowerCase()==='rochajosepaulo7@gmail.com'}catch(e){return false}
 }
@@ -497,29 +494,69 @@ function emailJogador(){
 function aplicarCriador(){
   if(!isCriador())return;
   P.maxLv=MAXL;
-  P.fuel=(typeof FMAX!=='undefined'?FMAX:4);
-  P.lock=0;
-  P.inf=Date.now()+365*86400e3;
-  P.orbs=999999;P.coins=999999;P.x2=1;
-  if(!P.own||P.own.length<6)P.own=[0,1,2,3,4,5];
 }
-function sv(){try{localStorage.setItem('auravia.p',JSON.stringify(P))}catch(e){}}
-try{
-  /* v2: todos os níveis fechados excepto o 1 do mundo 1 (reinicia progresso antigo de testes) */
-  if(P.progV!==2){
-    if(!isCriador()){
-      P.maxLv=1;
-      S.lv=1;
-      try{localStorage.setItem('auravia.lv','1')}catch(e){}
-    }
-    P.progV=2;
-    sv();
-  }
+function estadoParaConta(){
+  return {
+    lv:S.lv||1,maxLv:P.maxLv||1,orbs:P.orbs||0,coins:P.coins||0,
+    sh:P.sh||0,mg:P.mg||0,tu:P.tu||0,lt:P.lt||0,nt:P.nt||0,x2:P.x2||0,
+    mo:P.mo||0,ag:P.ag||0,te:P.te||0,fuel:P.fuel||0,lock:P.lock||0,inf:P.inf||0,
+    skin:P.skin||0,own:P.own||[0],vol:P.vol,ctl:P.ctl||0,glow:P.glow!==0?1:0,
+    dn:P.dn||'',progV:2
+  };
+}
+function aplicarEstadoConta(st){
+  if(!st||typeof st!=='object')return;
+  var keys=['orbs','coins','sh','mg','tu','lt','nt','x2','mo','ag','te','fuel','lock','inf','skin','vol','ctl','glow','maxLv','dn'];
+  for(var i=0;i<keys.length;i++){var k=keys[i];if(st[k]!=null)P[k]=st[k]}
+  if(Array.isArray(st.own))P.own=st.own.slice();
+  if(!P.own||!P.own.length)P.own=[0];
   if(P.maxLv==null||P.maxLv<1)P.maxLv=1;
-  if(!isCriador()){
-    if(S.lv>(P.maxLv||1)){S.lv=P.maxLv||1;try{localStorage.setItem('auravia.lv',String(S.lv))}catch(e){}}
-  }
-}catch(e){}
+  if(P.fuel==null)P.fuel=4;
+  S.lv=Math.min(MAXL,Math.max(1,parseInt(st.lv,10)||1));
+  if(!isCriador()&&S.lv>P.maxLv)S.lv=P.maxLv;
+  try{aplicarCriador()}catch(e){}
+  try{if(typeof glowP!=='undefined')glowP.visible=P.glow!==0}catch(e){}
+  try{if(typeof bodyM!=='undefined')bodyM.color.setHex(PAL[P.skin||0][0])}catch(e){}
+}
+var _saveTimer=null,_saveBusy=false,_contaPronta=false;
+function agendarSaveConta(){
+  if(!_contaPronta)return;
+  if(_saveTimer)clearTimeout(_saveTimer);
+  _saveTimer=setTimeout(function(){gravarConta()},700);
+}
+function sv(){agendarSaveConta()}
+function gravarConta(){
+  var em=emailJogador();
+  if(!em||_saveBusy)return;
+  _saveBusy=true;
+  fetch((location.origin||'')+'/api/auravia-salvar',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({email:em,action:'save',state:estadoParaConta()})
+  }).then(function(r){return r.json()}).then(function(d){
+    if(d&&d.ok&&d.state){
+      if(d.state.maxLv!=null)P.maxLv=d.state.maxLv;
+      if(d.state.orbs!=null)P.orbs=d.state.orbs;
+      if(d.state.coins!=null)P.coins=d.state.coins;
+    }
+  }).catch(function(){}).finally(function(){_saveBusy=false});
+}
+function carregarConta(cb){
+  var em=emailJogador();
+  if(!em){_contaPronta=false;if(cb)cb(false,'Sem login');return}
+  fetch((location.origin||'')+'/api/auravia-salvar',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({email:em,action:'load'})
+  }).then(function(r){return r.json()}).then(function(d){
+    if(d&&d.ok&&d.state)aplicarEstadoConta(d.state);
+    else aplicarEstadoConta({lv:1,maxLv:1,orbs:0,coins:0,fuel:4,own:[0]});
+    _contaPronta=true;
+    if(cb)cb(true);
+  }).catch(function(e){
+    aplicarEstadoConta({lv:1,maxLv:1,orbs:0,coins:0,fuel:4,own:[0]});
+    _contaPronta=!!emailJogador();
+    if(cb)cb(false);
+  });
+}
 try{aplicarCriador()}catch(e){}
 try{if(typeof glowP!=="undefined")glowP.visible=P.glow!==0}catch(e){}
 /* Música gerada por código */
@@ -885,8 +922,21 @@ function frame(now){
   stars.position.copy(cam.position);camL.position.copy(cam.position);camL.target.position.copy(car.position);camL.target.updateMatrixWorld();bodyM.emissive.copy(bodyM.color).multiplyScalar(.22);stage.visible=!S.play;stage.position.set(car.position.x,car.position.y-.035,car.position.z);stage.rotation.y+=dt*.4;sAcc.color.copy(auraM.color);bm.color.copy(auraM.color);
   if(ov.className!='lv')rd.render(scene,cam);
 }
-menu();cam.position.set(0,5,-10);
+ov.className='';ov.innerHTML='<div class="pn"><h1>AURAVIA</h1><p class="s">A carregar a tua conta...</p></div>';
+cam.position.set(0,5,-10);
 requestAnimationFrame(frame);
+(function bootConta(){
+  var em=emailJogador();
+  if(!em){
+    ov.innerHTML='<div class="pn"><h1>AURAVIA</h1><p class="s">Faz login no Desafio MOZ para jogar.</p><p class="h2">O progresso fica na tua conta (não no navegador).</p><button class="go" onclick="location.href=\'/desafios.html\'">Ir ao login</button></div>';
+    return;
+  }
+  carregarConta(function(ok){
+    try{menu()}catch(e){
+      ov.innerHTML='<div class="pn"><h1>AURAVIA</h1><p class="s">Erro a abrir o menu.</p><button class="go" onclick="location.reload()">Recarregar</button></div>';
+    }
+  });
+})();
 })();
 </script>
 </body>
