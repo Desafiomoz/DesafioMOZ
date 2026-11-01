@@ -425,13 +425,9 @@ function build(lv){
   var turbosNeeded = lv<=10 ? 0.85+(lv-1)*0.025 : Math.min(1.95, 1.30+(lv-11)*0.007);
   TR.pred = pure;
   TR.time = Math.max(12, Math.ceil(pure - turboSave*turbosNeeded + 2.5) + P.te*3);
-  /* 41, 63, 81: pista enorme + pouco tempo + muito trânsito (só paga / Ilimitado passa) */
+  /* 41, 63, 81: tempo normal (baseado na distância); dificuldade = trânsito + final apertado */
   var hardLvl = isNivelImpossivel(lv) && !podePassarImpossivel();
-  if(hardLvl){
-    TR.L = Math.floor(TR.L * 2.2);
-    L = TR.L;
-    TR.time = Math.max(7, Math.floor(TR.time * 0.28));
-  }
+  TR.hard = !!hardLvl;
   n=Math.ceil(L/DS)+40;px=[];pz=[];hd=[];py=[];
   var x=0,z=0,h=0,f1=.03+rnd()*.03,f2=.07+rnd()*.05,a=rnd()*6,b=rnd()*6,g1=.03,g2=.071,c1=rnd()*6,c2=rnd()*6;
   for(i=0;i<n;i++){var k=Math.min(1,i/25);px[i]=x;pz[i]=z;hd[i]=h;py[i]=ey*(Math.sin(i*g1+c1)+.6*Math.sin(i*g2+c2))*k;
@@ -469,7 +465,7 @@ function build(lv){
   var nc=lv<=5?0:Math.min(40,Math.min(Math.floor(L/160)+Math.floor(lv/60),3+(lv-6)));
   /* Níveis trancados: trânsito extremo (muitos carros em todas as faixas) */
   if(typeof hardLvl!=='undefined'&&hardLvl){
-    nc=Math.min(90, Math.max(nc*4, Math.floor(L/70)+25));
+    nc=Math.min(78, Math.max(Math.floor(nc*3.2), Math.floor(L/95)+20));
   }
   var lanes=[-4.8,-1.6,1.6,4.8];
   for(i=0;i<nc;i++){var cc=Math.floor(rnd()*tcol.length),g=mkCar(tcol[cc],Math.floor(rnd()*3),cc);world.add(g);TR.cars.push({g:g,s:160+i*(L-260)/nc+rnd()*25,lat:lanes[Math.floor(rnd()*4)],v:TR.maxV*(.22+.3*rnd()),cd:0})}
@@ -477,6 +473,7 @@ function build(lv){
   for(i=0;i<no;i++){var o=new T.Group(),sm=new T.Mesh(new T.SphereGeometry(.6,12,10),nm),sl=new T.Sprite(new T.SpriteMaterial({map:glowTex,color:ACC,transparent:true,depthWrite:false,blending:T.AdditiveBlending}));
     sl.scale.set(5,5,1);o.add(sm,sl);world.add(o);TR.orbs.push({g:o,s:120+rnd()*(L-220),lat:(rnd()-.5)*10,got:0})}
   var ns=Math.floor(L/1100)+1;
+  if(typeof hardLvl!=='undefined'&&hardLvl) ns = (Math.random()<0.22 ? 1 : 0); /* esferas especiais raras */
   for(i=0;i<ns;i++){var o2=new T.Group(),sm2=new T.Mesh(new T.OctahedronGeometry(.95,0),new T.MeshBasicMaterial({color:0xffffff})),sl2=new T.Sprite(new T.SpriteMaterial({map:glowTex,color:0xffd24a,transparent:true,depthWrite:false,blending:T.AdditiveBlending}));
     sl2.scale.set(11,11,1);o2.add(sm2,sl2);world.add(o2);TR.orbs.push({g:o2,s:350+(i+rnd()*.6)*(L-600)/ns,lat:(rnd()-.5)*6,got:0,sp:1})}
   /* Visual do mundo */
@@ -934,10 +931,25 @@ function step(dt){
   
   S.t-=dt;
   TR.cars.forEach(function(c){c.s+=c.v*dt;c.cd-=dt;
-    if(!c.dead&&c.cd<=0&&Math.abs(c.s-S.s)<4.2&&Math.abs(c.lat-S.lat)<1.9){c.cd=1.5;if(S.shd){S.shd=0;S.sh=.35;flash('ESCUDO ABSORVEU O IMPACTO!',1200);hudI()}else{S.crash=1}}});
+    if(!c.dead&&c.cd<=0&&Math.abs(c.s-S.s)<4.2&&Math.abs(c.lat-S.lat)<1.9){c.cd=1.5;if(S.shd){S.shd=0;S.sh=.35;flash('ESCUDO ABSORVEU O IMPACTO!',1200);hudI()}else{S.crash=1}}
+    /* Carros do trânsito apagam esferas ao tocarem */
+    if(!c.dead){TR.orbs.forEach(function(o){if(!o.got&&Math.abs(o.s-c.s)<3.4&&Math.abs(o.lat-c.lat)<2.3){o.got=1;if(o.g)o.g.visible=false}})}
+  });
   if(S.crash){S.crash=0;S.sh=1;end(false,'crash');return}
   if(S.mgo)TR.orbs.forEach(function(o){if(!o.got){var d0=o.s-S.s;if(d0>-6&&d0<55&&Math.abs(o.lat-S.lat)<12){var k=Math.min(1,dt*(o.sp?4:3));o.s+=(S.s-o.s)*k;o.lat+=(S.lat-o.lat)*k}}});
   TR.orbs.forEach(function(o){if(!o.got&&Math.abs(o.s-S.s)<(o.sp?3.8:3)&&Math.abs(o.lat-S.lat)<(o.sp?2.8:2.4)){o.got=1;o.g.visible=false;if(o.sp){S.sp=6;if(S.lv<35)S.t+=2;S.sh=Math.max(S.sh,.2);flash(S.lv<35?'ESFERA ESPECIAL! +2s':'ESFERA ESPECIAL!',1400)}else{S.orbs++;if(S.lv<35)S.t+=1.5;S.tc=Math.min(6,S.tc+1);if(S.tc==6)flash('TURBO PRONTO!',1500)}}});
+  /* Níveis 41/63/81: perto da chegada fica impossível — tempo despenca e o carro trava */
+  if(TR.hard){
+    var prog=TR.L>0?(S.s/TR.L):0;
+    if(prog>0.62){
+      var k=Math.min(1,(prog-0.62)/0.38); /* 0→1 do 62% ao fim */
+      /* tempo extra: começa moderado e explode no final */
+      S.t-=dt*(1.6 + k*k*6.5 + k*3.2);
+      /* carro cada vez mais lento (quase pára no fim) */
+      S.v=Math.max(4,S.v*(1-dt*(0.55 + k*1.8 + k*k*2.4)));
+      if(prog>0.88){ S.v=Math.min(S.v,12); S.t-=dt*4.5; }
+    }
+  }
   if(S.s>=TR.L)end(true);else if(S.t<=0)end(false);
 }
 var hu=0,c1='',c2='',c3=-1,fa0=0,fn=0,tm=0,last=performance.now(),cp=new T.Vector3(),ct=new T.Vector3(),bar=document.querySelector('#bar i');
