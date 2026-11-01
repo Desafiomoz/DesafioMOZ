@@ -756,7 +756,8 @@ function oldMenu(){
 function menu(skip){
   S.play=false;build(S.lv);
   ov.className='in';
-  ov.innerHTML='<div class="it"><h1>AURAVIA</h1><p class="s">1100 níveis · 12 mundos de luz</p></div><div class="ib"><button class="go" data-a="play" id="pb">Jogar</button></div>';
+  var inf=infOn();
+  ov.innerHTML='<div class="it"><h1>AURAVIA</h1><p class="s">1100 níveis · 12 mundos de luz</p><p class="s" style="margin-top:8px;font-size:1.05rem">✦ <b style="color:var(--a)">'+(inf?'∞':(P.orbs||0))+'</b> &nbsp; 💰 <b style="color:#ffd24a">'+(inf?'∞':(P.coins||0))+'</b></p><p class="s2">Nível '+(S.lv||1)+' · Máx. '+(P.maxLv||1)+'</p></div><div class="ib"><button class="go" data-a="play" id="pb">Jogar</button></div>';
   var pb=$('pb');
   if(!skip){pb.style.opacity=0;pb.style.pointerEvents='none';setTimeout(function(){pb.style.opacity=1;pb.style.pointerEvents='auto'},5000)}
   $('lv').textContent='';$('tm').textContent='';$('sp').textContent='';
@@ -842,7 +843,8 @@ function levels(){
   var wi=S.wi,w=WL[wi],pr=wprog(wi),tot=0,tst=0,i,q;
   for(i=0;i<12;i++){q=wprog(i);tot+=q[0];tst+=q[1]}
   var lk=isLocked(),a0=wi*92+1,b0=Math.min(MAXL,a0+91);
-  var h=`<div class='pn lp lvp' style='--a:${wcol(wi)};--a2:${rgba(w[4],.22)};--a3:${rgba(w[4],.55)};--a4:${rgba(w[4],.12)};background:radial-gradient(ellipse at 50% 0%,${rgba(w[4],.45)} 0%,transparent 60%),linear-gradient(180deg,${w[1]}f2 0%,${w[2]}66 38%,#070910 100%),#070910'><div class='lh'><div class='mt'>${tank()}</div><div class='lt'><h1>NÍVEIS</h1><p class='s2'>★ ${tst} · ${tot}/${MAXL} concluídos</p></div><button class='ls' data-a='shop0'>🛒 Loja</button></div>${lk?`<p class='lk'>⛽ Sem combustível! Volta em ${lockTxt()}</p>`:''}<div class='wt'>`;
+  var inf=infOn();
+  var h=`<div class='pn lp lvp' style='--a:${wcol(wi)};--a2:${rgba(w[4],.22)};--a3:${rgba(w[4],.55)};--a4:${rgba(w[4],.12)};background:radial-gradient(ellipse at 50% 0%,${rgba(w[4],.45)} 0%,transparent 60%),linear-gradient(180deg,${w[1]}f2 0%,${w[2]}66 38%,#070910 100%),#070910'><div class='lh'><div class='mt'>${tank()}</div><div class='lt'><h1>NÍVEIS</h1><p class='s2'>★ ${tst} · ${tot}/${MAXL} concluídos</p><p class='s2' style='margin-top:4px'>✦ <b>${inf?'∞':(P.orbs||0)}</b> &nbsp; 💰 <b>${inf?'∞':(P.coins||0)}</b></p></div><button class='ls' data-a='shop0'>🛒 Loja</button></div>${lk?`<p class='lk'>⛽ Sem combustível! Compra na loja para continuar.</p>`:''}<div class='wt'>`;
   WL.forEach(function(x,j){var p=wprog(j);h+=`<button class='wc${j==wi?' sel':''}' data-w='${j}' style='--c:${wcol(j)};--c2:${rgba(x[4],.25)}'><i class='wn'>${p[0]==p[2]?'👑 ':''}Mundo ${j+1}</i><span class='pb'><u style='width:${Math.round(p[0]/p[2]*100)}%'></u></span></button>`});
   h+=`</div><h2 class='wh'>${w[0]}</h2><p class='wr'>Níveis ${a0}–${b0} · ★ ${pr[1]}/${pr[2]*3} · ${pr[0]==pr[2]?'👑 Mundo completo':'🎯 Faltam '+(pr[2]-pr[0])}</p><div class='lg'>`;
   for(var k=a0;k<=b0;k++){var v=+(P.dn||'').charAt(k-1)||0;var locked=!isCriador()&&k>(P.maxLv||1);h+=`<button class='lb${v?' d':''}${k==S.lv?' cur':''}' data-l='${k}' ${locked?'disabled':''} style='${locked?'opacity:.4;pointer-events:none;filter:grayscale(.7)':''}'><b>${k}</b><i>${locked?'🔒':(v?'★'.repeat(v)+'☆'.repeat(3-v):'')}</i></button>`}

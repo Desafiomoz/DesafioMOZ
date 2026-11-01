@@ -244,9 +244,21 @@ function sanitizeIncoming(state, base) {
     // Nunca baixar maxLv. Aceitar progresso real via dn ou +10 por gravação (rede lenta / várias vitórias)
     let nextMax = Math.max(bMax, fromDn, Math.min(maxLvClient, bMax + 10));
     out.maxLv = clampInt(nextMax, 1, 1100);
-    // orbs/coins: permitir subida razoável (vitórias + recolha)
-    out.orbs = Math.max(0, Math.min(orbs, bOrbs + 500));
-    out.coins = Math.max(0, Math.min(coins, bCoins + 200));
+    // orbs/coins: sobe até +500/+200; desce (loja) permitido
+    // Protecção: se o cliente manda ~0 e a base tem valor alto, não apagar (load incompleto)
+    if (orbs <= 2 && bOrbs >= 15) {
+      out.orbs = bOrbs;
+    } else {
+      out.orbs = Math.max(0, Math.min(orbs, bOrbs + 500));
+    }
+    if (coins <= 2 && bCoins >= 15) {
+      out.coins = bCoins;
+    } else {
+      out.coins = Math.max(0, Math.min(coins, bCoins + 200));
+    }
+    // Se o cliente tem MAIS que a base (compra c200 / vitórias), aceitar até ao teto
+    if (orbs > bOrbs) out.orbs = Math.max(out.orbs, Math.min(orbs, bOrbs + 500));
+    if (coins > bCoins) out.coins = Math.max(out.coins, Math.min(coins, bCoins + 200));
     // consumíveis: não sobem no cliente (compras via Function)
     ['sh', 'mg', 'tu', 'lt', 'nt'].forEach((k) => {
       const nv = clampInt(state[k], 0, 999);
@@ -334,11 +346,22 @@ export async function onRequest(context) {
 
     if (action === 'load') {
       if (!existente || !existente.fields) {
-        return json({ ok: true, novo: true, state: DEFAULT_STATE });
+        return json({ ok: true, novo: true, state: Object.assign({}, DEFAULT_STATE) });
       }
       const raw = lerStr(existente, 'stateJson', '');
-      const st = parseState(raw) || DEFAULT_STATE;
+      const st = parseState(raw) || {};
       const merged = Object.assign({}, DEFAULT_STATE, st);
+      // Campos de topo (orbs/coins/maxLv) — nunca perder se stateJson estiver incompleto
+      const topOrbs = lerNum(existente, 'orbs', -1);
+      const topCoins = lerNum(existente, 'coins', -1);
+      const topMax = lerNum(existente, 'maxLv', -1);
+      const topLv = lerNum(existente, 'lv', -1);
+      if (topOrbs > (Number(merged.orbs) || 0)) merged.orbs = topOrbs;
+      if (topCoins > (Number(merged.coins) || 0)) merged.coins = topCoins;
+      if (topMax > (Number(merged.maxLv) || 0)) merged.maxLv = topMax;
+      if (topLv > 0) merged.lv = Math.max(Number(merged.lv) || 1, topLv);
+      merged.orbs = Math.max(0, Math.floor(Number(merged.orbs) || 0));
+      merged.coins = Math.max(0, Math.floor(Number(merged.coins) || 0));
       if (!merged.maxLv || merged.maxLv < 1) merged.maxLv = 1;
       if (!merged.lv || merged.lv < 1) merged.lv = 1;
       if (merged.lv > merged.maxLv) merged.lv = merged.maxLv;
