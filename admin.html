@@ -10735,6 +10735,32 @@ async function bloquearContaEmail() {
       outro:    { label: '❓ Outro',             bloq: 'pagamento' }
     };
 
+    var AV_ITEM_LABELS = {
+      fu: 'Combustível (tanque cheio)',
+      sh: 'Escudo',
+      mg: 'Ímã de esferas',
+      tu: 'Turbo Maximum',
+      lt: 'Menos trânsito',
+      nt: 'Sem trânsito',
+      pk: 'Pacote de esferas (+100)',
+      x2: 'Multiplicador ×2',
+      inf: 'Ilimitado 1 dia',
+      inf7: 'Ilimitado 1 semana',
+      open10: 'Abrir 10 níveis',
+      c200: '200 moedas',
+      world: 'Mundo completo',
+      skin0: 'Cor do carro', skin1: 'Cor do carro', skin2: 'Cor do carro',
+      skin3: 'Cor do carro', skin4: 'Cor do carro', skin5: 'Cor do carro'
+    };
+    function pgLabelAuravia(item, mt, fallback) {
+      var k = String(item || '').trim();
+      var nome = AV_ITEM_LABELS[k] || fallback || k || 'Item';
+      var v = Number(mt) || 0;
+      if (String(fallback || '').indexOf('[AURAVIA]') === 0) return String(fallback);
+      if (String(fallback || '').indexOf('MT') !== -1 && String(fallback || '').length > 8) return String(fallback);
+      return '[AURAVIA] ' + (v ? (v + ' MT · ') : '') + nome;
+    }
+
     function pgNormTx(t) { return String(t || '').replace(/\s+/g, '').toUpperCase(); }
 
     function pgOrigemDe(jogo, pacote, detalhe) {
@@ -10789,9 +10815,12 @@ async function bloquearContaEmail() {
         var sEm = await ler('emolaTransacoes', 400);
         if (sEm) sEm.forEach(function (doc) {
           var d = doc.data() || {};
+          var emOrigem = pgOrigemDe(d.jogo, d.item, d.descricao || d.label);
+          var emItem = d.descricao || d.label || d.item || '';
+          if (emOrigem === 'auravia') emItem = pgLabelAuravia(d.item, d.mt, emItem);
           juntar('emolaTransacoes', doc, {
-            tx: doc.id, email: d.email, nome: d.nome, tel: d.telefone, origem: pgOrigemDe(d.jogo, d.item, d.descricao),
-            item: d.descricao || d.item || '', mt: d.mt, data: d.createdAt, entrega: d.revertido === true ? 'revertido' : 'entregue'
+            tx: doc.id, email: d.email, nome: d.nome, tel: d.telefone, origem: emOrigem,
+            item: emItem, mt: d.mt, data: d.createdAt, entrega: d.revertido === true ? 'revertido' : 'entregue'
           });
         });
         var sPm = await ler('pagamentosManuais', 400);
@@ -10799,9 +10828,12 @@ async function bloquearContaEmail() {
           var d = doc.data() || {};
           var tx = d.txId || d.txid;
           if (!tx) return; // entregas feitas à mão pelo admin (sem ID) não entram
+          var pmOrigem = pgOrigemDe(d.jogo, d.item, d.label || d.descricao);
+          var pmItem = d.label || d.descricao || d.item || '';
+          if (pmOrigem === 'auravia') pmItem = pgLabelAuravia(d.item, d.mt || d.valorMt, pmItem);
           juntar('pagamentosManuais', doc, {
-            tx: tx, email: d.email, nome: d.nome, tel: d.telefone, origem: pgOrigemDe(d.jogo, d.item, d.label),
-            item: d.label || d.item || d.descricao || '', mt: d.mt || d.valorMt, data: d.createdAt,
+            tx: tx, email: d.email, nome: d.nome, tel: d.telefone, origem: pmOrigem,
+            item: pmItem, mt: d.mt || d.valorMt, data: d.createdAt,
             entrega: d.status === 'revertido' ? 'revertido' : 'entregue'
           });
         });

@@ -27,6 +27,33 @@ const PRECOS = {
   skin0: 2, skin1: 2, skin2: 2, skin3: 2, skin4: 2, skin5: 2,
 };
 
+const LABELS = {
+  fu: 'Combustível (tanque cheio)',
+  sh: 'Escudo',
+  mg: 'Ímã de esferas',
+  tu: 'Turbo Maximum',
+  lt: 'Menos trânsito',
+  nt: 'Sem trânsito',
+  pk: 'Pacote de esferas (+100)',
+  x2: 'Multiplicador ×2',
+  inf: 'Ilimitado 1 dia (esferas e moedas)',
+  inf7: 'Ilimitado 1 semana (esferas e moedas)',
+  open10: 'Abrir 10 níveis',
+  c200: '200 moedas',
+  world: 'Mundo completo',
+  skin0: 'Cor do carro',
+  skin1: 'Cor do carro',
+  skin2: 'Cor do carro',
+  skin3: 'Cor do carro',
+  skin4: 'Cor do carro',
+  skin5: 'Cor do carro',
+};
+
+function labelItem(item, mt, nomeBody) {
+  const base = LABELS[item] || nomeBody || item || 'Item AURAVIA';
+  return '[AURAVIA] ' + mt + ' MT · ' + base;
+}
+
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), { status, headers: CORS });
 }
@@ -143,11 +170,15 @@ export async function onRequest(context) {
     if (!mt || mt < 1) return json({ ok: false, erro: 'Item ou valor inválido' }, 400);
 
     // Idempotência: cada TX só uma vez
+    const descricao = labelItem(item, mt, body.nome);
     try {
       await fsCreate(token, projectId, 'emolaTransacoes', txId, {
         email: strField(email),
         item: strField(item),
+        descricao: strField(descricao),
+        label: strField(descricao),
         jogo: strField('auravia'),
+        origem: strField('AURAVIA'),
         mt: numField(mt),
         createdAt: strField(new Date().toISOString()),
         via: strField('api-auravia-compra'),
@@ -165,7 +196,8 @@ export async function onRequest(context) {
         origem: strField('AURAVIA'),
         email: strField(email),
         item: strField(item),
-        label: strField('[AURAVIA] ' + (body.nome || item)),
+        descricao: strField(descricao),
+        label: strField(descricao),
         mt: numField(mt),
         txId: strField(txId),
         status: strField('entregue'),
