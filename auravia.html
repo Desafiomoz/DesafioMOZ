@@ -464,8 +464,9 @@ function build(lv){
   TR.cars=[];TR.orbs=[];
   var nc=lv<=5?0:Math.min(40,Math.min(Math.floor(L/160)+Math.floor(lv/60),3+(lv-6)));
   /* Níveis trancados: trânsito extremo (muitos carros em todas as faixas) */
+  /* 41/63/81: só o trânsito torna difícil — Sem trânsito / Menos trânsito permitem passar */
   if(typeof hardLvl!=='undefined'&&hardLvl){
-    nc=Math.min(78, Math.max(Math.floor(nc*3.2), Math.floor(L/95)+20));
+    nc=Math.min(88, Math.max(Math.floor(nc*3.8), Math.floor(L/80)+28));
   }
   var lanes=[-4.8,-1.6,1.6,4.8];
   for(i=0;i<nc;i++){var cc=Math.floor(rnd()*tcol.length),g=mkCar(tcol[cc],Math.floor(rnd()*3),cc);world.add(g);TR.cars.push({g:g,s:160+i*(L-260)/nc+rnd()*25,lat:lanes[Math.floor(rnd()*4)],v:TR.maxV*(.22+.3*rnd()),cd:0})}
@@ -473,7 +474,6 @@ function build(lv){
   for(i=0;i<no;i++){var o=new T.Group(),sm=new T.Mesh(new T.SphereGeometry(.6,12,10),nm),sl=new T.Sprite(new T.SpriteMaterial({map:glowTex,color:ACC,transparent:true,depthWrite:false,blending:T.AdditiveBlending}));
     sl.scale.set(5,5,1);o.add(sm,sl);world.add(o);TR.orbs.push({g:o,s:120+rnd()*(L-220),lat:(rnd()-.5)*10,got:0})}
   var ns=Math.floor(L/1100)+1;
-  if(typeof hardLvl!=='undefined'&&hardLvl) ns = (Math.random()<0.22 ? 1 : 0); /* esferas especiais raras */
   for(i=0;i<ns;i++){var o2=new T.Group(),sm2=new T.Mesh(new T.OctahedronGeometry(.95,0),new T.MeshBasicMaterial({color:0xffffff})),sl2=new T.Sprite(new T.SpriteMaterial({map:glowTex,color:0xffd24a,transparent:true,depthWrite:false,blending:T.AdditiveBlending}));
     sl2.scale.set(11,11,1);o2.add(sm2,sl2);world.add(o2);TR.orbs.push({g:o2,s:350+(i+rnd()*.6)*(L-600)/ns,lat:(rnd()-.5)*6,got:0,sp:1})}
   /* Visual do mundo */
@@ -802,11 +802,7 @@ function askExit(){if(S.s<120){doExit(false);return}S.pz=true;ov.className='';ov
 function doExit(pen){if(pen)loseFuel();S.play=false;S.pz=false;S.wi=null;levels()}
 function end(win,why){
   S.play=false;
-  /* Níveis 41, 63, 81: só passam com Ilimitado 24h (ou criador). Sem aviso de "bloqueado". */
-  if(win && isNivelImpossivel(S.lv) && !podePassarImpossivel()){
-    win=false;
-    why='time';
-  }
+  /* 41/63/81: dificuldade = trânsito. Quem usar Sem trânsito / Menos trânsito (ou skill) pode concluir. */
   var last=S.lv>=MAXL,st=0,f0=P.fuel,gain=0;
   /* Estrelas primeiro → moedas: 3★=10, 2★=5, 1★=2, perda=0 */
   if(win){
@@ -938,18 +934,6 @@ function step(dt){
   if(S.crash){S.crash=0;S.sh=1;end(false,'crash');return}
   if(S.mgo)TR.orbs.forEach(function(o){if(!o.got){var d0=o.s-S.s;if(d0>-6&&d0<55&&Math.abs(o.lat-S.lat)<12){var k=Math.min(1,dt*(o.sp?4:3));o.s+=(S.s-o.s)*k;o.lat+=(S.lat-o.lat)*k}}});
   TR.orbs.forEach(function(o){if(!o.got&&Math.abs(o.s-S.s)<(o.sp?3.8:3)&&Math.abs(o.lat-S.lat)<(o.sp?2.8:2.4)){o.got=1;o.g.visible=false;if(o.sp){S.sp=6;if(S.lv<35)S.t+=2;S.sh=Math.max(S.sh,.2);flash(S.lv<35?'ESFERA ESPECIAL! +2s':'ESFERA ESPECIAL!',1400)}else{S.orbs++;if(S.lv<35)S.t+=1.5;S.tc=Math.min(6,S.tc+1);if(S.tc==6)flash('TURBO PRONTO!',1500)}}});
-  /* Níveis 41/63/81: perto da chegada fica impossível — tempo despenca e o carro trava */
-  if(TR.hard){
-    var prog=TR.L>0?(S.s/TR.L):0;
-    if(prog>0.62){
-      var k=Math.min(1,(prog-0.62)/0.38); /* 0→1 do 62% ao fim */
-      /* tempo extra: começa moderado e explode no final */
-      S.t-=dt*(1.6 + k*k*6.5 + k*3.2);
-      /* carro cada vez mais lento (quase pára no fim) */
-      S.v=Math.max(4,S.v*(1-dt*(0.55 + k*1.8 + k*k*2.4)));
-      if(prog>0.88){ S.v=Math.min(S.v,12); S.t-=dt*4.5; }
-    }
-  }
   if(S.s>=TR.L)end(true);else if(S.t<=0)end(false);
 }
 var hu=0,c1='',c2='',c3=-1,fa0=0,fn=0,tm=0,last=performance.now(),cp=new T.Vector3(),ct=new T.Vector3(),bar=document.querySelector('#bar i');
