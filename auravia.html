@@ -656,13 +656,27 @@ function audioSyncBoost(active){
 function audioStopAll(){audioStopTurbo();audioStopFundo()}
 function mf(n){return 440*Math.pow(2,(n-69)/12)}
 function osc(t,f,ty,d,v,fl){var o=AX.createOscillator(),g=AX.createGain(),x=AX.createBiquadFilter();o.type=ty;o.frequency.value=f;x.type='lowpass';x.frequency.value=fl;g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(x);x.connect(g);g.connect(mg);o.start(t);o.stop(t+d+.02)}
-function sched(){while(nt<AX.currentTime+.4){var st=beat%16,br=Math.floor(beat/16)%4;
+function sched(){
+  /* Música antiga (chip) só em níveis/loja — nunca a meio da corrida */
+  if(typeof S!=='undefined'&&S.play&&!S.pz){return}
+  if(!AX||!mg)return;
+  while(nt<AX.currentTime+.4){var st=beat%16,br=Math.floor(beat/16)%4;
   if(st%4==0){var o=AX.createOscillator(),g=AX.createGain();o.frequency.setValueAtTime(140,nt);o.frequency.exponentialRampToValueAtTime(40,nt+.12);g.gain.setValueAtTime(.9,nt);g.gain.exponentialRampToValueAtTime(.001,nt+.18);o.connect(g);g.connect(mg);o.start(nt);o.stop(nt+.2)}
   if(st%2==0)osc(nt,mf(BS[br]),'sawtooth',.22,.22,500);
   osc(nt,mf(CH[br][st%3]+12),'square',.12,.07,2400);
   if(st==0)CH[br].forEach(function(n){osc(nt,mf(n),'triangle',1.8,.12,1200)});
   nt+=.127;beat++}}
-function mus(){try{audioInit();if(AUD.wantFundo&&AUD.fundo&&AUD.fundo.paused)AUD.fundo.play().catch(function(){});if(AUD.wantTurbo&&AUD.turbo&&AUD.turbo.paused)AUD.turbo.play().catch(function(){})}catch(e){}if(AX){if(AX.state=='suspended')AX.resume();return}var C=window.AudioContext||window.webkitAudioContext;if(!C)return;AX=new C();mg=AX.createGain();setVol();mg.connect(AX.destination);nt=AX.currentTime+.1;setInterval(sched,100)}
+function mus(){
+  try{audioInit();if(AUD.wantFundo&&AUD.fundo&&AUD.fundo.paused)AUD.fundo.play().catch(function(){});if(AUD.wantTurbo&&AUD.turbo&&AUD.turbo.paused)AUD.turbo.play().catch(function(){})}catch(e){}
+  if(AX){if(AX.state=='suspended')AX.resume();
+    /* Se está a correr, não reacende a música chip antiga */
+    if(typeof S!=='undefined'&&S.play&&!S.pz){try{if(mg)mg.gain.value=0}catch(e){}return}
+    try{if(mg)setVol()}catch(e){}
+    return}
+  var C=window.AudioContext||window.webkitAudioContext;if(!C)return;AX=new C();mg=AX.createGain();setVol();mg.connect(AX.destination);nt=AX.currentTime+.1;
+  /* Chip só fora da corrida */
+  if(!(typeof S!=='undefined'&&S.play&&!S.pz))setInterval(sched,100)
+}
 /* Loja, opções e pausa */
 var UP=[['mo','Motor','+velocidade',250],['ag','Direção','+controlo',200],['te','Tempo extra','+4 s por nível',150]],SK=['Rubi','Safira','Obsidiana','Pérola','Esmeralda','Ouro'],SPR=[0,300,500,700,900,1500];
 function pauseScr(){S.pz=true;try{audioStopTurbo();if(AUD.fundo)AUD.fundo.pause()}catch(e){}ov.className='';ov.innerHTML=`<div class='pn'><h1 style='font-size:1.8rem'>PAUSA</h1><button class='go' data-a='resume'>Continuar</button><p><button class='go2' data-a='shop2'>🛒 Loja</button></p></div>`}
@@ -800,7 +814,7 @@ function oldMenu(){
   ov.className='';ov.innerHTML='<div class="pn"><h1>AURAVIA</h1><p class="s">1100 níveis · 12 mundos de luz</p><div class="lvl"><button data-d="-10">−10</button><button data-d="-1">−1</button><b>'+S.lv+'</b><button data-d="1">+1</button><button data-d="10">+10</button></div><p id="wn">'+WI[0]+'</p><button class="go" data-a="go">Jogar</button><p class="h2">Toca na esquerda ou na direita para virar. Apanha as esferas para ganhar tempo e chega à meta.</p></div>';
   $('lv').textContent='';$('tm').textContent='';$('sp').textContent='';
 }
-function menu(skip){try{audioStopAll()}catch(e){}
+function menu(skip){try{audioStopAll()}catch(e){}try{if(mg)setVol()}catch(e){}
   S.play=false;build(S.lv);
   ov.className='in';
   var inf=infOn();
@@ -857,7 +871,7 @@ function lockScr(){ov.className='';ov.innerHTML=`<div class='pn'><h1 style='font
 function askExit(){if(S.s<120){doExit(false);return}S.pz=true;ov.className='';ov.innerHTML=`<div class='pn'><h1 style='font-size:1.5rem'>SAIR DO NÍVEL?</h1><p class='s'>Se saíres agora, perdes 1 de combustível.</p><button class='go' data-a='resume'>Continuar a jogar</button><p><button data-a='exit2'>Sair mesmo assim</button></p></div>`}
 function doExit(pen){if(pen)loseFuel();S.play=false;S.pz=false;S.wi=null;levels()}
 function end(win,why){
-  S.play=false;try{audioStopAll()}catch(e){}
+  S.play=false;try{audioStopAll()}catch(e){}try{if(mg)setVol()}catch(e){}
   /* 41/63/81: dificuldade = trânsito. Quem usar Sem trânsito / Menos trânsito (ou skill) pode concluir. */
   var last=S.lv>=MAXL,st=0,f0=P.fuel,gain=0;
   /* Estrelas primeiro → moedas: 3★=10, 2★=5, 1★=2, perda=0 */
@@ -884,7 +898,7 @@ function perfil(sl){
   ov.innerHTML=`<div class='pn lp lvp shp${sl?' slL':''}' ${thS()}><h1 style='font-size:1.6rem;letter-spacing:4px'>PERFIL</h1><div class='lg1'><p class='s'>Carteira</p><div class='rw'><span>✦ Esferas</span><em>${inf?'∞':(P.orbs||0)}</em></div><div class='rw'><span>💰 Moedas</span><em>${inf?'∞':P.coins}</em></div>${inf?`<div class='rw'><span>♾️ Ilimitado por</span><em><u class='lkt' data-t='${P.inf}'>${fmt(P.inf-Date.now())}</u></em></div>`:''}<p class='s'>Combustível</p><div class='fz'>${tank()}<div class='ft'><span>${isLocked()?'Sem combustível! Volta em '+lockTxt():P.fuel+' de '+FMAX+' no tanque'}</span><button data-a='shopfu'>Encher</button></div></div><p class='s'>Itens comprados</p>${rows.map(function(r){return `<div class='rw'><span>${r[1]} <b>${r[2]}</b></span><em>×${P[r[0]]||0}</em></div>`}).join('')}<div class='rw'><span>✖ <b>Multiplicador ×2</b></span><em>${P.x2?'Ativo':'—'}</em></div><p class='s'>Melhorias</p>${UP.map(function(u){return `<div class='rw'><span>${u[1]}</span><em>nível ${P[u[0]]}/5</em></div>`}).join('')}<p class='s'>Tintas do carro</p><div class='row'>${SK.map(function(n,j){return `<span class='sw2${P.skin==j?' on2':''}' title='${n}' style='background:#${('000000'+PAL[j][0].toString(16)).slice(-6)};opacity:${P.own.indexOf(j)>=0?1:.25}'></span>`}).join('')}</div><p class='s'>Progresso</p><div class='rw'><span>Níveis concluídos</span><em>${c}/${MAXL}</em></div><div class='rw'><span>Estrelas</span><em>★ ${s}/${MAXL*3}</em></div><div class='rw'><span>Nível atual</span><em>${S.lv}</em></div></div><p class='h2'>‹ arrasta o ecrã para a esquerda para voltar à loja</p><p><button class='go' data-a='pback'>Voltar à loja</button></p></div>`}
 /* Tema, níveis em ecrã inteiro, loja com aura e deslizar para o perfil */
 function thS(){var wi=Math.floor((S.lv-1)/92)%12,w=WL[wi],n=w[4];return `style='--a:${wcol(wi)};--a2:${rgba(n,.22)};--a3:${rgba(n,.55)};--a4:${rgba(n,.12)};background:radial-gradient(ellipse at 50% 0%,${rgba(n,.5)} 0%,transparent 62%),linear-gradient(180deg,${w[1]}f2 0%,${w[2]}55 40%,#070910 100%),#070910'`}
-function levels(){try{audioStopAll()}catch(e){}
+function levels(){try{audioStopAll()}catch(e){}try{if(mg)setVol()}catch(e){}
   S.play=false;S.cur='levels';fuelTick();
   if(S.wi==null)S.wi=Math.floor((S.lv-1)/92)%12;
   var wi=S.wi,w=WL[wi],pr=wprog(wi),tot=0,tst=0,i,q;
@@ -941,7 +955,7 @@ function shop(from,sl){
 var sx0=0,sy0=0,st0=0;
 ov.addEventListener('pointerdown',function(e){sx0=e.clientX;sy0=e.clientY;st0=Date.now()});
 ov.addEventListener('pointerup',function(e){var dx=e.clientX-sx0,dy=e.clientY-sy0;if(Math.abs(dx)>70&&Math.abs(dy)<70&&Date.now()-st0<800){if(S.cur=='shop'&&dx>0)perfil(1);else if(S.cur=='perfil'&&dx<0)shop(S.sb,1)}});
-function start(){fuelTick();try{aplicarCriador()}catch(e){}if(!isCriador()){if((P.maxLv||1)<1)P.maxLv=1;if(S.lv>(P.maxLv||1)){S.lv=P.maxLv||1;save();alert("Nivel bloqueado. Joga o nivel "+(P.maxLv||1)+" para desbloquear o seguinte.");levels();return}}if(P.fuel<=0&&!isCriador()){lockScr();return}S.pz=false;c1='';c2='';c3=-1;build(S.lv);bodyM.color.setHex(PAL[P.skin][0]);S.play=true;ov.className='h';save();$('fk').innerHTML=tank();try{audioPlayFundo();audioStopTurbo()}catch(e){}flash((S.lv<=5?'Tu fazes as curvas! · ':S.lv<=10?'Apanha esferas e usa o TURBO · ':S.lv<=20?'Sem turbo não chegas! · ':'Usa o TURBO nas retas · ')+'Sem boost ~'+Math.ceil(TR.pred)+'s · tens '+Math.ceil(S.t)+'s',3400)}
+function start(){fuelTick();try{aplicarCriador()}catch(e){}if(!isCriador()){if((P.maxLv||1)<1)P.maxLv=1;if(S.lv>(P.maxLv||1)){S.lv=P.maxLv||1;save();alert("Nivel bloqueado. Joga o nivel "+(P.maxLv||1)+" para desbloquear o seguinte.");levels();return}}if(P.fuel<=0&&!isCriador()){lockScr();return}S.pz=false;c1='';c2='';c3=-1;build(S.lv);bodyM.color.setHex(PAL[P.skin][0]);S.play=true;ov.className='h';save();$('fk').innerHTML=tank();try{if(mg)mg.gain.value=0}catch(e){}try{audioPlayFundo();audioStopTurbo()}catch(e){}flash((S.lv<=5?'Tu fazes as curvas! · ':S.lv<=10?'Apanha esferas e usa o TURBO · ':S.lv<=20?'Sem turbo não chegas! · ':'Usa o TURBO nas retas · ')+'Sem boost ~'+Math.ceil(TR.pred)+'s · tens '+Math.ceil(S.t)+'s',3400)}
 function oldEnd(win){end(win,win?'':'time')}
 ov.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;
   if(b.dataset.l){var nl=parseInt(b.dataset.l,10);if(!isCriador()&&nl>(P.maxLv||1)){alert('Nivel '+nl+' bloqueado. Completa o nivel '+(P.maxLv||1)+' primeiro.');return}S.lv=nl;start()}else if(b.dataset.w){S.wi=parseInt(b.dataset.w);levels()}else if(b.dataset.a=='play'){S.wi=null;levels()}else if(b.dataset.a=='back')menu(true)
