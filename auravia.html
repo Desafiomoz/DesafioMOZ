@@ -425,10 +425,12 @@ function build(lv){
   var turbosNeeded = lv<=10 ? 0.85+(lv-1)*0.025 : Math.min(1.95, 1.30+(lv-11)*0.007);
   TR.pred = pure;
   TR.time = Math.max(12, Math.ceil(pure - turboSave*turbosNeeded + 2.5) + P.te*3);
-  /* 41, 63, 81: tempo quase impossível sem Ilimitado / desbloqueio */
-  if(isNivelImpossivel(lv) && !podePassarImpossivel()){
-    TR.L = Math.floor(TR.L * 1.55);
-    TR.time = Math.max(8, Math.floor(TR.time * 0.42));
+  /* 41, 63, 81: pista enorme + pouco tempo + muito trânsito (só paga / Ilimitado passa) */
+  var hardLvl = isNivelImpossivel(lv) && !podePassarImpossivel();
+  if(hardLvl){
+    TR.L = Math.floor(TR.L * 2.2);
+    L = TR.L;
+    TR.time = Math.max(7, Math.floor(TR.time * 0.28));
   }
   n=Math.ceil(L/DS)+40;px=[];pz=[];hd=[];py=[];
   var x=0,z=0,h=0,f1=.03+rnd()*.03,f2=.07+rnd()*.05,a=rnd()*6,b=rnd()*6,g1=.03,g2=.071,c1=rnd()*6,c2=rnd()*6;
@@ -464,7 +466,12 @@ function build(lv){
   var fl=new T.Mesh(new T.PlaneGeometry(2*HW,6),new T.MeshBasicMaterial({map:ft}));fl.rotation.x=-Math.PI/2;fl.rotation.order='YXZ';put(fl,L,0,.08);fl.rotation.x=-Math.PI/2;world.add(fl);
   /* Trânsito e esferas de energia */
   TR.cars=[];TR.orbs=[];
-  var nc=lv<=5?0:Math.min(40,Math.min(Math.floor(L/160)+Math.floor(lv/60),3+(lv-6))),lanes=[-4.8,-1.6,1.6,4.8];
+  var nc=lv<=5?0:Math.min(40,Math.min(Math.floor(L/160)+Math.floor(lv/60),3+(lv-6)));
+  /* Níveis trancados: trânsito extremo (muitos carros em todas as faixas) */
+  if(typeof hardLvl!=='undefined'&&hardLvl){
+    nc=Math.min(90, Math.max(nc*4, Math.floor(L/70)+25));
+  }
+  var lanes=[-4.8,-1.6,1.6,4.8];
   for(i=0;i<nc;i++){var cc=Math.floor(rnd()*tcol.length),g=mkCar(tcol[cc],Math.floor(rnd()*3),cc);world.add(g);TR.cars.push({g:g,s:160+i*(L-260)/nc+rnd()*25,lat:lanes[Math.floor(rnd()*4)],v:TR.maxV*(.22+.3*rnd()),cd:0})}
   var no=Math.floor(L/200)+4;
   for(i=0;i<no;i++){var o=new T.Group(),sm=new T.Mesh(new T.SphereGeometry(.6,12,10),nm),sl=new T.Sprite(new T.SpriteMaterial({map:glowTex,color:ACC,transparent:true,depthWrite:false,blending:T.AdditiveBlending}));
