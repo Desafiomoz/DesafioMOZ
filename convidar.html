@@ -404,15 +404,21 @@
     }
 
     async function apiInfluencer(payload) {
-      var r = await fetch(apiBase(), {
+      var url = apiBase();
+      var r = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload || {})
       });
+      var raw = '';
+      try { raw = await r.text(); } catch (e) { raw = ''; }
       var d = {};
-      try { d = await r.json(); } catch (e) { d = {}; }
+      try { d = raw ? JSON.parse(raw) : {}; } catch (e) { d = {}; }
       if (!r.ok || !d.ok) {
-        var err = (d && d.error) ? d.error : ('HTTP ' + r.status);
+        var err = (d && (d.error || d.erro || d.msg)) ? (d.error || d.erro || d.msg) : ('HTTP ' + r.status + (raw ? (': ' + raw.slice(0, 80)) : ''));
+        if (r.status === 404 || r.status === 405) {
+          err = 'API ainda não está no ar (HTTP ' + r.status + '). Confirma que functions/api/influencer-convidar.js foi publicado no Cloudflare.';
+        }
         throw new Error(err);
       }
       return d;
