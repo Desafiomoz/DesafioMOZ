@@ -37,13 +37,17 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family
 #tut{position:fixed;inset:0;z-index:9999;pointer-events:none;display:none}
 #tut.on{display:block !important}
 
+#app.g.tut-on #hb,#app.g.tut-on #ct,#app.g.tut-on #pd,#app.g.tut-on #fk,#app.g.tut-on #bar,#app.g.tut-on #hud{z-index:10000 !important;position:absolute}
+#app.g.tut-on #hb button,#app.g.tut-on #bl,#app.g.tut-on #br,#app.g.tut-on #tb,#app.g.tut-on #bk{box-shadow:0 0 0 2px #fff,0 0 14px #ff4fa3 !important}
+
+
 #app.g.tut-on #hb,#app.g.tut-on #ct,#app.g.tut-on #pd,#app.g.tut-on #fk,#app.g.tut-on #bar,#app.g.tut-on #hud{display:flex !important}
 #app.g.tut-on #fk{display:block !important}
 #app.g.tut-on #bar{display:block !important}
 #app.g.tut-on #bl,#app.g.tut-on #br{display:block !important}
 
 #tut .dim{position:absolute;inset:0;background:rgba(3,4,10,.28);pointer-events:none}
-#tut .ring{position:absolute;border:3px solid #fff;border-radius:18px;box-shadow:0 0 0 4px #ff4fa3,0 0 28px #ff4fa3,0 0 0 9999px rgba(0,0,0,.35);animation:tutPulse 1.1s ease-in-out infinite;pointer-events:none;z-index:2}
+#tut .ring{position:absolute;border:3px solid #fff;border-radius:18px;box-shadow:0 0 0 3px #ff4fa3,0 0 18px #ff4fa3aa,0 0 0 9999px rgba(0,0,0,.22);animation:tutPulse 1.1s ease-in-out infinite;pointer-events:none;z-index:2;background:transparent}
 @keyframes tutPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.06);opacity:.85}}
 #tut .call{position:absolute;z-index:3;pointer-events:none;max-width:min(70vw,220px);padding:10px 12px;border-radius:14px;background:linear-gradient(160deg,#1a1d2ef2,#0c0e16f5);border:2px solid var(--a,#ff4fa3);box-shadow:0 0 20px var(--a2),0 8px 24px #000a;color:#fff;font-weight:800;font-size:.88rem;line-height:1.25;text-align:center}
 #tut .call b{display:block;color:var(--a,#ff4fa3);font-size:.72rem;letter-spacing:1.5px;margin-bottom:3px;text-transform:uppercase}
@@ -1102,15 +1106,14 @@ ov.addEventListener('pointerup',function(e){var dx=e.clientX-sx0,dy=e.clientY-sy
 
 /* ===== Tutorial nível 1 ===== */
 var TUT_STEPS=[
-  {x:18,y:12,w:12,h:7,tag:'PAUSA',txt:'Botão ⏸ — pausar o jogo'},
-  {x:30,y:12,w:12,h:7,tag:'DEFINIÇÕES',txt:'Botão ⚙ — som e controlos'},
-  {x:42,y:12,w:12,h:7,tag:'SAIR',txt:'Botão ✕ — sair do nível'},
-  {x:8,y:9,w:84,h:3,tag:'DISTÂNCIA',txt:'Barra de progresso até à meta'},
-  {x:78,y:12,w:18,h:12,tag:'COMBUSTÍVEL',txt:'Tanque — sem combustível vais à loja'},
-  {x:4,y:78,w:22,h:12,tag:'ESQUERDA',txt:'Toca ◀ para virar à esquerda'},
-  {x:74,y:78,w:22,h:12,tag:'DIREITA',txt:'Toca ▶ para virar à direita'},
-  {x:78,y:58,w:18,h:16,tag:'TURBO / FREIO',txt:'6 esferas = TURBO · FREIO abranda'},
-  {x:15,y:38,w:70,h:20,tag:'COMO JOGAR',txt:'Evita outros carros · apanha esferas azuis · chega à meta antes do tempo acabar',center:1}
+  {sel:'#hb button[data-h="p"]',tag:'PAUSA',txt:'Este botão ⏸ pausa o jogo',icon:'⏸'},
+  {sel:'#hb button[data-h="o"]',tag:'DEFINIÇÕES',txt:'Aqui mudas som e controlos',icon:'⚙'},
+  {sel:'#hb button[data-h="x"]',tag:'SAIR',txt:'Este ✕ sai do nível',icon:'✕'},
+  {sel:'#bar',tag:'DISTÂNCIA',txt:'Barra até à meta — quando enche, ganhaste',icon:'▬'},
+  {sel:'#fk',tag:'COMBUSTÍVEL',txt:'Tanque de tentativas — sem combustível vais à loja',icon:'⛽'},
+  {sel:'#bl',sel2:'#br',tag:'VIRAR',txt:'◀ Esquerda e Direita ▶ — toca para virar',icon:'◀▶'},
+  {sel:'#tb',sel2:'#bk',tag:'TURBO / FREIO',txt:'6 esferas = TURBO · FREIO abranda',icon:'🚀'},
+  {sel:null,tag:'COMO JOGAR',txt:'Evita outros carros · apanha esferas azuis · chega à meta antes do tempo acabar',icon:'🏁',center:1}
 ];
 function precisaTutorial(){
   try{
@@ -1118,7 +1121,6 @@ function precisaTutorial(){
     if(q.indexOf('tut=1')>=0)return true;
     if(q.indexOf('tut=0')>=0)return false;
   }catch(e){}
-  /* Só nível 1, e só enquanto NÃO estiver concluído */
   if((S.lv|0)!==1)return false;
   try{if(typeof nivelConcluido==='function'&&nivelConcluido(1))return false}catch(e){}
   return true;
@@ -1126,6 +1128,33 @@ function precisaTutorial(){
 function tutClear(){
   var root=$('tut');
   if(root){root.className='';root.style.cssText='';root.innerHTML=''}
+}
+function tutForceHud(){
+  try{
+    S.play=true;
+    S.pz=true; /* PAUSA o jogo durante o tutorial */
+    S.tutOn=1;
+    P.ctl=0;
+    app.className='c0 g tut-on';
+    ['hb','ct','pd','fk','bar','hud'].forEach(function(id){
+      var el=$(id);if(!el)return;
+      el.style.display=(id==='hb'||id==='ct'||id==='pd'||id==='hud')?'flex':'block';
+      el.style.visibility='visible';
+      el.style.opacity='1';
+      el.style.zIndex='10001';
+    });
+    var bl=$('bl'),br=$('br');
+    if(bl){bl.style.display='block';bl.style.visibility='visible'}
+    if(br){br.style.display='block';br.style.visibility='visible'}
+  }catch(e){}
+}
+function tutRectOf(sel){
+  if(!sel)return null;
+  var el=document.querySelector(sel);
+  if(!el)return null;
+  var r=el.getBoundingClientRect();
+  if(r.width<2||r.height<2)return null;
+  return {l:r.left,t:r.top,w:r.width,h:r.height,el:el};
 }
 function tutShowStep(){
   var root=$('tut');
@@ -1136,44 +1165,80 @@ function tutShowStep(){
   }
   var i=S.tutStep|0,st=TUT_STEPS[i];
   if(!st){tutEnd();return}
+  tutForceHud();
+  S.pz=true;
   S.tutOn=1;
-  S.play=true;
-  S.pz=false;
-  try{P.ctl=0;app.className='c0 g tut-on'}catch(e){}
-  /* Overlay sempre visível — posições em % do ecrã */
   root.className='on';
-  root.style.cssText='position:fixed;inset:0;z-index:2147483646;display:block;pointer-events:none;font-family:system-ui,sans-serif';
+  root.style.cssText='position:fixed;inset:0;z-index:9998;display:block;pointer-events:none;font-family:system-ui,sans-serif';
+
   var html='';
-  html+='<div style="position:absolute;inset:0;background:rgba(0,0,0,.32);pointer-events:none"></div>';
-  html+='<div style="position:absolute;top:8px;left:50%;transform:translateX(-50%);background:#000c;color:#fff;padding:5px 14px;border-radius:999px;font-size:12px;font-weight:800;letter-spacing:1px;border:1px solid #ffffff44;pointer-events:none">'+(i+1)+' / '+TUT_STEPS.length+'</div>';
-  /* anel */
-  html+='<div style="position:absolute;left:'+st.x+'%;top:'+st.y+'%;width:'+st.w+'%;height:'+st.h+'%;border:3px solid #fff;border-radius:'+(st.center?16:20)+'px;box-shadow:0 0 0 4px #ff4fa3,0 0 24px #ff4fa3,0 0 0 9999px rgba(0,0,0,.25);pointer-events:none;animation:tutPulse 1s infinite"></div>';
-  /* etiqueta */
-  var labTop=Math.min(88,st.y+st.h+2);
-  if(labTop>70)labTop=Math.max(2,st.y-14);
-  html+='<div style="position:absolute;left:50%;top:'+labTop+'%;transform:translateX(-50%);width:min(90vw,300px);padding:12px 14px;border-radius:16px;background:linear-gradient(165deg,#1a1d2ef8,#0c0e16fa);border:2px solid #ff4fa3;box-shadow:0 0 22px #ff4fa366;color:#fff;text-align:center;pointer-events:none">';
-  html+='<div style="color:#ff4fa3;font-size:11px;font-weight:800;letter-spacing:2px;margin-bottom:4px">'+st.tag+'</div>';
-  html+='<div style="font-size:15px;font-weight:700;line-height:1.3">'+st.txt+'</div>';
-  html+='</div>';
-  /* seta */
-  html+='<div style="position:absolute;left:'+(st.x+st.w/2-3)+'%;top:'+(st.y+st.h)+'%;font-size:28px;pointer-events:none;filter:drop-shadow(0 0 6px #000);animation:tutPoint .9s infinite">👆</div>';
-  /* botões */
-  html+='<div style="position:absolute;left:50%;bottom:16px;transform:translateX(-50%);display:flex;gap:10px;width:min(94vw,360px);pointer-events:auto;z-index:2">';
-  html+='<button type="button" data-tut="skip" style="flex:1;padding:14px;border-radius:14px;font-weight:800;font-size:15px;border:1px solid #ffffff44;background:#ffffff20;color:#fff;cursor:pointer">Saltar</button>';
-  html+='<button type="button" data-tut="next" style="flex:1;padding:14px;border-radius:14px;font-weight:800;font-size:15px;border:0;background:#ff4fa3;color:#10121a;cursor:pointer;box-shadow:0 0 16px #ff4fa3aa">'+(i>=TUT_STEPS.length-1?'Já percebi · Jogar':'Seguinte ›')+'</button>';
+  /* fundo escuro leve — o “buraco” do círculo deixa ver o botão real */
+  html+='<div style="position:absolute;inset:0;background:rgba(0,0,0,.45);pointer-events:none"></div>';
+  html+='<div style="position:absolute;top:8px;left:50%;transform:translateX(-50%);background:#000c;color:#fff;padding:5px 14px;border-radius:999px;font-size:12px;font-weight:800;letter-spacing:1px;border:1px solid #ffffff44;z-index:6">'+(i+1)+' / '+TUT_STEPS.length+' · JOGO EM PAUSA</div>';
+
+  if(st.center||!st.sel){
+    html+='<div style="position:absolute;left:50%;top:38%;transform:translate(-50%,-50%);width:min(88vw,300px);padding:18px 16px;border-radius:18px;background:rgba(12,14,24,.95);border:2px solid #ff4fa3;box-shadow:0 0 28px #ff4fa366;text-align:center;color:#fff;z-index:6">';
+    html+='<div style="font-size:2rem;margin-bottom:8px">'+(st.icon||'🏁')+'</div>';
+    html+='<div style="color:#ff4fa3;font-size:12px;font-weight:800;letter-spacing:2px;margin-bottom:6px">'+st.tag+'</div>';
+    html+='<div style="font-size:15px;font-weight:700;line-height:1.35">'+st.txt+'</div></div>';
+  }else{
+    var rects=[];
+    var r1=tutRectOf(st.sel);if(r1)rects.push(r1);
+    if(st.sel2){var r2=tutRectOf(st.sel2);if(r2)rects.push(r2)}
+    if(!rects.length){
+      var W=window.innerWidth,H=window.innerHeight;
+      rects=[{l:W*0.04,t:H*0.1,w:52,h:52}];
+    }
+    rects.forEach(function(r,idx){
+      var pad=10;
+      var L=r.l-pad,T=r.t-pad,WW=r.w+pad*2,HH=r.h+pad*2;
+      /* círculo com buraco transparente — vê-se o botão real debaixo */
+      html+='<div style="position:absolute;left:'+L+'px;top:'+T+'px;width:'+WW+'px;height:'+HH+'px;border-radius:'+(r.w>90?14:50)+'%;border:3px solid #fff;box-shadow:0 0 0 4px #ff4fa3,0 0 22px #ff4fa3,0 0 0 9999px rgba(0,0,0,.5);background:transparent;pointer-events:none;z-index:5"></div>';
+      /* clone visual do indicado DENTRO do círculo (sempre legível) */
+      var icon=st.icon||'•';
+      if(st.sel2&&idx===1)icon='▶';
+      if(st.sel==='#bl'&&idx===0)icon='◀';
+      if(st.sel==='#tb'&&idx===0)icon='TURBO';
+      if(st.sel2==='#bk'&&idx===1)icon='FREIO';
+      html+='<div style="position:absolute;left:'+L+'px;top:'+T+'px;width:'+WW+'px;height:'+HH+'px;border-radius:'+(r.w>90?14:50)+'%;display:flex;align-items:center;justify-content:center;font-size:'+(WW>70?18:22)+'px;font-weight:900;color:#fff;background:radial-gradient(circle at 30% 25%,#ffffff55,#ff4fa3cc 55%,#7a1a4acc);box-shadow:0 0 16px #ff4fa3;pointer-events:none;z-index:6;text-shadow:0 1px 4px #000">'+(icon)+'</div>';
+      /* mão a apontar */
+      html+='<div style="position:absolute;left:'+(L+WW/2-14)+'px;top:'+(T+HH+2)+'px;font-size:28px;z-index:7;pointer-events:none;filter:drop-shadow(0 2px 4px #000);animation:tutPoint .9s ease-in-out infinite">👆</div>';
+    });
+    var main=rects[0];
+    var labTop=main.t+main.h+40;
+    if(labTop>window.innerHeight-150)labTop=Math.max(48,main.t-100);
+    var labLeft=Math.max(10,Math.min(window.innerWidth-300, main.l+main.w/2-140));
+    html+='<div style="position:absolute;left:'+labLeft+'px;top:'+labTop+'px;width:min(90vw,280px);padding:12px 14px;border-radius:16px;background:rgba(12,14,24,.95);border:2px solid #ff4fa3;box-shadow:0 0 20px #ff4fa355;color:#fff;text-align:center;pointer-events:none;z-index:7">';
+    html+='<div style="color:#ff4fa3;font-size:11px;font-weight:800;letter-spacing:2px;margin-bottom:4px">'+st.tag+'</div>';
+    html+='<div style="font-size:14px;font-weight:700;line-height:1.3">'+st.txt+'</div></div>';
+  }
+
+  html+='<div style="position:absolute;left:50%;bottom:16px;transform:translateX(-50%);display:flex;gap:10px;width:min(94vw,360px);pointer-events:auto;z-index:8">';
+  html+='<button type="button" data-tut="skip" style="flex:1;padding:14px;border-radius:14px;font-weight:800;font-size:15px;border:1px solid #ffffff44;background:#ffffff22;color:#fff">Saltar</button>';
+  html+='<button type="button" data-tut="next" style="flex:1;padding:14px;border-radius:14px;font-weight:800;font-size:15px;border:0;background:#ff4fa3;color:#10121a">'+(i>=TUT_STEPS.length-1?'Já percebi · Jogar':'Seguinte ›')+'</button>';
   html+='</div>';
   root.innerHTML=html;
 }
 function tutStart(){
-  S.tutStep=0;S.tutOn=1;S.play=true;S.pz=false;
-  try{P.ctl=0;app.className='c0 g tut-on'}catch(e){}
-  try{audioPlayFundo()}catch(e){}
-  tutShowStep();
+  S.tutStep=0;S.tutOn=1;S.play=true;S.pz=true;
+  tutForceHud();
+  try{if(AUD&&AUD.fundo)AUD.fundo.pause()}catch(e){}
+  try{audioStopTurbo()}catch(e){}
+  requestAnimationFrame(function(){
+    requestAnimationFrame(function(){
+      setTimeout(function(){tutForceHud();S.pz=true;tutShowStep()},150);
+    });
+  });
 }
 function tutEnd(){
   S.tutOn=0;
+  S.pz=false; /* retoma o jogo */
   try{app.className=(app.className||'').replace(/\s*tut-on/g,'')}catch(e){}
-  /* Não grava tut permanente: se sair do nível 1 sem concluir, volta a ver o guia */
+  try{
+    ['hb','ct','pd','fk','bar','hud'].forEach(function(id){
+      var el=$(id);if(el){el.style.zIndex='';el.style.display='';el.style.visibility=''}
+    });
+  }catch(e){}
   tutClear();
   try{audioPlayFundo()}catch(e){}
   flash('Boa sorte! Vira o carro e chega à meta 🏁',2800);
@@ -1181,7 +1246,11 @@ function tutEnd(){
 function tutNext(){
   S.tutStep=(S.tutStep|0)+1;
   if(S.tutStep>=TUT_STEPS.length)tutEnd();
-  else tutShowStep();
+  else{
+    S.pz=true;
+    tutForceHud();
+    requestAnimationFrame(function(){tutShowStep()});
+  }
 }
 document.addEventListener('click',function(e){
   var b=e.target.closest('[data-tut]');
