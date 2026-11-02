@@ -398,29 +398,49 @@
       return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     }
 
+    function apiBase() {
+      try { return (window.location.origin || '') + '/api/influencer-convidar'; }
+      catch (e) { return '/api/influencer-convidar'; }
+    }
+
+    async function apiInfluencer(payload) {
+      var r = await fetch(apiBase(), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload || {})
+      });
+      var d = {};
+      try { d = await r.json(); } catch (e) { d = {}; }
+      if (!r.ok || !d.ok) {
+        var err = (d && d.error) ? d.error : ('HTTP ' + r.status);
+        throw new Error(err);
+      }
+      return d;
+    }
+
     async function carregarRanking() {
       var lista = document.getElementById('lista-ranking');
       if (!lista) return;
       try {
-        var snap = await db.collection('usuarios').orderBy('influencerConvidados', 'desc').limit(5).get();
+        var d = await apiInfluencer({ action: 'ranking' });
+        var rows = d.ranking || [];
         var html = '';
-        var i = 0;
-        snap.forEach(function (doc) {
-          var d = doc.data() || {};
-          var n = Number(d.influencerConvidados || 0);
-          if (n <= 0 && !d.codigoInfluencer) return;
-          i++;
-          var medal = i === 1 ? '🥇' : (i === 2 ? '🥈' : (i === 3 ? '🥉' : String(i)));
-          var nome = d.nome || (d.email ? String(d.email).split('@')[0] : 'Influencer');
-          var cls = i === 1 ? ' top1' : '';
+        for (var i = 0; i < rows.length; i++) {
+          var item = rows[i] || {};
+          var n = Number(item.influencerConvidados || 0);
+          var pos = i + 1;
+          var medal = pos === 1 ? '🥇' : (pos === 2 ? '🥈' : (pos === 3 ? '🥉' : String(pos)));
+          var nome = item.nome || 'Influencer';
+          var cls = pos === 1 ? ' top1' : '';
           html += '<div class="rank-item' + cls + '">' +
             '<div class="rank-pos">' + medal + '</div>' +
             '<div class="rank-nome">' + esc(nome) + '</div>' +
             '<div class="rank-pts">' + n + '</div></div>';
-        });
+        }
         lista.innerHTML = html || '<div style="text-align:center;color:#666;font-size:13px;padding:12px;">Ainda ninguém no ranking. Sê o primeiro!</div>';
       } catch (e) {
-        lista.innerHTML = '<div style="text-align:center;color:#666;font-size:13px;padding:12px;">Ranking em breve. Abre a página Influencer.</div>';
+        console.warn('ranking', e);
+        lista.innerHTML = '<div style="text-align:center;color:#888;font-size:13px;padding:12px;line-height:1.4">Ranking temporariamente indisponível.<br><a href="influencer.html" style="color:#00e676">Abrir página Influencer</a></div>';
       }
     }
 
@@ -433,42 +453,33 @@
       }
 
       try {
-        var snap = await db.collection('usuarios').where('email', '==', email).limit(1).get();
-        if (snap.empty) {
-          snap = await db.collection('usuarios').where('email', '==', localStorage.getItem('emailUtilizador')).limit(1).get();
-        }
-        if (snap.empty) {
-          alert('Utilizador não encontrado.');
-          window.location.href = 'criar-conta.html';
+        var d = await apiInfluencer({ action: 'me', email: email });
+
+        codigoInfluencer = d.codigoInfluencer || '';
+        try { if (codigoInfluencer) localStorage.setItem('codigoInfluencer', codigoInfluencer); } catch (e) {}
+
+        var total = Number(d.influencerConvidados || 0);
+        var premios = Number(d.influencerPremios || 0);
+
+        document.getElementById('loading').style.display = 'none';
+
+        if (d.bloqueado) {
+          document.getElementById('msg-bloqueado').style.display = 'block';
+          document.getElementById('conteudo').style.display = 'none';
+          var t1 = document.getElementById('total-convidados-bloq');
+          var t2 = document.getElementById('pts-indicacao-bloq');
+          if (t1) t1.textContent = total;
+          if (t2) t2.textContent = premios;
           return;
         }
 
-        docRef = snap.docs[0].ref;
-        var data = snap.docs[0].data() || {};
-
-        codigoInfluencer = data.codigoInfluencer || '';
-        if (!codigoInfluencer) {
-          codigoInfluencer = gerarCodigoInf(data.nome, data.email || email);
-          var existe = await db.collection('usuarios').where('codigoInfluencer', '==', codigoInfluencer).limit(1).get();
-          if (!existe.empty) codigoInfluencer = gerarCodigoInf(data.nome, email + Date.now());
-          await docRef.update({
-            codigoInfluencer: codigoInfluencer,
-            influencerConvidados: data.influencerConvidados || 0,
-            influencerPremios: data.influencerPremios || 0
-          });
-        }
-
-        var total = Number(data.influencerConvidados || 0);
-        var premios = Number(data.influencerPremios || 0);
-
-        document.getElementById('loading').style.display = 'none';
         document.getElementById('msg-bloqueado').style.display = 'none';
         document.getElementById('conteudo').style.display = 'block';
         document.getElementById('total-convidados').textContent = total;
         document.getElementById('pts-indicacao').textContent = premios;
 
-        var link = montarLinkInf(codigoInfluencer);
-        atualizarUI(link);
+        if (!codigoInfluencer) throw new Error('Código de influencer em falta');
+        atualizarUI(montarLinkInf(codigoInfluencer));
         await carregarRanking();
       } catch (erro) {
         console.error(erro);

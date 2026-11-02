@@ -24,7 +24,7 @@ const PRECOS = {
   c200: 10,
   world: 150,
   inf7: 200,
-  skin0: 2, skin1: 2, skin2: 2, skin3: 2, skin4: 2, skin5: 2,
+  skin0: 0, skin1: 5, skin2: 8, skin3: 10, skin4: 12, skin5: 18, skin6: 25, skin7: 35,
 };
 
 const LABELS = {
@@ -41,12 +41,14 @@ const LABELS = {
   open10: 'Abrir 10 níveis',
   c200: '200 moedas',
   world: 'Mundo completo',
-  skin0: 'Cor do carro',
-  skin1: 'Cor do carro',
-  skin2: 'Cor do carro',
-  skin3: 'Cor do carro',
-  skin4: 'Cor do carro',
-  skin5: 'Cor do carro',
+  skin0: 'Carro Rubi Sport',
+  skin1: 'Carro Safira GT',
+  skin2: 'Carro Obsidiana Night',
+  skin3: 'Carro Pérola Neon',
+  skin4: 'Carro Esmeralda Trail',
+  skin5: 'Carro Ouro Imperial',
+  skin6: 'Carro Violeta Storm',
+  skin7: 'Carro Ciano Phantom',
 };
 
 function labelItem(item, mt, nomeBody) {
