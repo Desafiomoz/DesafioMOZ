@@ -607,15 +607,21 @@ try{if(typeof glowP!=="undefined")glowP.visible=P.glow!==0}catch(e){}
 /* Música gerada por código */
 var AX=null,mg=null,beat=0,nt=0,CH=[[57,60,64],[53,57,60],[48,52,55],[55,59,62]],BS=[45,41,36,43];
 function setVol(){if(mg)mg.gain.value=P.vol*.5;try{audioSyncVol()}catch(e){}}
-/* ===== Músicas de fundo (roleta) + turbo/aceleração ===== */
-var AUD={fundo:null,turbo:null,ready:false,wantFundo:false,wantTurbo:false};
+/* ===== Áudio AURAVIA: fundo, turbo, esfera, colisão, ganhou, perdeu ===== */
+var AUD={fundo:null,turbo:null,esfera:null,colisao:null,ganhou:null,perdeu:null,ready:false,wantFundo:false,wantTurbo:false};
 function audioInit(){
   if(AUD.ready)return;
   try{
     AUD.fundo=new Audio('auravia-fundo.mp3');
     AUD.turbo=new Audio('auravia-turbo.mp3');
+    AUD.esfera=new Audio('auravia-esfera.mp3');
+    AUD.colisao=new Audio('auravia-colisao.mp3');
+    AUD.ganhou=new Audio('auravia-ganhou.mp3');
+    AUD.perdeu=new Audio('auravia-perdeu.mp3');
     AUD.fundo.loop=true;AUD.turbo.loop=true;
     AUD.fundo.preload='auto';AUD.turbo.preload='auto';
+    AUD.esfera.preload='auto';AUD.colisao.preload='auto';
+    AUD.ganhou.preload='auto';AUD.perdeu.preload='auto';
     AUD.ready=true;
     audioSyncVol();
   }catch(e){console.warn('audioInit',e)}
@@ -625,6 +631,10 @@ function audioSyncVol(){
   if(isNaN(v))v=0.6;
   try{if(AUD.fundo)AUD.fundo.volume=Math.max(0,Math.min(1,v*0.45))}catch(e){}
   try{if(AUD.turbo)AUD.turbo.volume=Math.max(0,Math.min(1,v*0.55))}catch(e){}
+  try{if(AUD.esfera)AUD.esfera.volume=Math.max(0,Math.min(1,v*0.75))}catch(e){}
+  try{if(AUD.colisao)AUD.colisao.volume=Math.max(0,Math.min(1,v*0.85))}catch(e){}
+  try{if(AUD.ganhou)AUD.ganhou.volume=Math.max(0,Math.min(1,v*0.9))}catch(e){}
+  try{if(AUD.perdeu)AUD.perdeu.volume=Math.max(0,Math.min(1,v*0.85))}catch(e){}
 }
 function audioPlayFundo(){
   audioInit();AUD.wantFundo=true;
@@ -652,6 +662,14 @@ function audioStopTurbo(){
 }
 function audioSyncBoost(active){
   if(active)audioPlayTurbo();else audioStopTurbo();
+}
+function audioSfx(kind){
+  audioInit();audioSyncVol();
+  var a=kind==='esfera'?AUD.esfera:kind==='colisao'?AUD.colisao:kind==='ganhou'?AUD.ganhou:kind==='perdeu'?AUD.perdeu:null;
+  if(!a)return;
+  try{a.pause();a.currentTime=0}catch(e){}
+  var p=a.play();
+  if(p&&p.catch)p.catch(function(){});
 }
 function audioStopAll(){audioStopTurbo();audioStopFundo()}
 function mf(n){return 440*Math.pow(2,(n-69)/12)}
@@ -871,7 +889,7 @@ function lockScr(){ov.className='';ov.innerHTML=`<div class='pn'><h1 style='font
 function askExit(){if(S.s<120){doExit(false);return}S.pz=true;ov.className='';ov.innerHTML=`<div class='pn'><h1 style='font-size:1.5rem'>SAIR DO NÍVEL?</h1><p class='s'>Se saíres agora, perdes 1 de combustível.</p><button class='go' data-a='resume'>Continuar a jogar</button><p><button data-a='exit2'>Sair mesmo assim</button></p></div>`}
 function doExit(pen){if(pen)loseFuel();S.play=false;S.pz=false;S.wi=null;levels()}
 function end(win,why){
-  S.play=false;try{audioStopAll()}catch(e){}try{if(mg)setVol()}catch(e){}
+  S.play=false;try{audioStopAll()}catch(e){}try{if(mg)setVol()}catch(e){}try{audioSfx(win?'ganhou':'perdeu')}catch(e){}
   /* 41/63/81: dificuldade = trânsito. Quem usar Sem trânsito / Menos trânsito (ou skill) pode concluir. */
   var last=S.lv>=MAXL,st=0,f0=P.fuel,gain=0;
   /* Estrelas primeiro → moedas: 3★=10, 2★=5, 1★=2, perda=0 */
@@ -1004,9 +1022,9 @@ function step(dt){
     /* Carros do trânsito apagam esferas ao tocarem */
     if(!c.dead){TR.orbs.forEach(function(o){if(!o.got&&Math.abs(o.s-c.s)<3.4&&Math.abs(o.lat-c.lat)<2.3){o.got=1;if(o.g)o.g.visible=false}})}
   });
-  if(S.crash){S.crash=0;S.sh=1;end(false,'crash');return}
+  if(S.crash){S.crash=0;S.sh=1;try{audioSfx('colisao')}catch(e){}end(false,'crash');return}
   if(S.mgo)TR.orbs.forEach(function(o){if(!o.got){var d0=o.s-S.s;if(d0>-6&&d0<55&&Math.abs(o.lat-S.lat)<12){var k=Math.min(1,dt*(o.sp?4:3));o.s+=(S.s-o.s)*k;o.lat+=(S.lat-o.lat)*k}}});
-  TR.orbs.forEach(function(o){if(!o.got&&Math.abs(o.s-S.s)<(o.sp?3.8:3)&&Math.abs(o.lat-S.lat)<(o.sp?2.8:2.4)){o.got=1;o.g.visible=false;if(o.sp){S.sp=6;if(S.lv<35)S.t+=2;S.sh=Math.max(S.sh,.2);flash(S.lv<35?'ESFERA ESPECIAL! +2s':'ESFERA ESPECIAL!',1400)}else{S.orbs++;if(S.lv<35)S.t+=1.5;S.tc=Math.min(6,S.tc+1);if(S.tc==6)flash('TURBO PRONTO!',1500)}}});
+  TR.orbs.forEach(function(o){if(!o.got&&Math.abs(o.s-S.s)<(o.sp?3.8:3)&&Math.abs(o.lat-S.lat)<(o.sp?2.8:2.4)){o.got=1;o.g.visible=false;try{audioSfx('esfera')}catch(e){}if(o.sp){S.sp=6;if(S.lv<35)S.t+=2;S.sh=Math.max(S.sh,.2);flash(S.lv<35?'ESFERA ESPECIAL! +2s':'ESFERA ESPECIAL!',1400)}else{S.orbs++;if(S.lv<35)S.t+=1.5;S.tc=Math.min(6,S.tc+1);if(S.tc==6)flash('TURBO PRONTO!',1500)}}});
   if(S.s>=TR.L)end(true);else if(S.t<=0)end(false);
 }
 var hu=0,c1='',c2='',c3=-1,fa0=0,fn=0,tm=0,last=performance.now(),cp=new T.Vector3(),ct=new T.Vector3(),bar=document.querySelector('#bar i');
