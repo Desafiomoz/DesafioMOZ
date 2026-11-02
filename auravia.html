@@ -149,11 +149,27 @@ em{color:var(--a,#ff4fa3);font-style:normal;font-weight:700}
 .hint{width:100%;padding:9px;font-size:.85rem;background:linear-gradient(90deg,var(--a2),transparent);border:1px solid var(--a2);text-align:left}
 .hint span{opacity:.75;font-size:.75rem;margin-left:6px}
 .infb{margin:0;color:#ffd24a;font-weight:700;text-shadow:0 0 10px #ffd24a88}
-.msg{margin:8px 0;padding:12px 14px;border-radius:14px;font-weight:800;font-size:.95rem;text-align:center;color:#fff;
-background:linear-gradient(135deg,rgba(255,79,163,.28),rgba(255,210,74,.2));border:1px solid var(--a,#ff4fa3);
-box-shadow:0 0 20px var(--a2,#ff4fa366),0 0 40px rgba(255,210,74,.25);animation:msgAura .85s ease;text-shadow:0 0 10px var(--a)}
-@keyframes msgAura{0%{transform:scale(.9);opacity:0}55%{transform:scale(1.05)}100%{transform:scale(1);opacity:1}}
-.msg.bad{background:linear-gradient(135deg,rgba(255,75,87,.3),rgba(255,120,80,.18));border-color:#ff4b57;box-shadow:0 0 20px #ff4b5788}
+.msg{margin:6px auto 8px;padding:7px 12px;border-radius:999px;font-weight:800;font-size:.78rem;letter-spacing:.3px;text-align:center;color:#fff;max-width:92%;
+background:linear-gradient(135deg,rgba(255,79,163,.35),rgba(255,210,74,.22));border:1px solid var(--a,#ff4fa3);
+box-shadow:0 0 14px var(--a2,#ff4fa355),0 0 28px rgba(255,210,74,.2);animation:msgAura .55s ease;text-shadow:0 0 8px var(--a)}
+@keyframes msgAura{0%{transform:scale(.92) translateY(-4px);opacity:0}100%{transform:scale(1) translateY(0);opacity:1}}
+.msg.bad{background:linear-gradient(135deg,rgba(255,75,87,.4),rgba(255,120,80,.2));border-color:#ff4b57;box-shadow:0 0 14px #ff4b5788;color:#ffe8ea}
+/* Paineis in-game (pausa / opções / sair) */
+.pn.ig{max-width:320px;padding:22px 18px 18px;border-radius:22px;background:linear-gradient(165deg,rgba(18,20,34,.94),rgba(8,9,16,.96));border:1.5px solid var(--a2,#ff4fa355);box-shadow:0 0 40px var(--a2,#ff4fa344),0 12px 40px #000a,inset 0 1px 0 #ffffff18}
+.pn.ig h1{font-size:1.35rem;letter-spacing:4px;margin:0 0 4px;text-shadow:0 0 18px var(--a,#ff4fa3)}
+.pn.ig .ico-top{font-size:2rem;line-height:1;margin-bottom:6px;filter:drop-shadow(0 0 12px var(--a,#ff4fa3))}
+.pn.ig .s{margin:4px 0 14px;font-size:.84rem;color:#aeb6c8}
+.pn.ig .go{margin-top:10px;padding:12px;font-size:1.05rem;border-radius:14px;box-shadow:0 0 18px var(--a2,#ff4fa366)}
+.pn.ig .go2{width:100%;margin-top:8px;padding:11px;font-size:.95rem;font-weight:700;border-radius:14px;background:linear-gradient(145deg,#ffffff22,#ffffff08);border:1px solid #ffffff33;color:#fff}
+.pn.ig .go-danger{width:100%;margin-top:8px;padding:11px;font-size:.92rem;font-weight:700;border-radius:14px;background:linear-gradient(145deg,rgba(255,75,87,.35),rgba(255,75,87,.12));border:1px solid #ff4b5788;color:#ffd0d4}
+.pn.ig .row-btns{display:flex;flex-direction:column;gap:0;margin-top:4px}
+.pn.ig .opt-sec{text-align:left;margin:12px 0 6px;font-size:.72rem;font-weight:800;letter-spacing:2px;color:var(--a,#ff4fa3);text-shadow:0 0 10px var(--a3)}
+.pn.ig label{display:flex;justify-content:space-between;align-items:center;font-size:.85rem;color:#c9d0e0;margin:4px 0}
+.pn.ig .rg{width:100%;margin:6px 0 10px;accent-color:var(--a,#ff4fa3)}
+.pn.ig .cb{width:100%;margin:4px 0;padding:10px 12px;text-align:left;border-radius:12px;background:#ffffff10;border:1px solid #ffffff22}
+.pn.ig .cb.on{background:linear-gradient(135deg,var(--a,#ff4fa3),#ff8ec8);color:#10121a;border-color:transparent;font-weight:800;box-shadow:0 0 14px var(--a2)}
+.pn.ig .h2{font-size:.75rem;color:#8b93a5;margin:8px 0 4px;line-height:1.35;text-align:left}
+
 .shp .lg1{display:flex;flex-direction:column;gap:10px;padding:4px 2px 8px}
 .shp .lg1 .s{margin:8px 0 0;font-weight:800;letter-spacing:3px;color:var(--a);text-shadow:0 0 12px var(--a3);text-align:left}
 .shp .rw{padding:10px 12px;border-radius:12px;background:#ffffff0d;border:1px solid var(--a2)}
@@ -697,8 +713,8 @@ function mus(){
 }
 /* Loja, opções e pausa */
 var UP=[['mo','Motor','+velocidade',250],['ag','Direção','+controlo',200],['te','Tempo extra','+4 s por nível',150]],SK=['Rubi','Safira','Obsidiana','Pérola','Esmeralda','Ouro'],SPR=[0,300,500,700,900,1500];
-function pauseScr(){S.pz=true;try{audioStopTurbo();if(AUD.fundo)AUD.fundo.pause()}catch(e){}ov.className='';ov.innerHTML=`<div class='pn'><h1 style='font-size:1.8rem'>PAUSA</h1><button class='go' data-a='resume'>Continuar</button><p><button class='go2' data-a='shop2'>🛒 Loja</button></p></div>`}
-function opts(from){S.ob=from;var c=['Setas','Inclinar o telemóvel','Leme','Arrastar o ecrã'],od=[0,3,2];ov.className='';ov.innerHTML=`<div class='pn'><h1 style='font-size:1.6rem;letter-spacing:4px'>OPÇÕES</h1><p class='s'>Som</p><label>Música <b id='vv'>${Math.round(P.vol*100)}%</b></label><input id='vol' class='rg' type='range' min='0' max='100' value='${Math.round(P.vol*100)}'><p class='s'>Controlo do carro</p>${od.map(function(i){var n=c[i];return `<button class='cb${P.ctl==i?' on':''}' data-c='${i}'>${n}</button>`}).join('')}<p class='h2'>${['Setas: toca nos botões ◀ e ▶ para ir para esse lado.','Inclinar: vira o telemóvel para o lado para onde queres ir.','Leme: roda o volante para a direita (sentido horário) ou para a esquerda (anti-horário).','Arrastar: põe o dedo no lado esquerdo ou direito do ecrã e arrasta.'][P.ctl]}</p><p class='s'>Aparencia</p><button class='cb' data-a='glow'>Luz do carro: ${P.glow!==0?'LIGADA':'DESLIGADA'}</button><p class='h2'>Desliga a luz para ver o carro melhor.</p><p><button class='go' data-a='ob'>Voltar</button></p></div>`}
+function pauseScr(){S.pz=true;try{audioStopTurbo();if(AUD.fundo)AUD.fundo.pause()}catch(e){}ov.className='';ov.innerHTML=`<div class='pn ig'><div class='ico-top'>⏸</div><h1>PAUSA</h1><p class='s'>Nível ${S.lv} · o jogo está parado</p><button class='go' data-a='resume'>▶ Continuar</button><div class='row-btns'><button class='go2' data-a='shop2'>🛒 Loja</button><button class='go2' data-a='opt'>⚙ Opções</button><button class='go-danger' data-a='exit'>✕ Sair do nível</button></div></div>`}
+function opts(from){S.ob=from;var c=['Setas','Inclinar o telemóvel','Leme','Arrastar o ecrã'],od=[0,3,2];ov.className='';ov.innerHTML=`<div class='pn ig'><div class='ico-top'>⚙</div><h1>OPÇÕES</h1><p class='s'>Ajusta som, controlo e aparência</p><div class='opt-sec'>SOM</div><label>Música <b id='vv'>${Math.round(P.vol*100)}%</b></label><input id='vol' class='rg' type='range' min='0' max='100' value='${Math.round(P.vol*100)}'><div class='opt-sec'>CONTROLO</div>${od.map(function(i){var n=c[i];return `<button class='cb${P.ctl==i?' on':''}' data-c='${i}'>${n}</button>`}).join('')}<p class='h2'>${['Setas: toca nos botões ◀ e ▶.','Inclinar: vira o telemóvel para o lado.','Leme: roda o volante no ecrã.','Arrastar: dedo no lado esquerdo ou direito.'][P.ctl]}</p><div class='opt-sec'>APARÊNCIA</div><button class='cb' data-a='glow'>Luz do carro · ${P.glow!==0?'LIGADA ✓':'DESLIGADA'}</button><p class='h2'>Desliga a luz para ver o carro melhor.</p><button class='go' data-a='ob'>Voltar</button></div>`}
 function oldShop(from){S.sb=from;var h=`<div class='pn lp'><h1 style='font-size:1.6rem;letter-spacing:4px'>LOJA</h1>${fuelBar(1)}<p class='s'>${infOn()?`✦ ∞ esferas · 💰 ∞ moedas · ⏱ <u class='lkt' data-t='${P.inf}'>${fmt(P.inf-Date.now())}</u>`:`✦ ${P.orbs||0} esferas · 💰 ${P.coins} moedas`}${S.msg?' · '+S.msg:''}</p><p><button data-a='perfil'>👤 Perfil</button></p><div class='lg1'><p class='s'>Itens</p>${itemsHtml()}<p class='s'>Melhorias</p>`;
   UP.forEach(function(u){var l=P[u[0]];h+=`<div class='rw'><span><b>${u[1]}</b><br><small>${u[2]} · nível ${l}/5</small></span>${l>=5?'<em>Máx.</em>':`<button data-u='${u[0]}'>${u[3]*(l+1)} 💰</button>`}</div>`});
   h+=`<p class='s'>Carros (tintas)</p>`;
@@ -885,8 +901,8 @@ function tank(h){var f=Math.max(0,P.fuel||0),pc=Math.max(0,h==null?f:h)/FMAX*100
 function lockTxt(){return `<u class='lkt' data-t='${P.lock}'>${fmt(P.lock-Date.now())}</u>`}
 function fuelBar(nb){fuelTick();return `<div class='fz'>${tank()}<div class='ft'><b>COMBUSTÍVEL</b><span>${isLocked()?'Sem combustível! Volta em '+lockTxt():'Cada nível perdido gasta 1. Com 0, esperas 3 dias.'}</span>${nb?'':`<button data-a='shop0'>Encher</button>`}</div></div>`}
 setInterval(function(){document.querySelectorAll('.lkt').forEach(function(e){var t=+e.dataset.t-Date.now();e.textContent=t>0?fmt(t):'agora!'})},1000);
-function lockScr(){ov.className='';ov.innerHTML=`<div class='pn'><h1 style='font-size:1.5rem'>SEM COMBUSTÍVEL</h1>${tank()}<p class='s'>O tanque está vazio. Compra combustível na loja para continuar a jogar.</p><button class='go' data-a='shop0'>⛽ Ir à loja</button><p><button data-a='menu'>Níveis</button></p></div>`}
-function askExit(){if(S.s<120){doExit(false);return}S.pz=true;ov.className='';ov.innerHTML=`<div class='pn'><h1 style='font-size:1.5rem'>SAIR DO NÍVEL?</h1><p class='s'>Se saíres agora, perdes 1 de combustível.</p><button class='go' data-a='resume'>Continuar a jogar</button><p><button data-a='exit2'>Sair mesmo assim</button></p></div>`}
+function lockScr(){ov.className='';ov.innerHTML=`<div class='pn ig'><div class='ico-top'>⛽</div><h1>SEM COMBUSTÍVEL</h1><div style='display:flex;justify-content:center;margin:8px 0'>${tank()}</div><p class='s'>O tanque está vazio. Compra na loja para continuar.</p><button class='go' data-a='shop0'>Ir à loja</button><div class='row-btns'><button class='go2' data-a='menu'>Níveis</button></div></div>`}
+function askExit(){if(S.s<120){doExit(false);return}S.pz=true;ov.className='';ov.innerHTML=`<div class='pn ig'><div class='ico-top'>🚪</div><h1>SAIR?</h1><p class='s'>Se saíres agora, perdes <b style="color:#ffd24a">1 combustível</b>.</p><button class='go' data-a='resume'>▶ Continuar a jogar</button><div class='row-btns'><button class='go-danger' data-a='exit2'>Sair mesmo assim</button></div></div>`}
 function doExit(pen){if(pen)loseFuel();S.play=false;S.pz=false;S.wi=null;levels()}
 function end(win,why){
   S.play=false;try{audioStopAll()}catch(e){}try{if(mg)setVol()}catch(e){}try{if(win)audioSfx('ganhou');else if(why!='crash')audioSfx('perdeu')}catch(e){}
