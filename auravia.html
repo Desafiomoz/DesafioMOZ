@@ -90,10 +90,11 @@ em{color:var(--a,#ff4fa3);font-style:normal;font-weight:700}
 .pbs button{white-space:nowrap;font-size:.82rem;padding:8px 10px}
 .ow{font-style:normal;color:var(--a,#ff4fa3);font-weight:800;margin-left:6px}
 .rw small{color:#9aa3b2}
-#ib{position:absolute;left:14px;top:calc(env(safe-area-inset-top,0px) + 124px);display:flex;flex-direction:column;gap:8px}
-#ib button{width:46px;height:46px;min-width:0;padding:0;border-radius:50%;font-size:1.25rem;position:relative;background:#000a;border:1px solid #fff5}
-#ib button b{position:absolute;right:-4px;bottom:-4px;min-width:18px;height:18px;border-radius:9px;background:var(--a,#ff4fa3);color:#10121a;font-size:.7rem;line-height:18px;text-align:center}
-#ib button.on{box-shadow:0 0 16px var(--a,#ff4fa3);border-color:var(--a,#ff4fa3)}
+/* Itens activos: abaixo do combustível (direita), pequenos */
+#ib{position:absolute;right:10px;top:calc(env(safe-area-inset-top,0px) + 128px);display:flex;flex-direction:column;align-items:flex-end;gap:5px;pointer-events:none;z-index:5}
+#ib button{pointer-events:auto;width:34px;height:34px;min-width:0;padding:0;border-radius:10px;font-size:.95rem;position:relative;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.22);box-shadow:0 2px 8px #0008;line-height:1}
+#ib button b{position:absolute;right:-5px;bottom:-5px;min-width:14px;height:14px;padding:0 3px;border-radius:7px;background:var(--a,#ff4fa3);color:#10121a;font-size:.58rem;line-height:14px;text-align:center;font-weight:800}
+#ib button.on{box-shadow:0 0 10px var(--a,#ff4fa3);border-color:var(--a,#ff4fa3);background:rgba(255,79,163,.25)}
 #app:not(.g) #ib{display:none}
 .tkw{position:relative;display:inline-block;padding-top:8px}
 .tkw:before{content:'';position:absolute;top:0;left:50%;width:22px;height:10px;margin-left:-11px;border-radius:4px 4px 0 0;background:#e8f6ff}
@@ -111,7 +112,7 @@ em{color:var(--a,#ff4fa3);font-style:normal;font-weight:700}
 .ft button{align-self:flex-start;padding:6px 12px;font-size:.8rem}
 .sw2{width:28px;height:28px;border-radius:50%;display:inline-block;box-shadow:inset 0 0 0 1px #fff5}
 .on2{box-shadow:0 0 0 3px var(--a,#ff4fa3)}
-#fk{position:absolute;right:14px;top:calc(env(safe-area-inset-top,0px) + 70px);transform:scale(.7);transform-origin:top right;pointer-events:none}
+#fk{position:absolute;right:12px;top:calc(env(safe-area-inset-top,0px) + 68px);transform:scale(.65);transform-origin:top right;pointer-events:none;z-index:4}
 #app:not(.g) #fk{display:none}
 #hb{gap:10px}
 #hb button{width:46px;height:46px;font-size:1.15rem;color:#fff;background:radial-gradient(circle at 30% 25%,#ffffff55,#ffffff10 45%,#00000099 100%);border:2px solid var(--a,#ff4fa3);box-shadow:0 0 10px var(--a,#ff4fa3),0 0 24px var(--a,#ff4fa3),inset 0 0 12px var(--a,#ff4fa3);text-shadow:0 0 8px #fff;transition:transform .12s}
