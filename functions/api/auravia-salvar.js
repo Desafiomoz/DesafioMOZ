@@ -370,9 +370,9 @@ export async function onRequest(context) {
 
     
     if (action === 'claim-premios') {
-      // 10 pontos = 1 MT (80 pts = 10 MT)
-      const PTS_MUNDO1 = 700;    // 70 MT
-      const PTS_COMPLETO = 11000; // 1100 MT
+      // 8 pontos = 1 MT (ex.: 80 pts = 10 MT)
+      const PTS_MUNDO1 = 560;     // 70 MT
+      const PTS_COMPLETO = 9600;  // 1200 MT
       const pathAv = fsPathDoc('auraviaEstado', email);
       const docAv = await fsGet(token, projectId, pathAv);
       let st = Object.assign({}, DEFAULT_STATE);
@@ -481,7 +481,7 @@ export async function onRequest(context) {
               detalhe: {
                 stringValue:
                   (premioMundo1Novo ? 'Prémio Mundo 1 AURAVIA (+70 MT). ' : '') +
-                  (premioCompletoNovo ? 'Prémio todos os mundos AURAVIA (+1100 MT).' : ''),
+                  (premioCompletoNovo ? 'Prémio todos os mundos AURAVIA (+1200 MT).' : ''),
               },
               dia: { stringValue: new Date().toISOString().slice(0, 10) },
               createdAt: { stringValue: new Date().toISOString() },

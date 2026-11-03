@@ -280,15 +280,15 @@
             <i class="fas fa-chevron-right seta"></i>
         </a>
 
-        <div class="card-jogo" style="opacity:0.95; cursor:default;">
+        <a href="auravia.html" class="card-jogo" id="btn-auravia" aria-label="Abrir AURAVIA">
             <div class="emblema" style="background:url('https://i.supaimg.com/9447b725-0914-4700-9681-fccbd9cb5399/849e36d2-1581-407c-bb0a-6f88abb1298b.jpg') center/cover no-repeat; box-shadow:0 0 22px rgba(255,79,163,0.45);">
             </div>
             <div class="info">
                 <h3>AURAVIA</h3>
-                <p>Corre em 1100 níveis por 12 mundos de luz com aura neon. Em breve neste espaço.</p>
+                <p>1100 níveis · 12 mundos. Completa o Mundo 1 e ganha <b style="color:#ff4fa3">70 MT</b>. Todos os mundos: <b style="color:#ffcf4d">1200 MT</b> (8 pts = 1 MT).</p>
             </div>
-            <span class="seta" style="color:#ff4fa3; font-size:12px; font-weight:800; letter-spacing:0.5px;">EM BREVE</span>
-        </div>
+            <i class="fas fa-chevron-right seta" style="color:#ff4fa3;"></i>
+        </a>
     </div>
 
     <div class="secao-titulo">🏆 Missões — ganha dinheiro a jogar</div>
@@ -306,6 +306,16 @@
         <div class="marco-linha"><div class="marco-nivel"><div class="bandeira">300</div> Nível 300</div><div class="marco-valor">+50 MT</div></div>
 
         <div class="missoes-rodape">Chegando ao nível 300, terás ganho <strong style="color:var(--verde-claro);">300 MT no total</strong>, direto na tua carteira Desafio MOZ. Precisas de estar com sessão iniciada para o dinheiro ser guardado na tua conta.</div>
+    </div>
+
+
+    <div class="secao-titulo" style="margin-top:8px;">🌌 AURAVIA — prémios em metical</div>
+    <div class="caixa-missoes" style="border-color:rgba(255,79,163,0.35);background:linear-gradient(160deg,rgba(255,79,163,0.12),rgba(18,22,31,0.9));box-shadow:0 0 26px rgba(255,79,163,0.18);">
+        <h3 style="color:#ffb3d9;">🚗 Completa mundos, recebe na carteira</h3>
+        <p>Na AURAVIA o progresso fica na tua conta Desafio MOZ. Ao terminares um marco, o valor entra <b>automaticamente</b> nos teus pontos (<b>8 pontos = 1 MT</b>).</p>
+        <div class="marco-linha"><div class="marco-nivel"><div class="bandeira" style="background:linear-gradient(135deg,#ff4fa3,#ffcf4d);">M1</div> Mundo 1 (níveis 1–92)</div><div class="marco-valor" style="color:#ff4fa3;">+70 MT</div></div>
+        <div class="marco-linha"><div class="marco-nivel"><div class="bandeira" style="background:linear-gradient(135deg,#ffcf4d,#ff4fa3);">★</div> Todos os 12 mundos (nível 1100)</div><div class="marco-valor" style="color:#ffcf4d;">+1200 MT</div></div>
+        <div class="missoes-rodape">Precisas de estar com sessão iniciada. O aviso no jogo confirma quando o prémio for creditado. Só recebes cada prémio <strong style="color:#ff4fa3;">uma vez</strong> por conta.</div>
     </div>
 
     <!-- Modal: jogar online ou baixar APK -->
@@ -581,6 +591,7 @@
     verificarBloqueio().then(function () {
       interceptar(document.getElementById('btn-homejub'));
       interceptar(document.getElementById('btn-roleta'));
+      interceptar(document.getElementById('btn-auravia'));
       interceptar(document.getElementById('btn-jogar-online'));
       interceptar(document.getElementById('btn-baixar-apk'));
       // Menu Online no rodapé (já estamos em online, mas reforça)

@@ -609,6 +609,25 @@ function agendarSaveConta(){
 }
 function sv(){agendarSaveConta()}
 
+function showPremioAura(titulo, sub, mt){
+  try{
+    var old=document.getElementById('av-premio-box');
+    if(old&&old.parentNode)old.parentNode.removeChild(old);
+    var el=document.createElement('div');
+    el.id='av-premio-box';
+    el.style.cssText='position:fixed;inset:0;z-index:10050;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(4,6,12,.72);pointer-events:auto';
+    el.innerHTML='<div style="max-width:360px;width:100%;text-align:center;padding:22px 18px;border-radius:24px;background:linear-gradient(160deg,#2a1030,#12081a 55%,#0a0610);border:2px solid #ff4fa3;box-shadow:0 0 40px #ff4fa388,0 0 80px #ffcf4d44,0 16px 40px #000a">'+
+      '<div style="font-size:2.4rem;margin-bottom:6px;filter:drop-shadow(0 0 12px #ff4fa3)">🎉</div>'+
+      '<div style="font-size:1.15rem;font-weight:900;letter-spacing:1px;background:linear-gradient(90deg,#fff,#ff4fa3,#ffcf4d);-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:8px">'+titulo+'</div>'+
+      '<div style="font-size:2rem;font-weight:900;color:#ffcf4d;text-shadow:0 0 20px #ffcf4daa;margin:8px 0">+'+mt+' MT</div>'+
+      '<p style="margin:0;font-size:13.5px;color:#d5dbe8;line-height:1.4">'+sub+'</p>'+
+      '<button type="button" style="margin-top:16px;width:100%;padding:12px;border:0;border-radius:14px;font-weight:800;font-size:15px;background:linear-gradient(90deg,#ff4fa3,#ffcf4d);color:#1a0a12;cursor:pointer">Continuar</button>'+
+      '</div>';
+    document.body.appendChild(el);
+    el.querySelector('button').onclick=function(){if(el.parentNode)el.parentNode.removeChild(el)};
+    setTimeout(function(){if(el.parentNode)el.parentNode.removeChild(el)},9000);
+  }catch(e){try{alert(titulo+'\n+'+mt+' MT')}catch(e2){}}
+}
 function claimPremiosAuravia(){
   var em=emailJogador();
   if(!em)return;
@@ -619,12 +638,12 @@ function claimPremiosAuravia(){
   }).then(function(r){return r.json().then(function(d){return {ok:r.ok,d:d}})}).then(function(res){
     if(!res.d||!res.d.ok)return;
     if(res.d.premioMundo1Novo){
-      try{flash('🎉 Mundo 1 completo! +70 MT na tua carteira Desafio MOZ',5200)}catch(e){}
-      try{alert('Parabéns! Completaste o Mundo 1 da AURAVIA.\nRecebeste 70 meticais (700 pontos) na tua carteira do Desafio MOZ.')}catch(e){}
+      try{flash('🎉 Mundo 1 completo! +70 MT',5200)}catch(e){}
+      showPremioAura('MUNDO 1 COMPLETO','560 pontos (= 70 MT) já entraram na tua carteira Desafio MOZ. No site: 8 pontos = 1 MT.',70);
     }
     if(res.d.premioCompletoNovo){
-      try{flash('🏆 Todos os mundos! +1100 MT na carteira Desafio MOZ',6000)}catch(e){}
-      try{alert('Incrível! Completaste todos os 1100 níveis da AURAVIA.\nRecebeste 1100 meticais (11000 pontos) na tua carteira do Desafio MOZ.')}catch(e){}
+      try{flash('🏆 Todos os mundos! +1200 MT',6000)}catch(e){}
+      showPremioAura('TODOS OS MUNDOS','9600 pontos (= 1200 MT) na carteira. Completaste os 1100 níveis da AURAVIA.',1200);
     }
     if(res.d.state){try{aplicarEstadoConta(res.d.state)}catch(e){}}
   }).catch(function(e){console.warn('claimPremios',e)});
