@@ -368,6 +368,155 @@ export async function onRequest(context) {
       return json({ ok: true, novo: false, state: merged });
     }
 
+    
+    if (action === 'claim-premios') {
+      // 10 pontos = 1 MT (80 pts = 10 MT)
+      const PTS_MUNDO1 = 700;    // 70 MT
+      const PTS_COMPLETO = 11000; // 1100 MT
+      const pathAv = fsPathDoc('auraviaEstado', email);
+      const docAv = await fsGet(token, projectId, pathAv);
+      let st = Object.assign({}, DEFAULT_STATE);
+      let premioMundo1 = false;
+      let premioCompleto = false;
+      if (docAv && docAv.fields) {
+        const raw = lerStr(docAv, 'stateJson', '');
+        st = Object.assign({}, DEFAULT_STATE, parseState(raw) || {});
+        const topMax = lerNum(docAv, 'maxLv', -1);
+        if (topMax > (Number(st.maxLv) || 0)) st.maxLv = topMax;
+        if (docAv.fields.premioMundo1 && docAv.fields.premioMundo1.booleanValue) premioMundo1 = true;
+        if (docAv.fields.premioCompleto && docAv.fields.premioCompleto.booleanValue) premioCompleto = true;
+      }
+      if (st.premioMundo1) premioMundo1 = true;
+      if (st.premioCompleto) premioCompleto = true;
+
+      const clientMax = Math.max(0, Math.floor(Number(body.maxLv) || 0));
+      if (clientMax > (Number(st.maxLv) || 0)) st.maxLv = clientMax;
+      const maxLv = Math.max(1, Math.floor(Number(st.maxLv) || 1));
+
+      let premioMundo1Novo = false;
+      let premioCompletoNovo = false;
+      let ptsCreditar = 0;
+      // Mundo 1 concluído quando desbloqueia nível 93 (completou o 92)
+      if (!premioMundo1 && maxLv >= 93) {
+        premioMundo1 = true;
+        premioMundo1Novo = true;
+        ptsCreditar += PTS_MUNDO1;
+        st.premioMundo1 = 1;
+      }
+      if (!premioCompleto && maxLv >= 1100) {
+        premioCompleto = true;
+        premioCompletoNovo = true;
+        ptsCreditar += PTS_COMPLETO;
+        st.premioCompleto = 1;
+      }
+
+      if (ptsCreditar > 0) {
+        // localizar utilizador: doc id = email OU query por campo email
+        let userDoc = await fsGet(token, projectId, 'usuarios/' + encodeURIComponent(email));
+        if (!userDoc || !userDoc.fields) {
+          try {
+            const url =
+              'https://firestore.googleapis.com/v1/projects/' +
+              projectId +
+              '/databases/(default)/documents:runQuery';
+            const r = await fetch(url, {
+              method: 'POST',
+              headers: {
+                Authorization: 'Bearer ' + token,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                structuredQuery: {
+                  from: [{ collectionId: 'usuarios' }],
+                  where: {
+                    fieldFilter: {
+                      field: { fieldPath: 'email' },
+                      op: 'EQUAL',
+                      value: { stringValue: email },
+                    },
+                  },
+                  limit: 1,
+                },
+              }),
+            });
+            if (r.ok) {
+              const rows = await r.json();
+              for (const row of rows || []) {
+                if (row.document) {
+                  userDoc = row.document;
+                  break;
+                }
+              }
+            }
+          } catch (eQ) {
+            console.warn('user query', eQ);
+          }
+        }
+        if (userDoc && userDoc.fields) {
+          let pts = 0;
+          if (userDoc.fields.pontos) {
+            if (userDoc.fields.pontos.integerValue != null)
+              pts = parseInt(userDoc.fields.pontos.integerValue, 10);
+            else if (userDoc.fields.pontos.doubleValue != null)
+              pts = Number(userDoc.fields.pontos.doubleValue);
+          }
+          const novo = pts + ptsCreditar;
+          const uid = (userDoc.name || '').split('/').pop();
+          await fsPatch(
+            token,
+            projectId,
+            'usuarios/' + uid,
+            {
+              pontos: { integerValue: String(novo) },
+              ultimaAtualizacao: { stringValue: new Date().toISOString() },
+            },
+            ['pontos', 'ultimaAtualizacao']
+          );
+          try {
+            const histId = 'av_' + email.replace(/[^a-z0-9]/gi, '_') + '_' + Date.now();
+            await fsCreate(token, projectId, 'historicoPontos', histId, {
+              email: { stringValue: email },
+              pontos: { integerValue: String(ptsCreditar) },
+              origem: { stringValue: 'auravia' },
+              detalhe: {
+                stringValue:
+                  (premioMundo1Novo ? 'Prémio Mundo 1 AURAVIA (+70 MT). ' : '') +
+                  (premioCompletoNovo ? 'Prémio todos os mundos AURAVIA (+1100 MT).' : ''),
+              },
+              dia: { stringValue: new Date().toISOString().slice(0, 10) },
+              createdAt: { stringValue: new Date().toISOString() },
+            });
+          } catch (eH) {
+            console.warn('hist', eH);
+          }
+        }
+      }
+
+      const fields = {
+        stateJson: strField(JSON.stringify(st)),
+        email: strField(email),
+        maxLv: numField(maxLv),
+        lv: numField(st.lv || 1),
+        orbs: numField(st.orbs || 0),
+        coins: numField(st.coins || 0),
+        premioMundo1: { booleanValue: !!premioMundo1 },
+        premioCompleto: { booleanValue: !!premioCompleto },
+        updatedAt: numField(Date.now()),
+      };
+      if (docAv) {
+        await fsPatch(token, projectId, pathAv, fields, Object.keys(fields));
+      } else {
+        await fsCreate(token, projectId, 'auraviaEstado', email, fields);
+      }
+      return json({
+        ok: true,
+        premioMundo1Novo,
+        premioCompletoNovo,
+        ptsCreditados: ptsCreditar,
+        state: st,
+      });
+    }
+
     if (action === 'save') {
       const base = existente
         ? parseState(lerStr(existente, 'stateJson', '')) || DEFAULT_STATE

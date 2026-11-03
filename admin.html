@@ -269,6 +269,7 @@
     <button class="tab" data-tab="convites" onclick="mudarTab('convites')"><i class="fas fa-user-plus"></i> Convites</button>
     <button class="tab" data-tab="visitantes" onclick="mudarTab('visitantes')"><i class="fas fa-chart-line"></i> Visitantes</button>
     <button class="tab" data-tab="homejub" onclick="mudarTab('homejub')"><i class="fas fa-gamepad"></i> Homejub</button>
+    <button class="tab" data-tab="auravia" onclick="mudarTab('auravia')"><i class="fas fa-car"></i> AURAVIA</button>
     <button class="tab" data-tab="influencer" onclick="mudarTab('influencer')"><i class="fas fa-star"></i> Influencer</button>
     <button class="tab" data-tab="inf-convites" onclick="mudarTab('inf-convites'); try{carregarInfConvites20();}catch(e){}"><i class="fas fa-user-check"></i> Inf ≥30 pts <span class="badge" id="badge-inf20">0</span></button>
 
@@ -1121,7 +1122,105 @@
 
 
     <!-- INFLUENCER (ofertas / programa) -->
-    <div class="painel" id="painel-influencer">
+    
+    <!-- AURAVIA -->
+    <div class="painel" id="painel-auravia">
+      <div class="form-box" style="border:1px solid rgba(255,79,163,0.45);">
+        <h3><i class="fas fa-car"></i> Controlo total AURAVIA (nível, esferas, moedas, itens)</h3>
+        <p style="font-size:12px;color:#888;margin-bottom:12px;">
+          Progresso na coleção <code>auraviaEstado</code> (mesma conta do Desafio MOZ).<br>
+          <b>Recompensas automáticas:</b> terminar Mundo 1 (nível 92) → <b>70 MT</b> (700 pts). Terminar todos os 1100 níveis → <b>1100 MT</b> (11000 pts).
+        </p>
+        <div class="form-grid">
+          <div class="form-row">
+            <label>E-mail do jogador</label>
+            <input type="email" id="av-ctrl-email" placeholder="email@exemplo.com">
+          </div>
+          <div class="form-row">
+            <label>Nível actual (1–1100)</label>
+            <input type="number" id="av-ctrl-lv" min="1" max="1100" placeholder="Ex: 10">
+          </div>
+          <div class="form-row">
+            <label>Nível máx. desbloqueado</label>
+            <input type="number" id="av-ctrl-maxlv" min="1" max="1100" placeholder="Ex: 15">
+          </div>
+          <div class="form-row">
+            <label>Esferas (orbs)</label>
+            <input type="number" id="av-ctrl-orbs" min="0" placeholder="Ex: 50">
+          </div>
+          <div class="form-row">
+            <label>Moedas do jogo</label>
+            <input type="number" id="av-ctrl-coins" min="0" placeholder="Ex: 100">
+          </div>
+          <div class="form-row">
+            <label>Combustível (0–4)</label>
+            <input type="number" id="av-ctrl-fuel" min="0" max="20" placeholder="Ex: 4">
+          </div>
+          <div class="form-row">
+            <label>Ímã (mg)</label>
+            <input type="number" id="av-ctrl-mg" min="0" placeholder="0">
+          </div>
+          <div class="form-row">
+            <label>Turbo max (tu)</label>
+            <input type="number" id="av-ctrl-tu" min="0" placeholder="0">
+          </div>
+          <div class="form-row">
+            <label>Escudo (sh)</label>
+            <input type="number" id="av-ctrl-sh" min="0" placeholder="0">
+          </div>
+          <div class="form-row">
+            <label>Luz / Nitro (lt / nt)</label>
+            <div style="display:flex;gap:6px;">
+              <input type="number" id="av-ctrl-lt" min="0" placeholder="lt" style="flex:1">
+              <input type="number" id="av-ctrl-nt" min="0" placeholder="nt" style="flex:1">
+            </div>
+          </div>
+          <div class="form-row">
+            <label>Multiplicador ×2 (0/1)</label>
+            <input type="number" id="av-ctrl-x2" min="0" max="1" placeholder="0">
+          </div>
+          <div class="form-row">
+            <label>Ilimitado até (timestamp ms, 0=off)</label>
+            <input type="number" id="av-ctrl-inf" min="0" placeholder="0">
+          </div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;">
+          <button type="button" class="btn-azul" style="width:auto;padding:10px 14px;" onclick="carregarUmAuravia()">📥 Carregar dados</button>
+          <button type="button" class="btn-verde" style="width:auto;padding:10px 14px;" onclick="aplicarControloAuravia()">✅ Aplicar alterações</button>
+          <button type="button" class="btn-laranja" style="width:auto;padding:10px 14px;" onclick="(function(){var e=(document.getElementById('av-ctrl-email').value||'').trim();if(!e)return alert('E-mail');document.getElementById('av-ctrl-maxlv').value=92;document.getElementById('av-ctrl-lv').value=92;aplicarControloAuravia();})()">🏁 Pôr no fim Mundo 1 (92)</button>
+          <button type="button" class="btn-vermelho" style="width:auto;padding:10px 14px;" onclick="resetAuraviaJogador()">🗑 Zerar progresso AURAVIA</button>
+        </div>
+      </div>
+
+      <div class="busca">
+        <input type="text" id="busca-auravia" placeholder="Pesquisar por e-mail..." oninput="filtrarAuravia()">
+      </div>
+      <div class="tabela-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>E-mail</th>
+              <th>Nível</th>
+              <th>Máx.</th>
+              <th>Mundo</th>
+              <th>Esferas</th>
+              <th>Moedas</th>
+              <th>Fuel</th>
+              <th>Itens</th>
+              <th>Prémios</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="tbody-auravia">
+            <tr><td colspan="11" class="vazio">Abre esta aba para carregar.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="font-size:12px;color:#666;margin-top:10px;">Dados da coleção <code>auraviaEstado</code>.</p>
+    </div>
+
+<div class="painel" id="painel-influencer">
 
       <div class="form-box" style="border:1px solid rgba(255,201,77,0.35);">
         <h3><i class="fas fa-link"></i> Links de influencer bloqueados (após 1000)</h3>
@@ -3681,6 +3780,7 @@ function mostrarAviso(txt) {
         }
         if (nome === 'visitantes') try { carregarVisitantes(); } catch (eV) {}
         if (nome === 'homejub') try { carregarHomejub(); } catch (eH) {}
+        if (nome === 'auravia') try { carregarAuravia(); } catch (eA) {}
         if (nome === 'influencer') { try { renderInfluencerAdmin(); } catch (eI) {} try { carregarLinksBloqueadosInf(); } catch (eL) {} try { carregarBonusSaquePendentes(); } catch (eB) {} }
         if (nome === 'chat') try { carregarChatAdmin(); } catch (eC) {}
         if (nome === 'online') {
@@ -3799,6 +3899,8 @@ function mostrarAviso(txt) {
         carregarRanking();
       } else if (nome === 'homejub') {
         try { carregarHomejub(); } catch (e) {}
+      } else if (nome === 'auravia') {
+        try { carregarAuravia(); } catch (e) {}
       } else {
         try { mudarTab(nome); } catch (e) {}
       }
@@ -12804,6 +12906,208 @@ async function carregarCliquesMissao() {
 
 
     
+
+
+    
+    // ========== AURAVIA ==========
+    var listaAuravia = [];
+
+    function mundoDeNivel(lv) {
+      lv = Math.max(1, parseInt(lv, 10) || 1);
+      return Math.min(12, Math.floor((lv - 1) / 92) + 1);
+    }
+
+    function parseAuraviaState(d) {
+      d = d || {};
+      var st = {};
+      try {
+        if (d.stateJson) st = typeof d.stateJson === 'string' ? JSON.parse(d.stateJson) : (d.stateJson || {});
+      } catch (e) { st = {}; }
+      if (!st || typeof st !== 'object') st = {};
+      return {
+        email: d.email || '',
+        lv: Number(d.lv != null ? d.lv : (st.lv || 1)) || 1,
+        maxLv: Number(d.maxLv != null ? d.maxLv : (st.maxLv || 1)) || 1,
+        orbs: Number(d.orbs != null ? d.orbs : (st.orbs || 0)) || 0,
+        coins: Number(d.coins != null ? d.coins : (st.coins || 0)) || 0,
+        fuel: Number(st.fuel != null ? st.fuel : 4) || 0,
+        mg: Number(st.mg || 0) || 0,
+        tu: Number(st.tu || 0) || 0,
+        sh: Number(st.sh || 0) || 0,
+        lt: Number(st.lt || 0) || 0,
+        nt: Number(st.nt || 0) || 0,
+        x2: Number(st.x2 || 0) || 0,
+        inf: Number(st.inf || 0) || 0,
+        premioMundo1: !!(d.premioMundo1 || st.premioMundo1),
+        premioCompleto: !!(d.premioCompleto || st.premioCompleto),
+        state: st
+      };
+    }
+
+    async function carregarAuravia() {
+      var tbody = document.getElementById('tbody-auravia');
+      if (!tbody) return;
+      tbody.innerHTML = '<tr><td colspan="11" class="vazio">A carregar AURAVIA...</td></tr>';
+      try {
+        var snap = await db.collection('auraviaEstado').limit(80).get();
+        listaAuravia = [];
+        snap.forEach(function (doc) {
+          var d = doc.data() || {};
+          d.email = d.email || doc.id;
+          var p = parseAuraviaState(d);
+          p.email = String(p.email || doc.id).toLowerCase();
+          p.docId = doc.id;
+          listaAuravia.push(p);
+        });
+        listaAuravia.sort(function (a, b) { return (b.maxLv || 0) - (a.maxLv || 0); });
+        filtrarAuravia();
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="11" class="vazio">Erro: ' + escHtml(e.message || e) + '</td></tr>';
+      }
+    }
+
+    function filtrarAuravia() {
+      var tbody = document.getElementById('tbody-auravia');
+      if (!tbody) return;
+      var q = ((document.getElementById('busca-auravia') || {}).value || '').trim().toLowerCase();
+      var rows = listaAuravia.filter(function (u) {
+        if (!q) return true;
+        return String(u.email || '').indexOf(q) >= 0;
+      });
+      if (!rows.length) {
+        tbody.innerHTML = '<tr><td colspan="11" class="vazio">Nenhum jogador AURAVIA.</td></tr>';
+        return;
+      }
+      var html = '';
+      rows.forEach(function (u, i) {
+        var em = String(u.email || '');
+        var itens = 'mg:' + (u.mg || 0) + ' tu:' + (u.tu || 0) + ' sh:' + (u.sh || 0);
+        if (u.x2) itens += ' ×2';
+        if (u.inf && u.inf > Date.now()) itens += ' ∞';
+        var prem = '';
+        if (u.premioMundo1) prem += 'M1✓ ';
+        if (u.premioCompleto) prem += 'ALL✓';
+        if (!prem) prem = '—';
+        html += '<tr>' +
+          '<td>' + (i + 1) + '</td>' +
+          '<td><strong>' + escHtml(em) + '</strong></td>' +
+          '<td class="pts-ok">' + (u.lv || 1) + '</td>' +
+          '<td class="pts-alto">' + (u.maxLv || 1) + '</td>' +
+          '<td>' + mundoDeNivel(u.maxLv || 1) + '/12</td>' +
+          '<td>' + (u.orbs || 0) + '</td>' +
+          '<td>' + (u.coins || 0) + '</td>' +
+          '<td>' + (u.fuel || 0) + '</td>' +
+          '<td style="font-size:11px;">' + escHtml(itens) + '</td>' +
+          '<td style="font-size:11px;">' + prem + '</td>' +
+          '<td><button type="button" class="btn-azul" data-em="' + em.replace(/"/g, '') + '" onclick="preencherCtrlAuravia(this.getAttribute(\'data-em\'))">Editar</button></td>' +
+          '</tr>';
+      });
+      tbody.innerHTML = html;
+    }
+
+    async function preencherCtrlAuravia(email) {
+      document.getElementById('av-ctrl-email').value = email;
+      await carregarUmAuravia();
+      try { document.getElementById('av-ctrl-email').scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) {}
+    }
+
+    async function carregarUmAuravia() {
+      var email = (document.getElementById('av-ctrl-email').value || '').trim().toLowerCase();
+      if (!email) return alert('Indica o e-mail.');
+      try {
+        var snap = await db.collection('auraviaEstado').doc(email).get();
+        if (!snap.exists) return alert('Sem progresso AURAVIA para este e-mail.');
+        var p = parseAuraviaState(snap.data() || {});
+        document.getElementById('av-ctrl-lv').value = p.lv;
+        document.getElementById('av-ctrl-maxlv').value = p.maxLv;
+        document.getElementById('av-ctrl-orbs').value = p.orbs;
+        document.getElementById('av-ctrl-coins').value = p.coins;
+        document.getElementById('av-ctrl-fuel').value = p.fuel;
+        document.getElementById('av-ctrl-mg').value = p.mg;
+        document.getElementById('av-ctrl-tu').value = p.tu;
+        document.getElementById('av-ctrl-sh').value = p.sh;
+        document.getElementById('av-ctrl-lt').value = p.lt;
+        document.getElementById('av-ctrl-nt').value = p.nt;
+        document.getElementById('av-ctrl-x2').value = p.x2 ? 1 : 0;
+        document.getElementById('av-ctrl-inf').value = p.inf || 0;
+        if (typeof mostrarAviso === 'function') mostrarAviso('AURAVIA carregado: ' + email);
+      } catch (e) {
+        alert('Erro: ' + (e.message || e));
+      }
+    }
+
+    async function aplicarControloAuravia() {
+      var email = (document.getElementById('av-ctrl-email').value || '').trim().toLowerCase();
+      if (!email || email.indexOf('@') === -1) return alert('E-mail inválido.');
+      try {
+        var snap = await db.collection('auraviaEstado').doc(email).get();
+        var base = snap.exists ? (snap.data() || {}) : {};
+        var st = {};
+        try { st = base.stateJson ? (typeof base.stateJson === 'string' ? JSON.parse(base.stateJson) : base.stateJson) : {}; } catch (e) { st = {}; }
+        if (!st || typeof st !== 'object') st = {};
+
+        function num(id, def) {
+          var el = document.getElementById(id);
+          if (!el || el.value === '' || el.value == null) return def;
+          var n = parseInt(el.value, 10);
+          return isNaN(n) ? def : n;
+        }
+        st.lv = Math.min(1100, Math.max(1, num('av-ctrl-lv', st.lv || 1)));
+        st.maxLv = Math.min(1100, Math.max(1, num('av-ctrl-maxlv', st.maxLv || 1)));
+        if (st.lv > st.maxLv) st.maxLv = st.lv;
+        st.orbs = Math.max(0, num('av-ctrl-orbs', st.orbs || 0));
+        st.coins = Math.max(0, num('av-ctrl-coins', st.coins || 0));
+        st.fuel = Math.max(0, num('av-ctrl-fuel', st.fuel != null ? st.fuel : 4));
+        st.mg = Math.max(0, num('av-ctrl-mg', st.mg || 0));
+        st.tu = Math.max(0, num('av-ctrl-tu', st.tu || 0));
+        st.sh = Math.max(0, num('av-ctrl-sh', st.sh || 0));
+        st.lt = Math.max(0, num('av-ctrl-lt', st.lt || 0));
+        st.nt = Math.max(0, num('av-ctrl-nt', st.nt || 0));
+        st.x2 = num('av-ctrl-x2', st.x2 || 0) ? 1 : 0;
+        st.inf = Math.max(0, num('av-ctrl-inf', st.inf || 0));
+        st.progV = 2;
+
+        var payload = {
+          stateJson: JSON.stringify(st),
+          email: email,
+          lv: st.lv,
+          maxLv: st.maxLv,
+          orbs: st.orbs,
+          coins: st.coins,
+          updatedAt: Date.now(),
+          adminEdit: true,
+          adminEditEm: new Date().toISOString()
+        };
+        await db.collection('auraviaEstado').doc(email).set(payload, { merge: true });
+        if (typeof mostrarAviso === 'function') mostrarAviso('AURAVIA actualizado: ' + email);
+        else alert('AURAVIA actualizado: ' + email);
+        carregarAuravia();
+      } catch (e) {
+        alert('Erro ao guardar: ' + (e.message || e));
+      }
+    }
+
+    async function resetAuraviaJogador() {
+      var email = (document.getElementById('av-ctrl-email').value || '').trim().toLowerCase();
+      if (!email) return alert('E-mail.');
+      if (!confirm('Zerar progresso AURAVIA de ' + email + '?')) return;
+      try {
+        var st = { lv: 1, maxLv: 1, orbs: 0, coins: 0, fuel: 4, own: [0], mg: 0, tu: 0, sh: 0, lt: 0, nt: 0, x2: 0, inf: 0, progV: 2 };
+        await db.collection('auraviaEstado').doc(email).set({
+          stateJson: JSON.stringify(st),
+          email: email,
+          lv: 1, maxLv: 1, orbs: 0, coins: 0,
+          updatedAt: Date.now(),
+          premioMundo1: false,
+          premioCompleto: false
+        }, { merge: true });
+        alert('Progresso AURAVIA zerado.');
+        carregarUmAuravia();
+        carregarAuravia();
+      } catch (e) {
+        alert('Erro: ' + (e.message || e));
+      }
+    }
 
 
     // ========== BANIMENTO PERMANENTE + ROUBO (sistema/) ==========

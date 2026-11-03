@@ -608,6 +608,28 @@ function agendarSaveConta(){
   _saveTimer=setTimeout(function(){gravarConta(false)},400);
 }
 function sv(){agendarSaveConta()}
+
+function claimPremiosAuravia(){
+  var em=emailJogador();
+  if(!em)return;
+  var maxLv=Math.max(1,P.maxLv|0);
+  fetch((location.origin||'')+'/api/auravia-salvar',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({email:em,action:'claim-premios',maxLv:maxLv,state:estadoParaConta()})
+  }).then(function(r){return r.json().then(function(d){return {ok:r.ok,d:d}})}).then(function(res){
+    if(!res.d||!res.d.ok)return;
+    if(res.d.premioMundo1Novo){
+      try{flash('🎉 Mundo 1 completo! +70 MT na tua carteira Desafio MOZ',5200)}catch(e){}
+      try{alert('Parabéns! Completaste o Mundo 1 da AURAVIA.\nRecebeste 70 meticais (700 pontos) na tua carteira do Desafio MOZ.')}catch(e){}
+    }
+    if(res.d.premioCompletoNovo){
+      try{flash('🏆 Todos os mundos! +1100 MT na carteira Desafio MOZ',6000)}catch(e){}
+      try{alert('Incrível! Completaste todos os 1100 níveis da AURAVIA.\nRecebeste 1100 meticais (11000 pontos) na tua carteira do Desafio MOZ.')}catch(e){}
+    }
+    if(res.d.state){try{aplicarEstadoConta(res.d.state)}catch(e){}}
+  }).catch(function(e){console.warn('claimPremios',e)});
+}
+
 function gravarConta(urgente){
   var em=emailJogador();
   if(!em)return;
@@ -985,7 +1007,7 @@ function end(win,why){
   }else{
     loseFuel();
   }
-  if(win){P.maxLv=Math.max(P.maxLv||1,Math.min(MAXL,S.lv+1));}if(win&&!last){S.lv=Math.min(MAXL,S.lv+1);}try{save();gravarConta(true)}catch(e){sv()}
+  if(win){P.maxLv=Math.max(P.maxLv||1,Math.min(MAXL,S.lv+1));}if(win&&!last){S.lv=Math.min(MAXL,S.lv+1);}try{save();gravarConta(true);if(win)setTimeout(function(){try{claimPremiosAuravia()}catch(e){}},600)}catch(e){sv()}
   var lk=!win&&P.fuel<=0&&P.lock>Date.now(),ttl=win?(last?'CAMPEÃO!':'NÍVEL CONCLUÍDO'):(why=='crash'?'COLISÃO!':why=='off'?'SAÍSTE DA PISTA!':'TEMPO ESGOTADO'),
   sub=win?(last?'Completaste os 1100 níveis da AURAVIA!':'Esferas: +'+S.orbs*(P.x2?2:1)+' · '+st+'★ · +'+gain+' moedas'):(why=='crash'?'Bateste noutro carro! Só o escudo da loja te salva.':why=='off'?'O carro não curva sozinho: tens de virar o volante nas curvas.':'O tempo acabou antes da meta.')+' +'+gain+' moedas';
   ov.className='';
