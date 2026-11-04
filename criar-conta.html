@@ -482,9 +482,42 @@
     try { localStorage.setItem(chaveAuraviaAd(email), '1'); } catch (e) {}
   }
 
+  /* Pré-carrega o MP4 inteiro para memória — evita “pausa” por buffering no início */
+  window.__dmAuraviaBlobUrl = null;
+  window.__dmAuraviaBlobReady = false;
+  (function precarregarAuraviaMp4() {
+    var urls = ['Auravia.mp4', '/Auravia.mp4', './Auravia.mp4'];
+    var i = 0;
+    function next() {
+      if (i >= urls.length) return;
+      var u = urls[i++];
+      fetch(u, { credentials: 'same-origin', cache: 'force-cache' })
+        .then(function (r) {
+          if (!r.ok) throw new Error('fail');
+          return r.blob();
+        })
+        .then(function (blob) {
+          if (!blob || blob.size < 1000) throw new Error('empty');
+          try {
+            if (window.__dmAuraviaBlobUrl) URL.revokeObjectURL(window.__dmAuraviaBlobUrl);
+          } catch (e) {}
+          window.__dmAuraviaBlobUrl = URL.createObjectURL(blob);
+          window.__dmAuraviaBlobReady = true;
+        })
+        .catch(function () { next(); });
+    }
+    next();
+  })();
+
+  function srcAuravia() {
+    if (window.__dmAuraviaBlobUrl) return window.__dmAuraviaBlobUrl;
+    return 'Auravia.mp4';
+  }
+
   /**
-   * Arranca o vídeo NO MESMO instante do clique (gesto do utilizador).
-   * Assim o browser NÃO pausa. O login corre em paralelo.
+   * Vídeo em ecrã cheio no CLIQUE do login.
+   * Fonte = blob em memória (sem cortes de rede).
+   * Sem mudar muted a meio. Sem reiniciar src.
    */
   function arrancarAnuncioFullscreen(email) {
     if (document.getElementById('dm-auravia-ad')) return window.__dmAdVideo || null;
@@ -495,30 +528,33 @@
     window.__dmAdLoginFailed = false;
     window.__dmAdDone = false;
 
-    var st = document.createElement('style');
-    st.id = 'dm-auravia-ad-css';
-    st.textContent =
-      '#dm-auravia-ad{position:fixed;inset:0;z-index:2147483646;background:#000;margin:0;padding:0;}' +
-      '#dm-auravia-ad video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;border:0;}';
-    document.head.appendChild(st);
+    if (!document.getElementById('dm-auravia-ad-css')) {
+      var st = document.createElement('style');
+      st.id = 'dm-auravia-ad-css';
+      st.textContent =
+        '#dm-auravia-ad{position:fixed;inset:0;z-index:2147483646;background:#000;margin:0;padding:0;}' +
+        '#dm-auravia-ad video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;border:0;}';
+      document.head.appendChild(st);
+    }
 
     var wrap = document.createElement('div');
     wrap.id = 'dm-auravia-ad';
     var v = document.createElement('video');
     v.id = 'dm-auravia-video';
-    v.setAttribute('playsinline', '');
-    v.setAttribute('webkit-playsinline', '');
+    v.setAttribute('playsinline', 'true');
+    v.setAttribute('webkit-playsinline', 'true');
     v.setAttribute('preload', 'auto');
     v.playsInline = true;
     v.controls = false;
-    v.disablePictureInPicture = true;
-    /* NÃO começar mudo — estamos dentro do gesto do clique */
+    v.loop = false;
+    v.autoplay = true;
+    /* som desde o 1.º frame — gesto do clique ainda activo */
+    v.defaultMuted = false;
     v.muted = false;
     try { v.volume = 1; } catch (e) {}
-    v.src = 'Auravia.mp4';
+
     wrap.appendChild(v);
     document.body.appendChild(wrap);
-
     window.__dmAdVideo = v;
 
     function irParaDestino() {
@@ -530,20 +566,16 @@
       }
       marcarAnuncioAuraviaVisto(window.__dmAdEmail || email);
       try { v.pause(); } catch (e2) {}
+      window.__dmAdVideo = null;
       try {
         var el = document.getElementById('dm-auravia-ad');
         if (el) el.remove();
       } catch (e3) {}
-      window.__dmAdVideo = null;
-      if (window.__dmAdLoginFailed) {
-        /* volta ao formulário — o erro já foi mostrado */
-        return;
-      }
-      var dest = window.__dmAdDestino || 'desafios.html';
-      window.location.href = dest;
+      if (window.__dmAdLoginFailed) return;
+      window.location.href = window.__dmAdDestino || 'desafios.html';
     }
 
-    function tentarIr() {
+    function quandoAcabar() {
       if (window.__dmAdLoginFailed) {
         irParaDestino();
         return;
@@ -552,53 +584,81 @@
         irParaDestino();
         return;
       }
-      /* login ainda a correr — espera um pouco */
       if (window.__dmAdLoginPending) {
-        setTimeout(tentarIr, 200);
+        setTimeout(quandoAcabar, 250);
         return;
       }
       irParaDestino();
     }
 
-    v.addEventListener('ended', tentarIr);
+    v.addEventListener('ended', quandoAcabar);
 
-    /* play IMEDIATO no gesto — sem await, sem setTimeout */
-    var pr = v.play();
-    if (pr && typeof pr.then === 'function') {
-      pr.catch(function () {
-        /* último recurso: mudo só para não ficar preto; tenta ligar som sem pausar */
-        try {
-          v.muted = true;
-          v.play().then(function () {
-            try { v.muted = false; v.volume = 1; } catch (e4) {}
-          }).catch(function () {});
-        } catch (e5) {}
+    /* Uma única atribuição de src — nunca v.load() depois de play */
+    v.src = srcAuravia();
+
+    var playPromise = v.play();
+    if (playPromise && typeof playPromise.catch === 'function') {
+      playPromise.catch(function () {
+        /* Só se o browser bloquear som: mudo permanente neste play (continua a imagem) */
+        v.muted = true;
+        v.play().catch(function () {
+          window.__dmAdLoginPending = false;
+          if (!window.__dmAdDestino) window.__dmAdDestino = 'desafios.html';
+          irParaDestino();
+        });
       });
     }
 
-    /* Watchdog: se o browser pausar, retoma SEM reiniciar do zero */
-    if (window.__dmAdKeep) clearInterval(window.__dmAdKeep);
-    window.__dmAdKeep = setInterval(function () {
-      if (window.__dmAdDone || !window.__dmAdVideo) return;
-      try {
-        if (!v.ended && v.paused) {
-          var p2 = v.play();
-          if (p2 && p2.catch) p2.catch(function () {});
-        }
-      } catch (e6) {}
-    }, 200);
-
-    v.addEventListener('error', function () {
-      if (String(v.src).indexOf('/Auravia.mp4') === -1) {
-        v.src = '/Auravia.mp4';
-        v.play().catch(function () {});
-      } else {
-        /* ficheiro em falta — não prender o user */
-        window.__dmAdLoginPending = false;
-        if (!window.__dmAdDestino) window.__dmAdDestino = 'desafios.html';
-        irParaDestino();
-      }
+    /* Retoma se pausar sozinho — NÃO mexe em src nem muted */
+    var lastT = 0;
+    v.addEventListener('timeupdate', function () {
+      try { lastT = v.currentTime; } catch (e) {}
     });
+    v.addEventListener('pause', function () {
+      if (window.__dmAdDone || v.ended || window.__dmAdLoginFailed) return;
+      setTimeout(function () {
+        if (window.__dmAdDone || !window.__dmAdVideo || v.ended) return;
+        if (!v.paused) return;
+        var p = v.play();
+        if (p && p.then) {
+          p.then(function () {
+            try {
+              if (lastT > 0.3 && v.currentTime < lastT - 0.4) {
+                v.currentTime = lastT;
+              }
+            } catch (e4) {}
+          }).catch(function () {});
+        }
+      }, 30);
+    });
+
+    /* Se o blob ainda não estava pronto, quando chegar actualiza SEM parar se já toca */
+    if (!window.__dmAuraviaBlobReady) {
+      var waitBlob = setInterval(function () {
+        if (window.__dmAdDone) {
+          clearInterval(waitBlob);
+          return;
+        }
+        if (window.__dmAuraviaBlobReady && window.__dmAuraviaBlobUrl) {
+          clearInterval(waitBlob);
+          /* só troca se ainda estiver no início (evita salto a meio) */
+          try {
+            if (v.currentTime < 1.5) {
+              var t = v.currentTime;
+              var wasMuted = v.muted;
+              v.src = window.__dmAuraviaBlobUrl;
+              v.muted = wasMuted;
+              v.addEventListener('loadeddata', function once() {
+                v.removeEventListener('loadeddata', once);
+                try { if (t > 0.05) v.currentTime = t; } catch (e5) {}
+                v.play().catch(function () {});
+              });
+            }
+          } catch (e6) {}
+        }
+      }, 200);
+      setTimeout(function () { try { clearInterval(waitBlob); } catch (e7) {} }, 15000);
+    }
 
     return v;
   }
@@ -608,15 +668,12 @@
     window.__dmAdLoginFailed = false;
     window.__dmAdDestino = destino || 'desafios.html';
     var v = window.__dmAdVideo;
-    /* se o vídeo já terminou enquanto o login corria */
     if (!v || v.ended || window.__dmAdDone) {
       if (!window.__dmAdDone) {
         marcarAnuncioAuraviaVisto(window.__dmAdEmail || '');
         window.location.href = window.__dmAdDestino;
       }
-      return;
     }
-    /* senão: deixa o vídeo acabar e o onended redireciona */
   }
 
   function cancelarAnuncioPorErro() {
@@ -637,7 +694,6 @@
     } catch (e3) {}
   }
 
-  /* compat: chamados antigos */
   function desbloquearMediaAuravia() {
     try {
       var AC = window.AudioContext || window.webkitAudioContext;
@@ -647,8 +703,8 @@
       }
     } catch (e) {}
   }
+
   function mostrarAnuncioAuravia(destino, email) {
-    /* se ainda não arrancou no clique, arranca agora */
     if (!document.getElementById('dm-auravia-ad')) {
       arrancarAnuncioFullscreen(email);
     }
