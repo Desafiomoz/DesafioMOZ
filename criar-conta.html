@@ -482,7 +482,7 @@
     try { localStorage.setItem(chaveAuraviaAd(email), '1'); } catch (e) {}
   }
 
-  /* Desbloqueia áudio no clique do login (sem pausar o vídeo do anúncio) */
+  /* ===== Anúncio Auravia.mp4: arranca NO CLIQUE (gesto) e nunca pausa ===== */
   function desbloquearMediaAuravia() {
     try {
       var AC = window.AudioContext || window.webkitAudioContext;
@@ -491,26 +491,65 @@
         if (window.__dmAC.state === 'suspended') window.__dmAC.resume();
       }
     } catch (e) {}
-    try {
-      /* tom silencioso — NÃO usa o mesmo ficheiro do anúncio (evita pausa) */
-      if (!window.__dmUnlockAudio) {
-        window.__dmUnlockAudio = new Audio();
-        window.__dmUnlockAudio.src =
-          'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQQAAAAAAA==';
-        window.__dmUnlockAudio.volume = 0.01;
-      }
-      var a = window.__dmUnlockAudio;
-      var p = a.play();
-      if (p && p.then) {
-        p.then(function () {
-          try { a.pause(); } catch (e2) {}
-          window.__dmMediaUnlocked = true;
-        }).catch(function () {});
-      }
-    } catch (e) {}
+    /* Arranca o vídeo já no gesto do utilizador — evita pausa depois do login async */
+    try { iniciarVideoAnuncioNoGesto(); } catch (e2) {}
   }
 
-  /** Vídeo Auravia.mp4 — ecrã cheio, toca de seguida COM som, sem botões. 1× por conta. */
+  function iniciarVideoAnuncioNoGesto() {
+    if (window.__dmAuraviaPrep) return;
+    var v = document.createElement('video');
+    v.id = 'dm-auravia-prep';
+    v.setAttribute('playsinline', '');
+    v.setAttribute('webkit-playsinline', '');
+    v.playsInline = true;
+    v.preload = 'auto';
+    v.controls = false;
+    v.disablePictureInPicture = true;
+    v.muted = false;
+    try { v.volume = 1; } catch (e) {}
+    /* escondido mas a tocar — depois só mostramos ecrã cheio */
+    v.style.cssText = 'position:fixed;left:0;top:0;width:1px;height:1px;opacity:0.01;pointer-events:none;z-index:1';
+    v.src = 'Auravia.mp4';
+    document.body.appendChild(v);
+
+    function playAgora() {
+      var p = v.play();
+      if (p && typeof p.then === 'function') {
+        p.then(function () {
+          window.__dmAuraviaPlaying = true;
+        }).catch(function () {
+          /* política do browser: arranca mudo e liga o som quando mostrar */
+          v.muted = true;
+          v.play().then(function () {
+            window.__dmAuraviaPlaying = true;
+            window.__dmAuraviaNeedsUnmute = true;
+          }).catch(function () {});
+        });
+      }
+    }
+    playAgora();
+    v.addEventListener('loadeddata', function () {
+      if (v.paused) playAgora();
+    });
+
+    /* watchdog: se pausar sozinho, retoma (não é o utilizador) */
+    if (window.__dmAuraviaKeep) clearInterval(window.__dmAuraviaKeep);
+    window.__dmAuraviaKeep = setInterval(function () {
+      if (!window.__dmAuraviaPrep) return;
+      if (window.__dmAuraviaDone) return;
+      try {
+        if (v.ended) return;
+        if (v.paused) {
+          var pr = v.play();
+          if (pr && pr.catch) pr.catch(function () {});
+        }
+      } catch (e3) {}
+    }, 250);
+
+    window.__dmAuraviaPrep = v;
+  }
+
+  /** Mostra o vídeo já a tocar em ecrã cheio (1× por conta). */
   function mostrarAnuncioAuravia(destino, email) {
     if (document.getElementById('dm-auravia-ad')) return;
 
@@ -523,103 +562,89 @@
 
     var wrap = document.createElement('div');
     wrap.id = 'dm-auravia-ad';
-    wrap.innerHTML =
-      '<video id="dm-auravia-video" playsinline webkit-playsinline preload="auto" ' +
-      'x-webkit-airplay="allow"></video>';
     document.body.appendChild(wrap);
 
-    var v = document.getElementById('dm-auravia-video');
-    v.setAttribute('playsinline', '');
-    v.setAttribute('webkit-playsinline', '');
-    v.playsInline = true;
-    v.preload = 'auto';
-    v.controls = false;
+    var v = window.__dmAuraviaPrep;
+    if (!v) {
+      iniciarVideoAnuncioNoGesto();
+      v = window.__dmAuraviaPrep;
+    }
+
+    /* move o mesmo elemento de vídeo para o overlay — NÃO reinicia */
+    try {
+      v.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;border:0;opacity:1;pointer-events:auto;z-index:1';
+      wrap.appendChild(v);
+    } catch (e) {}
 
     var done = false;
-    var playStarted = false;
-    var triedAlt = false;
+    window.__dmAuraviaDone = false;
 
     function finalizar() {
       if (done) return;
       done = true;
+      window.__dmAuraviaDone = true;
+      if (window.__dmAuraviaKeep) {
+        try { clearInterval(window.__dmAuraviaKeep); } catch (e) {}
+        window.__dmAuraviaKeep = null;
+      }
       marcarAnuncioAuraviaVisto(email);
-      try { v.pause(); } catch (e) {}
+      try { v.pause(); } catch (e2) {}
+      window.__dmAuraviaPrep = null;
       try {
         var el = document.getElementById('dm-auravia-ad');
         if (el) el.remove();
-      } catch (e2) {}
+      } catch (e3) {}
       window.location.href = destino || 'desafios.html';
     }
 
-    function manterATocar() {
-      if (done || v.ended) return;
-      if (v.paused) {
+    function ligarSom() {
+      try {
+        v.muted = false;
+        v.volume = 1;
+      } catch (e) {}
+      if (v.paused && !v.ended) {
         var p = v.play();
         if (p && p.catch) p.catch(function () {});
       }
     }
 
-    function iniciarPlay() {
-      if (done || playStarted) return;
-      playStarted = true;
-      try { v.volume = 1; } catch (e) {}
-      /* 1.ª tentativa: com som (gesto do login já desbloqueou) */
+    /* tenta som agora (já estava a tocar desde o clique) */
+    ligarSom();
+    setTimeout(ligarSom, 100);
+    setTimeout(ligarSom, 400);
+
+    v.onended = finalizar;
+    v.addEventListener('ended', finalizar);
+
+    /* se ainda não começou (rede lenta), força play */
+    if (v.paused) {
       v.muted = false;
-      var p = v.play();
-      if (p && typeof p.then === 'function') {
-        p.then(function () {
-          try { v.muted = false; v.volume = 1; } catch (e1) {}
+      v.play().catch(function () {
+        v.muted = true;
+        v.play().then(function () {
+          setTimeout(ligarSom, 150);
         }).catch(function () {
-          /* fallback: mudo só para arrancar, depois liga o som SEM reiniciar */
-          v.muted = true;
-          v.play().then(function () {
-            setTimeout(function () {
-              if (done) return;
-              try {
-                v.muted = false;
-                v.volume = 1;
-              } catch (e2) {}
-              manterATocar();
-            }, 120);
-          }).catch(function () {
-            /* se falhar de todo, não prender o utilizador */
-            setTimeout(finalizar, 800);
-          });
+          setTimeout(finalizar, 1000);
         });
-      }
+      });
     }
 
-    v.addEventListener('ended', finalizar);
-    /* se o browser pausar no início, retoma logo */
-    v.addEventListener('pause', function () {
-      if (done || v.ended) return;
-      setTimeout(manterATocar, 40);
-    });
-    v.addEventListener('playing', function () {
-      playStarted = true;
-    });
-    v.addEventListener('canplay', function () {
-      if (!playStarted) iniciarPlay();
-    });
-    v.addEventListener('loadeddata', function () {
-      if (!playStarted) iniciarPlay();
-    });
-    v.addEventListener('error', function () {
-      if (!triedAlt) {
-        triedAlt = true;
-        playStarted = false;
+    /* rede: se falhar o src relativo, tenta absoluto sem parar o fluxo */
+    v.addEventListener('error', function onErr() {
+      v.removeEventListener('error', onErr);
+      if (String(v.currentSrc || v.src).indexOf('/Auravia.mp4') === -1) {
+        var t = 0;
+        try { t = v.currentTime || 0; } catch (e) {}
         v.src = '/Auravia.mp4';
-        v.load();
-        return;
+        v.addEventListener('loadeddata', function once() {
+          v.removeEventListener('loadeddata', once);
+          try { if (t > 0.2) v.currentTime = t; } catch (e2) {}
+          ligarSom();
+        });
+      } else {
+        finalizar();
       }
-      finalizar();
     });
-
-    v.src = 'Auravia.mp4';
-    /* não chamar load()+play várias vezes — o src já dispara o buffer */
-    setTimeout(function () {
-      if (!playStarted && !done) iniciarPlay();
-    }, 80);
   }
 
   function redirecionarAposLogin(usuario, novaConta) {
