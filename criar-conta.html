@@ -534,22 +534,136 @@
     return false;
   }
 
-  function redirecionarAposLogin(usuario, novaConta) {
+  function destinoAposLogin(usuario, novaConta) {
     var u = usuario || {};
     var bloqueado =
       u.contaBloqueada === true || u.contaBloqueada === 'true' || u.contaBloqueada === 1 ||
       u.jogosBloqueado === true || u.jogosBloqueado === 'true' || u.jogosBloqueado === 1;
-    if (bloqueado) {
-      window.location.href = 'conta-bloqueada.html';
-      return;
-    }
-    // Contas novas já nascem com dadosActualizados; contas antigas têm de actualizar uma vez
+    if (bloqueado) return 'conta-bloqueada.html';
     if (!novaConta && u.dadosActualizados !== true && u.dadosActualizados !== 'true') {
-      window.location.href = 'atualizar-dados.html';
+      return 'atualizar-dados.html';
+    }
+    return novaConta ? 'desafios.html?nova=1' : 'desafios.html';
+  }
+
+  function chaveAuraviaAd(email) {
+    return 'dmAuraviaAdSeen_' + String(email || '').trim().toLowerCase();
+  }
+  function jaViuAnuncioAuravia(email) {
+    try { return localStorage.getItem(chaveAuraviaAd(email)) === '1'; } catch (e) { return false; }
+  }
+  function marcarAnuncioAuraviaVisto(email) {
+    try { localStorage.setItem(chaveAuraviaAd(email), '1'); } catch (e) {}
+  }
+
+  /* Desbloqueia áudio no clique do login (igual ideia aos anúncios da Tua Vez) */
+  function desbloquearMediaAuravia() {
+    try {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (AC) {
+        if (!window.__dmAC) window.__dmAC = new AC();
+        if (window.__dmAC.state === 'suspended') window.__dmAC.resume();
+      }
+    } catch (e) {}
+    try {
+      if (!window.__dmUnlockVid) {
+        window.__dmUnlockVid = document.createElement('video');
+        window.__dmUnlockVid.playsInline = true;
+        window.__dmUnlockVid.setAttribute('playsinline', '');
+        window.__dmUnlockVid.muted = true;
+        window.__dmUnlockVid.preload = 'auto';
+        window.__dmUnlockVid.src = 'Auravia.mp4';
+      }
+      var u = window.__dmUnlockVid;
+      var p = u.play();
+      if (p && p.then) {
+        p.then(function () {
+          try { u.pause(); u.currentTime = 0; } catch (e2) {}
+          window.__dmMediaUnlocked = true;
+        }).catch(function () {});
+      }
+    } catch (e) {}
+  }
+
+  /** Vídeo AURAVIA.mp4 — ecrã cheio, inicia sozinho COM som, sem botões. 1× por conta. */
+  function mostrarAnuncioAuravia(destino, email) {
+    if (document.getElementById('dm-auravia-ad')) return;
+
+    var st = document.createElement('style');
+    st.id = 'dm-auravia-ad-css';
+    st.textContent =
+      '#dm-auravia-ad{position:fixed;inset:0;z-index:2147483646;background:#000;margin:0;padding:0}' +
+      '#dm-auravia-ad video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;border:0}';
+    document.head.appendChild(st);
+
+    var wrap = document.createElement('div');
+    wrap.id = 'dm-auravia-ad';
+    wrap.innerHTML = '<video id="dm-auravia-video" playsinline webkit-playsinline autoplay preload="auto"></video>';
+    document.body.appendChild(wrap);
+
+    var v = document.getElementById('dm-auravia-video');
+    var done = false;
+    function finalizar() {
+      if (done) return;
+      done = true;
+      marcarAnuncioAuraviaVisto(email);
+      try { v.pause(); } catch (e) {}
+      window.location.href = destino || 'desafios.html';
+    }
+
+    function tentarPlayComSom() {
+      try { v.volume = 1; } catch (e) {}
+      v.muted = false;
+      var p = v.play();
+      if (p && typeof p.then === 'function') {
+        p.then(function () {
+          /* a tocar com som */
+        }).catch(function () {
+          /* fallback: inicia mudo e tenta ligar o som de seguida (política do browser) */
+          v.muted = true;
+          v.play().then(function () {
+            try {
+              v.muted = false;
+              v.volume = 1;
+            } catch (e2) {}
+          }).catch(function () {});
+        });
+      }
+    }
+
+    v.addEventListener('ended', finalizar);
+    v.addEventListener('loadeddata', tentarPlayComSom);
+    v.addEventListener('canplay', tentarPlayComSom);
+    v.addEventListener('error', function () {
+      /* último recurso: caminho absoluto */
+      if (v.src.indexOf('/Auravia.mp4') === -1) {
+        v.src = '/Auravia.mp4';
+        v.load();
+        tentarPlayComSom();
+      } else {
+        finalizar();
+      }
+    });
+
+    v.src = 'Auravia.mp4';
+    v.load();
+    tentarPlayComSom();
+  }
+
+  function redirecionarAposLogin(usuario, novaConta) {
+    var u = usuario || {};
+    var destino = destinoAposLogin(u, novaConta);
+    if (destino === 'conta-bloqueada.html' || destino === 'atualizar-dados.html') {
+      window.location.href = destino;
       return;
     }
-    window.location.href = novaConta ? 'desafios.html?nova=1' : 'desafios.html';
+    var email = String((u && u.email) || localStorage.getItem('emailUtilizador') || '').trim().toLowerCase();
+    if (email && !jaViuAnuncioAuravia(email)) {
+      try { mostrarAnuncioAuravia(destino, email); return; } catch (e) {}
+    }
+    window.location.href = destino;
   }
+
 
 
 
@@ -801,6 +915,7 @@
   // ENTRAR / CADASTRAR COM GOOGLE — cria o utilizador em "usuarios" se ainda não existir
   async function entrarComGoogle() {
     try {
+      try { desbloquearMediaAuravia(); } catch (eUn) {}
       var formCad = document.getElementById('form-cadastro');
       if (formCad && formCad.classList.contains('ativo')) {
         var aceitoG = document.getElementById('aceito-termos');
@@ -892,6 +1007,7 @@
   // LOGIN – carrega só as pesquisas DESTA conta
   document.getElementById('form-login').addEventListener('submit', async function (e) {
     e.preventDefault();
+    try { desbloquearMediaAuravia(); } catch (eUn) {}
     var email = document.getElementById('email-login').value.trim().toLowerCase();
     var senha = document.getElementById('senha-login').value;
     var btn = document.getElementById('btn-login');
@@ -950,6 +1066,7 @@
 
   document.getElementById('form-cadastro').addEventListener('submit', async function (e) {
     e.preventDefault();
+    try { desbloquearMediaAuravia(); } catch (eUn) {}
     var nome = document.getElementById('nome-cadastro').value.trim();
     var telemovel = document.getElementById('telemovel-cadastro').value.trim();
     var email = document.getElementById('email-cadastro').value.trim().toLowerCase();
