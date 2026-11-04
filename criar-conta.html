@@ -534,21 +534,135 @@
     return false;
   }
 
-  function redirecionarAposLogin(usuario, novaConta) {
+  function destinoAposLogin(usuario, novaConta) {
     var u = usuario || {};
     var bloqueado =
       u.contaBloqueada === true || u.contaBloqueada === 'true' || u.contaBloqueada === 1 ||
       u.jogosBloqueado === true || u.jogosBloqueado === 'true' || u.jogosBloqueado === 1;
-    if (bloqueado) {
-      window.location.href = 'conta-bloqueada.html';
-      return;
-    }
-    // Contas novas já nascem com dadosActualizados; contas antigas têm de actualizar uma vez
+    if (bloqueado) return 'conta-bloqueada.html';
     if (!novaConta && u.dadosActualizados !== true && u.dadosActualizados !== 'true') {
-      window.location.href = 'atualizar-dados.html';
+      return 'atualizar-dados.html';
+    }
+    return novaConta ? 'desafios.html?nova=1' : 'desafios.html';
+  }
+
+  function chaveAuraviaAd(email) {
+    return 'dmAuraviaAdSeen_' + String(email || '').trim().toLowerCase();
+  }
+
+  function jaViuAnuncioAuravia(email) {
+    try {
+      return localStorage.getItem(chaveAuraviaAd(email)) === '1';
+    } catch (e) { return false; }
+  }
+
+  function marcarAnuncioAuraviaVisto(email) {
+    try { localStorage.setItem(chaveAuraviaAd(email), '1'); } catch (e) {}
+  }
+
+  function irParaDestinoLogin(url) {
+    window.location.href = url || 'desafios.html';
+  }
+
+  /** Anúncio AURAVIA.mp4 — só uma vez por conta (email), após login. */
+  function mostrarAnuncioAuravia(destino, email) {
+    if (document.getElementById('dm-auravia-ad')) {
+      irParaDestinoLogin(destino);
       return;
     }
-    window.location.href = novaConta ? 'desafios.html?nova=1' : 'desafios.html';
+    var style = document.createElement('style');
+    style.id = 'dm-auravia-ad-css';
+    style.textContent =
+      '#dm-auravia-ad{position:fixed;inset:0;z-index:200000;background:#05060a;display:flex;flex-direction:column;align-items:center;justify-content:center}' +
+      '#dm-auravia-ad video{width:100%;height:100%;max-height:100%;object-fit:contain;background:#000}' +
+      '#dm-auravia-ad .bar{position:absolute;left:0;right:0;bottom:0;padding:14px 16px calc(14px + env(safe-area-inset-bottom,0px));display:flex;gap:10px;justify-content:center;background:linear-gradient(transparent,rgba(0,0,0,.85));}' +
+      '#dm-auravia-ad .bar button{flex:1;max-width:200px;padding:12px 14px;border:0;border-radius:12px;font-weight:800;font-size:14px;cursor:pointer}' +
+      '#dm-auravia-ad .go{background:linear-gradient(90deg,#00c853,#22ff99);color:#04140a}' +
+      '#dm-auravia-ad .mute{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.25)!important}' +
+      '#dm-auravia-ad .tag{position:absolute;top:calc(12px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);padding:6px 14px;border-radius:999px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#04140a;background:linear-gradient(90deg,#ff4fa3,#ffcf4d);box-shadow:0 0 20px rgba(255,79,163,.45)}';
+    document.head.appendChild(style);
+
+    var wrap = document.createElement('div');
+    wrap.id = 'dm-auravia-ad';
+    wrap.innerHTML =
+      '<div class="tag">AURAVIA · Anúncio</div>' +
+      '<video id="dm-auravia-video" playsinline webkit-playsinline preload="auto" ' +
+      'src="Auravia.mp4"></video>' +
+      '<div class="bar">' +
+      '<button type="button" class="mute" id="dm-auravia-mute">🔊 Som</button>' +
+      '<button type="button" class="go" id="dm-auravia-skip">Continuar ›</button>' +
+      '</div>';
+    document.body.appendChild(wrap);
+
+    var v = document.getElementById('dm-auravia-video');
+    var done = false;
+    function finalizar() {
+      if (done) return;
+      done = true;
+      marcarAnuncioAuraviaVisto(email);
+      try { v.pause(); } catch (e) {}
+      irParaDestinoLogin(destino);
+    }
+
+    v.addEventListener('ended', finalizar);
+    v.addEventListener('error', function () {
+      console.warn('AURAVIA ad video error');
+      finalizar();
+    });
+    document.getElementById('dm-auravia-skip').onclick = finalizar;
+
+    // Autoplay: browsers often require muted first
+    v.muted = true;
+    var p = v.play();
+    if (p && typeof p.then === 'function') {
+      p.then(function () {
+        // try unmute after start (may fail silently)
+        try {
+          v.muted = false;
+          if (v.muted) {
+            document.getElementById('dm-auravia-mute').textContent = '🔇 Ativar som';
+          } else {
+            document.getElementById('dm-auravia-mute').textContent = '🔊 Som ligado';
+          }
+        } catch (e) {}
+      }).catch(function () {
+        v.muted = true;
+        v.play().catch(function () {});
+        document.getElementById('dm-auravia-mute').textContent = '🔇 Toque para som';
+      });
+    }
+
+    document.getElementById('dm-auravia-mute').onclick = function () {
+      try {
+        v.muted = !v.muted;
+        if (v.muted) {
+          this.textContent = '🔇 Som desligado';
+        } else {
+          this.textContent = '🔊 Som ligado';
+          v.play().catch(function () {});
+        }
+      } catch (e) {}
+    };
+  }
+
+  function redirecionarAposLogin(usuario, novaConta) {
+    var u = usuario || {};
+    var destino = destinoAposLogin(u, novaConta);
+    if (destino === 'conta-bloqueada.html') {
+      window.location.href = destino;
+      return;
+    }
+    var email = String((u && u.email) || localStorage.getItem('emailUtilizador') || '').trim().toLowerCase();
+    // Actualizar dados tem prioridade sobre o anúncio
+    if (destino === 'atualizar-dados.html') {
+      window.location.href = destino;
+      return;
+    }
+    if (email && !jaViuAnuncioAuravia(email)) {
+      mostrarAnuncioAuravia(destino, email);
+      return;
+    }
+    irParaDestinoLogin(destino);
   }
 
 
