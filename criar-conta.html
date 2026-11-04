@@ -534,100 +534,21 @@
     return false;
   }
 
-  function destinoAposLogin(usuario, novaConta) {
+  function redirecionarAposLogin(usuario, novaConta) {
     var u = usuario || {};
     var bloqueado =
       u.contaBloqueada === true || u.contaBloqueada === 'true' || u.contaBloqueada === 1 ||
       u.jogosBloqueado === true || u.jogosBloqueado === 'true' || u.jogosBloqueado === 1;
-    if (bloqueado) return 'conta-bloqueada.html';
-    if (!novaConta && u.dadosActualizados !== true && u.dadosActualizados !== 'true') {
-      return 'atualizar-dados.html';
-    }
-    return novaConta ? 'desafios.html?nova=1' : 'desafios.html';
-  }
-
-  function chaveAuraviaAd(email) {
-    return 'dmAuraviaAdSeen_' + String(email || '').trim().toLowerCase();
-  }
-  function jaViuAnuncioAuravia(email) {
-    try { return localStorage.getItem(chaveAuraviaAd(email)) === '1'; } catch (e) { return false; }
-  }
-  function marcarAnuncioAuraviaVisto(email) {
-    try { localStorage.setItem(chaveAuraviaAd(email), '1'); } catch (e) {}
-  }
-
-  /** Vídeo AURAVIA: ecrã cheio, inicia sozinho, sem botões. Só 1× por conta. */
-  function mostrarAnuncioAuravia(destino, email) {
-    if (document.getElementById('dm-auravia-ad')) return;
-
-    var st = document.createElement('style');
-    st.id = 'dm-auravia-ad-css';
-    st.textContent =
-      '#dm-auravia-ad{position:fixed;inset:0;z-index:2147483646;background:#000;margin:0;padding:0}' +
-      '#dm-auravia-ad video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;border:0}';
-    document.head.appendChild(st);
-
-    var wrap = document.createElement('div');
-    wrap.id = 'dm-auravia-ad';
-    wrap.innerHTML = '<video id="dm-auravia-video" playsinline webkit-playsinline autoplay muted preload="auto"></video>';
-    document.body.appendChild(wrap);
-
-    var v = document.getElementById('dm-auravia-video');
-    var fontes = ['Auravia.mp4', '/Auravia.mp4', './Auravia.mp4', 'auravia.mp4', '/auravia.mp4'];
-    var fi = 0;
-    var done = false;
-
-    function finalizar() {
-      if (done) return;
-      done = true;
-      marcarAnuncioAuraviaVisto(email);
-      try { v.pause(); } catch (e) {}
-      window.location.href = destino || 'desafios.html';
-    }
-
-    function tentarPlay() {
-      v.muted = true;
-      var p = v.play();
-      if (p && typeof p.then === 'function') {
-        p.catch(function () {
-          v.muted = true;
-          v.play().catch(function () {});
-        });
-      }
-    }
-
-    function carregarFonte() {
-      if (fi >= fontes.length) {
-        finalizar();
-        return;
-      }
-      v.src = fontes[fi++];
-      v.load();
-      tentarPlay();
-    }
-
-    v.addEventListener('ended', finalizar);
-    v.addEventListener('loadeddata', tentarPlay);
-    v.addEventListener('canplay', tentarPlay);
-    v.addEventListener('error', function () {
-      carregarFonte();
-    });
-
-    carregarFonte();
-  }
-
-  function redirecionarAposLogin(usuario, novaConta) {
-    var u = usuario || {};
-    var destino = destinoAposLogin(u, novaConta);
-    if (destino === 'conta-bloqueada.html' || destino === 'atualizar-dados.html') {
-      window.location.href = destino;
+    if (bloqueado) {
+      window.location.href = 'conta-bloqueada.html';
       return;
     }
-    var email = String((u && u.email) || localStorage.getItem('emailUtilizador') || '').trim().toLowerCase();
-    if (email && !jaViuAnuncioAuravia(email)) {
-      try { mostrarAnuncioAuravia(destino, email); return; } catch (e) {}
+    // Contas novas já nascem com dadosActualizados; contas antigas têm de actualizar uma vez
+    if (!novaConta && u.dadosActualizados !== true && u.dadosActualizados !== 'true') {
+      window.location.href = 'atualizar-dados.html';
+      return;
     }
-    window.location.href = destino;
+    window.location.href = novaConta ? 'desafios.html?nova=1' : 'desafios.html';
   }
 
 
