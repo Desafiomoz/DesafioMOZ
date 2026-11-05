@@ -349,55 +349,26 @@
     mostrarAviso('⏳ A verificar...', 'sucesso');
 
     try {
-      var ban = await emailEstaBanido(email);
-      if (ban) {
-        btn.disabled = false;
-        btn.textContent = 'Guardar e continuar';
-        return mostrarAviso('🚫 Este e-mail está <b>banido permanentemente</b> do Desafio MOZ' +
-          (ban.motivo ? ' (' + String(ban.motivo).slice(0, 70) + ')' : '') +
-          '. Não podes actualizar nem entrar até o administrador desbanir.');
-      }
-
-      var snap = await db.collection('usuarios').where('email', '==', email).limit(1).get();
-      if (snap.empty) {
-        btn.disabled = false;
-        btn.textContent = 'Guardar e continuar';
-        return mostrarAviso('⚠️ Este e-mail <b>não está registado</b> no Desafio MOZ. Usa o e-mail da tua conta.');
-      }
-
       telemovel = normalizarTelMoz(telemovel);
-      // Telemóvel já usado por OUTRA conta?
-      var telSnap = await db.collection('usuarios').where('telemovel', '==', telemovel).limit(3).get();
-      var telConflito = false;
-      telSnap.forEach(function (doc) {
-        var d = doc.data() || {};
-        if (String(d.email || '').toLowerCase() !== email) telConflito = true;
-      });
-      if (telConflito) {
-        // tenta formato sem +258
-        var telAlt = telemovel.replace(/^\+258/, '');
-        var telSnap2 = await db.collection('usuarios').where('telemovel', '==', telAlt).limit(3).get();
-        telSnap2.forEach(function (doc) {
-          var d = doc.data() || {};
-          if (String(d.email || '').toLowerCase() !== email) telConflito = true;
-        });
-      }
-      if (telConflito) {
+      var apiRes = await fetch('https://desafiomoz.pages.dev/api/auth-atualizar-dados', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: email,
+          nome: nome,
+          telemovel: telemovel,
+          senha: senha
+        })
+      }).then(function (r) { return r.json(); });
+
+      if (!apiRes || !apiRes.ok) {
         btn.disabled = false;
         btn.textContent = 'Guardar e continuar';
-        return mostrarAviso('⚠️ Este número já está ligado a <b>outra conta</b>. Usa o teu número.');
+        if (apiRes && apiRes.banido) {
+          return mostrarAviso('🚫 ' + (apiRes.erro || 'Este e-mail está banido permanentemente do Desafio MOZ.'));
+        }
+        return mostrarAviso('⚠️ ' + ((apiRes && apiRes.erro) || 'Não foi possível actualizar os dados.'));
       }
-
-      var senhaHash = await hashSenha(senha);
-      var ref = snap.docs[0].ref;
-      await ref.update({
-        nome: nome,
-        telemovel: telemovel,
-        senha: senhaHash,
-        dadosActualizados: true,
-        dadosActualizadosEm: new Date().toISOString(),
-        ultimaAtualizacao: new Date().toISOString()
-      });
 
       localStorage.setItem('nomeUtilizador', nome);
       localStorage.setItem('telUtilizador', telemovel);
