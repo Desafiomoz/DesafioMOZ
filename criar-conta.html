@@ -472,332 +472,11 @@
     return novaConta ? 'desafios.html?nova=1' : 'desafios.html';
   }
 
-  function chaveAuraviaAd(email) {
-    return 'dmAuraviaAdSeen_' + String(email || '').trim().toLowerCase();
-  }
-  function jaViuAnuncioAuravia(email) {
-    try { return localStorage.getItem(chaveAuraviaAd(email)) === '1'; } catch (e) { return false; }
-  }
-  function marcarAnuncioAuraviaVisto(email) {
-    try { localStorage.setItem(chaveAuraviaAd(email), '1'); } catch (e) {}
-  }
-
-  /** Limpa temporizadores e ouvintes do anúncio */
-  function limparAnuncio() {
-    try { clearInterval(window.__dmAdKeep); } catch (e) {}
-    window.__dmAdKeep = null;
-    try { clearTimeout(window.__dmAdHard); } catch (e1) {}
-    window.__dmAdHard = null;
-    try { if (window.__dmAdVis) document.removeEventListener('visibilitychange', window.__dmAdVis); } catch (e2) {}
-    window.__dmAdVis = null;
-    try { if (window.__dmAdLock) window.__dmAdLock.release(); } catch (e3) {}
-    window.__dmAdLock = null;
-  }
-
-  /**
-   * Arranca o vídeo NO MESMO instante do clique (gesto do utilizador).
-   * Versão robusta: retoma sozinho se o browser pausar, nunca liga o som fora de um toque
-   * (era isso que fazia o vídeo parar) e termina sempre, mesmo que o evento "ended" falhe.
-   */
-  function arrancarAnuncioFullscreen(email) {
-    if (document.getElementById('dm-auravia-ad')) return window.__dmAdVideo || null;
-
-    window.__dmAdEmail = String(email || '').trim().toLowerCase();
-    window.__dmAdDestino = null;
-    window.__dmAdLoginPending = true;
-    window.__dmAdLoginFailed = false;
-    window.__dmAdDone = false;
-    window.__dmAdEnding = false;
-
-    var st = document.createElement('style');
-    st.id = 'dm-auravia-ad-css';
-    st.textContent =
-      '#dm-auravia-ad{position:fixed;inset:0;z-index:2147483646;background:#000;margin:0;padding:0;}' +
-      '#dm-auravia-ad video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;border:0;pointer-events:none;}' +
-      '#dm-ad-som{position:absolute;right:14px;bottom:calc(env(safe-area-inset-bottom,0px) + 18px);z-index:2;display:none;padding:12px 18px;border:0;border-radius:999px;font:700 15px system-ui,sans-serif;color:#04140a;background:linear-gradient(90deg,#00c853,#22ff99);box-shadow:0 0 18px rgba(34,255,153,.7);}' +
-      '#dm-ad-msg{position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 26px);z-index:2;display:none;text-align:center;color:#fff;font:600 15px system-ui,sans-serif;text-shadow:0 2px 8px #000;}';
-    document.head.appendChild(st);
-
-    var wrap = document.createElement('div');
-    wrap.id = 'dm-auravia-ad';
-    var v = document.createElement('video');
-    v.id = 'dm-auravia-video';
-    v.setAttribute('playsinline', '');
-    v.setAttribute('webkit-playsinline', '');
-    v.setAttribute('x-webkit-airplay', 'deny');
-    v.setAttribute('preload', 'auto');
-    v.playsInline = true;
-    v.controls = false;
-    v.loop = false;
-    v.disablePictureInPicture = true;
-    v.disableRemotePlayback = true;
-    /* começa COM som: estamos dentro do gesto do clique */
-    v.muted = false;
-    try { v.volume = 1; } catch (e) {}
-    v.src = 'Auravia.mp4';
-
-    var btnSom = document.createElement('button');
-    btnSom.id = 'dm-ad-som';
-    btnSom.type = 'button';
-    btnSom.textContent = '🔊 Ativar som';
-    var msg = document.createElement('div');
-    msg.id = 'dm-ad-msg';
-
-    wrap.appendChild(v);
-    wrap.appendChild(btnSom);
-    wrap.appendChild(msg);
-    document.body.appendChild(wrap);
-    window.__dmAdVideo = v;
-
-    /* mantém o ecrã ligado enquanto o anúncio passa */
-    try {
-      if (navigator.wakeLock && navigator.wakeLock.request) {
-        navigator.wakeLock.request('screen').then(function (l) { window.__dmAdLock = l; }).catch(function () {});
-      }
-    } catch (eL) {}
-
-    var lastT = 0, lastMove = Date.now(), started = false, retries = 0, triedAlt = false, waitT = null;
-
-    function irParaDestino() {
-      if (window.__dmAdDone) return;
-      window.__dmAdDone = true;
-      limparAnuncio();
-      clearTimeout(waitT);
-      marcarAnuncioAuraviaVisto(window.__dmAdEmail || email);
-      try { v.pause(); } catch (e2) {}
-      try {
-        var el = document.getElementById('dm-auravia-ad');
-        if (el) el.remove();
-      } catch (e3) {}
-      window.__dmAdVideo = null;
-      if (window.__dmAdLoginFailed) {
-        /* volta ao formulário — o erro já foi mostrado */
-        return;
-      }
-      var dest = window.__dmAdDestino || 'desafios.html';
-      window.location.href = dest;
-    }
-
-    function tentarIr() {
-      if (window.__dmAdDone) return;
-      if (window.__dmAdLoginFailed) {
-        irParaDestino();
-        return;
-      }
-      if (window.__dmAdDestino) {
-        irParaDestino();
-        return;
-      }
-      /* login ainda a correr — espera um pouco */
-      if (window.__dmAdLoginPending) {
-        msg.textContent = 'A entrar…';
-        msg.style.display = 'block';
-        setTimeout(tentarIr, 200);
-        return;
-      }
-      irParaDestino();
-    }
-
-    function terminou() {
-      if (window.__dmAdEnding) return;
-      window.__dmAdEnding = true;
-      tentarIr();
-    }
-
-    function faltaPouco(seg) {
-      var d = v.duration;
-      return isFinite(d) && d > 0 && (d - v.currentTime) < seg;
-    }
-
-    function mostrarSom(on) { btnSom.style.display = on ? 'block' : 'none'; }
-
-    /* play seguro: se o browser bloquear o som, toca sem som e pede um toque para ativar */
-    function tentarPlay() {
-      if (window.__dmAdDone || v.ended) return;
-      var p;
-      try { p = v.play(); } catch (e) { p = null; }
-      if (p && p.catch) {
-        p.catch(function (err) {
-          if (window.__dmAdDone) return;
-          if (err && err.name === 'AbortError') return; /* interrompido por nós — normal */
-          if (!v.muted) {
-            v.muted = true;
-            mostrarSom(true);
-            var p2;
-            try { p2 = v.play(); } catch (e2) { p2 = null; }
-            if (p2 && p2.catch) p2.catch(function () {});
-          }
-        });
-      }
-    }
-
-    /* o som só é ligado por um TOQUE (ligar sem toque faz o browser pausar o vídeo) */
-    btnSom.addEventListener('click', function () {
-      try { v.muted = false; v.volume = 1; } catch (e) {}
-      mostrarSom(false);
-      tentarPlay();
-    });
-
-    v.addEventListener('ended', terminou);
-    v.addEventListener('timeupdate', function () { if (v.currentTime > 0) started = true; });
-    /* o browser pausou (chamada, notificação, poupança de dados…): retoma sem reiniciar */
-    v.addEventListener('pause', function () {
-      if (window.__dmAdDone || window.__dmAdEnding) return;
-      if (v.ended || faltaPouco(0.5)) { terminou(); return; }
-      if (document.hidden) return;
-      setTimeout(tentarPlay, 150);
-    });
-    v.addEventListener('waiting', function () {
-      clearTimeout(waitT);
-      waitT = setTimeout(function () {
-        msg.textContent = 'A carregar o anúncio…';
-        msg.style.display = 'block';
-      }, 1500);
-    });
-    v.addEventListener('playing', function () {
-      clearTimeout(waitT);
-      msg.style.display = 'none';
-    });
-    /* garantia: termina mesmo que o "ended" nunca chegue */
-    v.addEventListener('loadedmetadata', function () {
-      if (isFinite(v.duration) && v.duration > 0) {
-        clearTimeout(window.__dmAdHard);
-        window.__dmAdHard = setTimeout(terminou, (v.duration + 12) * 1000);
-      }
-    });
-
-    window.__dmAdVis = function () { if (!document.hidden) tentarPlay(); };
-    document.addEventListener('visibilitychange', window.__dmAdVis);
-
-    /* play IMEDIATO no gesto — sem await, sem setTimeout */
-    tentarPlay();
-
-    /* Vigia (cada 0,5 s): retoma se parar, empurra se encravar, desiste se for impossível */
-    if (window.__dmAdKeep) clearInterval(window.__dmAdKeep);
-    window.__dmAdKeep = setInterval(function () {
-      if (window.__dmAdDone || !window.__dmAdVideo) return;
-      try {
-        var t = v.currentTime, agora = Date.now();
-        if (Math.abs(t - lastT) > 0.01) { lastT = t; lastMove = agora; return; }
-        if (v.ended) { terminou(); return; }
-        if (document.hidden) { lastMove = agora; return; }
-        var parado = agora - lastMove;
-        if (faltaPouco(1.5) && parado > 1500) { terminou(); return; }
-        if (v.paused) {
-          if (parado > 400 && !window.__dmAdEnding) tentarPlay();
-        } else if (parado > 4000) {
-          try { v.currentTime = Math.min(isFinite(v.duration) ? v.duration : t + 1, t + 0.1); } catch (e7) {}
-          tentarPlay();
-        }
-        if (parado > 20000) terminou(); /* nunca prender o utilizador */
-      } catch (e6) {}
-    }, 500);
-
-    v.addEventListener('error', function () {
-      if (window.__dmAdDone) return;
-      if (started && retries < 2) {
-        /* falha a meio (rede): recarrega e continua de onde estava */
-        retries++;
-        var tp = v.currentTime;
-        v.load();
-        var cont = function () {
-          v.removeEventListener('loadedmetadata', cont);
-          try { v.currentTime = tp; } catch (e8) {}
-          tentarPlay();
-        };
-        v.addEventListener('loadedmetadata', cont);
-        return;
-      }
-      if (!started && !triedAlt) {
-        triedAlt = true;
-        v.src = '/Auravia.mp4';
-        tentarPlay();
-        return;
-      }
-      /* ficheiro em falta — não prender o user */
-      window.__dmAdLoginPending = false;
-      if (!window.__dmAdDestino) window.__dmAdDestino = 'desafios.html';
-      irParaDestino();
-    });
-
-    return v;
-  }
-
-  function finalizarAnuncioComDestino(destino) {
-    window.__dmAdLoginPending = false;
-    window.__dmAdLoginFailed = false;
-    window.__dmAdDestino = destino || 'desafios.html';
-    var v = window.__dmAdVideo;
-    /* se o vídeo já terminou enquanto o login corria */
-    if (!v || v.ended || window.__dmAdDone) {
-      if (!window.__dmAdDone) {
-        marcarAnuncioAuraviaVisto(window.__dmAdEmail || '');
-        window.location.href = window.__dmAdDestino;
-      }
-      return;
-    }
-    /* senão: deixa o vídeo acabar e o onended redireciona */
-  }
-
-  function cancelarAnuncioPorErro() {
-    window.__dmAdLoginPending = false;
-    window.__dmAdLoginFailed = true;
-    window.__dmAdDone = true;
-    limparAnuncio();
-    try {
-      if (window.__dmAdVideo) window.__dmAdVideo.pause();
-    } catch (e2) {}
-    window.__dmAdVideo = null;
-    try {
-      var el = document.getElementById('dm-auravia-ad');
-      if (el) el.remove();
-    } catch (e3) {}
-  }
-
-  /* compat: chamados antigos */
-  function desbloquearMediaAuravia() {
-    try {
-      var AC = window.AudioContext || window.webkitAudioContext;
-      if (AC) {
-        if (!window.__dmAC) window.__dmAC = new AC();
-        if (window.__dmAC.state === 'suspended') window.__dmAC.resume();
-      }
-    } catch (e) {}
-  }
-  function mostrarAnuncioAuravia(destino, email) {
-    /* se ainda não arrancou no clique, arranca agora */
-    if (!document.getElementById('dm-auravia-ad')) {
-      arrancarAnuncioFullscreen(email);
-    }
-    finalizarAnuncioComDestino(destino);
-  }
-
   function redirecionarAposLogin(usuario, novaConta) {
     var u = usuario || {};
     var destino = destinoAposLogin(u, novaConta);
-    if (destino === 'conta-bloqueada.html' || destino === 'atualizar-dados.html') {
-      try { cancelarAnuncioPorErro(); } catch (eC) {}
-      window.location.href = destino;
-      return;
-    }
-    var email = String((u && u.email) || localStorage.getItem('emailUtilizador') || '').trim().toLowerCase();
-    /* Se o anúncio já está a tocar (arrancou no clique), só define o destino */
-    if (document.getElementById('dm-auravia-ad') && window.__dmAdVideo) {
-      finalizarAnuncioComDestino(destino);
-      return;
-    }
-    if (email && !jaViuAnuncioAuravia(email)) {
-      try {
-        arrancarAnuncioFullscreen(email);
-        finalizarAnuncioComDestino(destino);
-        return;
-      } catch (e) {}
-    }
     window.location.href = destino;
   }
-
-
-
 
   (function guardarRefDoLink() {
     try {
@@ -1047,7 +726,6 @@
   // ENTRAR / CADASTRAR COM GOOGLE — cria o utilizador em "usuarios" se ainda não existir
   async function entrarComGoogle() {
     try {
-      try { desbloquearMediaAuravia(); } catch (eUn) {}
       var formCad = document.getElementById('form-cadastro');
       if (formCad && formCad.classList.contains('ativo')) {
         var aceitoG = document.getElementById('aceito-termos');
@@ -1145,13 +823,6 @@
     if (!email || !senha) return mostrarAviso('⚠️ Preencha todos os campos!');
     btn.disabled = true;
     btn.textContent = 'A entrar...';
-    /* VÍDEO NO CLIQUE — antes de qualquer await */
-    var _precisaAd = !jaViuAnuncioAuravia(email);
-    if (_precisaAd) {
-      try { arrancarAnuncioFullscreen(email); } catch (eAd) {}
-    } else {
-      try { desbloquearMediaAuravia(); } catch (eUn) {}
-    }
     try {
       var apiRes = await fetch('https://desafiomoz.pages.dev/api/auth-login', {
         method: 'POST',
@@ -1159,7 +830,6 @@
         body: JSON.stringify({ email: email, senha: senha, captchaToken: captchaToken || '' })
       }).then(function (r) { return r.json(); });
       if (!apiRes || !apiRes.ok) {
-        try { cancelarAnuncioPorErro(); } catch (eCa) {}
         btn.disabled = false;
         btn.textContent = 'Entrar';
         resetCaptcha();
@@ -1188,14 +858,12 @@
         /* sem setTimeout longo — o vídeo já está a tocar */
         redirecionarAposLogin(usuario, false);
       } else {
-        try { cancelarAnuncioPorErro(); } catch (eT) {}
         btn.disabled = false;
         btn.textContent = 'Entrar';
         mostrarModalTermosPendentes();
       }
     } catch (erro) {
       console.error(erro);
-      try { cancelarAnuncioPorErro(); } catch (eCa4) {}
       mostrarAviso('❌ Erro de ligação. Tenta de novo.');
       btn.disabled = false;
       btn.textContent = 'Entrar';
@@ -1221,10 +889,6 @@
     if (senha.length < 6) return mostrarAviso('⚠️ Senha deve ter pelo menos 6 caracteres!');
     var aceito = document.getElementById('aceito-termos');
     if (!aceito || !aceito.checked) return mostrarAviso('⚠️ Tem de aceitar os Termos de Uso para criar conta. Se não concordar, pode sair sem se registar.');
-    /* VÍDEO NO CLIQUE — depois das validações, ainda sem await */
-    if (!jaViuAnuncioAuravia(email)) {
-      try { arrancarAnuncioFullscreen(email); } catch (eAd2) {}
-    }
     btn.disabled = true;
     btn.textContent = 'A processar...';
     mostrarAviso('⏳ A processar...', 'sucesso');
@@ -1246,7 +910,6 @@
         })
       }).then(function (r) { return r.json(); });
       if (!apiRes || !apiRes.ok) {
-        try { cancelarAnuncioPorErro(); } catch (eCa2) {}
         btn.disabled = false;
         btn.textContent = 'Criar a minha conta';
         resetCaptcha();
@@ -1277,7 +940,6 @@
       redirecionarAposLogin(usuario, true);
     } catch (erro) {
       console.error(erro);
-      try { cancelarAnuncioPorErro(); } catch (eCa3) {}
       mostrarAviso('❌ Erro de ligação. Tenta de novo.');
       btn.disabled = false;
       btn.textContent = 'Criar a minha conta';
